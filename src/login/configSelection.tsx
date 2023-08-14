@@ -275,7 +275,7 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
     }
   }, []);
   return (
-    <div className="settings-component">
+    <div>
       <ToastContainer />
       {isLoadingUser && isLoadingProject && isLoadingRegion && !configError ? (
         <div className="spin-loaderMain">
@@ -293,7 +293,7 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
           runtimeTemplateSelected={runtimeTemplateSelected}
         />
       ) : (
-        <div>
+        <div className="settings-component">
           <div className="settings-overlay">
             <div>
               <Iconsettings.react tag="div" />
