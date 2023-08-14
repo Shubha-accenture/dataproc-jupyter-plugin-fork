@@ -33,7 +33,7 @@ import { ICellProps, authApi, jobTimeFormat } from '../utils/utils';
 import DeletePopup from '../utils/deletePopup';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { deleteSessionAPI } from '../utils/sessionService';
+import { deleteRuntimeTemplateAPI } from '../utils/runtimeService';
 import { PaginationView } from '../utils/paginationView';
 import PollingTimer from '../utils/pollingTimer';
 import SubmitJobIcon from '../../style/icons/submit_job_icon.svg';
@@ -193,7 +193,7 @@ function ListRuntimeTemplates() {
   };
 
   const handleDelete = async () => {
-    await deleteSessionAPI(selectedRuntimeTemplateValue);
+    await deleteRuntimeTemplateAPI(selectedRuntimeTemplateValue);
     setDeletePopupOpen(false);
   };
   const {
