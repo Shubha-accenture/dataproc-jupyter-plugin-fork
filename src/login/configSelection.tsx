@@ -32,6 +32,18 @@ import { requestAPI } from '../handler/handler';
 import ClipLoader from 'react-spinners/ClipLoader';
 import { ToastContainer, ToastOptions, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ListRuntimeTemplates from '../runtime/listRuntimeTemplates';
+import expandLessIcon from '../../style/icons/expand_less.svg';
+import expandMoreIcon from '../../style/icons/expand_more.svg';
+
+const iconExpandLess = new LabIcon({
+  name: 'launcher:expand-less-icon',
+  svgstr: expandLessIcon
+});
+const iconExpandMore = new LabIcon({
+  name: 'launcher:expand-more-icon',
+  svgstr: expandMoreIcon
+});
 
 function ConfigSelection({ loginState, configError, setConfigError }: any) {
   const Iconsettings = new LabIcon({
@@ -54,6 +66,7 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
     email: '',
     picture: ''
   });
+  const [expandRuntimeTemplate, setExpandRuntimeTemplate] = useState(true);
 
   const handleProjectIdChange = (event: any, data: any) => {
     setRegionList([]);
@@ -93,11 +106,11 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
           const toastifyCustomStyle: ToastOptions<{}> = {
             hideProgressBar: true,
             autoClose: false,
-            theme: "dark",
+            theme: 'dark',
             position: toast.POSITION.BOTTOM_CENTER,
             toastId: 'custom-toast'
-          }
-          if(configStatus.includes('Failed')) {
+          };
+          if (configStatus.includes('Failed')) {
             toast.error(configStatus, toastifyCustomStyle);
           } else {
             toast.success(configStatus, toastifyCustomStyle);
@@ -242,6 +255,12 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
       setConfigError(true);
     }
   };
+
+  const handleRuntimeExpand = () => {
+    let runTimeMode = !expandRuntimeTemplate
+    setExpandRuntimeTemplate(runTimeMode);
+  }
+  
   useEffect(() => {
     if (loginState) {
       fetchProjectRegion();
@@ -253,7 +272,7 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
     }
   }, []);
   return (
-    <div className="Settings-component">
+    <div className="settings-component">
       <ToastContainer />
       {isLoadingUser && isLoadingProject && isLoadingRegion && !configError ? (
         <div className="spin-loaderMain">
@@ -270,14 +289,14 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
         !configError && (
           <div>
             <div className="settings-overlay">
-              <div className="settings-icon">
+              <div>
                 <Iconsettings.react tag="div" />
               </div>
               <div className="settings-text">Settings</div>
             </div>
             <div className="settings-seperator"></div>
             <div className="config-overlay">
-              <div className="configForm">
+              <div className="config-form">
                 <div className="project-overlay">
                   <label className="project-text" htmlFor="project-id">
                     Project ID
@@ -374,6 +393,19 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
                   </a>
                 </div>
               </div>
+            </div>
+            <div>
+              <div className="runtime-title-section">
+                <div>Serverless Runtime configurations</div>
+                <div onClick={()=>handleRuntimeExpand()}>
+                  {expandRuntimeTemplate ? (
+                    <iconExpandLess.react tag="div" />
+                  ) : (
+                    <iconExpandMore.react tag="div" />
+                  )}
+                </div>
+              </div>
+              {expandRuntimeTemplate && <ListRuntimeTemplates />}
             </div>
           </div>
         )
