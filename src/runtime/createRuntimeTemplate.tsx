@@ -1,4 +1,4 @@
- /**
+/**
  * @license
  * Copyright 2023 Google LLC
  *
@@ -17,10 +17,16 @@
 
 import React from 'react';
 
-const CreateRuntimeTemplate = (): React.JSX.Element => {
+const CreateRuntimeTemplate = ({
+  runtimeTemplateSelected
+}: any): React.JSX.Element => {
   return (
     <div className="component-level">
-      Create Runtime Template
+      {runtimeTemplateSelected ? (
+        <div>Create Runtime Template {runtimeTemplateSelected.name}</div>
+      ) : (
+        <div>Create Runtime Template </div>
+      )}
     </div>
   );
 };

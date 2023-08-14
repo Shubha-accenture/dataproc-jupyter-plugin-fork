@@ -35,6 +35,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ListRuntimeTemplates from '../runtime/listRuntimeTemplates';
 import expandLessIcon from '../../style/icons/expand_less.svg';
 import expandMoreIcon from '../../style/icons/expand_more.svg';
+import CreateRuntimeTemplate from '../runtime/createRuntimeTemplate';
 
 const iconExpandLess = new LabIcon({
   name: 'launcher:expand-less-icon',
@@ -67,6 +68,8 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
     picture: ''
   });
   const [expandRuntimeTemplate, setExpandRuntimeTemplate] = useState(true);
+  const [openCreateTemplate, setOpenCreateTemplate] = useState(false);
+  const [runtimeTemplateSelected, setRuntimeTemplateSelected] = useState('');
 
   const handleProjectIdChange = (event: any, data: any) => {
     setRegionList([]);
@@ -257,10 +260,10 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
   };
 
   const handleRuntimeExpand = () => {
-    let runTimeMode = !expandRuntimeTemplate
+    let runTimeMode = !expandRuntimeTemplate;
     setExpandRuntimeTemplate(runTimeMode);
-  }
-  
+  };
+
   useEffect(() => {
     if (loginState) {
       fetchProjectRegion();
@@ -285,130 +288,143 @@ function ConfigSelection({ loginState, configError, setConfigError }: any) {
           />
           Loading Config Setup
         </div>
+      ) : !configError && openCreateTemplate ? (
+        <CreateRuntimeTemplate 
+          runtimeTemplateSelected={runtimeTemplateSelected}
+        />
       ) : (
-        !configError && (
-          <div>
-            <div className="settings-overlay">
-              <div>
-                <Iconsettings.react tag="div" />
-              </div>
-              <div className="settings-text">Settings</div>
+        <div>
+          <div className="settings-overlay">
+            <div>
+              <Iconsettings.react tag="div" />
             </div>
-            <div className="settings-seperator"></div>
-            <div className="config-overlay">
-              <div className="config-form">
-                <div className="project-overlay">
-                  <label className="project-text" htmlFor="project-id">
-                    Project ID
-                  </label>
-                  <Select
-                    placeholder={projectId}
-                    className="project-select"
-                    value={projectId}
-                    onChange={handleProjectIdChange}
-                    options={projectList}
-                  />
-                </div>
-
-                <div className="region-overlay">
-                  <label className="region-text" htmlFor="region-id">
-                    Region
-                  </label>
-
-                  <Select
-                    onClick={handleDropdownOpen}
-                    placeholder={region}
-                    className="region-select"
-                    value={region}
-                    onChange={handleRegionChange}
-                    options={regionList}
-                    isDisabled={isDropdownOpen}
-                  />
-                </div>
-                <div className="save-overlay">
-                  <button
-                    className={
-                      isSaveDisabled ? 'save-button disabled' : 'save-button'
-                    }
-                    disabled={isSaveDisabled}
-                    onClick={handleSave}
-                  >
-                    Save
-                  </button>
-                  {isLoading && (
-                    <div className="save-loader">
-                      <ClipLoader
-                        loading={true}
-                        size={25}
-                        aria-label="Loading Spinner"
-                        data-testid="loader"
-                      />
-                    </div>
-                  )}
-                </div>
+            <div className="settings-text">Settings</div>
+          </div>
+          <div className="settings-seperator"></div>
+          <div className="config-overlay">
+            <div className="config-form">
+              <div className="project-overlay">
+                <label className="project-text" htmlFor="project-id">
+                  Project ID
+                </label>
+                <Select
+                  placeholder={projectId}
+                  className="project-select"
+                  value={projectId}
+                  onChange={handleProjectIdChange}
+                  options={projectList}
+                />
               </div>
-              {isDropdownOpen && (
-                <div className="region-loader">
-                  <ClipLoader
-                    loading={true}
-                    size={15}
-                    aria-label="Loading Spinner"
-                    data-testid="loader"
-                  />
-                </div>
-              )}
-              <div className="user-info-card">
-                <div className="google-header">
-                  This account is managed by google.com
-                </div>
-                <div className="seperator"></div>
-                <div className="user-overlay">
-                  <div className="user-image-overlay">
-                    <img
-                      src={userInfo.picture}
-                      alt="User Image"
-                      className="user-image"
+
+              <div className="region-overlay">
+                <label className="region-text" htmlFor="region-id">
+                  Region
+                </label>
+
+                <Select
+                  onClick={handleDropdownOpen}
+                  placeholder={region}
+                  className="region-select"
+                  value={region}
+                  onChange={handleRegionChange}
+                  options={regionList}
+                  isDisabled={isDropdownOpen}
+                />
+              </div>
+              <div className="save-overlay">
+                <button
+                  className={
+                    isSaveDisabled ? 'save-button disabled' : 'save-button'
+                  }
+                  disabled={isSaveDisabled}
+                  onClick={handleSave}
+                >
+                  Save
+                </button>
+                {isLoading && (
+                  <div className="save-loader">
+                    <ClipLoader
+                      loading={true}
+                      size={25}
+                      aria-label="Loading Spinner"
+                      data-testid="loader"
                     />
                   </div>
-                  <div className="user-details">
-                    <div className="user-email">{userInfo.email}</div>
-                  </div>
-                </div>
-                <div className="seperator"></div>
-                <div className="google-header">
-                  <a
-                    href="https://policies.google.com/privacy?hl=en"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Privacy Policy
-                  </a>
-                  <span className="privacy-terms"> • </span>
-                  <a
-                    href="https://policies.google.com/terms?hl=en"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Terms of Service
-                  </a>
-                </div>
+                )}
               </div>
             </div>
-            <div>
-              <div className="runtime-title-section">
-                <div>Serverless Runtime configurations</div>
-                <div onClick={()=>handleRuntimeExpand()}>
-                  {expandRuntimeTemplate ? (
-                    <iconExpandLess.react tag="div" />
-                  ) : (
-                    <iconExpandMore.react tag="div" />
-                  )}
+            {isDropdownOpen && (
+              <div className="region-loader">
+                <ClipLoader
+                  loading={true}
+                  size={15}
+                  aria-label="Loading Spinner"
+                  data-testid="loader"
+                />
+              </div>
+            )}
+            <div className="user-info-card">
+              <div className="google-header">
+                This account is managed by google.com
+              </div>
+              <div className="seperator"></div>
+              <div className="user-overlay">
+                <div className="user-image-overlay">
+                  <img
+                    src={userInfo.picture}
+                    alt="User Image"
+                    className="user-image"
+                  />
+                </div>
+                <div className="user-details">
+                  <div className="user-email">{userInfo.email}</div>
                 </div>
               </div>
-              {expandRuntimeTemplate && <ListRuntimeTemplates />}
+              <div className="seperator"></div>
+              <div className="google-header">
+                <a
+                  href="https://policies.google.com/privacy?hl=en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Privacy Policy
+                </a>
+                <span className="privacy-terms"> • </span>
+                <a
+                  href="https://policies.google.com/terms?hl=en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Terms of Service
+                </a>
+              </div>
             </div>
           </div>
-        )
+          <div>
+            <div className="runtime-title-section">
+              <div className="runtime-title-part">
+                Serverless Runtime configurations
+              </div>
+              <div
+                className="expand-icon"
+                onClick={() => handleRuntimeExpand()}
+              >
+                {expandRuntimeTemplate ? (
+                  <iconExpandLess.react tag="div" />
+                ) : (
+                  <iconExpandMore.react tag="div" />
+                )}
+              </div>
+            </div>
+            {expandRuntimeTemplate && (
+              <ListRuntimeTemplates
+                openCreateTemplate={openCreateTemplate}
+                setOpenCreateTemplate={setOpenCreateTemplate}
+                setRuntimeTemplateSelected={setRuntimeTemplateSelected}
+              />
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -38,6 +38,7 @@ export const deleteRuntimeTemplateAPI = async (selectedRuntimeTemplate: string) 
       }
     )
       .then((response: Response) => {
+        toast.success(`${selectedRuntimeTemplate} is deleted successfully`);
         console.log(response);
       })
       .catch((err: Error) => {

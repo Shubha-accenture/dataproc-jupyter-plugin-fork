@@ -37,7 +37,7 @@ import { deleteRuntimeTemplateAPI } from '../utils/runtimeService';
 import { PaginationView } from '../utils/paginationView';
 import PollingTimer from '../utils/pollingTimer';
 import SubmitJobIcon from '../../style/icons/submit_job_icon.svg';
-import CreateRuntimeTemplate from './createRuntimeTemplate';
+// import CreateRuntimeTemplate from './createRuntimeTemplate';
 
 const iconFilter = new LabIcon({
   name: 'launcher:filter-icon',
@@ -52,12 +52,21 @@ const iconSubmitJob = new LabIcon({
   svgstr: SubmitJobIcon
 });
 
-function ListRuntimeTemplates() {
+interface IListRuntimeTemplate {
+  openCreateTemplate: boolean;
+  setOpenCreateTemplate: (value: boolean) => void;
+  setRuntimeTemplateSelected: any
+}
+
+function ListRuntimeTemplates({
+  openCreateTemplate,
+  setOpenCreateTemplate,
+  setRuntimeTemplateSelected
+}: IListRuntimeTemplate) {
   const [runtimeTemplateslist, setRuntimeTemplateslist] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pollingDisable, setPollingDisable] = useState(false);
-  const [runtimeTemplateSelected, setRuntimeTemplateSelected] = useState('');
-  const [openCreateTemplate, setOpenCreateTemplate] = useState(false);
+  
   const [deletePopupOpen, setDeletePopupOpen] = useState(false);
   const [selectedRuntimeTemplateValue, setSelectedRuntimeTemplateValue] =
     useState('');
@@ -172,7 +181,7 @@ function ListRuntimeTemplates() {
               }
             })
             .catch((e: Error) => {
-              console.log(e);
+              console.error(e);
               setIsLoading(false);
             });
         })
@@ -224,7 +233,6 @@ function ListRuntimeTemplates() {
       pollingRuntimeTemplates(listRuntimeTemplatesAPI, pollingDisable);
     }
 
-    console.log(runtimeTemplateSelected);
     return () => {
       pollingRuntimeTemplates(listRuntimeTemplatesAPI, true);
     };
@@ -247,9 +255,15 @@ function ListRuntimeTemplates() {
   };
 
   const handleRuntimeTemplatesName = (selectedName: string) => {
-    console.log(selectedName);
+    let selectedRunTime: any = []
+    runtimeTemplateslist.forEach((data: any)=>{
+      if(data.name === selectedName) {
+        selectedRunTime.push(data)
+      }
+    })
     pollingRuntimeTemplates(listRuntimeTemplatesAPI, true);
-    setRuntimeTemplateSelected(selectedName);
+    setRuntimeTemplateSelected(selectedRunTime[0]);
+    setOpenCreateTemplate(true);
   };
 
   const handleCreateBatchOpen = () => {
@@ -292,7 +306,6 @@ function ListRuntimeTemplates() {
           }
         />
       )}
-      {openCreateTemplate && <CreateRuntimeTemplate />}
       {runtimeTemplateslist.length > 0 && !openCreateTemplate ? (
         <div>
           <div className="create-runtime-button-wrapper">

@@ -269,3 +269,11 @@
   overflow-y: auto;
   margin-left: 40px;
 }
+
+.expand-icon {
+  cursor: pointer;
+}
+
+.runtime-title-part {
+  margin-bottom: 5px;
+}
