@@ -16,6 +16,7 @@
  */
 
 import React from 'react';
+import CreateRunTime from './createRunTime';
 
 const CreateRuntimeTemplate = ({
   runtimeTemplateSelected
@@ -23,9 +24,9 @@ const CreateRuntimeTemplate = ({
   return (
     <div className="component-level">
       {runtimeTemplateSelected ? (
-        <div>Create Runtime Template {runtimeTemplateSelected.name}</div>
+       <CreateRunTime/>
       ) : (
-        <div>Create Runtime Template </div>
+        <CreateRunTime/>
       )}
     </div>
   );
