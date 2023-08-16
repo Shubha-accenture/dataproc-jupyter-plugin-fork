@@ -114,8 +114,17 @@ function CreateRunTime({}: any) {
   const [displayNameValidation, setDisplayNameValidation] = useState(false);
   const [versionValidation, setVersionValidation] = useState(false);
   const [defaultValue, setDefaultValue] = useState('default');
+  const [idleTimeSelected, setIdleTimeSelected] = useState('');
+  const [timeSelected, setTimeSelected] = useState('');
+  const [timeList, setTimeList] = useState([{}]);
 
   useEffect(() => {
+    const timeData = [
+        { key: 'hour', value: 'hour', text: 'hour' },
+        { key: 'min', value: 'min', text: 'min' },
+        { key: 'sec', value: 'sec', text: 'sec' }
+      ];
+      setTimeList(timeData);
     projectListAPI();
     listClustersAPI();
     listNetworksAPI();
@@ -447,6 +456,9 @@ function CreateRunTime({}: any) {
   const handleServiceSelected = (event: any, data: any) => {
     setServicesSelected(data.value);
   };
+  const handletimeSelected = (event: any, data: any) => {
+    setTimeSelected(data.value);
+  };
   const handleProjectIdChange = (event: any, data: any) => {
     regionListAPI(data.value);
     setProjectId(data.value);
@@ -624,6 +636,26 @@ function CreateRunTime({}: any) {
                 placeholder="None"
               />
             )}
+            <div className="single-line">
+              <div className="create-batches-subMessage">Max idle time</div>
+              <div className="create-batches-subMessage">Time</div>
+            </div>
+            <div className="single-line">
+              <Input
+                className="create-batch-style "
+                value={idleTimeSelected}
+                onChange={e => setIdleTimeSelected(e.target.value)}
+                type="text"
+              />
+
+              <Select
+                className="select-sub-network-style"
+                value={timeSelected}
+                onChange={handletimeSelected}
+                type="text"
+                options={timeList}
+              />
+            </div>
 
             <div className="create-batches-message">
               Python packages repository
@@ -635,8 +667,8 @@ function CreateRunTime({}: any) {
               type="text"
             />
             <div className="create-messagelist">
-              Enter the URI for the repository to install Python packages. By default packages
-              are installed to PyPI mirror on GCP.
+              Enter the URI for the repository to install Python packages. By
+              default packages are installed to PyPI mirror on GCP.
             </div>
 
             <div className="submit-job-label-header">
