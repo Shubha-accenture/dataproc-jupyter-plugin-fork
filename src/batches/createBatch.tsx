@@ -28,6 +28,7 @@ import {
   ARGUMENTS_MESSAGE,
   ARTIFACT_REGISTERY,
   BASE_URL,
+  BASE_URL_KEYRINGS,
   BASE_URL_META,
   BASE_URL_NETWORKS,
   CONTAINER_REGISTERY,
@@ -149,7 +150,9 @@ function CreateBatch({
     { value: string; key: string; text: string }[]
   >([]);
   const [networkList, setNetworklist] = useState([{}]);
-  const [subNetworkList, setSubNetworklist] = useState<{ key: string; value: string; text: string }[]>([]);
+  const [subNetworkList, setSubNetworklist] = useState<
+    { key: string; value: string; text: string }[]
+  >([]);
   const [isLoadingRegion, setIsLoadingRegion] = useState(false);
   const [networkSelected, setNetworkSelected] = useState('default');
   const [subNetworkSelected, setSubNetworkSelected] = useState('default');
@@ -174,7 +177,8 @@ function CreateBatch({
   const [batchIdValidation, setBatchIdValidation] = useState(false);
   const [mainJarValidation, setMainJarValidation] = useState(true);
   const [defaultValue, setDefaultValue] = useState('default');
-
+  const [keyRingList, setKeyRinglist] = useState([{}]);
+  const [keyRingSelected, setKeyRingSelecetd] = useState('');
   const handleCreateBatchBackView = () => {
     setCreateBatchView(false);
   };
@@ -200,7 +204,7 @@ function CreateBatch({
     projectListAPI();
     listClustersAPI();
     listNetworksAPI();
-  }, [clusterSelected,defaultValue]);
+  }, [clusterSelected, defaultValue]);
 
   useEffect(() => {
     generateRandomHex();
@@ -411,7 +415,7 @@ function CreateBatch({
         .then((response: Response) => {
           response
             .json()
-            .then((responseResult:  {subnetworks: string[]}) => {
+            .then((responseResult: { subnetworks: string[] }) => {
               let transformedSubNetworkList = [];
               /*
          Extracting  subnetworks from Network
@@ -421,14 +425,14 @@ function CreateBatch({
               transformedSubNetworkList = responseResult.subnetworks.map(
                 (data: string) => {
                   return {
-                    subnetworks: data.split(`${credentials.region_id}/subnetworks/`)[1]
+                    subnetworks: data.split(
+                      `${credentials.region_id}/subnetworks/`
+                    )[1]
                   };
                 }
               );
               const keyLabelStructureSubNetwork = transformedSubNetworkList
-                .filter(
-                  (obj: SubnetworkData) => obj.subnetworks !== undefined
-                )
+                .filter((obj: SubnetworkData) => obj.subnetworks !== undefined)
                 .map((obj: SubnetworkData) => ({
                   key: obj.subnetworks,
                   value: obj.subnetworks,
@@ -444,6 +448,97 @@ function CreateBatch({
         })
         .catch((err: Error) => {
           console.error('Error listing Networks', err);
+        });
+    }
+  };
+  const KeyRingsAPI = async () => {
+    const credentials = await authApi();
+    if (credentials) {
+      fetch(
+        `${BASE_URL_KEYRINGS}/projects/${credentials.project_id}/locations/${credentials.region_id}/keyRings`,
+        {
+          headers: {
+            'Content-Type': API_HEADER_CONTENT_TYPE,
+            Authorization: API_HEADER_BEARER + credentials.access_token
+          }
+        }
+      )
+        .then((response: Response) => {
+          response
+            .json()
+            .then((responseResult: any) => {
+              let transformedkeyRingsList = [];
+              /*
+         Extracting  name from KeyRings
+         Example: "https://cloudkms.googleapis.com/v1/{parent=projects//locations//keyRings",
+      */
+
+              transformedkeyRingsList = responseResult.keyRings.map(
+                (data: any) => {
+                  return {
+                    name: data.name.split('/')[5]
+                  };
+                }
+              );
+             
+              console.log(transformedkeyRingsList)
+              listKeyAPI(transformedkeyRingsList);
+            })
+
+            .catch((e: Error) => {
+              console.log(e);
+            });
+        })
+        .catch((err: Error) => {
+          console.error('Error listing Key Rings', err);
+        });
+    }
+  };
+  const listKeyAPI = async (keyRingValue: any) => {
+    const credentials = await authApi();
+    if (credentials) {
+      fetch(
+        `${BASE_URL_KEYRINGS}/projects/${credentials.project_id}/locations/${credentials.region_id}/keyRings/${keyRingValue}/cryptoKeys`,
+        {
+          headers: {
+            'Content-Type': API_HEADER_CONTENT_TYPE,
+            Authorization: API_HEADER_BEARER + credentials.access_token
+          }
+        }
+      )
+        .then((response: Response) => {
+          response
+            .json()
+            .then((responseResult: any) => {
+              let transformedkeyRingsList = [];
+              /*
+         Extracting  name from KeyRings
+         Example: "https://cloudkms.googleapis.com/v1/{parent=projects//locations//keyRings",
+      */
+
+              transformedkeyRingsList = responseResult.cryptoKeys.map(
+                (data: any) => {
+                  return {
+                    name: data.name
+                  };
+                }
+              );
+              const keyLabelStructureKey = transformedkeyRingsList.map(
+                (obj: any) => ({
+                  key: obj.name,
+                  value: obj.name,
+                  text: obj.name
+                })
+              );
+              setKeyRinglist(keyLabelStructureKey);
+            })
+
+            .catch((e: Error) => {
+              console.log(e);
+            });
+        })
+        .catch((err: Error) => {
+          console.error('Error listing Key Rings', err);
         });
     }
   };
@@ -659,6 +754,7 @@ function CreateBatch({
         ...(serviceAccountSelected !== '' && {
           serviceAccount: serviceAccountSelected
         }),
+        networkUri: networkSelected,
         subnetworkUri: subNetworkSelected,
         ...(networkTagSelected.length > 0 && {
           networkTags: networkTagSelected
@@ -817,6 +913,13 @@ function CreateBatch({
 
   const handleClusterSelected = (event: any, data: any) => {
     setClusterSelected(data.value);
+  };
+  const handleRadioCustomer = () => {
+    setSelectedEncryptionRadio('customerManaged');
+    KeyRingsAPI();
+  };
+  const handleKeySelected = (event: any, data: any) => {
+    setKeyRingSelecetd(data.value);
   };
 
   return (
@@ -1335,9 +1438,7 @@ function CreateBatch({
                     value="googleManaged"
                     disabled
                     checked={selectedEncryptionRadio === 'customerManaged'}
-                    onChange={() =>
-                      setSelectedEncryptionRadio('customerManaged')
-                    }
+                    onChange={handleRadioCustomer}
                   />
                   <div className="create-batch-message">
                     Customer-managed encryption key (CMEK)
@@ -1360,10 +1461,10 @@ function CreateBatch({
                       className="select-job-style"
                       search
                       selection
-                      value={clusterSelected}
-                      onChange={handleClusterSelected}
-                      options={clustersList}
-                      placeholder="Search..."
+                      value={keyRingSelected}
+                      onChange={handleKeySelected}
+                      options={keyRingList}
+                      placeholder=""
                     />
                   </div>
                 )}
