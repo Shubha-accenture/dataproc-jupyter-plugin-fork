@@ -75,6 +75,7 @@ function CreateRunTime({}: any) {
   const [desciptionSelected, setDescriptionSelected] = useState('');
   const [runTimeSelected, setRunTimeSelected] = useState('');
   const [versionSelected, setVersionSelected] = useState('2.1');
+  const [pythonRepositorySelected, setPythonRepositorySelected] = useState('');
   const [networkTagSelected, setNetworkTagSelected] = useState([
     ...networkUris
   ]);
@@ -108,7 +109,10 @@ function CreateRunTime({}: any) {
   const [clustersList, setClustersList] = useState<
     Array<{ key: string; value: string; text: string }>
   >([]);
+  const [runTimeValidation, setRuntimeValidation] = useState(false);
+  const [descriptionValidation, setDescriptionValidation] = useState(false);
   const [displayNameValidation, setDisplayNameValidation] = useState(false);
+  const [versionValidation, setVersionValidation] = useState(false);
   const [defaultValue, setDefaultValue] = useState('default');
 
   useEffect(() => {
@@ -120,10 +124,10 @@ function CreateRunTime({}: any) {
   useEffect(() => {
     generateRandomHex();
   }, [
-    displayNameSelected,
+    runTimeSelected,
     keyValidation,
     valueValidation,
-    displayNameValidation,
+    runTimeValidation,
     duplicateKeyError
   ]);
   const listClustersAPI = async () => {
@@ -404,8 +408,8 @@ function CreateRunTime({}: any) {
       crypto.getRandomValues(array);
       const hex = array[0].toString(14);
       const paddedHex = hex.padStart(10, '0');
-      setHexNumber('RT-CONFIG-' + paddedHex);
-      setDisplayNameSelected('RT-CONFIG-' + paddedHex);
+      setHexNumber(paddedHex);
+      setRunTimeSelected(paddedHex);
       setGenerationCompleted(true);
     }
   };
@@ -413,10 +417,31 @@ function CreateRunTime({}: any) {
   const handleInputChange = (event: any) => {
     setHexNumber(event.target.value);
     event.target.value.length > 0
+      ? setRuntimeValidation(false)
+      : setRuntimeValidation(true);
+    const newRunTime = event.target.value;
+    setRunTimeSelected(newRunTime);
+  };
+  const handleDisplayNameChange = (event: any) => {
+    event.target.value.length > 0
       ? setDisplayNameValidation(false)
       : setDisplayNameValidation(true);
-    const newBatchId = event.target.value;
-    setDisplayNameSelected(newBatchId);
+    const newDisplayName = event.target.value;
+    setDisplayNameSelected(newDisplayName);
+  };
+  const handleDescriptionChange = (event: any) => {
+    event.target.value.length > 0
+      ? setDescriptionValidation(false)
+      : setDescriptionValidation(true);
+    const newDescription = event.target.value;
+    setDescriptionSelected(newDescription);
+  };
+  const handleVersionChange = (event: any) => {
+    event.target.value.length > 0
+      ? setVersionValidation(false)
+      : setVersionValidation(true);
+    const newVersion = event.target.value;
+    setVersionSelected(newVersion);
   };
 
   const handleServiceSelected = (event: any, data: any) => {
@@ -446,47 +471,67 @@ function CreateRunTime({}: any) {
     <div>
       <div className="scroll-comp">
         <div className="cluster-details-header">
-          <div className="cluster-details-title">Basic</div>
+          <div className="cluster-details-title">Basics</div>
         </div>
         <div className="submit-job-container">
           <form>
             <div className="create-batches-message">Display name*</div>
             <Input
               className="create-batch-style "
-              value={hexNumber}
-              onChange={e => handleInputChange(e)}
+              value={displayNameSelected}
+              onChange={e => handleDisplayNameChange(e)}
               type="text"
             />
             {displayNameValidation && (
               <div className="error-key-parent">
                 <iconError.react tag="div" />
+                <div className="error-key-missing">Name is required</div>
+              </div>
+            )}
+
+            <div className="create-batches-message">Runtime ID*</div>
+
+            <Input
+              className="create-batch-style "
+              value={hexNumber}
+              onChange={e => handleInputChange(e)}
+              type="text"
+            />
+            {runTimeValidation && (
+              <div className="error-key-parent">
+                <iconError.react tag="div" />
                 <div className="error-key-missing">ID is required</div>
               </div>
             )}
-            <div className="create-batches-message">Runtime ID*</div>
-            <Input
-              className="create-batch-style "
-              value={runTimeSelected}
-              onChange={e => setRunTimeSelected(e.target.value)}
-              type="text"
-            />
 
             <div className="create-batches-message">Description*</div>
             <Input
               className="create-batch-style "
               value={desciptionSelected}
-              onChange={e => setDescriptionSelected(e.target.value)}
+              onChange={e => handleDescriptionChange(e)}
               type="text"
             />
+            {descriptionValidation && (
+              <div className="error-key-parent">
+                <iconError.react tag="div" />
+                <div className="error-key-missing">Description is required</div>
+              </div>
+            )}
 
             <div className="create-batches-message">Runtime version*</div>
 
             <Input
               className="create-batch-style "
               value={versionSelected}
-              onChange={e => setVersionSelected(e.target.value)}
+              onChange={e => handleVersionChange(e)}
               type="text"
             />
+            {versionValidation && (
+              <div className="error-key-parent">
+                <iconError.react tag="div" />
+                <div className="error-key-missing">Version is required</div>
+              </div>
+            )}
             <div className="submit-job-label-header">Network Configuration</div>
             <div className="create-batches-message">
               Establishes connectivity for the VM instances in this cluster.
@@ -579,6 +624,20 @@ function CreateRunTime({}: any) {
                 placeholder="None"
               />
             )}
+
+            <div className="create-batches-message">
+              Python packages repository
+            </div>
+            <Input
+              className="create-batch-style "
+              value={pythonRepositorySelected}
+              onChange={e => setPythonRepositorySelected(e.target.value)}
+              type="text"
+            />
+            <div className="create-messagelist">
+              Enter the URI for the repository to install Python packages. By default packages
+              are installed to PyPI mirror on GCP.
+            </div>
 
             <div className="submit-job-label-header">
               Persistent Spark History Server
