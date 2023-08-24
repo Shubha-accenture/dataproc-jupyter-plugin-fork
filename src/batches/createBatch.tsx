@@ -88,6 +88,7 @@ interface ICreateBatchProps {
   setCreateBatchView: (value: boolean) => void;
   regionName: string;
   projectName: string;
+  batchSelected: string;
 }
 let jarFileUris: string[] = [];
 let fileUris: string[] = [];
@@ -97,18 +98,55 @@ let networkUris: string[] = [];
 let key: string[] | (() => string[]) = [];
 let value: string[] | (() => string[]) = [];
 let pythonFileUris: string[] = [];
+function batchKey(batchSelected: any) {
+  const batchKeys: string[] = [];
 
+  for (const key in batchSelected) {
+    if (key.endsWith('Job')) {
+      batchKeys.push(key);
+    }
+  }
+  return batchKeys;
+}
+function batchTypeFunction(batchKey: string) {
+  let batchType = 'spark';
+  switch (batchKey) {
+    case 'sparkRJob':
+      batchType = 'sparkR';
+      return batchType;
+    case 'pysparkJob':
+      batchType = 'pySpark';
+      return batchType;
+    case 'sparkSqlJob':
+      batchType = 'sparkSql';
+      return batchType;
+    default:
+      return batchType;
+  }
+}
 function CreateBatch({
   setCreateBatchView,
   regionName,
-  projectName
+  projectName,
+  batchSelected
 }: ICreateBatchProps) {
+  let batchKeys: string[] = [];
+  let batchType = 'spark';
+  // let mainClass = '';
+  console.log(batchSelected);
+  if (Object.keys(batchSelected).length !== 0) {
+    batchKeys = batchKey(batchSelected);
+    batchType = batchTypeFunction(batchKeys[0]);
+    const batchTypeKey = batchKeys[0];
+    console.log(batchTypeKey)
+  }
+
   const [batchTypeList, setBatchTypeList] = useState([{}]);
   const [versionList, setVersionList] = useState([{}]);
   const [generationCompleted, setGenerationCompleted] = useState(false);
   const [hexNumber, setHexNumber] = useState('');
   const [batchIdSelected, setBatchIdSelected] = useState('');
-  const [batchTypeSelected, setBatchTypeSelected] = useState('spark');
+  const [batchTypeSelected, setBatchTypeSelected] = useState(batchType);
   const [versionSelected, setVersionSelected] = useState('2.1');
   const [selectedRadio, setSelectedRadio] = useState('mainClass');
   const [mainClassSelected, setMainClassSelected] = useState('');

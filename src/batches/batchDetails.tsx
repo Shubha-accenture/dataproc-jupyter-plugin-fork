@@ -50,6 +50,7 @@ import { deleteBatchAPI } from '../utils/batchService';
 import { statusDisplay } from '../utils/statusDisplay';
 import PollingTimer from '../utils/pollingTimer';
 
+
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
   svgstr: LeftArrowIcon
@@ -66,11 +67,15 @@ const iconDeleteCluster = new LabIcon({
 type BatchDetailsProps = {
   batchSelected: string;
   setDetailedBatchView: (flag: boolean) => void;
+  setCreateBatchView: (flag: boolean) => void;
+  createBatchView: boolean;
 };
 
 function BatchDetails({
   batchSelected,
-  setDetailedBatchView
+  setDetailedBatchView,
+  setCreateBatchView,
+  createBatchView
 }: BatchDetailsProps) {
   const [batchInfoResponse, setBatchInfoResponse] = useState({
     uuid: '',
@@ -120,6 +125,8 @@ function BatchDetails({
   const [isLoading, setIsLoading] = useState(true);
   const [deletePopupOpen, setDeletePopupOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState('');
+  // const [projectName, setProjectName] = useState('');
+
   const timer = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const pollingBatchDetails = async (
@@ -223,6 +230,10 @@ function BatchDetails({
     handleDetailedBatchView();
     setDeletePopupOpen(false);
   };
+  const handleCloneBatch = async () => {
+    console.log('clone click');
+    setCreateBatchView(true);
+  }
 
   return (
     <div>
@@ -253,7 +264,9 @@ function BatchDetails({
           }
         />
       )}
-      {batchInfoResponse.uuid !== '' && (
+
+      {!createBatchView && (
+      batchInfoResponse.uuid !== '' && (
         <div className="scroll-comp">
           <div className="cluster-details-header">
             <div
@@ -264,7 +277,7 @@ function BatchDetails({
               <iconLeftArrow.react tag="div" />
             </div>
             <div className="cluster-details-title">{batchSelected}</div>
-            <div className="action-disabled action-cluster-section">
+            <div role="button" className="action-cluster-section" onClick={() => handleCloneBatch()}>
               <div className="action-cluster-icon">
                 <iconCloneJob.react tag="div" />
               </div>
@@ -494,6 +507,7 @@ function BatchDetails({
             </div>
           </div>
         </div>
+      )
       )}
     </div>
   );

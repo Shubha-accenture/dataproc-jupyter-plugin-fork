@@ -64,7 +64,6 @@ const BatchesComponent = (): React.JSX.Element => {
   const [selectedBatch, setSelectedBatch] = useState('');
   const [regionName, setRegionName] = useState('');
   const [projectName, setProjectName] = useState('');
-
   const [createBatchView, setCreateBatchView] = useState(false);
   const timer = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -255,6 +254,8 @@ const BatchesComponent = (): React.JSX.Element => {
             <BatchDetails
               batchSelected={batchSelected}
               setDetailedBatchView={setDetailedBatchView}
+              setCreateBatchView ={setCreateBatchView}
+              createBatchView={createBatchView}
             />
           )}
           {createBatchView && (
@@ -262,6 +263,7 @@ const BatchesComponent = (): React.JSX.Element => {
               setCreateBatchView={setCreateBatchView}
               regionName={regionName}
               projectName={projectName}
+              batchSelected={batchSelected}
             />
           )}
 
