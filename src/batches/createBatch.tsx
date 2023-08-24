@@ -52,6 +52,7 @@ import { ClipLoader } from 'react-spinners';
 import { toast } from 'react-toastify';
 import ErrorPopup from '../utils/errorPopup';
 import errorIcon from '../../style/icons/error_icon.svg';
+// import { set } from 'lib0/encoding';
 
 type Project = {
   projectId: string;
@@ -85,10 +86,12 @@ const iconError = new LabIcon({
 });
 
 interface ICreateBatchProps {
-  setCreateBatchView: (value: boolean) => void;
+  setCreateBatchView?: (value: boolean) => void;
   regionName: string;
   projectName: string;
-  batchSelected: string;
+  batchInfoResponse?: any;
+  createBatch?: boolean;
+  setCreateBatch?: (value: boolean) => void;
 }
 let jarFileUris: string[] = [];
 let fileUris: string[] = [];
@@ -102,7 +105,7 @@ function batchKey(batchSelected: any) {
   const batchKeys: string[] = [];
 
   for (const key in batchSelected) {
-    if (key.endsWith('Job')) {
+    if (key.endsWith('Batch')) {
       batchKeys.push(key);
     }
   }
@@ -111,13 +114,13 @@ function batchKey(batchSelected: any) {
 function batchTypeFunction(batchKey: string) {
   let batchType = 'spark';
   switch (batchKey) {
-    case 'sparkRJob':
+    case 'sparkRBatch':
       batchType = 'sparkR';
       return batchType;
-    case 'pysparkJob':
+    case 'pysparkBatch':
       batchType = 'pySpark';
       return batchType;
-    case 'sparkSqlJob':
+    case 'sparkSqlBatch':
       batchType = 'sparkSql';
       return batchType;
     default:
@@ -128,18 +131,32 @@ function CreateBatch({
   setCreateBatchView,
   regionName,
   projectName,
-  batchSelected
+  batchInfoResponse,
+  setCreateBatch,
+  createBatch
 }: ICreateBatchProps) {
   let batchKeys: string[] = [];
   let batchType = 'spark';
-  // let mainClass = '';
-  console.log(batchSelected);
-  if (Object.keys(batchSelected).length !== 0) {
-    batchKeys = batchKey(batchSelected);
+  let mainClass = '';
+  let mainJarFileUri = '';
+  let mainRFileUri = '';
+  let mainPythonFileUri = '';
+  let queryFileUri = '';
+  console.log(batchInfoResponse);
+  if (Object.keys(batchInfoResponse).length !== 0) {
+    batchKeys = batchKey(batchInfoResponse);
     batchType = batchTypeFunction(batchKeys[0]);
     const batchTypeKey = batchKeys[0];
     console.log(batchTypeKey)
+    if (batchInfoResponse[batchKeys[0]].hasOwnProperty('queryFileUri')) {
+      queryFileUri = batchInfoResponse[batchKeys[0]].queryFileUri;
+    }
+    mainJarFileUri = batchInfoResponse[batchKeys[0]].mainJarFileUri;
+    mainClass = batchInfoResponse[batchKeys[0]].mainClass;
+    mainRFileUri = batchInfoResponse[batchKeys[0]].mainRFileUri;
+    mainPythonFileUri = batchInfoResponse[batchKeys[0]].mainPythonFileUri;
   }
+  console.log(batchType);
 
   const [batchTypeList, setBatchTypeList] = useState([{}]);
   const [generationCompleted, setGenerationCompleted] = useState(false);
@@ -148,13 +165,13 @@ function CreateBatch({
   const [batchTypeSelected, setBatchTypeSelected] = useState(batchType);
   const [versionSelected, setVersionSelected] = useState('2.1');
   const [selectedRadio, setSelectedRadio] = useState('mainClass');
-  const [mainClassSelected, setMainClassSelected] = useState('');
-  const [mainJarSelected, setMainJarSelected] = useState('');
-  const [mainRSelected, setMainRSelected] = useState('');
+  const [mainClassSelected, setMainClassSelected] = useState(mainClass);
+  const [mainJarSelected, setMainJarSelected] = useState(mainJarFileUri);
+  const [mainRSelected, setMainRSelected] = useState(mainRFileUri);
   const [containerImageSelected, setContainerImageSelected] = useState('');
   const [jarFilesSelected, setJarFilesSelected] = useState([...jarFileUris]);
   const [filesSelected, setFilesSelected] = useState([...fileUris]);
-  const [queryFileSelected, setQueryFileSelected] = useState('');
+  const [queryFileSelected, setQueryFileSelected] = useState(queryFileUri);
   const [ArchiveFilesSelected, setArchiveFileSelected] = useState([
     ...archiveFileUris
   ]);
@@ -199,7 +216,7 @@ function CreateBatch({
   const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
   const [additionalPythonFileSelected, setAdditionalPythonFileSelected] =
     useState([...pythonFileUris]);
-  const [mainPythonSelected, setMainPythonSelected] = useState('');
+  const [mainPythonSelected, setMainPythonSelected] = useState(mainPythonFileUri);
   const [clustersList, setClustersList] = useState<
     Array<{ key: string; value: string; text: string }>
   >([]);
@@ -216,7 +233,12 @@ function CreateBatch({
   const [defaultValue, setDefaultValue] = useState('default');
 
   const handleCreateBatchBackView = () => {
+    if(setCreateBatchView){
     setCreateBatchView(false);
+    }
+    if(setCreateBatch){
+    setCreateBatch(false);
+    }
   };
   const handleMainClassRadio = () => {
     setSelectedRadio('mainClass');
@@ -791,7 +813,12 @@ function CreateBatch({
           if (response.ok) {
             const responseResult = await response.json();
             console.log(responseResult);
+            if(setCreateBatchView){
             setCreateBatchView(false);
+            }
+            if(setCreateBatch){
+              setCreateBatch(false);
+            }
           } else {
             const errorResponse = await response.json();
             console.log(errorResponse);

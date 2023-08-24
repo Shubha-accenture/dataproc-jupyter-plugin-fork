@@ -59,6 +59,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { deleteBatchAPI } from '../utils/batchService';
 import { statusDisplay } from '../utils/statusDisplay';
 import PollingTimer from '../utils/pollingTimer';
+import CreateBatch from './createBatch';
 
 
 const iconLeftArrow = new LabIcon({
@@ -78,14 +79,12 @@ type BatchDetailsProps = {
   batchSelected: string;
   setDetailedBatchView: (flag: boolean) => void;
   setCreateBatchView: (flag: boolean) => void;
-  createBatchView: boolean;
 };
 
 function BatchDetails({
   batchSelected,
   setDetailedBatchView,
   setCreateBatchView,
-  createBatchView
 }: BatchDetailsProps) {
   const [batchInfoResponse, setBatchInfoResponse] = useState({
     uuid: '',
@@ -144,7 +143,8 @@ function BatchDetails({
   const [isLoading, setIsLoading] = useState(true);
   const [deletePopupOpen, setDeletePopupOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState('');
-  // const [projectName, setProjectName] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [createBatch, setCreateBatch] = useState(false);
 
   const timer = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -177,6 +177,7 @@ function BatchDetails({
     const credentials = await authApi();
     if (credentials) {
       setRegionName(credentials.region_id || '');
+      setProjectName(credentials.project_id || '');
       fetch(
         `${BASE_URL}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches/${batchSelected}`,
         {
@@ -251,9 +252,9 @@ function BatchDetails({
     handleDetailedBatchView();
     setDeletePopupOpen(false);
   };
-  const handleCloneBatch = async () => {
+  const handleCloneBatch = async (batchInfoResponse: any) => {
     console.log('clone click');
-    setCreateBatchView(true);
+    setCreateBatch(true);
   }
 
   return (
@@ -275,6 +276,15 @@ function BatchDetails({
           )}
         </div>
       )}
+        {createBatch && (
+          <CreateBatch
+          setCreateBatch={setCreateBatch}
+          regionName={regionName}
+          projectName={projectName}
+          batchInfoResponse={batchInfoResponse}  
+          createBatch= {createBatch}          />
+          )
+          }
       {deletePopupOpen && (
         <DeletePopup
           onCancel={() => handleCancelDelete()}
@@ -286,7 +296,7 @@ function BatchDetails({
         />
       )}
 
-      {!createBatchView && (
+      {!createBatch && (
       batchInfoResponse.uuid !== '' && (
         <div className="scroll-comp">
           <div className="cluster-details-header">
@@ -298,7 +308,7 @@ function BatchDetails({
               <iconLeftArrow.react tag="div" />
             </div>
             <div className="cluster-details-title">{batchSelected}</div>
-            <div role="button" className="action-cluster-section" onClick={() => handleCloneBatch()}>
+            <div role="button" className="action-cluster-section" onClick={() => handleCloneBatch(batchInfoResponse)}>
               <div className="action-cluster-icon">
                 <iconCloneJob.react tag="div" />
               </div>

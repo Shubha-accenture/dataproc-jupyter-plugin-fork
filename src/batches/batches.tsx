@@ -66,7 +66,6 @@ const BatchesComponent = (): React.JSX.Element => {
   const [projectName, setProjectName] = useState('');
   const [createBatchView, setCreateBatchView] = useState(false);
   const timer = useRef<NodeJS.Timeout | undefined>(undefined);
-
   const pollingBatches = async (
     pollingFunction: () => void,
     pollingDisable: boolean
@@ -255,17 +254,15 @@ const BatchesComponent = (): React.JSX.Element => {
               batchSelected={batchSelected}
               setDetailedBatchView={setDetailedBatchView}
               setCreateBatchView ={setCreateBatchView}
-              createBatchView={createBatchView}
             />
           )}
           {createBatchView && (
             <CreateBatch
               setCreateBatchView={setCreateBatchView}
               regionName={regionName}
-              projectName={projectName}
-              batchSelected={batchSelected}
-            />
-          )}
+              projectName={projectName}         />
+          )
+          }
 
           {!detailedBatchView && !createBatchView && (
             <div className="clusters-list-component" role="tablist">
