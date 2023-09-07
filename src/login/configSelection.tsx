@@ -21,13 +21,14 @@ import settingsIcon from '../../style/icons/settings_icon.svg';
 import {
   API_HEADER_BEARER,
   API_HEADER_CONTENT_TYPE,
-  USER_INFO_URL
+  USER_INFO_URL,
+  VERSION_DETAIL
 } from '../utils/const';
-import { IAuthCredentials, authApi } from '../utils/utils';
+import { IAuthCredentials, authApi, toastifyCustomStyle } from '../utils/utils';
 import 'semantic-ui-css/semantic.min.css';
 import { requestAPI } from '../handler/handler';
 import ClipLoader from 'react-spinners/ClipLoader';
-import { ToastContainer, ToastOptions, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import THIRD_PARTY_LICENSES from '../../third-party-licenses.txt';
 import ListRuntimeTemplates from '../runtime/listRuntimeTemplates';
@@ -80,13 +81,6 @@ function ConfigSelection({ configError, setConfigError }: any) {
       if (typeof data === 'object' && data !== null) {
         const configStatus = (data as { config: string }).config;
         if (configStatus && !toast.isActive('custom-toast')) {
-          const toastifyCustomStyle: ToastOptions<{}> = {
-            hideProgressBar: true,
-            autoClose: false,
-            theme: 'dark',
-            position: toast.POSITION.BOTTOM_CENTER,
-            toastId: 'custom-toast'
-          };
           if (configStatus.includes('Failed')) {
             toast.error(configStatus, toastifyCustomStyle);
           } else {
@@ -125,7 +119,7 @@ function ConfigSelection({ configError, setConfigError }: any) {
         .catch((err: any) => {
           setIsLoadingUser(false);
           console.error('Error displaying user info', err);
-          toast.error('Failed to fetch user information');
+          toast.error('Failed to fetch user information', toastifyCustomStyle);
         });
     }
   };
@@ -163,7 +157,6 @@ function ConfigSelection({ configError, setConfigError }: any) {
   }, []);
   return (
     <div>
-      <ToastContainer />
       {isLoadingUser && !configError ? (
         <div className="spin-loaderMain">
           <ClipLoader
@@ -184,11 +177,12 @@ function ConfigSelection({ configError, setConfigError }: any) {
         <div className="settings-component">
           <div className="settings-overlay">
             <div>
-              <Iconsettings.react tag="div" />
+              <Iconsettings.react tag="div" className="logo-alignment-style" />
             </div>
             <div className="settings-text">Settings</div>
           </div>
           <div className="settings-seperator"></div>
+          <div className="project-header">Project Info </div>
           <div className="config-overlay">
             <div className="config-form">
               <div className="project-overlay">
@@ -223,6 +217,7 @@ function ConfigSelection({ configError, setConfigError }: any) {
               <div className="google-header">
                 This account is managed by google.com
               </div>
+
               <div className="seperator"></div>
               <div className="user-overlay">
                 <div className="user-image-overlay">
@@ -258,6 +253,19 @@ function ConfigSelection({ configError, setConfigError }: any) {
                   Licenses
                 </a>
               </div>
+              <div className="feedback-version-container">
+                <div className="google-header">
+                  <div className="feedback-container">Provide Feedback</div>
+                  <span className="privacy-terms"> • </span>
+                  <a
+                    href="https://github.com/GoogleCloudDataproc/dataproc-jupyter-plugin"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Version {VERSION_DETAIL}
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
           <div>
@@ -270,9 +278,15 @@ function ConfigSelection({ configError, setConfigError }: any) {
                 onClick={() => handleRuntimeExpand()}
               >
                 {expandRuntimeTemplate ? (
-                  <iconExpandLess.react tag="div" />
+                  <iconExpandLess.react
+                    tag="div"
+                    className="logo-alignment-style"
+                  />
                 ) : (
-                  <iconExpandMore.react tag="div" />
+                  <iconExpandMore.react
+                    tag="div"
+                    className="logo-alignment-style"
+                  />
                 )}
               </div>
             </div>

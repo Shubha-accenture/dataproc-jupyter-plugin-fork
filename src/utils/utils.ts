@@ -41,7 +41,8 @@ import {
   STATUS_STARTING,
   STATUS_SUCCESS
 } from './const';
-
+import { ToastOptions, toast } from 'react-toastify';
+import { v4 as uuidv4 } from 'uuid';
 export interface IAuthCredentials {
   access_token?: string;
   project_id?: string;
@@ -395,4 +396,11 @@ export const batchDetailsOptionalDisplay = (data: string) => {
   }
 };
 
+export const toastifyCustomStyle: ToastOptions<{}> = {
+  hideProgressBar: true,
+  autoClose: false,
+  theme: 'dark',
+  position: toast.POSITION.BOTTOM_CENTER,
+  toastId: uuidv4(),
+};
 export function assumeNeverHit(_: never): void {}

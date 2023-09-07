@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+export const VERSION_DETAIL = "0.1.17"
 export const CREATE_CLUSTER_URL =
   'https://console.cloud.google.com/dataproc/clusters';
 export const CREATE_BATCH_URL =
@@ -22,7 +23,7 @@ export const CREATE_BATCH_URL =
 export const BASE_URL = 'https://dataproc.googleapis.com/v1';
 export const BASE_URL_NETWORKS = 'https://compute.googleapis.com/compute/v1';
 export const BASE_URL_META = 'https://metastore.googleapis.com/v1';
-export const BASE_URL_KEY ='https://cloudkms.googleapis.com/v1';
+export const BASE_URL_KEY = 'https://cloudkms.googleapis.com/v1';
 export const VIEW_LOGS_URL = 'https://console.cloud.google.com/logs';
 export const POLLING_TIME_LIMIT = 10000;
 export const API_HEADER_CONTENT_TYPE = 'application/json';
@@ -30,6 +31,9 @@ export enum ClusterStatus {
   STATUS_RUNNING = 'RUNNING',
   STATUS_STOPPED = 'STOPPED',
   STATUS_ACTIVE = 'ACTIVE'
+}
+export enum BatchStatus {
+  STATUS_PENDING = 'PENDING'
 }
 export const STATUS_RUNNING = 'RUNNING';
 export const STATUS_ERROR = 'ERROR';
@@ -143,3 +147,4 @@ export enum HTTP_METHOD {
   GET = 'GET',
   POST = 'POST'
 };
+export const NETWORK_TAG_MESSAGE = 'Network tags are text attributes you can add to make firewall rules and routes applicable to specific VM instances.';
