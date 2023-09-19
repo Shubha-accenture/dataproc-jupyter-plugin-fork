@@ -56,9 +56,9 @@
   background: var(--jp-layout-color0);
   border-radius: 4px;
   width: 50%;
-  margin-top: 10px;
-  min-height: 40px;
-  outline: none;
+}
+.select-text-overlay-label{
+  position: relative;
 }
 .input-style {
   background: var(--jp-layout-color0);
