@@ -75,6 +75,37 @@
   cursor: pointer;
 }
 
+.gcs-date-actions-parent {
+  width: 75%;
+  height: 25px;
+  padding-left: 15px;
+  padding-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.gcs-modified-date-static {
+  padding-left: 15px;
+  padding-top: 4px;
+}
+
+.gcs-modified-date:hover + .gcs-more-actions-icon {
+  margin: 0px 5px;
+  cursor: pointer;
+  display: block;
+}
+
+.gcs-modified-date:hover,
+.gcs-more-actions-icon {
+  display: none;
+  cursor: pointer;
+}
+
+.menu-actions-style-override {
+  box-shadow: 0 2px 3px 0 rgba(34, 36, 38, 0.15);
+}
+
 .gcs-filter-overlay {
   border-radius: 4px;
   border: 1px solid var(--jp-layout-color4);
@@ -88,10 +119,7 @@
   padding-left: 10px;
   padding-top: 4px;
 }
-.gcs-modified-date {
-  padding-left: 15px;
-  padding-top: 4px;
-}
+
 .gcs-name-file-folder {
   width: 100px;
   flex: 1 0 64px;
@@ -109,7 +137,7 @@
   line-height: 20px;
   padding: 15px 0px;
 }
-.gcs-search-field{
+.gcs-search-field {
   padding-right: 13px;
   margin-top: 20px;
   margin-bottom: 10px;

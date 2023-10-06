@@ -50,6 +50,16 @@ import darkSearchIcon from '../../style/icons/search_icon_dark.svg';
 import darkSearchClearIcon from '../../style/icons/dark_search_clear_icon.svg';
 import darkGcsFileIcon from '../../style/icons/gcs_file_icon_dark.svg';
 import darkGcsFolderIcon from '../../style/icons/gcs_folder_icon_dark.svg';
+import moreActionsIcon from '../../style/icons/more_actions.svg';
+
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
+
+const iconMoreActions = new LabIcon({
+  name: 'launcher:more-actions-icon',
+  svgstr: moreActionsIcon
+});
 
 const iconGcsFolderNew = new LabIcon({
   name: 'launcher:gcs-folder-new-icon',
@@ -128,6 +138,67 @@ const GcsBucketComponent = ({
   const [pollingDisable, setPollingDisable] = useState(false);
 
   const timer = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const [contextMenu, setContextMenu] = React.useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+
+  const handleContextMenu = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX - 60,
+            mouseY: event.clientY + 30
+          }
+        : // repeated contextmenu when it is already open closes it with Chrome 84 on Ubuntu
+          // Other native context menus might behave different.
+          // With this behavior we prevent contextmenu from the backdrop to re-locale existing context menus.
+          null
+    );
+  };
+
+
+  const handleClose = () => {
+    setContextMenu(null);
+  }
+
+  const handleDelete = async (fileName: any) => {
+
+    let editedFileName = fileName.name.replace(/\//g, '%2F');
+    const credentials = await authApi();
+    if (credentials) {
+      let apiURL = `${GCS_URL}/${gcsFolderPath[0]}/o/${editedFileName}`;
+      fetch(apiURL, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': API_HEADER_CONTENT_TYPE,
+          Authorization: API_HEADER_BEARER + credentials.access_token
+        }
+      })
+        .then((response: Response) => {
+          setIsLoading(false);
+          response
+            .text()
+            .then(async (responseResult: any) => {
+              console.log(responseResult);
+              
+              setIsLoading(false);
+            })
+            .catch((e: Error) => {
+              console.log(e);
+              setIsLoading(false);
+            });
+        })
+        .catch((err: Error) => {
+          console.error('Failed to fetch file information', err);
+          toast.error(`Failed to fetch file information`, toastifyCustomStyle);
+        });
+    }
+
+    setContextMenu(null);
+  };
 
   const pollingGCSlist = async (
     pollingFunction: () => void,
@@ -267,7 +338,6 @@ const GcsBucketComponent = ({
                 : handleFileClick(cell.value)
               : undefined
           }
-          
         >
           <div key="Status" className="gcs-object-name">
             {(cell.value.includes('/') &&
@@ -302,11 +372,44 @@ const GcsBucketComponent = ({
         </td>
       );
     } else {
-      return (
-        <td {...cell.getCellProps()} className="gcs-modified-date">
-          {cell.render('Cell')}
-        </td>
-      );
+      if (gcsFolderPath.length > 0) {
+        return (
+          <div className="gcs-date-actions-parent">
+            <td {...cell.getCellProps()} className="gcs-modified-date">
+              {cell.render('Cell')}
+            </td>
+            <div onClick={handleContextMenu} className="gcs-more-actions-icon">
+              <Typography>
+                <td {...cell.getCellProps()} >
+                  <iconMoreActions.react tag="div"/>
+                </td>
+              </Typography>
+
+              <Menu
+                className='menu-actions-style-override'
+                open={contextMenu !== null}
+                onClose={handleClose}
+                anchorReference="anchorPosition"
+                anchorPosition={
+                  contextMenu !== null
+                    ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+                    : undefined
+                }
+              >
+                <MenuItem onClick={()=>handleDelete(cell.row.original)}>Rename</MenuItem>
+                <MenuItem onClick={()=>handleDelete(cell.row.original)}>Download</MenuItem>
+                <MenuItem onClick={()=>handleDelete(cell.row.original)}>Delete</MenuItem>
+              </Menu>
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <td {...cell.getCellProps()} className="gcs-modified-date-static">
+            {cell.render('Cell')}
+          </td>
+        );
+      }
     }
   };
   interface IFileDetail {
@@ -502,7 +605,6 @@ const GcsBucketComponent = ({
                   }
                 }
               );
-
               //@ts-ignore
               setBucketsList(finalBucketsData);
               //@ts-ignore
@@ -647,13 +749,12 @@ const GcsBucketComponent = ({
         listBucketsAPI();
       } else {
         // Display a toast message indicating that the folder already exists
-    
         toast.error(`Folder ${folderName} already exists`, toastifyCustomStyle);
-         bucketsList.shift();
-       setBucketsList(bucketsList);
-       setBucketsListUpdate(bucketsList);
-       listBucketsAPI();
-       setFolderCreated(true);
+        bucketsList.shift();
+        setBucketsList(bucketsList);
+        setBucketsListUpdate(bucketsList);
+        listBucketsAPI();
+        setFolderCreated(true);
       }
     }
   };
@@ -724,7 +825,7 @@ const GcsBucketComponent = ({
       }
       toast.dismiss(toastInfo);
       // Display toast messages after all files have been processed
-     
+
       setTimeout(() => {
         // Display success toast if any files were uploaded
         if (uploadedCount > 0) {
