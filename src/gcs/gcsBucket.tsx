@@ -419,7 +419,8 @@ const GcsBucketComponent = ({
   }
   const handleFileSave = async (fileDetail: IFileDetail, content: string) => {
     // Create a Blob object from the content and metadata
-    let fileContent=fileDetail.type==='notebook'? JSON.stringify(content):content;
+    let fileContent =
+      fileDetail.type === 'notebook' ? JSON.stringify(content) : content;
     const blob = new Blob([fileContent], { type: fileDetail.mimetype });
 
     // Create a File object
@@ -781,7 +782,7 @@ const GcsBucketComponent = ({
 
     if (credentials) {
       const toastInfo = toast.info(
-        `Uploading ${files.length} file/s`,
+        `Uploading ${files.length} file${files.length > 1 ? 's' : ''}`,
         toastifyCustomStyle
       );
 
@@ -830,14 +831,16 @@ const GcsBucketComponent = ({
         // Display success toast if any files were uploaded
         if (uploadedCount > 0) {
           toast.success(
-            `${uploadedCount} File/s uploaded successfully`,
+            `${uploadedCount} file${
+              uploadedCount > 1 ? 's' : ''
+            } uploaded successfully`,
             toastifyCustomStyle
           );
         }
-        // Display error toast if any files failed to upload
+
         if (failedCount > 0) {
           toast.error(
-            `Failed to upload ${failedCount} files`,
+            `Failed to upload ${failedCount} file${failedCount > 1 ? 's' : ''}`,
             toastifyCustomStyle
           );
         }
