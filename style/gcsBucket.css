@@ -22,7 +22,17 @@
 .gcs-row-data-parent:hover {
   background: var(--jp-layout-color2);
 }
+.gcs-contextmenu-icon {
+  visibility: hidden;
+  float: right;
+  display: flex;
+  cursor: pointer;
+}
 
+.gcs-row-data-parent:hover .gcs-contextmenu-icon,
+.gcs-row-data-parent-selected .gcs-contextmenu-icon {
+  visibility: visible;
+}
 .gcs-row-data-parent-selected {
   background: var(--jp-brand-color1);
   color: var(--jp-layout-color1);
@@ -76,30 +86,17 @@
 }
 
 .gcs-date-actions-parent {
-  width: 75%;
   height: 25px;
   padding-left: 15px;
   padding-top: 4px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .gcs-modified-date-static {
   padding-left: 15px;
   padding-top: 4px;
-}
-
-.gcs-modified-date:hover + .gcs-more-actions-icon {
-  margin: 0px 5px;
-  cursor: pointer;
-  display: block;
-}
-
-.gcs-modified-date:hover,
-.gcs-more-actions-icon {
-  display: none;
-  cursor: pointer;
 }
 
 .menu-actions-style-override {

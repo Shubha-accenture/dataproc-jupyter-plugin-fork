@@ -50,16 +50,9 @@ import darkSearchIcon from '../../style/icons/search_icon_dark.svg';
 import darkSearchClearIcon from '../../style/icons/dark_search_clear_icon.svg';
 import darkGcsFileIcon from '../../style/icons/gcs_file_icon_dark.svg';
 import darkGcsFolderIcon from '../../style/icons/gcs_folder_icon_dark.svg';
-import moreActionsIcon from '../../style/icons/more_actions.svg';
-
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import Typography from '@mui/material/Typography';
-
-const iconMoreActions = new LabIcon({
-  name: 'launcher:more-actions-icon',
-  svgstr: moreActionsIcon
-});
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 const iconGcsFolderNew = new LabIcon({
   name: 'launcher:gcs-folder-new-icon',
@@ -159,13 +152,11 @@ const GcsBucketComponent = ({
     );
   };
 
-
   const handleClose = () => {
     setContextMenu(null);
-  }
+  };
 
   const handleDelete = async (fileName: any) => {
-
     let editedFileName = fileName.name.replace(/\//g, '%2F');
     const credentials = await authApi();
     if (credentials) {
@@ -183,7 +174,7 @@ const GcsBucketComponent = ({
             .text()
             .then(async (responseResult: any) => {
               console.log(responseResult);
-              
+
               setIsLoading(false);
             })
             .catch((e: Error) => {
@@ -378,15 +369,13 @@ const GcsBucketComponent = ({
             <td {...cell.getCellProps()} className="gcs-modified-date">
               {cell.render('Cell')}
             </td>
-            <div onClick={handleContextMenu} className="gcs-more-actions-icon">
-              <Typography>
-                <td {...cell.getCellProps()} >
-                  <iconMoreActions.react tag="div"/>
-                </td>
-              </Typography>
+            <div onClick={handleContextMenu} className="gcs-contextmenu-icon">
+              <span className="gcs-contextmenu-icon">
+                <MoreVertIcon fontSize="small" />
+              </span>
 
               <Menu
-                className='menu-actions-style-override'
+                className="menu-actions-style-override"
                 open={contextMenu !== null}
                 onClose={handleClose}
                 anchorReference="anchorPosition"
@@ -396,9 +385,15 @@ const GcsBucketComponent = ({
                     : undefined
                 }
               >
-                <MenuItem onClick={()=>handleDelete(cell.row.original)}>Rename</MenuItem>
-                <MenuItem onClick={()=>handleDelete(cell.row.original)}>Download</MenuItem>
-                <MenuItem onClick={()=>handleDelete(cell.row.original)}>Delete</MenuItem>
+                <MenuItem onClick={() => handleDelete(cell.row.original)}>
+                  Rename
+                </MenuItem>
+                <MenuItem onClick={() => handleDelete(cell.row.original)}>
+                  Download
+                </MenuItem>
+                <MenuItem onClick={() => handleDelete(cell.row.original)}>
+                  Delete
+                </MenuItem>
               </Menu>
             </div>
           </div>
@@ -406,7 +401,7 @@ const GcsBucketComponent = ({
       } else {
         return (
           <td {...cell.getCellProps()} className="gcs-modified-date-static">
-            {cell.render('Cell')}
+            <span>{cell.render('Cell')}</span>
           </td>
         );
       }
