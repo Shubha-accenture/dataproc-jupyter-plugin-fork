@@ -51,8 +51,6 @@ import darkSearchClearIcon from '../../style/icons/dark_search_clear_icon.svg';
 import darkGcsFileIcon from '../../style/icons/gcs_file_icon_dark.svg';
 import darkGcsFolderIcon from '../../style/icons/gcs_folder_icon_dark.svg';
 
-import {IDocumentManager} from '@jupyterlab/docmanager';
-
 const iconGcsRefresh = new LabIcon({
   name: 'launcher:gcs-refresh-icon',
   svgstr: gcsRefreshIcon
@@ -85,12 +83,10 @@ const darkIconGcsFolder = new LabIcon({
 
 const GcsBucketComponent = ({
   app,
-  docManager,
   factory,
   themeManager
 }: {
   app: JupyterLab;
-  docManager: IDocumentManager;
   factory: IFileBrowserFactory;
   themeManager: IThemeManager;
 }): JSX.Element => {
@@ -184,12 +180,6 @@ const GcsBucketComponent = ({
           response
             .text()
             .then(async (responseResult: unknown) => {
-              // console.log(responseResult)
-              // const widget = app.shell.currentWidget;
-              // const context = docManager.contextForWidget(widget!);
-              // console.log(context?.path);
-              // await context?.save();
-
               // Get the contents manager to save the file
               const contentsManager = app.serviceManager.contents;
 
@@ -216,10 +206,8 @@ const GcsBucketComponent = ({
 
               // Function to handle the fileChanged event
               async function handleFileChangeConnect(_: any, change: any) {
-                console.log(change)
                 const response = await contentsManager.get(filePath);
                 if (change.type === 'save') {
-                  console.log(response.content, filePath)
                   // Call your function when a file is saved
                   handleFileSave(change.newValue, response.content, filePath);
                 }
@@ -313,7 +301,6 @@ const GcsBucketComponent = ({
     mimetype: string;
   }
   const handleFileSave = async (fileDetail: IFileDetail, content: string, filePath: string) => {
-    console.log(fileDetail.name, filePath)
     let actualFilePath = filePath.split('/')[2]
     // Create a Blob object from the content and metadata
     let fileContent =
@@ -842,19 +829,16 @@ const GcsBucketComponent = ({
 
 export class GcsBucket extends DataprocWidget {
   app: JupyterLab;
-  docManager: IDocumentManager;
   factory: IFileBrowserFactory;
   themeManager!: IThemeManager;
 
   constructor(
     app: JupyterLab,
-    docManager: IDocumentManager,
     factory: IFileBrowserFactory,
     themeManager: IThemeManager
   ) {
     super(themeManager);
     this.app = app;
-    this.docManager = docManager;
     this.factory = factory;
   }
 
@@ -862,7 +846,6 @@ export class GcsBucket extends DataprocWidget {
     return (
       <GcsBucketComponent
         app={this.app}
-        docManager={this.docManager}
         factory={this.factory}
         themeManager={this.themeManager}
       />

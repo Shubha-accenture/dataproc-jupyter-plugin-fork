@@ -33,7 +33,7 @@ import serverlessIcon from '../style/icons/serverless_icon.svg';
 import storageIcon from '../style/icons/storage_icon.svg';
 import { Panel, Title, Widget } from '@lumino/widgets';
 import { AuthLogin } from './login/authLogin';
-import { KernelAPI, KernelSpecAPI } from '@jupyterlab/services';
+import { Kernel, KernelAPI, KernelSpecAPI } from '@jupyterlab/services';
 import { iconDisplay } from './utils/utils';
 import { dpmsWidget } from './dpms/dpmsWidget';
 import dpmsIcon from '../style/icons/dpms_icon.svg';
@@ -47,7 +47,6 @@ import storageIconDark from '../style/icons/Storage-icon-dark.svg';
 import { NotebookButtonExtension } from './controls/NotebookButtonExtension';
 import { injectToastContainer } from './utils/injectToastContainer';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
-import {IDocumentManager} from '@jupyterlab/docmanager';
 
 const iconDpms = new LabIcon({
   name: 'launcher:dpms-icon',
@@ -60,7 +59,6 @@ const extension: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
   autoStart: true,
   optional: [
-    IDocumentManager,
     IFileBrowserFactory,
     ILauncher,
     IMainMenu,
@@ -71,7 +69,6 @@ const extension: JupyterFrontEndPlugin<void> = {
   ],
   activate: async (
     app: JupyterFrontEnd,
-    docManager: IDocumentManager,
     factory: IFileBrowserFactory,
     launcher: ILauncher,
     mainMenu: IMainMenu,
@@ -165,7 +162,6 @@ const extension: JupyterFrontEndPlugin<void> = {
         panelGcs.addWidget(
           new GcsBucket(
             app as JupyterLab,
-            docManager as IDocumentManager,
             factory as IFileBrowserFactory,
             themeManager
           )
@@ -253,7 +249,7 @@ const extension: JupyterFrontEndPlugin<void> = {
       } else {
         document.title = title.label;
       }
-      // console.log(Kernel);
+      console.log(Kernel);
     };
     labShell.currentChanged.connect(async (_, change) => {
       await KernelAPI.listRunning();
