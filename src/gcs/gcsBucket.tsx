@@ -300,8 +300,16 @@ const GcsBucketComponent = ({
     name: string;
     mimetype: string;
   }
-  const handleFileSave = async (fileDetail: IFileDetail, content: string, filePath: string) => {
-    let actualFilePath = filePath.split('/')[2]
+  const handleFileSave = async (
+    fileDetail: IFileDetail,
+    content: string,
+    filePath: string
+  ) => {
+    /*
+      Extracting object file path from file path location
+      Example: "./gcsTemp/folder1_folder11_fileName""
+    */
+    let actualFilePath = filePath.split('/')[2];
     // Create a Blob object from the content and metadata
     let fileContent =
       fileDetail.type === 'notebook' ? JSON.stringify(content) : content;
@@ -558,7 +566,6 @@ const GcsBucketComponent = ({
           folderName: folderNameConcat
         };
       }
-     
 
       setFolderName(newFolderData.folderName);
       setFolderNameNew(newFolderData.folderName);
@@ -610,7 +617,6 @@ const GcsBucketComponent = ({
                 `Folder ${folderName} successfully created`,
                 toastifyCustomStyle
               );
-            
             } else {
               const errorResponse = await response.json();
               console.log(errorResponse);
