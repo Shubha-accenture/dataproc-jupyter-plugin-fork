@@ -493,7 +493,7 @@ See `examples/node` for an example of using an ES5 node script.
 
 ## Usage Examples
 
-**Note:** This package is compiled to ES2018 JavaScript syntax from
+**Note:** This package is compiled to ES2021 JavaScript syntax from
 TypeScript. Here are some examples of using parts of this package. See the
 other `examples` subdirectories for more examples.
 
@@ -1102,7 +1102,7 @@ expect(ticker.join(' ')).to.equal(expected);
 
 ### Note for consumers of async iterators
 
-In order to use `for-await...of` loops in TypeScript, you will need to use `ES2018` or above in your `lib` array in `tsconfig.json`.
+In order to use `for-await...of` loops in TypeScript, you will need to use `ES2021` or above in your `lib` array in `tsconfig.json`.
 
 -----------
 

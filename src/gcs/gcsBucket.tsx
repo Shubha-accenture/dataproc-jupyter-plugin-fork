@@ -51,6 +51,8 @@ import darkSearchClearIcon from '../../style/icons/dark_search_clear_icon.svg';
 import darkGcsFileIcon from '../../style/icons/gcs_file_icon_dark.svg';
 import darkGcsFolderIcon from '../../style/icons/gcs_folder_icon_dark.svg';
 
+import {IDocumentManager} from '@jupyterlab/docmanager';
+
 const iconGcsRefresh = new LabIcon({
   name: 'launcher:gcs-refresh-icon',
   svgstr: gcsRefreshIcon
@@ -83,10 +85,12 @@ const darkIconGcsFolder = new LabIcon({
 
 const GcsBucketComponent = ({
   app,
+  docManager,
   factory,
   themeManager
 }: {
   app: JupyterLab;
+  docManager: IDocumentManager;
   factory: IFileBrowserFactory;
   themeManager: IThemeManager;
 }): JSX.Element => {
@@ -165,6 +169,7 @@ const GcsBucketComponent = ({
 
   const handleFileClick = async (fileName: string) => {
     let editedFileName = fileName.replace(/\//g, '%2F');
+    let localFileName = fileName.replace(/\//g, '_');
     const credentials = await authApi();
     if (credentials) {
       let apiURL = `${GCS_URL}/${gcsFolderPath[0]}/o/${editedFileName}?alt=media`;
@@ -179,11 +184,17 @@ const GcsBucketComponent = ({
           response
             .text()
             .then(async (responseResult: unknown) => {
+              // console.log(responseResult)
+              // const widget = app.shell.currentWidget;
+              // const context = docManager.contextForWidget(widget!);
+              // console.log(context?.path);
+              // await context?.save();
+
               // Get the contents manager to save the file
               const contentsManager = app.serviceManager.contents;
 
               // Define the path to the 'gcsTemp' folder within the local application directory
-              const gcsTempFolderPath = `${path.sep}gcsTemp`;
+              const gcsTempFolderPath = `.${path.sep}gcsTemp`;
 
               try {
                 // Check if the 'gcsTemp' folder exists
@@ -196,22 +207,23 @@ const GcsBucketComponent = ({
               }
 
               // Replace 'path/to/save/file.txt' with the desired path and filename
-              const filePath = `.${gcsTempFolderPath}${path.sep}${editedFileName}`;
+              let filePath = `${gcsTempFolderPath}${path.sep}${localFileName}`;
 
               // Remove any existing event handlers before adding a new one
               contentsManager.fileChanged.disconnect(handleFileChangeConnect);
+              // Listen for the fileChanged event
+              contentsManager.fileChanged.connect(handleFileChangeConnect);
 
               // Function to handle the fileChanged event
               async function handleFileChangeConnect(_: any, change: any) {
+                console.log(change)
                 const response = await contentsManager.get(filePath);
                 if (change.type === 'save') {
+                  console.log(response.content, filePath)
                   // Call your function when a file is saved
-                  handleFileSave(change.newValue, response.content);
+                  handleFileSave(change.newValue, response.content, filePath);
                 }
               }
-
-              // Listen for the fileChanged event
-              contentsManager.fileChanged.connect(handleFileChangeConnect);
 
               // Save the file to the workspace
               await contentsManager.save(filePath, {
@@ -219,9 +231,6 @@ const GcsBucketComponent = ({
                 format: 'text',
                 content: responseResult
               });
-
-              // Refresh the file browser to reflect the new file
-              app.shell.currentWidget?.update();
 
               app.commands.execute('docmanager:open', {
                 path: filePath
@@ -303,14 +312,16 @@ const GcsBucketComponent = ({
     name: string;
     mimetype: string;
   }
-  const handleFileSave = async (fileDetail: IFileDetail, content: string) => {
+  const handleFileSave = async (fileDetail: IFileDetail, content: string, filePath: string) => {
+    console.log(fileDetail.name, filePath)
+    let actualFilePath = filePath.split('/')[2]
     // Create a Blob object from the content and metadata
     let fileContent =
       fileDetail.type === 'notebook' ? JSON.stringify(content) : content;
     const blob = new Blob([fileContent], { type: fileDetail.mimetype });
 
     // Create a File object
-    const filePayload = new File([blob], fileDetail.name, {
+    const filePayload = new File([blob], actualFilePath, {
       type: fileDetail.mimetype
     });
 
@@ -325,9 +336,10 @@ const GcsBucketComponent = ({
             prefixList = prefixList + '/' + folderName;
           }
         });
-      let newFileName = fileDetail.name;
+      let newFileName = actualFilePath;
+      let editedFileName = newFileName.replaceAll('_', '%2F');
 
-      fetch(`${GCS_UPLOAD_URL}/${gcsFolderPath[0]}/o?name=${newFileName}`, {
+      fetch(`${GCS_UPLOAD_URL}/${gcsFolderPath[0]}/o?name=${editedFileName}`, {
         method: 'POST',
         body: filePayload,
         headers: {
@@ -589,10 +601,8 @@ const GcsBucketComponent = ({
 
       // Check if a folder with the same name already exists
       const folderExists = bucketsObjectsList.some((item: IBucketItem) => {
-        console.log(folderName, item.folderName);
         return item.folderName === folderName;
       });
-      console.log(folderExists, bucketsObjectsList);
 
       if (!folderExists) {
         fetch(
@@ -832,16 +842,19 @@ const GcsBucketComponent = ({
 
 export class GcsBucket extends DataprocWidget {
   app: JupyterLab;
+  docManager: IDocumentManager;
   factory: IFileBrowserFactory;
   themeManager!: IThemeManager;
 
   constructor(
     app: JupyterLab,
+    docManager: IDocumentManager,
     factory: IFileBrowserFactory,
     themeManager: IThemeManager
   ) {
     super(themeManager);
     this.app = app;
+    this.docManager = docManager;
     this.factory = factory;
   }
 
@@ -849,6 +862,7 @@ export class GcsBucket extends DataprocWidget {
     return (
       <GcsBucketComponent
         app={this.app}
+        docManager={this.docManager}
         factory={this.factory}
         themeManager={this.themeManager}
       />
