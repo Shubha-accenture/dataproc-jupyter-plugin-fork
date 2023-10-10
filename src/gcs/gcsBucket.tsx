@@ -295,6 +295,7 @@ const GcsBucketComponent = ({
       );
     }
   };
+
   interface IFileDetail {
     type: string;
     name: string;
@@ -424,7 +425,7 @@ const GcsBucketComponent = ({
             .then((responseResult: IBucketItem) => {
               let sortedResponse = responseResult.items.sort(
                 (itemOne: IBucketItem, itemTwo: IBucketItem) =>
-                  itemOne.updated < itemTwo.updated ? -1 : 1
+                  itemOne.name < itemTwo.name ? -1 : 1
               );
               let transformBucketsData = [];
               transformBucketsData = sortedResponse.map(

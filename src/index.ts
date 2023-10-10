@@ -40,13 +40,13 @@ import dpmsIcon from '../style/icons/dpms_icon.svg';
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { TITLE_LAUNCHER_CATEGORY } from './utils/const';
 import { RuntimeTemplate } from './runtime/runtimeTemplate';
-import { GcsBucket } from './gcs/gcsBucket';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import dpmsIconDark from '../style/icons/dpms_icon_dark.svg';
 import storageIconDark from '../style/icons/Storage-icon-dark.svg';
 import { NotebookButtonExtension } from './controls/NotebookButtonExtension';
 import { injectToastContainer } from './utils/injectToastContainer';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { GcsBucket } from './gcs/gcsBucket';
 
 const iconDpms = new LabIcon({
   name: 'launcher:dpms-icon',
