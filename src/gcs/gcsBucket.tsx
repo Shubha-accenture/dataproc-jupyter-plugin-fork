@@ -393,9 +393,14 @@ const GcsBucketComponent = ({
     name: string;
     lastModified: string;
     folderName: string;
+    nextPageToken: string;
   }
-  const listBucketsAPI = async () => {
+  const listBucketsAPI = async (
+    nextPageToken?: string,
+    previousBucketsListData?: object
+  ) => {
     setIsLoading(true);
+    const pageToken = nextPageToken ?? '';
     const credentials = await authApi();
     if (credentials) {
       let prefixList = '';
@@ -409,10 +414,10 @@ const GcsBucketComponent = ({
         });
       let apiURL =
         gcsFolderPath.length === 0
-          ? `${GCS_URL}?project=${credentials.project_id}`
+          ? `${GCS_URL}?project=${credentials.project_id}&pageToken=${pageToken}`
           : gcsFolderPath.length === 1
-          ? `${GCS_URL}/${gcsFolderPath[0]}/o`
-          : `${GCS_URL}/${gcsFolderPath[0]}/o?prefix=${prefixList}/`;
+          ? `${GCS_URL}/${gcsFolderPath[0]}/o?pageToken=${pageToken}`
+          : `${GCS_URL}/${gcsFolderPath[0]}/o?prefix=${prefixList}/&pageToken=${pageToken}`;
       fetch(apiURL, {
         headers: {
           'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -423,12 +428,8 @@ const GcsBucketComponent = ({
           response
             .json()
             .then((responseResult: IBucketItem) => {
-              let sortedResponse = responseResult.items.sort(
-                (itemOne: IBucketItem, itemTwo: IBucketItem) =>
-                  itemOne.name < itemTwo.name ? -1 : 1
-              );
               let transformBucketsData = [];
-              transformBucketsData = sortedResponse.map(
+              transformBucketsData = responseResult.items.map(
                 (data: { updated: Date; name: string }) => {
                   const updatedDate = new Date(data.updated);
                   const lastModified = lastModifiedFormat(updatedDate);
@@ -457,49 +458,61 @@ const GcsBucketComponent = ({
                   ])
                 ).values()
               ];
+              let nameIndex =
+                gcsFolderPath.length === 0 ? 0 : gcsFolderPath.length - 1;
+
+              //Order by name
               finalBucketsData = finalBucketsData.sort(
                 (itemOne: any, itemTwo: any) =>
-                  itemOne.folderName < itemTwo.folderName ? -1 : 1
+                  itemOne.folderName.toLowerCase() <
+                  itemTwo.folderName.toLowerCase()
+                    ? -1
+                    : 1
               );
+
+              //Filtering Folders data
+              let finalFoldersData = finalBucketsData.filter((item: any) => {
+                return item.name.split('/').length - 1 !== nameIndex;
+              });
+
+              //Filtering Files data
+              let finalFilesData = finalBucketsData.filter((item: any) => {
+                return item.name.split('/').length - 1 === nameIndex;
+              });
+
+              finalBucketsData = [...finalFoldersData, ...finalFilesData];
+
               finalBucketsData = finalBucketsData.filter((item: any) => {
                 return item.folderName.includes(searchTerm);
               });
-              finalBucketsData = finalBucketsData.sort(
-                (itemOne: { name: string }, itemTwo: { name: string }) => {
-                  const nameOne = itemOne.name.toLowerCase();
-                  const nameTwo = itemTwo.name.toLowerCase();
 
-                  // Define your condition here
-                  const condition = '/';
+              const existingBucketsListData = previousBucketsListData ?? [];
 
-                  const endsWithConditionOne = nameOne.endsWith(condition);
-                  const endsWithConditionTwo = nameTwo.endsWith(condition);
+              //setStateAction never type issue
+              let allBucketsListData: any = [
+                ...(existingBucketsListData as []),
+                ...finalBucketsData
+              ];
 
-                  if (endsWithConditionOne && !endsWithConditionTwo) {
-                    return -1; // itemOne should come first
-                  } else if (!endsWithConditionOne && endsWithConditionTwo) {
-                    return 1; // itemTwo should come first
-                  } else if (
-                    nameOne.includes(condition) &&
-                    !nameTwo.includes(condition)
-                  ) {
-                    return -1; // itemOne should come first if it contains "/"
-                  } else if (
-                    !nameOne.includes(condition) &&
-                    nameTwo.includes(condition)
-                  ) {
-                    return 1; // itemTwo should come first if it contains "/"
-                  } else {
-                    return nameOne.localeCompare(nameTwo);
-                  }
-                }
-              );
+              function getUniqueListBy(arr: any, key: string) {
+                return [
+                  ...new Map(arr.map((item: any) => [item[key], item])).values()
+                ];
+              }
 
-              //@ts-ignore
-              setBucketsList(finalBucketsData);
-              //@ts-ignore
-              setBucketsListUpdate(finalBucketsData);
-              setIsLoading(false);
+              if (responseResult.nextPageToken) {
+                listBucketsAPI(
+                  responseResult.nextPageToken,
+                  allBucketsListData
+                );
+              } else {
+                const finalAllBucketsListData = getUniqueListBy(allBucketsListData, 'folderName');
+                //@ts-ignore
+                setBucketsList(finalAllBucketsListData);
+                //@ts-ignore
+                setBucketsListUpdate(finalAllBucketsListData);
+                setIsLoading(false);
+              }
             })
             .catch((e: Error) => {
               console.log(e);
@@ -618,6 +631,7 @@ const GcsBucketComponent = ({
                 `Folder ${folderName} successfully created`,
                 toastifyCustomStyle
               );
+              listBucketsAPI();
             } else {
               const errorResponse = await response.json();
               console.log(errorResponse);
@@ -628,7 +642,6 @@ const GcsBucketComponent = ({
             toast.error(`Failed to create folder`, toastifyCustomStyle);
           });
         setFolderCreated(true);
-        listBucketsAPI();
       } else {
         // Display a toast message indicating that the folder already exists
 
