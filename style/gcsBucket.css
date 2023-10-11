@@ -1,5 +1,13 @@
 @import url(https://fonts.googleapis.com/css?family=Roboto);
 
+.gcs-DirListing-content{
+  height: 78vh;
+}
+
+.gcs-search {
+  padding: 10px;
+}
+
 .gcs-panel-title {
   color: var(--jp-ui-font-color0);
   font-family: Roboto;

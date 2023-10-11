@@ -25,6 +25,7 @@ import { MainAreaWidget, IThemeManager } from '@jupyterlab/apputils';
 import { ILauncher } from '@jupyterlab/launcher';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { IMainMenu } from '@jupyterlab/mainmenu';
+import { IDocumentManager } from '@jupyterlab/docmanager';
 import { Cluster } from './cluster/cluster';
 import { Batches } from './batches/batches';
 import clusterIcon from '../style/icons/cluster_icon.svg';
@@ -46,7 +47,8 @@ import storageIconDark from '../style/icons/Storage-icon-dark.svg';
 import { NotebookButtonExtension } from './controls/NotebookButtonExtension';
 import { injectToastContainer } from './utils/injectToastContainer';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
-import { GcsBucket } from './gcs/gcsBucket';
+// import { GcsBucket } from './gcs/gcsBucket';
+import { NewGcsBucket } from './gcs/newGcsBucket';
 
 const iconDpms = new LabIcon({
   name: 'launcher:dpms-icon',
@@ -55,7 +57,7 @@ const iconDpms = new LabIcon({
 
 const PLUGIN_ID = 'dataproc_jupyter_plugin:plugin';
 
-const extension: JupyterFrontEndPlugin<void> = {
+const dataProcExtension: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
   autoStart: true,
   optional: [
@@ -91,17 +93,9 @@ const extension: JupyterFrontEndPlugin<void> = {
       name: 'launcher:serverless-icon',
       svgstr: serverlessIcon
     });
-    const iconStorage = new LabIcon({
-      name: 'launcher:storage-icon',
-      svgstr: storageIcon
-    });
     const iconDpmsDark = new LabIcon({
       name: 'launcher:dpms-icon-dark',
       svgstr: dpmsIconDark
-    });
-    const iconStorageDark = new LabIcon({
-      name: 'launcher:storage-icon-dark',
-      svgstr: storageIconDark
     });
     window.addEventListener('beforeunload', () => {
       localStorage.removeItem('notebookValue');
@@ -116,7 +110,7 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     // The current value of whether or not preview features are enabled.
     let previewEnabled = settings.get('previewEnabled').composite as boolean;
-    let panelDpms: Panel | undefined, panelGcs: Panel | undefined;
+    let panelDpms: Panel | undefined;
     settings.changed.connect(() => {
       previewEnabled = settings.get('previewEnabled').composite as boolean;
       onPreviewEnabledChanged();
@@ -126,49 +120,35 @@ const extension: JupyterFrontEndPlugin<void> = {
      * Handler for when the Jupyter Lab theme changes.
      */
     const onThemeChanged = () => {
-      if (!panelDpms || !panelGcs) return;
+      if (!panelDpms) return;
       const isLightTheme = themeManager.theme
         ? themeManager.isLight(themeManager.theme)
         : true;
       if (isLightTheme) {
         panelDpms.title.icon = iconDpms;
-        panelGcs.title.icon = iconStorage;
       } else {
         panelDpms.title.icon = iconDpmsDark;
-        panelGcs.title.icon = iconStorageDark;
       }
     };
     themeManager.themeChanged.connect(onThemeChanged);
 
     /**
      * Helper method for when the preview flag gets updated.  This reads the
-     * previewEnabled flag and hides or shows the GCS browser or DPMS explorer
+     * previewEnabled flag and hides or shows the DPMS explorer
      * as necessary.
      */
     const onPreviewEnabledChanged = () => {
       if (!previewEnabled) {
         // Preview was disabled, tear everything down.
         panelDpms?.dispose();
-        panelGcs?.dispose();
         panelDpms = undefined;
-        panelGcs = undefined;
       } else {
-        // Preview was enabled, (re)create DPMS and GCS.
+        // Preview was enabled, (re)create DPMS.
         panelDpms = new Panel();
         panelDpms.id = 'dpms-tab';
         panelDpms.addWidget(new dpmsWidget(app as JupyterLab, themeManager));
-        panelGcs = new Panel();
-        panelGcs.id = 'GCS-bucket-tab';
-        panelGcs.addWidget(
-          new GcsBucket(
-            app as JupyterLab,
-            factory as IFileBrowserFactory,
-            themeManager
-          )
-        );
         // Update the icons.
         onThemeChanged();
-        app.shell.add(panelGcs, 'left', { rank: 1001 });
         app.shell.add(panelDpms, 'left', { rank: 1000 });
       }
     };
@@ -469,4 +449,86 @@ const extension: JupyterFrontEndPlugin<void> = {
   }
 };
 
-export default extension;
+const gcsBrowserExtension: JupyterFrontEndPlugin<void> = {
+  id: 'gcs_browser_extension:plugin',
+  autoStart: true,
+  requires: [
+    IDocumentManager,
+    ISettingRegistry,
+    IThemeManager,
+  ],
+  activate: async (
+    app: JupyterFrontEnd,
+    docManager:IDocumentManager,
+    settingRegistry: ISettingRegistry,
+    themeManager: IThemeManager
+  ) => {
+    // const { commands } = app;
+    const iconStorage = new LabIcon({
+      name: 'launcher:storage-icon',
+      svgstr: storageIcon
+    });
+    const iconStorageDark = new LabIcon({
+      name: 'launcher:storage-icon-dark',
+      svgstr: storageIconDark
+    });
+
+    // START -- Enable Preview Features.
+    const settings = await settingRegistry.load(PLUGIN_ID);
+
+    // The current value of whether or not preview features are enabled.
+    // let previewEnabled = settings.get('previewEnabled').composite as boolean;
+    let previewEnabled = true;
+    let panelGcs: Panel | undefined
+    settings.changed.connect(() => {
+      previewEnabled = settings.get('previewEnabled').composite as boolean;
+      onPreviewEnabledChanged();
+    });
+
+    /**
+     * Handler for when the Jupyter Lab theme changes.
+     */
+    const onThemeChanged = () => {
+      if (!panelGcs) return;
+      const isLightTheme = themeManager.theme
+        ? themeManager.isLight(themeManager.theme)
+        : true;
+      if (isLightTheme) {
+        panelGcs.title.icon = iconStorage;
+      } else {
+        panelGcs.title.icon = iconStorageDark;
+      }
+    };
+    themeManager.themeChanged.connect(onThemeChanged);
+
+    /**
+     * Helper method for when the preview flag gets updated.  This reads the
+     * previewEnabled flag and hides or shows the DPMS explorer
+     * as necessary.
+     */
+    const onPreviewEnabledChanged = () => {
+      if (!previewEnabled) {
+        // Preview was disabled, tear everything down.
+        panelGcs?.dispose();
+        panelGcs = undefined;
+      } else {
+        // Preview was enabled
+        panelGcs = new Panel();
+        panelGcs.id = 'GCS-bucket-tab';
+        panelGcs.addWidget(new NewGcsBucket(app as JupyterLab, docManager, themeManager));
+        // Update the icons.
+        onThemeChanged();
+        app.shell.add(panelGcs, 'left', { rank: 1000 });
+      }
+    };
+    onPreviewEnabledChanged();
+  }
+}
+
+/**
+   * Export the plugins as default.
+   */
+const dataprocPlugins: JupyterFrontEndPlugin<any>[] = [dataProcExtension, gcsBrowserExtension]
+
+export default dataprocPlugins;
+
