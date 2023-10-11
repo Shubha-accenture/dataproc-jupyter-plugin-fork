@@ -506,7 +506,10 @@ const GcsBucketComponent = ({
                   allBucketsListData
                 );
               } else {
-                const finalAllBucketsListData = getUniqueListBy(allBucketsListData, 'folderName');
+                const finalAllBucketsListData = getUniqueListBy(
+                  allBucketsListData,
+                  'folderName'
+                );
                 //@ts-ignore
                 setBucketsList(finalAllBucketsListData);
                 //@ts-ignore
@@ -602,8 +605,11 @@ const GcsBucketComponent = ({
             prefixList = prefixList + '/' + folderName;
           }
         });
-      let newFolderName = folderName;
-      if (prefixList !== '') {
+      let newFolderName = folderName === '' ? folderNameNew : folderName;
+
+      if (prefixList !== '' && folderName === '') {
+        newFolderName = prefixList + '/' + folderNameNew;
+      } else if (prefixList !== '' && folderName !== '') {
         newFolderName = prefixList + '/' + folderName;
       }
 
@@ -627,8 +633,9 @@ const GcsBucketComponent = ({
             if (response.ok) {
               const responseResult = await response.json();
               console.log(responseResult);
+              let displayFolderName = folderName === '' ? folderNameNew : folderName;
               toast.success(
-                `Folder ${folderName} successfully created`,
+                `Folder ${displayFolderName} successfully created`,
                 toastifyCustomStyle
               );
               listBucketsAPI();
