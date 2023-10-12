@@ -199,6 +199,8 @@ const GcsBucketComponent = ({
               // Replace 'path/to/save/file.txt' with the desired path and filename
               let filePath = `${gcsTempFolderPath}${path.sep}${localFileName}`;
 
+              let lastModifiedTime: any = null;
+
               // Remove any existing event handlers before adding a new one
               contentsManager.fileChanged.disconnect(handleFileChangeConnect);
               // Listen for the fileChanged event
@@ -207,9 +209,13 @@ const GcsBucketComponent = ({
               // Function to handle the fileChanged event
               async function handleFileChangeConnect(_: any, change: any) {
                 const response = await contentsManager.get(filePath);
-                if (change.type === 'save') {
-                  // Call your function when a file is saved
+                if (
+                  lastModifiedTime === null ||
+                  lastModifiedTime < response.last_modified
+                ) {
+                  // File has been modified after the last save (new content or opened but not saved yet)
                   handleFileSave(change.newValue, response.content, filePath);
+                  lastModifiedTime = response.last_modified; // Update lastModifiedTime
                 }
               }
 
@@ -633,7 +639,8 @@ const GcsBucketComponent = ({
             if (response.ok) {
               const responseResult = await response.json();
               console.log(responseResult);
-              let displayFolderName = folderName === '' ? folderNameNew : folderName;
+              let displayFolderName =
+                folderName === '' ? folderNameNew : folderName;
               toast.success(
                 `Folder ${displayFolderName} successfully created`,
                 toastifyCustomStyle
