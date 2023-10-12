@@ -758,7 +758,14 @@ const GcsBucketComponent = ({
         <div className="gcs-panel-header">
           <div className="gcs-panel-title">Google Cloud Storage</div>
           <div onClick={() => listBucketsAPI()} role="button">
-            <iconGcsRefresh.react tag="div" className="gcs-title-icons" />
+            {!isDarkTheme ? (
+              <iconGcsRefresh.react tag="div" className="gcs-title-icons" />
+            ) : (
+              <iconGcsRefresh.react
+                tag="div"
+                className="gcs-title-icons dark-theme"
+              />
+            )}
           </div>
           {gcsFolderPath.length > 0 && (
             <div
@@ -766,7 +773,14 @@ const GcsBucketComponent = ({
               className="gcs-create-new-icon"
               role="button"
             >
-              <iconGcsFolderNew.react tag="div" className="gcs-title-icons" />
+              {!isDarkTheme ? (
+                <iconGcsFolderNew.react tag="div" className="gcs-title-icons" />
+              ) : (
+                <iconGcsFolderNew.react
+                  tag="div"
+                  className="gcs-title-icons dark-theme"
+                />
+              )}
             </div>
           )}
           {gcsFolderPath.length > 0 && (
@@ -780,7 +794,14 @@ const GcsBucketComponent = ({
                 multiple
               />
               <div onClick={handleFileChange} role="button">
-                <iconGcsUpload.react tag="div" className="gcs-title-icons" />
+                {!isDarkTheme ? (
+                  <iconGcsUpload.react tag="div" className="gcs-title-icons" />
+                ) : (
+                  <iconGcsUpload.react
+                    tag="div"
+                    className="gcs-title-icons dark-theme"
+                  />
+                )}
               </div>
             </>
           )}
@@ -847,6 +868,7 @@ const GcsBucketComponent = ({
             prepareRow={prepareRow}
             tableDataCondition={tableDataCondition}
             fromPage=""
+            themeManager={themeManager}
           />
         </div>
       </div>
