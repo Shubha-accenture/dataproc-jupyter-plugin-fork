@@ -165,7 +165,7 @@ const GcsBucketComponent = ({
 
   const handleFileClick = async (fileName: string) => {
     let editedFileName = fileName.replace(/\//g, '%2F');
-    let localFileName = fileName.replace(/\//g, '_');
+    let localFileName = fileName.replace(/\//g, '__');
     const credentials = await authApi();
     if (credentials) {
       let apiURL = `${GCS_URL}/${gcsFolderPath[0]}/o/${editedFileName}?alt=media`;
@@ -333,7 +333,7 @@ const GcsBucketComponent = ({
           }
         });
       let newFileName = actualFilePath;
-      let editedFileName = newFileName.replaceAll('_', '%2F');
+      let editedFileName = newFileName.replaceAll('__', '%2F');
 
       fetch(`${GCS_UPLOAD_URL}/${gcsFolderPath[0]}/o?name=${editedFileName}`, {
         method: 'POST',
