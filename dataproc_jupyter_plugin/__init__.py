@@ -21,7 +21,8 @@ from kernels_mixer.websockets import DelegatingWebsocketConnection
 from jupyter_server.services.sessions.sessionmanager import SessionManager
 from traitlets import Unicode
 from traitlets.config import Configurable
-
+from dataproc_jupyter_plugin.executors import CustomExecutionManager
+from dataproc_jupyter_plugin.environments import CustomEnvironmentManager
 
 from .handlers import setup_handlers, update_gateway_client_url
 
@@ -54,6 +55,9 @@ def _link_jupyter_server_extension(server_app):
     c.GatewayClient.auth_scheme = 'Bearer'
     c.GatewayClient.headers = '{"Cookie": "_xsrf=XSRF", "X-XSRFToken": "XSRF"}'
     c.GatewayClient.gateway_token_renewer_class = CommandTokenRenewer
+    c.BaseScheduler.execution_manager_class = CustomExecutionManager
+    c.SchedulerApp.environment_manager_class = CustomEnvironmentManager
+
     c.CommandTokenRenewer.token_command = (
         'gcloud config config-helper --format="value(credential.access_token)"')
 
