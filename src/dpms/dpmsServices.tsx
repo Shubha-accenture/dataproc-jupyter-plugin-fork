@@ -21,7 +21,7 @@ import { authApi, loggedFetch, toastifyCustomStyle } from '../utils/utils';
 import {
   API_HEADER_BEARER,
   API_HEADER_CONTENT_TYPE,
-  BASE_URL,
+  BASE_URL_DATAPROC,
   CATALOG_SEARCH,
   COLUMN_API,
   QUERY_DATABASE,
@@ -292,7 +292,7 @@ export class DpmsService {
     const credentials = await authApi();
     if (credentials && notebookValue) {
       loggedFetch(
-        `${BASE_URL}/projects/${credentials.project_id}/regions/${credentials.region_id}/clusters/${notebookValue}`,
+        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/clusters/${notebookValue}`,
         {
           method: 'GET',
           headers: {
@@ -354,7 +354,7 @@ export class DpmsService {
     const credentials = await authApi();
     if (credentials && notebookValue) {
       loggedFetch(
-        `${BASE_URL}/projects/${credentials.project_id}/locations/${credentials.region_id}/sessionTemplates/${notebookValue}`,
+        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/sessionTemplates/${notebookValue}`,
         {
           method: 'GET',
           headers: {
