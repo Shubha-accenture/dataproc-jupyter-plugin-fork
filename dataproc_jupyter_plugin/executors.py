@@ -36,26 +36,29 @@ class CustomExecutionManager(ExecutionManager):
         output, _ = process.communicate()
         print(process.returncode,_,output)
     
+    @staticmethod
     def prepareDag(self):
-        TEMPLATES_FOLDER_PATH = "dagTemplates"
+        TEMPLATES_FOLDER_PATH = "dataproc_jupyter_plugin/dagTemplates"
         PYSPARK_JOB_TEMPLATE_V1 = "pysparkJobTemplate-v1.py"
         environment = Environment(loader=FileSystemLoader(TEMPLATES_FOLDER_PATH))
         template = environment.get_template(PYSPARK_JOB_TEMPLATE_V1)
+        # dagModel = prepareDagModel(self)
         # filename = f"{self.model.input_filename}"
-        content = template.render(self)
+        content = template.render(self.model, inputFilePath=self.staging_paths)
+        print("<-------CONTENT------------->")
+        print(content)
+        print("<-------CONTENT------------->")
         # with open(filename, mode="w", encoding="utf-8") as message:
         #     message.write(content)
         #     print(f"... wrote {filename}")
 
     def execute(self):
         job = self.model
-        print(self)
-        print(job.input_filename)
         with open(self.staging_paths["input"], encoding="utf-8") as f:
             nb = nbformat.read(f, as_version=4)
 
-        self.uploadInputFileToGcs(nb)
-        # prepareDag(self)
+        #self.uploadInputFileToGcs(nb)
+        self.prepareDag(self)
 
         if job.parameters:
             nb = add_parameters(nb, job.parameters)

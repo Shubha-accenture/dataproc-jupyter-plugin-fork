@@ -14,9 +14,9 @@ default_args = {
 }
 
 dag = DAG(
-    '{{jobName}}', 
+    '{{name}}', 
     default_args=default_args,
-    description='{{jobName}}',
+    description='{{name}}',
     schedule_interval=timedelta(days=1),
 )
 
@@ -25,10 +25,10 @@ submit_pyspark_job = DataprocSubmitJobOperator(
     project_id='{{gcpProjectId}}',  # This parameter can be overridden by the connection
     region='{{gcpRegion}}',  # This parameter can be overridden by the connection 
     job={
-        'reference': {'project_id': '{{gcpProjectId}}', 'job_id': '{{jobId}}'},
+        'reference': {'project_id': '{{gcpProjectId}}', 'job_id': '{{job_id}}'},
         'placement': {'cluster_name': '{{clusterName}}'},
         'pyspark_job': {
-            'main_python_file_uri': '{{inputFilePath}}'
+            'main_python_file_uri': 'file://{{inputFilePath}}'
         },
     },
     gcp_conn_id='google_cloud_default',  # Reference to the GCP connection
