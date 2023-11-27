@@ -8,10 +8,12 @@ from jupyter_scheduler.parameterize import add_parameters
 from jupyter_scheduler.executors import ExecutionManager
 import subprocess
 from dataproc_jupyter_plugin.handlers import get_cached_credentials
+from jinja2 import Environment, FileSystemLoader
+
 
 class CustomExecutionManager(ExecutionManager):
     """Default execution manager that executes notebooks"""
-    print("-> CustomExecutionManager")
+    
     @staticmethod
     def uploadToGcloud():
         print("gcloud")
@@ -25,6 +27,7 @@ class CustomExecutionManager(ExecutionManager):
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             output, _ = process.communicate()
             print(process.returncode,_,output)
+    
     @staticmethod
     def uploadInputFileToGcs(nb):
         print("gcloud upload")
@@ -32,9 +35,19 @@ class CustomExecutionManager(ExecutionManager):
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         output, _ = process.communicate()
         print(process.returncode,_,output)
+    
+    def prepareDag(self):
+        TEMPLATES_FOLDER_PATH = "dagTemplates"
+        PYSPARK_JOB_TEMPLATE_V1 = "pysparkJobTemplate-v1.py"
+        environment = Environment(loader=FileSystemLoader(TEMPLATES_FOLDER_PATH))
+        template = environment.get_template(PYSPARK_JOB_TEMPLATE_V1)
+        # filename = f"{self.model.input_filename}"
+        content = template.render(self)
+        # with open(filename, mode="w", encoding="utf-8") as message:
+        #     message.write(content)
+        #     print(f"... wrote {filename}")
+
     def execute(self):
-        print("-> CustomExecutionManager: Execute ")
-        
         job = self.model
         print(self)
         print(job.input_filename)
@@ -42,7 +55,7 @@ class CustomExecutionManager(ExecutionManager):
             nb = nbformat.read(f, as_version=4)
 
         self.uploadInputFileToGcs(nb)
-        # prepareDag()
+        # prepareDag(self)
 
         if job.parameters:
             nb = add_parameters(nb, job.parameters)
@@ -63,7 +76,6 @@ class CustomExecutionManager(ExecutionManager):
                 with fsspec.open(self.staging_paths[output_format], "w", encoding="utf-8") as f:
                     f.write(output)
             self.uploadToGcloud()
-            print("<- CustomExecutionManager: Execute ")
 
     def supported_features(cls) -> Dict[JobFeature, bool]:
         return {

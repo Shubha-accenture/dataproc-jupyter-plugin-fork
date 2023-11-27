@@ -26,6 +26,7 @@ dependencies = [
     "cachetools>=5.0.0",
     "kernels-mixer>=0.0.4",
     "jupyter_scheduler>=2.3.0",
+    "Jinja2>=3.1.2",
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 
