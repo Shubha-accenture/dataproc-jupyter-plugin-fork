@@ -17,6 +17,7 @@ import uuid
 
 unique_id = str(uuid.uuid4().hex)
 job_id = ''
+job_name = ''
 def getBucket(runtime_env):
     credentials = get_cached_credentials()
     if 'access_token' and 'project_id' and 'region_id' in credentials:
@@ -41,9 +42,8 @@ class CustomExecutionManager(ExecutionManager):
     """Default execution manager that executes notebooks"""
     
     @staticmethod
-    def uploadToGcloud(runtime_env):
+    def uploadToGcloud(runtime_env,dag_file):
         credentials = get_cached_credentials()
-        dag_file = f"dagfile_{job_id}.py"
         if 'region_id' in credentials:
             region = credentials['region_id']
             cmd = f"gcloud beta composer environments storage dags import --environment {runtime_env} --location {region} --source={dag_file}"
@@ -62,29 +62,30 @@ class CustomExecutionManager(ExecutionManager):
 
 
     @staticmethod
-    def prepareDag(self,runtime_env):
+    def prepareDag(self,runtime_env,dag_file):
         TEMPLATES_FOLDER_PATH = "dataproc_jupyter_plugin/dagTemplates"
         DAG_TEMPLATE_V1 = "pysparkJobTemplate-v1.py"
         environment = Environment(loader=FileSystemLoader(TEMPLATES_FOLDER_PATH))
         template = environment.get_template(DAG_TEMPLATE_V1)
         credentials = get_cached_credentials()
-        dag_file = f"dagFile_{job_id}.py"
         gcs_dag_bucket = getBucket(runtime_env)
         if 'project_id' in credentials:
-            gcpProjectId = credentials['project_id']
-        content = template.render(self.model, inputFilePath= gcs_dag_bucket+"/"+dag_file, gcpProjectId=gcpProjectId)
+            gcp_project_id = credentials['project_id']
+        content = template.render(self.model, inputFilePath= gcs_dag_bucket+"/"+dag_file, gcpProjectId=gcp_project_id)
         with open(dag_file, mode="w", encoding="utf-8") as message:
             message.write(content)
 
     def execute(self):
         job = self.model
         global job_id
+        global job_name
         job_id = job.job_id
+        job_name = job.name
         with open(self.staging_paths["input"], encoding="utf-8") as f:
             nb = nbformat.read(f, as_version=4)
-
+        dag_file = f"{job_name}_{job_id}.py"
         self.uploadInputFileToGcs(self.staging_paths["input"],job.runtime_environment_name)
-        self.prepareDag(self,job.runtime_environment_name)
+        self.prepareDag(self,job.runtime_environment_name,dag_file)
 
         if job.parameters:
             nb = add_parameters(nb, job.parameters)
@@ -103,7 +104,7 @@ class CustomExecutionManager(ExecutionManager):
                 output, resources = cls().from_notebook_node(nb)
                 with fsspec.open(self.staging_paths[output_format], "w", encoding="utf-8") as f:
                     f.write(output)
-            self.uploadToGcloud(job.runtime_environment_name)
+            self.uploadToGcloud(job.runtime_environment_name,dag_file)
 
     def supported_features(cls) -> Dict[JobFeature, bool]:
         return {
