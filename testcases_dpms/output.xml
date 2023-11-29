@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 6.1.1 (Python 3.9.6 on darwin)" generated="20231123 15:59:25.794" rpa="false" schemaversion="4">
+<suite id="s1" name="Dpms" source="/Users/sampreet/Downloads/dataproc_jupyter_plugin_QA/testcases_dpms/dpms.robot">
+<test id="s1-t1" name="test1" line="21">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231123 15:59:25.962" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231123 15:59:25.962" endtime="20231123 15:59:27.369"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231123 15:59:27.369" endtime="20231123 15:59:27.832"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231123 15:59:27.832" endtime="20231123 15:59:27.850"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231123 15:59:27.850" level="INFO">Typing text 'ac5e02f3516ec1ff1f96b73db08be620d33561fb95d46de7' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231123 15:59:27.850" endtime="20231123 15:59:27.940"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231123 15:59:27.940" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231123 15:59:27.940" endtime="20231123 15:59:28.155"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231123 15:59:28.155" endtime="20231123 15:59:35.043"/>
+</kw>
+<status status="PASS" starttime="20231123 15:59:25.961" endtime="20231123 15:59:35.043"/>
+</kw>
+<kw name="Sleep" library="BuiltIn">
+<arg>3</arg>
+<doc>Pauses the test executed for the given time.</doc>
+<msg timestamp="20231123 15:59:38.045" level="INFO">Slept 3 seconds</msg>
+<status status="PASS" starttime="20231123 15:59:35.044" endtime="20231123 15:59:38.046"/>
+</kw>
+<status status="PASS" starttime="20231123 15:59:25.961" endtime="20231123 15:59:38.047"/>
+</test>
+<status status="PASS" starttime="20231123 15:59:25.795" endtime="20231123 15:59:38.048"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="1" fail="0" skip="0" id="s1" name="Dpms">Dpms</stat>
+</suite>
+</statistics>
+<errors>
+<msg timestamp="20231123 15:59:25.960" level="WARN">Imported resource file '/Users/sampreet/Downloads/dataproc_jupyter_plugin_QA/resources/dpms.robot' is empty.</msg>
+</errors>
+</robot>

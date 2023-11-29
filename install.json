@@ -1,5 +1,0 @@
-{
-  "packageManager": "python",
-  "packageName": "dataproc_jupyter_plugin",
-  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package dataproc_jupyter_plugin"
-}

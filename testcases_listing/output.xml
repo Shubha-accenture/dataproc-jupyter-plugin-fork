@@ -1,0 +1,2433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 6.1.1 (Python 3.9.6 on darwin)" generated="20231129 15:41:18.733" rpa="false" schemaversion="4">
+<suite id="s1" name="Jobs Listing" source="/Users/sampreet/Downloads/dataproc_jupyter_plugin_QA/testcases_listing/jobs_listing.robot">
+<test id="s1-t1" name="test1" line="19">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231129 15:41:18.881" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231129 15:41:18.881" endtime="20231129 15:41:20.328"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231129 15:41:20.328" endtime="20231129 15:41:20.788"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:41:20.788" endtime="20231129 15:41:20.801"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:20.802" level="INFO">Typing text 'be566856f6e875f9e597006b44cec1877116ca737bfee239' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231129 15:41:20.802" endtime="20231129 15:41:20.888"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:20.888" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231129 15:41:20.888" endtime="20231129 15:41:21.104"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:41:21.104" endtime="20231129 15:41:32.782"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:18.880" endtime="20231129 15:41:32.782"/>
+</kw>
+<kw name="project_check_dataproc_jupyter_extension_dev" library="batches">
+<kw name="open_config_setup_page" library="config_setup">
+<doc>opening config setup page from launcher</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:41:32.782" endtime="20231129 15:41:32.794"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:32.794" level="INFO">Clicking element 'xpath://div[text()="Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:41:32.794" endtime="20231129 15:41:32.820"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:41:32.820" endtime="20231129 15:41:32.833"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:32.833" level="INFO">Clicking element 'xpath://div[text()="Cloud Dataproc Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:41:32.833" endtime="20231129 15:41:32.867"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:41:32.867" endtime="20231129 15:41:33.522"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:32.782" endtime="20231129 15:41:33.522"/>
+</kw>
+<kw name="Get Value" library="Selenium2Library">
+<var>${proj_id}</var>
+<arg>${project_id_dropdown}</arg>
+<doc>Returns the value attribute of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:33.534" level="INFO">${proj_id} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:41:33.522" endtime="20231129 15:41:33.534"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${proj_id_set}</var>
+<arg>dataproc-jupyter-extension-dev</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:41:33.535" level="INFO">${proj_id_set} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:41:33.534" endtime="20231129 15:41:33.535"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${count}</var>
+<arg>${close_btn_on_tabs}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:41:33.535" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:41:33.543" level="INFO">${count} = 3</msg>
+<status status="PASS" starttime="20231129 15:41:33.535" endtime="20231129 15:41:33.543"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${a}</var>
+<arg>0</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:41:33.543" level="INFO">${a} = 0</msg>
+<status status="PASS" starttime="20231129 15:41:33.543" endtime="20231129 15:41:33.543"/>
+</kw>
+<for flavor="IN RANGE">
+<var>${a}</var>
+<value>1</value>
+<value>${count}</value>
+<iter>
+<var name="${a}">1</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:41:33.543" endtime="20231129 15:41:33.543"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:33.543" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:41:33.543" endtime="20231129 15:41:33.576"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:33.543" endtime="20231129 15:41:33.576"/>
+</iter>
+<iter>
+<var name="${a}">2</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:41:33.576" endtime="20231129 15:41:33.577"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:33.577" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:41:33.577" endtime="20231129 15:41:33.624"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:33.576" endtime="20231129 15:41:33.624"/>
+</iter>
+<status status="PASS" starttime="20231129 15:41:33.543" endtime="20231129 15:41:33.624"/>
+</for>
+<status status="PASS" starttime="20231129 15:41:33.535" endtime="20231129 15:41:33.624"/>
+</kw>
+<if>
+<branch type="IF" condition="$proj_id != $proj_id_set">
+<kw name="change_project_for_extension_dev" library="runtimetemplate">
+<status status="NOT RUN" starttime="20231129 15:41:33.626" endtime="20231129 15:41:33.626"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<status status="NOT RUN" starttime="20231129 15:41:33.626" endtime="20231129 15:41:33.626"/>
+</kw>
+<status status="NOT RUN" starttime="20231129 15:41:33.624" endtime="20231129 15:41:33.626"/>
+</branch>
+<status status="PASS" starttime="20231129 15:41:33.624" endtime="20231129 15:41:33.626"/>
+</if>
+<status status="PASS" starttime="20231129 15:41:32.782" endtime="20231129 15:41:33.626"/>
+</kw>
+<kw name="open_jobs_listing_page" library="jobs">
+<doc>launcher page to clusters listing page.</doc>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:41:33.627" endtime="20231129 15:41:33.922"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:33.923" level="INFO">Clicking element 'xpath://p[text()='Clusters']/parent::div/parent::div'.</msg>
+<status status="PASS" starttime="20231129 15:41:33.922" endtime="20231129 15:41:33.960"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:41:33.960" endtime="20231129 15:41:33.983"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:33.983" level="INFO">Clicking element 'xpath://div[text()='Jobs']'.</msg>
+<status status="PASS" starttime="20231129 15:41:33.983" endtime="20231129 15:41:34.013"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:33.627" endtime="20231129 15:41:34.014"/>
+</kw>
+<kw name="back_nav_job_details" library="jobs">
+<doc>go to job details and check the back nav functionality.</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_id_first_element}</arg>
+<arg>60</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:41:34.014" endtime="20231129 15:41:56.843"/>
+</kw>
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${name_list_count}</var>
+<arg>${jobs_id_list}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:41:56.843" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:41:56.850" level="INFO">${name_list_count} = 50</msg>
+<status status="PASS" starttime="20231129 15:41:56.843" endtime="20231129 15:41:56.850"/>
+</kw>
+<kw name="Get Random Number From Range" library="python_keywords">
+<var>${random_number_from_count}</var>
+<arg>${name_list_count}</arg>
+<msg timestamp="20231129 15:41:56.851" level="INFO">${random_number_from_count} = 23</msg>
+<status status="PASS" starttime="20231129 15:41:56.851" endtime="20231129 15:41:56.851"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:41:56.851" endtime="20231129 15:41:57.123"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:57.125" level="INFO">Clicking element '(//td[@role='cell' and @class='cluster-name'])[23]'.</msg>
+<status status="PASS" starttime="20231129 15:41:57.124" endtime="20231129 15:41:57.171"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${back_nav_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:41:57.171" endtime="20231129 15:41:58.035"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${back_nav_btn}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:41:58.035" endtime="20231129 15:41:58.304"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${back_nav_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:41:58.305" level="INFO">Clicking element 'xpath://*[local-name()='svg' and @data-icon='launcher:left-arrow-icon']'.</msg>
+<status status="PASS" starttime="20231129 15:41:58.304" endtime="20231129 15:41:58.369"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_id_list}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:41:58.369" endtime="20231129 15:41:58.387"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:34.014" endtime="20231129 15:41:58.387"/>
+</kw>
+<kw name="logout" library="login" type="TEARDOWN">
+<doc>closing the Browser</doc>
+<kw name="Close Browser" library="Selenium2Library">
+<doc>Closes the current browser.</doc>
+<status status="PASS" starttime="20231129 15:41:58.388" endtime="20231129 15:41:58.528"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:58.387" endtime="20231129 15:41:58.528"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:18.880" endtime="20231129 15:41:58.528"/>
+</test>
+<test id="s1-t2" name="test2" line="24">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231129 15:41:58.529" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231129 15:41:58.529" endtime="20231129 15:42:00.047"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231129 15:42:00.047" endtime="20231129 15:42:00.517"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:00.517" endtime="20231129 15:42:00.530"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:00.530" level="INFO">Typing text 'be566856f6e875f9e597006b44cec1877116ca737bfee239' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231129 15:42:00.530" endtime="20231129 15:42:00.618"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:00.618" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231129 15:42:00.618" endtime="20231129 15:42:00.831"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:00.831" endtime="20231129 15:42:12.111"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:58.528" endtime="20231129 15:42:12.111"/>
+</kw>
+<kw name="project_check_dataproc_jupyter_extension_dev" library="batches">
+<kw name="open_config_setup_page" library="config_setup">
+<doc>opening config setup page from launcher</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:12.111" endtime="20231129 15:42:12.123"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:12.124" level="INFO">Clicking element 'xpath://div[text()="Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:42:12.123" endtime="20231129 15:42:12.146"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:12.147" endtime="20231129 15:42:12.159"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:12.160" level="INFO">Clicking element 'xpath://div[text()="Cloud Dataproc Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:42:12.159" endtime="20231129 15:42:12.192"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:12.193" endtime="20231129 15:42:12.843"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:12.111" endtime="20231129 15:42:12.843"/>
+</kw>
+<kw name="Get Value" library="Selenium2Library">
+<var>${proj_id}</var>
+<arg>${project_id_dropdown}</arg>
+<doc>Returns the value attribute of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:12.870" level="INFO">${proj_id} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:42:12.843" endtime="20231129 15:42:12.870"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${proj_id_set}</var>
+<arg>dataproc-jupyter-extension-dev</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:42:12.870" level="INFO">${proj_id_set} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:42:12.870" endtime="20231129 15:42:12.870"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${count}</var>
+<arg>${close_btn_on_tabs}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:42:12.870" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:42:12.878" level="INFO">${count} = 3</msg>
+<status status="PASS" starttime="20231129 15:42:12.870" endtime="20231129 15:42:12.878"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${a}</var>
+<arg>0</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:42:12.878" level="INFO">${a} = 0</msg>
+<status status="PASS" starttime="20231129 15:42:12.878" endtime="20231129 15:42:12.878"/>
+</kw>
+<for flavor="IN RANGE">
+<var>${a}</var>
+<value>1</value>
+<value>${count}</value>
+<iter>
+<var name="${a}">1</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:42:12.878" endtime="20231129 15:42:12.879"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:12.879" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:42:12.879" endtime="20231129 15:42:12.915"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:12.878" endtime="20231129 15:42:12.915"/>
+</iter>
+<iter>
+<var name="${a}">2</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:42:12.915" endtime="20231129 15:42:12.915"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:12.916" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:42:12.915" endtime="20231129 15:42:12.976"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:12.915" endtime="20231129 15:42:12.976"/>
+</iter>
+<status status="PASS" starttime="20231129 15:42:12.878" endtime="20231129 15:42:12.976"/>
+</for>
+<status status="PASS" starttime="20231129 15:42:12.870" endtime="20231129 15:42:12.976"/>
+</kw>
+<if>
+<branch type="IF" condition="$proj_id != $proj_id_set">
+<kw name="change_project_for_extension_dev" library="runtimetemplate">
+<status status="NOT RUN" starttime="20231129 15:42:12.976" endtime="20231129 15:42:12.976"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<status status="NOT RUN" starttime="20231129 15:42:12.976" endtime="20231129 15:42:12.976"/>
+</kw>
+<status status="NOT RUN" starttime="20231129 15:42:12.976" endtime="20231129 15:42:12.976"/>
+</branch>
+<status status="PASS" starttime="20231129 15:42:12.976" endtime="20231129 15:42:12.976"/>
+</if>
+<status status="PASS" starttime="20231129 15:42:12.111" endtime="20231129 15:42:12.976"/>
+</kw>
+<kw name="open_jobs_listing_page" library="jobs">
+<doc>launcher page to clusters listing page.</doc>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:42:12.977" endtime="20231129 15:42:13.263"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:13.264" level="INFO">Clicking element 'xpath://p[text()='Clusters']/parent::div/parent::div'.</msg>
+<status status="PASS" starttime="20231129 15:42:13.264" endtime="20231129 15:42:13.300"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:13.300" endtime="20231129 15:42:13.319"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:13.320" level="INFO">Clicking element 'xpath://div[text()='Jobs']'.</msg>
+<status status="PASS" starttime="20231129 15:42:13.320" endtime="20231129 15:42:13.352"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:12.976" endtime="20231129 15:42:13.352"/>
+</kw>
+<kw name="check_job_id_and_status" library="jobs">
+<doc>get the name and status from listing and verify it on details page.</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_id_first_element}</arg>
+<arg>30</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:13.352" endtime="20231129 15:42:34.924"/>
+</kw>
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${name_list_count}</var>
+<arg>${jobs_id_list}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:42:34.924" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:42:34.933" level="INFO">${name_list_count} = 50</msg>
+<status status="PASS" starttime="20231129 15:42:34.925" endtime="20231129 15:42:34.933"/>
+</kw>
+<kw name="Get Random Number From Range" library="python_keywords">
+<var>${random_number_from_count}</var>
+<arg>${name_list_count}</arg>
+<msg timestamp="20231129 15:42:34.933" level="INFO">${random_number_from_count} = 44</msg>
+<status status="PASS" starttime="20231129 15:42:34.933" endtime="20231129 15:42:34.933"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:42:34.933" endtime="20231129 15:42:35.208"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${list_name}</var>
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:35.236" level="INFO">${list_name} = job-4e0f503f-auto-test</msg>
+<status status="PASS" starttime="20231129 15:42:35.209" endtime="20231129 15:42:35.236"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${list_status}</var>
+<arg>(//div[@class='cluster-status'])[${random_number_from_count}]</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:35.255" level="INFO">${list_status} = Failed</msg>
+<status status="PASS" starttime="20231129 15:42:35.237" endtime="20231129 15:42:35.255"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:35.255" level="INFO">Clicking element '(//td[@role='cell' and @class='cluster-name'])[44]'.</msg>
+<status status="PASS" starttime="20231129 15:42:35.255" endtime="20231129 15:42:35.286"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${job_details_name}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:35.286" endtime="20231129 15:42:36.157"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${details_name}</var>
+<arg>${job_details_name}</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:36.167" level="INFO">${details_name} = job-4e0f503f-auto-test</msg>
+<status status="PASS" starttime="20231129 15:42:36.157" endtime="20231129 15:42:36.167"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${details_status}</var>
+<arg>${job_details_status}</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:36.184" level="INFO">${details_status} = Failed</msg>
+<status status="PASS" starttime="20231129 15:42:36.167" endtime="20231129 15:42:36.184"/>
+</kw>
+<kw name="Should Be Equal As Strings" library="BuiltIn">
+<arg>${list_name}</arg>
+<arg>${details_name}</arg>
+<doc>Fails if objects are unequal after converting them to strings.</doc>
+<status status="PASS" starttime="20231129 15:42:36.184" endtime="20231129 15:42:36.184"/>
+</kw>
+<kw name="Should Be Equal As Strings" library="BuiltIn">
+<arg>${list_status}</arg>
+<arg>${details_status}</arg>
+<doc>Fails if objects are unequal after converting them to strings.</doc>
+<status status="PASS" starttime="20231129 15:42:36.184" endtime="20231129 15:42:36.185"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${random_number_from_count}</var>
+<arg>0</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:42:36.185" level="INFO">${random_number_from_count} = 0</msg>
+<status status="PASS" starttime="20231129 15:42:36.185" endtime="20231129 15:42:36.185"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:13.352" endtime="20231129 15:42:36.185"/>
+</kw>
+<kw name="logout" library="login" type="TEARDOWN">
+<doc>closing the Browser</doc>
+<kw name="Close Browser" library="Selenium2Library">
+<doc>Closes the current browser.</doc>
+<status status="PASS" starttime="20231129 15:42:36.185" endtime="20231129 15:42:36.312"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:36.185" endtime="20231129 15:42:36.312"/>
+</kw>
+<status status="PASS" starttime="20231129 15:41:58.528" endtime="20231129 15:42:36.312"/>
+</test>
+<test id="s1-t3" name="test3" line="29">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231129 15:42:36.313" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231129 15:42:36.313" endtime="20231129 15:42:37.749"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231129 15:42:37.750" endtime="20231129 15:42:38.218"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:38.218" endtime="20231129 15:42:38.234"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:38.235" level="INFO">Typing text 'be566856f6e875f9e597006b44cec1877116ca737bfee239' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231129 15:42:38.235" endtime="20231129 15:42:38.337"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:38.337" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231129 15:42:38.337" endtime="20231129 15:42:38.385"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:38.385" endtime="20231129 15:42:52.283"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:36.313" endtime="20231129 15:42:52.283"/>
+</kw>
+<kw name="project_check_dataproc_jupyter_extension_dev" library="batches">
+<kw name="open_config_setup_page" library="config_setup">
+<doc>opening config setup page from launcher</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:52.284" endtime="20231129 15:42:52.297"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:52.297" level="INFO">Clicking element 'xpath://div[text()="Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:42:52.297" endtime="20231129 15:42:52.320"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:52.320" endtime="20231129 15:42:52.336"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:52.337" level="INFO">Clicking element 'xpath://div[text()="Cloud Dataproc Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:42:52.336" endtime="20231129 15:42:52.371"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:52.371" endtime="20231129 15:42:56.894"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:52.284" endtime="20231129 15:42:56.894"/>
+</kw>
+<kw name="Get Value" library="Selenium2Library">
+<var>${proj_id}</var>
+<arg>${project_id_dropdown}</arg>
+<doc>Returns the value attribute of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:56.910" level="INFO">${proj_id} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:42:56.894" endtime="20231129 15:42:56.910"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${proj_id_set}</var>
+<arg>dataproc-jupyter-extension-dev</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:42:56.910" level="INFO">${proj_id_set} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:42:56.910" endtime="20231129 15:42:56.910"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${count}</var>
+<arg>${close_btn_on_tabs}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:42:56.910" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:42:56.918" level="INFO">${count} = 2</msg>
+<status status="PASS" starttime="20231129 15:42:56.910" endtime="20231129 15:42:56.918"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${a}</var>
+<arg>0</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:42:56.918" level="INFO">${a} = 0</msg>
+<status status="PASS" starttime="20231129 15:42:56.918" endtime="20231129 15:42:56.918"/>
+</kw>
+<for flavor="IN RANGE">
+<var>${a}</var>
+<value>1</value>
+<value>${count}</value>
+<iter>
+<var name="${a}">1</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:42:56.919" endtime="20231129 15:42:56.919"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:56.919" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:42:56.919" endtime="20231129 15:42:56.966"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:56.919" endtime="20231129 15:42:56.966"/>
+</iter>
+<status status="PASS" starttime="20231129 15:42:56.918" endtime="20231129 15:42:56.966"/>
+</for>
+<status status="PASS" starttime="20231129 15:42:56.910" endtime="20231129 15:42:56.966"/>
+</kw>
+<if>
+<branch type="IF" condition="$proj_id != $proj_id_set">
+<kw name="change_project_for_extension_dev" library="runtimetemplate">
+<status status="NOT RUN" starttime="20231129 15:42:56.966" endtime="20231129 15:42:56.966"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<status status="NOT RUN" starttime="20231129 15:42:56.967" endtime="20231129 15:42:56.967"/>
+</kw>
+<status status="NOT RUN" starttime="20231129 15:42:56.966" endtime="20231129 15:42:56.967"/>
+</branch>
+<status status="PASS" starttime="20231129 15:42:56.966" endtime="20231129 15:42:56.967"/>
+</if>
+<status status="PASS" starttime="20231129 15:42:52.284" endtime="20231129 15:42:56.967"/>
+</kw>
+<kw name="open_jobs_listing_page" library="jobs">
+<doc>launcher page to clusters listing page.</doc>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:42:56.967" endtime="20231129 15:42:57.251"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:57.252" level="INFO">Clicking element 'xpath://p[text()='Clusters']/parent::div/parent::div'.</msg>
+<status status="PASS" starttime="20231129 15:42:57.251" endtime="20231129 15:42:57.294"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:57.294" endtime="20231129 15:42:57.314"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:42:57.314" level="INFO">Clicking element 'xpath://div[text()='Jobs']'.</msg>
+<status status="PASS" starttime="20231129 15:42:57.314" endtime="20231129 15:42:57.339"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:56.967" endtime="20231129 15:42:57.339"/>
+</kw>
+<kw name="job_delete_listing" library="jobs">
+<doc>delete the job from listing page and confirm deletion.</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_id_first_element}</arg>
+<arg>30</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:42:57.339" endtime="20231129 15:43:18.095"/>
+</kw>
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${name_list_count}</var>
+<arg>${jobs_id_list}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:43:18.095" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:43:18.102" level="INFO">${name_list_count} = 50</msg>
+<status status="PASS" starttime="20231129 15:43:18.095" endtime="20231129 15:43:18.102"/>
+</kw>
+<kw name="Get Random Number From Range" library="python_keywords">
+<var>${random_number_from_count}</var>
+<arg>${name_list_count}</arg>
+<msg timestamp="20231129 15:43:18.103" level="INFO">${random_number_from_count} = 12</msg>
+<status status="PASS" starttime="20231129 15:43:18.103" endtime="20231129 15:43:18.103"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:43:18.103" endtime="20231129 15:43:18.368"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${delete_job_id}</var>
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:18.382" level="INFO">${delete_job_id} = job01</msg>
+<status status="PASS" starttime="20231129 15:43:18.369" endtime="20231129 15:43:18.382"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//div[@role='button' and @title='Delete Job'])[${random_number_from_count}]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:18.383" level="INFO">Clicking element '(//div[@role='button' and @title='Delete Job'])[12]'.</msg>
+<status status="PASS" starttime="20231129 15:43:18.383" endtime="20231129 15:43:18.422"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${confirm_deletion_dialog}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:18.422" endtime="20231129 15:43:18.434"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${confirm_deletion_cancel_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:18.434" endtime="20231129 15:43:18.445"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${confirm_deletion_delete_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:18.445" endtime="20231129 15:43:18.455"/>
+</kw>
+<kw name="Element Should Contain" library="Selenium2Library">
+<arg>${confirm_deletion_text}</arg>
+<arg>${delete_job_id}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<msg timestamp="20231129 15:43:18.465" level="INFO">Element 'xpath://p[contains(text(),'This will delete')]' contains text 'job01'.</msg>
+<status status="PASS" starttime="20231129 15:43:18.455" endtime="20231129 15:43:18.465"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${confirm_deletion_cancel_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:18.466" level="INFO">Clicking element 'xpath://button[text()='Cancel']'.</msg>
+<status status="PASS" starttime="20231129 15:43:18.466" endtime="20231129 15:43:18.497"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:18.497" endtime="20231129 15:43:18.512"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:43:18.512" endtime="20231129 15:43:18.779"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//div[@role='button' and @title='Delete Job'])[${random_number_from_count}]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:18.782" level="INFO">Clicking element '(//div[@role='button' and @title='Delete Job'])[12]'.</msg>
+<status status="PASS" starttime="20231129 15:43:18.780" endtime="20231129 15:43:18.829"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${confirm_deletion_delete_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:18.829" level="INFO">Clicking element 'xpath://button[text()='Delete']'.</msg>
+<status status="PASS" starttime="20231129 15:43:18.829" endtime="20231129 15:43:18.852"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${toastify_success_message}</arg>
+<arg>30</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:18.852" endtime="20231129 15:43:19.952"/>
+</kw>
+<kw name="Element Should Contain" library="Selenium2Library">
+<arg>${toastify_success_message}</arg>
+<arg>${delete_job_id}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<msg timestamp="20231129 15:43:19.967" level="INFO">Element 'xpath://div[@role='alert']/div[contains(text(),'deleted successfully')]' contains text 'job01'.</msg>
+<status status="PASS" starttime="20231129 15:43:19.952" endtime="20231129 15:43:19.967"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:57.339" endtime="20231129 15:43:19.967"/>
+</kw>
+<kw name="logout" library="login" type="TEARDOWN">
+<doc>closing the Browser</doc>
+<kw name="Close Browser" library="Selenium2Library">
+<doc>Closes the current browser.</doc>
+<status status="PASS" starttime="20231129 15:43:19.967" endtime="20231129 15:43:20.088"/>
+</kw>
+<status status="PASS" starttime="20231129 15:43:19.967" endtime="20231129 15:43:20.088"/>
+</kw>
+<status status="PASS" starttime="20231129 15:42:36.312" endtime="20231129 15:43:20.089"/>
+</test>
+<test id="s1-t4" name="test4" line="34">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231129 15:43:20.089" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231129 15:43:20.089" endtime="20231129 15:43:21.794"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231129 15:43:21.794" endtime="20231129 15:43:22.259"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:22.259" endtime="20231129 15:43:22.272"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:22.272" level="INFO">Typing text 'be566856f6e875f9e597006b44cec1877116ca737bfee239' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231129 15:43:22.272" endtime="20231129 15:43:22.360"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:22.361" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231129 15:43:22.360" endtime="20231129 15:43:22.568"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:22.569" endtime="20231129 15:43:33.523"/>
+</kw>
+<status status="PASS" starttime="20231129 15:43:20.089" endtime="20231129 15:43:33.523"/>
+</kw>
+<kw name="project_check_dataproc_jupyter_extension_dev" library="batches">
+<kw name="open_config_setup_page" library="config_setup">
+<doc>opening config setup page from launcher</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:33.524" endtime="20231129 15:43:33.535"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:33.535" level="INFO">Clicking element 'xpath://div[text()="Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:43:33.535" endtime="20231129 15:43:33.558"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:33.558" endtime="20231129 15:43:33.570"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:33.570" level="INFO">Clicking element 'xpath://div[text()="Cloud Dataproc Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:43:33.570" endtime="20231129 15:43:33.604"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:33.604" endtime="20231129 15:43:34.273"/>
+</kw>
+<status status="PASS" starttime="20231129 15:43:33.524" endtime="20231129 15:43:34.273"/>
+</kw>
+<kw name="Get Value" library="Selenium2Library">
+<var>${proj_id}</var>
+<arg>${project_id_dropdown}</arg>
+<doc>Returns the value attribute of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:34.287" level="INFO">${proj_id} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:43:34.273" endtime="20231129 15:43:34.287"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${proj_id_set}</var>
+<arg>dataproc-jupyter-extension-dev</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:43:34.288" level="INFO">${proj_id_set} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:43:34.288" endtime="20231129 15:43:34.288"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${count}</var>
+<arg>${close_btn_on_tabs}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:43:34.288" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:43:34.296" level="INFO">${count} = 3</msg>
+<status status="PASS" starttime="20231129 15:43:34.288" endtime="20231129 15:43:34.296"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${a}</var>
+<arg>0</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:43:34.297" level="INFO">${a} = 0</msg>
+<status status="PASS" starttime="20231129 15:43:34.296" endtime="20231129 15:43:34.297"/>
+</kw>
+<for flavor="IN RANGE">
+<var>${a}</var>
+<value>1</value>
+<value>${count}</value>
+<iter>
+<var name="${a}">1</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:43:34.297" endtime="20231129 15:43:34.297"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:34.297" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:43:34.297" endtime="20231129 15:43:34.330"/>
+</kw>
+<status status="PASS" starttime="20231129 15:43:34.297" endtime="20231129 15:43:34.330"/>
+</iter>
+<iter>
+<var name="${a}">2</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:43:34.331" endtime="20231129 15:43:34.331"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:34.331" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:43:34.331" endtime="20231129 15:43:34.378"/>
+</kw>
+<status status="PASS" starttime="20231129 15:43:34.331" endtime="20231129 15:43:34.378"/>
+</iter>
+<status status="PASS" starttime="20231129 15:43:34.297" endtime="20231129 15:43:34.378"/>
+</for>
+<status status="PASS" starttime="20231129 15:43:34.288" endtime="20231129 15:43:34.378"/>
+</kw>
+<if>
+<branch type="IF" condition="$proj_id != $proj_id_set">
+<kw name="change_project_for_extension_dev" library="runtimetemplate">
+<status status="NOT RUN" starttime="20231129 15:43:34.378" endtime="20231129 15:43:34.378"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<status status="NOT RUN" starttime="20231129 15:43:34.378" endtime="20231129 15:43:34.378"/>
+</kw>
+<status status="NOT RUN" starttime="20231129 15:43:34.378" endtime="20231129 15:43:34.378"/>
+</branch>
+<status status="PASS" starttime="20231129 15:43:34.378" endtime="20231129 15:43:34.378"/>
+</if>
+<status status="PASS" starttime="20231129 15:43:33.524" endtime="20231129 15:43:34.378"/>
+</kw>
+<kw name="open_jobs_listing_page" library="jobs">
+<doc>launcher page to clusters listing page.</doc>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:43:34.379" endtime="20231129 15:43:34.668"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:34.668" level="INFO">Clicking element 'xpath://p[text()='Clusters']/parent::div/parent::div'.</msg>
+<status status="PASS" starttime="20231129 15:43:34.668" endtime="20231129 15:43:34.704"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:34.704" endtime="20231129 15:43:34.725"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:43:34.726" level="INFO">Clicking element 'xpath://div[text()='Jobs']'.</msg>
+<status status="PASS" starttime="20231129 15:43:34.725" endtime="20231129 15:43:34.768"/>
+</kw>
+<status status="PASS" starttime="20231129 15:43:34.378" endtime="20231129 15:43:34.768"/>
+</kw>
+<kw name="job_clone_listing" library="jobs">
+<doc>clone the job from listing page with as is entered details.</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_id_first_element}</arg>
+<arg>60</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:43:34.769" endtime="20231129 15:44:06.056"/>
+</kw>
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${name_list_count}</var>
+<arg>${jobs_id_list}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:44:06.056" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:44:06.064" level="INFO">${name_list_count} = 50</msg>
+<status status="PASS" starttime="20231129 15:44:06.056" endtime="20231129 15:44:06.064"/>
+</kw>
+<kw name="Get Random Number From Range" library="python_keywords">
+<var>${random_number_from_count}</var>
+<arg>${name_list_count}</arg>
+<msg timestamp="20231129 15:44:06.064" level="INFO">${random_number_from_count} = 31</msg>
+<status status="PASS" starttime="20231129 15:44:06.064" endtime="20231129 15:44:06.064"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:44:06.064" endtime="20231129 15:44:06.338"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//div[@role='button' and @title='Clone Job'])[${random_number_from_count}]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:06.340" level="INFO">Clicking element '(//div[@role='button' and @title='Clone Job'])[31]'.</msg>
+<status status="PASS" starttime="20231129 15:44:06.339" endtime="20231129 15:44:06.429"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${new_job_id}</var>
+<arg>${job_id_loc}</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:06.457" level="INFO">${new_job_id} = </msg>
+<status status="PASS" starttime="20231129 15:44:06.429" endtime="20231129 15:44:06.457"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${job_clone_submit_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:44:06.457" endtime="20231129 15:44:06.469"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${job_clone_submit_btn}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:44:06.469" endtime="20231129 15:44:06.743"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${job_clone_submit_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:06.745" level="INFO">Clicking element 'xpath://div[text()='SUBMIT']/parent::div[@class='submit-button-style']'.</msg>
+<status status="PASS" starttime="20231129 15:44:06.744" endtime="20231129 15:44:06.817"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${toastify_submit_success_message}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<msg timestamp="20231129 15:44:27.147" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-3.png"&gt;&lt;img src="selenium-screenshot-3.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg timestamp="20231129 15:44:27.148" level="FAIL">Element 'xpath://div[@role='alert']/div[contains(text(),'successfully')]' not visible after 20 seconds.</msg>
+<status status="FAIL" starttime="20231129 15:44:06.817" endtime="20231129 15:44:27.151"/>
+</kw>
+<kw name="Element Should Contain" library="Selenium2Library">
+<arg>${toastify_submit_success_message}</arg>
+<arg>${new_job_id}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="NOT RUN" starttime="20231129 15:44:27.151" endtime="20231129 15:44:27.151"/>
+</kw>
+<status status="FAIL" starttime="20231129 15:43:34.768" endtime="20231129 15:44:27.151"/>
+</kw>
+<kw name="logout" library="login" type="TEARDOWN">
+<doc>closing the Browser</doc>
+<kw name="Close Browser" library="Selenium2Library">
+<doc>Closes the current browser.</doc>
+<status status="PASS" starttime="20231129 15:44:27.152" endtime="20231129 15:44:27.281"/>
+</kw>
+<status status="PASS" starttime="20231129 15:44:27.152" endtime="20231129 15:44:27.281"/>
+</kw>
+<status status="FAIL" starttime="20231129 15:43:20.089" endtime="20231129 15:44:27.281">Element 'xpath://div[@role='alert']/div[contains(text(),'successfully')]' not visible after 20 seconds.</status>
+</test>
+<test id="s1-t5" name="test5" line="39">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231129 15:44:27.282" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231129 15:44:27.281" endtime="20231129 15:44:28.752"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231129 15:44:28.753" endtime="20231129 15:44:29.212"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:44:29.212" endtime="20231129 15:44:29.224"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:29.225" level="INFO">Typing text 'be566856f6e875f9e597006b44cec1877116ca737bfee239' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231129 15:44:29.224" endtime="20231129 15:44:29.315"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:29.315" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231129 15:44:29.315" endtime="20231129 15:44:29.526"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:44:29.526" endtime="20231129 15:44:41.286"/>
+</kw>
+<status status="PASS" starttime="20231129 15:44:27.281" endtime="20231129 15:44:41.286"/>
+</kw>
+<kw name="project_check_dataproc_jupyter_extension_dev" library="batches">
+<kw name="open_config_setup_page" library="config_setup">
+<doc>opening config setup page from launcher</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:44:41.286" endtime="20231129 15:44:41.297"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:41.297" level="INFO">Clicking element 'xpath://div[text()="Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:44:41.297" endtime="20231129 15:44:41.319"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:44:41.319" endtime="20231129 15:44:41.330"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:41.330" level="INFO">Clicking element 'xpath://div[text()="Cloud Dataproc Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:44:41.330" endtime="20231129 15:44:41.364"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:44:41.364" endtime="20231129 15:44:42.229"/>
+</kw>
+<status status="PASS" starttime="20231129 15:44:41.286" endtime="20231129 15:44:42.229"/>
+</kw>
+<kw name="Get Value" library="Selenium2Library">
+<var>${proj_id}</var>
+<arg>${project_id_dropdown}</arg>
+<doc>Returns the value attribute of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:42.244" level="INFO">${proj_id} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:44:42.230" endtime="20231129 15:44:42.244"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${proj_id_set}</var>
+<arg>dataproc-jupyter-extension-dev</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:44:42.244" level="INFO">${proj_id_set} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:44:42.244" endtime="20231129 15:44:42.244"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${count}</var>
+<arg>${close_btn_on_tabs}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:44:42.244" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:44:42.251" level="INFO">${count} = 3</msg>
+<status status="PASS" starttime="20231129 15:44:42.244" endtime="20231129 15:44:42.252"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${a}</var>
+<arg>0</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:44:42.252" level="INFO">${a} = 0</msg>
+<status status="PASS" starttime="20231129 15:44:42.252" endtime="20231129 15:44:42.252"/>
+</kw>
+<for flavor="IN RANGE">
+<var>${a}</var>
+<value>1</value>
+<value>${count}</value>
+<iter>
+<var name="${a}">1</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:44:42.252" endtime="20231129 15:44:42.252"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:42.252" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:44:42.252" endtime="20231129 15:44:42.283"/>
+</kw>
+<status status="PASS" starttime="20231129 15:44:42.252" endtime="20231129 15:44:42.283"/>
+</iter>
+<iter>
+<var name="${a}">2</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:44:42.283" endtime="20231129 15:44:42.283"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:42.284" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:44:42.283" endtime="20231129 15:44:42.327"/>
+</kw>
+<status status="PASS" starttime="20231129 15:44:42.283" endtime="20231129 15:44:42.327"/>
+</iter>
+<status status="PASS" starttime="20231129 15:44:42.252" endtime="20231129 15:44:42.327"/>
+</for>
+<status status="PASS" starttime="20231129 15:44:42.244" endtime="20231129 15:44:42.327"/>
+</kw>
+<if>
+<branch type="IF" condition="$proj_id != $proj_id_set">
+<kw name="change_project_for_extension_dev" library="runtimetemplate">
+<status status="NOT RUN" starttime="20231129 15:44:42.328" endtime="20231129 15:44:42.328"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<status status="NOT RUN" starttime="20231129 15:44:42.328" endtime="20231129 15:44:42.328"/>
+</kw>
+<status status="NOT RUN" starttime="20231129 15:44:42.327" endtime="20231129 15:44:42.328"/>
+</branch>
+<status status="PASS" starttime="20231129 15:44:42.327" endtime="20231129 15:44:42.328"/>
+</if>
+<status status="PASS" starttime="20231129 15:44:41.286" endtime="20231129 15:44:42.328"/>
+</kw>
+<kw name="open_jobs_listing_page" library="jobs">
+<doc>launcher page to clusters listing page.</doc>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:44:42.328" endtime="20231129 15:44:42.626"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:42.626" level="INFO">Clicking element 'xpath://p[text()='Clusters']/parent::div/parent::div'.</msg>
+<status status="PASS" starttime="20231129 15:44:42.626" endtime="20231129 15:44:42.667"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:44:42.667" endtime="20231129 15:44:42.688"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:44:42.689" level="INFO">Clicking element 'xpath://div[text()='Jobs']'.</msg>
+<status status="PASS" starttime="20231129 15:44:42.689" endtime="20231129 15:44:42.728"/>
+</kw>
+<status status="PASS" starttime="20231129 15:44:42.328" endtime="20231129 15:44:42.728"/>
+</kw>
+<kw name="job_details_clone" library="jobs">
+<doc>clone the job from job details page with as is entered details.</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_id_first_element}</arg>
+<arg>30</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:44:42.729" endtime="20231129 15:45:05.194"/>
+</kw>
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${name_list_count}</var>
+<arg>${jobs_id_list}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:45:05.194" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:45:05.202" level="INFO">${name_list_count} = 50</msg>
+<status status="PASS" starttime="20231129 15:45:05.194" endtime="20231129 15:45:05.202"/>
+</kw>
+<kw name="Get Random Number From Range" library="python_keywords">
+<var>${random_number_from_count}</var>
+<arg>${name_list_count}</arg>
+<msg timestamp="20231129 15:45:05.203" level="INFO">${random_number_from_count} = 49</msg>
+<status status="PASS" starttime="20231129 15:45:05.202" endtime="20231129 15:45:05.203"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:45:05.203" endtime="20231129 15:45:05.479"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:05.483" level="INFO">Clicking element '(//td[@role='cell' and @class='cluster-name'])[49]'.</msg>
+<status status="PASS" starttime="20231129 15:45:05.480" endtime="20231129 15:45:05.533"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${job_details_clone_btn}</arg>
+<arg>30</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:45:05.533" endtime="20231129 15:45:06.403"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${job_details_clone_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:06.403" level="INFO">Clicking element 'xpath://div[text()='CLONE']/parent::div'.</msg>
+<status status="PASS" starttime="20231129 15:45:06.403" endtime="20231129 15:45:06.467"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${new_job_id}</var>
+<arg>${job_id_loc}</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:06.497" level="INFO">${new_job_id} = </msg>
+<status status="PASS" starttime="20231129 15:45:06.468" endtime="20231129 15:45:06.497"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${job_clone_submit_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:45:06.497" endtime="20231129 15:45:06.509"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${job_clone_submit_btn}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:45:06.509" endtime="20231129 15:45:06.775"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${job_clone_submit_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:06.775" level="INFO">Clicking element 'xpath://div[text()='SUBMIT']/parent::div[@class='submit-button-style']'.</msg>
+<status status="PASS" starttime="20231129 15:45:06.775" endtime="20231129 15:45:06.803"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${toastify_submit_success_message}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<msg timestamp="20231129 15:45:27.071" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-4.png"&gt;&lt;img src="selenium-screenshot-4.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg timestamp="20231129 15:45:27.071" level="FAIL">Element 'xpath://div[@role='alert']/div[contains(text(),'successfully')]' not visible after 20 seconds.</msg>
+<status status="FAIL" starttime="20231129 15:45:06.803" endtime="20231129 15:45:27.071"/>
+</kw>
+<kw name="Element Should Contain" library="Selenium2Library">
+<arg>${toastify_submit_success_message}</arg>
+<arg>${new_job_id}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:27.071" endtime="20231129 15:45:27.071"/>
+</kw>
+<status status="FAIL" starttime="20231129 15:44:42.729" endtime="20231129 15:45:27.071"/>
+</kw>
+<kw name="logout" library="login" type="TEARDOWN">
+<doc>closing the Browser</doc>
+<kw name="Close Browser" library="Selenium2Library">
+<doc>Closes the current browser.</doc>
+<status status="PASS" starttime="20231129 15:45:27.072" endtime="20231129 15:45:27.192"/>
+</kw>
+<status status="PASS" starttime="20231129 15:45:27.071" endtime="20231129 15:45:27.192"/>
+</kw>
+<status status="FAIL" starttime="20231129 15:44:27.281" endtime="20231129 15:45:27.193">Element 'xpath://div[@role='alert']/div[contains(text(),'successfully')]' not visible after 20 seconds.</status>
+</test>
+<test id="s1-t6" name="test6" line="44">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231129 15:45:27.193" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231129 15:45:27.193" endtime="20231129 15:45:28.811"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231129 15:45:28.812" endtime="20231129 15:45:29.274"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:45:29.274" endtime="20231129 15:45:29.290"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:29.291" level="INFO">Typing text 'be566856f6e875f9e597006b44cec1877116ca737bfee239' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231129 15:45:29.290" endtime="20231129 15:45:29.379"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:29.379" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231129 15:45:29.379" endtime="20231129 15:45:29.595"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:45:29.595" endtime="20231129 15:45:41.267"/>
+</kw>
+<status status="PASS" starttime="20231129 15:45:27.193" endtime="20231129 15:45:41.267"/>
+</kw>
+<kw name="project_check_dataproc_jupyter_extension_dev" library="batches">
+<kw name="open_config_setup_page" library="config_setup">
+<doc>opening config setup page from launcher</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:45:41.268" endtime="20231129 15:45:41.279"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:41.279" level="INFO">Clicking element 'xpath://div[text()="Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:45:41.279" endtime="20231129 15:45:41.303"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:45:41.303" endtime="20231129 15:45:41.315"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:41.316" level="INFO">Clicking element 'xpath://div[text()="Cloud Dataproc Settings"]'.</msg>
+<status status="PASS" starttime="20231129 15:45:41.315" endtime="20231129 15:45:41.376"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:45:41.376" endtime="20231129 15:45:41.860"/>
+</kw>
+<status status="PASS" starttime="20231129 15:45:41.267" endtime="20231129 15:45:41.860"/>
+</kw>
+<kw name="Get Value" library="Selenium2Library">
+<var>${proj_id}</var>
+<arg>${project_id_dropdown}</arg>
+<doc>Returns the value attribute of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:41.875" level="INFO">${proj_id} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:45:41.861" endtime="20231129 15:45:41.875"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${proj_id_set}</var>
+<arg>dataproc-jupyter-extension-dev</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:45:41.875" level="INFO">${proj_id_set} = dataproc-jupyter-extension-dev</msg>
+<status status="PASS" starttime="20231129 15:45:41.875" endtime="20231129 15:45:41.875"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${count}</var>
+<arg>${close_btn_on_tabs}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 15:45:41.875" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:45:41.882" level="INFO">${count} = 3</msg>
+<status status="PASS" starttime="20231129 15:45:41.875" endtime="20231129 15:45:41.882"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${a}</var>
+<arg>0</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 15:45:41.882" level="INFO">${a} = 0</msg>
+<status status="PASS" starttime="20231129 15:45:41.882" endtime="20231129 15:45:41.882"/>
+</kw>
+<for flavor="IN RANGE">
+<var>${a}</var>
+<value>1</value>
+<value>${count}</value>
+<iter>
+<var name="${a}">1</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:45:41.882" endtime="20231129 15:45:41.883"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:41.883" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:45:41.883" endtime="20231129 15:45:41.915"/>
+</kw>
+<status status="PASS" starttime="20231129 15:45:41.882" endtime="20231129 15:45:41.915"/>
+</iter>
+<iter>
+<var name="${a}">2</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 15:45:41.915" endtime="20231129 15:45:41.915"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:41.915" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 15:45:41.915" endtime="20231129 15:45:41.960"/>
+</kw>
+<status status="PASS" starttime="20231129 15:45:41.915" endtime="20231129 15:45:41.960"/>
+</iter>
+<status status="PASS" starttime="20231129 15:45:41.882" endtime="20231129 15:45:41.960"/>
+</for>
+<status status="PASS" starttime="20231129 15:45:41.875" endtime="20231129 15:45:41.960"/>
+</kw>
+<if>
+<branch type="IF" condition="$proj_id != $proj_id_set">
+<kw name="change_project_for_extension_dev" library="runtimetemplate">
+<status status="NOT RUN" starttime="20231129 15:45:41.961" endtime="20231129 15:45:41.961"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<status status="NOT RUN" starttime="20231129 15:45:41.961" endtime="20231129 15:45:41.961"/>
+</kw>
+<status status="NOT RUN" starttime="20231129 15:45:41.960" endtime="20231129 15:45:41.961"/>
+</branch>
+<status status="PASS" starttime="20231129 15:45:41.960" endtime="20231129 15:45:41.961"/>
+</if>
+<status status="PASS" starttime="20231129 15:45:41.267" endtime="20231129 15:45:41.961"/>
+</kw>
+<kw name="open_jobs_listing_page" library="jobs">
+<doc>launcher page to clusters listing page.</doc>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 15:45:41.961" endtime="20231129 15:45:42.262"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:42.262" level="INFO">Clicking element 'xpath://p[text()='Clusters']/parent::div/parent::div'.</msg>
+<status status="PASS" starttime="20231129 15:45:42.262" endtime="20231129 15:45:42.309"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:45:42.309" endtime="20231129 15:45:42.334"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:42.335" level="INFO">Clicking element 'xpath://div[text()='Jobs']'.</msg>
+<status status="PASS" starttime="20231129 15:45:42.334" endtime="20231129 15:45:42.384"/>
+</kw>
+<status status="PASS" starttime="20231129 15:45:41.961" endtime="20231129 15:45:42.384"/>
+</kw>
+<kw name="job_details_delete" library="jobs">
+<doc>delete the job going inside the details page.</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_id_first_element}</arg>
+<arg>30</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<msg timestamp="20231129 15:45:50.146" level="WARN">Keyword 'Capture Page Screenshot' could not be run on failure: Message: disconnected: not connected to DevTools
+  (failed to check if window was closed: disconnected: not connected to DevTools)
+  (Session info: chrome=119.0.6045.199)
+Stacktrace:
+0   chromedriver                        0x000000010303e004 chromedriver + 4169732
+1   chromedriver                        0x0000000103035ff8 chromedriver + 4136952
+2   chromedriver                        0x0000000102c8b500 chromedriver + 292096
+3   chromedriver                        0x0000000102c73094 chromedriver + 192660
+4   chromedriver                        0x0000000102c72f9c chromedriver + 192412
+5   chromedriver                        0x0000000102d0afc8 chromedriver + 815048
+6   chromedriver                        0x0000000102cc45e8 chromedriver + 525800
+7   chromedriver                        0x0000000102cc54b8 chromedriver + 529592
+8   chromedriver                        0x0000000103004334 chromedriver + 3932980
+9   chromedriver                        0x0000000103008970 chromedriver + 3950960
+10  chromedriver                        0x0000000102fec774 chromedriver + 3835764
+11  chromedriver                        0x0000000103009478 chromedriver + 3953784
+12  chromedriver                        0x0000000102fdeab4 chromedriver + 3779252
+13  chromedriver                        0x0000000103025914 chromedriver + 4069652
+14  chromedriver                        0x0000000103025a90 chromedriver + 4070032
+15  chromedriver                        0x0000000103035c70 chromedriver + 4136048
+16  libsystem_pthread.dylib             0x000000018965d034 _pthread_start + 136
+17  libsystem_pthread.dylib             0x0000000189657e3c thread_start + 8
+</msg>
+<msg timestamp="20231129 15:45:50.147" level="FAIL">WebDriverException: Message: disconnected: not connected to DevTools
+  (failed to check if window was closed: disconnected: not connected to DevTools)
+  (Session info: chrome=119.0.6045.199)
+Stacktrace:
+0   chromedriver                        0x000000010303e004 chromedriver + 4169732
+1   chromedriver                        0x0000000103035ff8 chromedriver + 4136952
+2   chromedriver                        0x0000000102c8b500 chromedriver + 292096
+3   chromedriver                        0x0000000102c73094 chromedriver + 192660
+4   chromedriver                        0x0000000102c72f9c chromedriver + 192412
+5   chromedriver                        0x0000000102d0afc8 chromedriver + 815048
+6   chromedriver                        0x0000000102cc45e8 chromedriver + 525800
+7   chromedriver                        0x0000000102cc54b8 chromedriver + 529592
+8   chromedriver                        0x0000000103004334 chromedriver + 3932980
+9   chromedriver                        0x0000000103008970 chromedriver + 3950960
+10  chromedriver                        0x0000000102fec774 chromedriver + 3835764
+11  chromedriver                        0x0000000103009478 chromedriver + 3953784
+12  chromedriver                        0x0000000102fdeab4 chromedriver + 3779252
+13  chromedriver                        0x0000000103025914 chromedriver + 4069652
+14  chromedriver                        0x0000000103025a90 chromedriver + 4070032
+15  chromedriver                        0x0000000103035c70 chromedriver + 4136048
+16  libsystem_pthread.dylib             0x000000018965d034 _pthread_start + 136
+17  libsystem_pthread.dylib             0x0000000189657e3c thread_start + 8
+</msg>
+<status status="FAIL" starttime="20231129 15:45:42.385" endtime="20231129 15:45:50.164"/>
+</kw>
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${name_list_count}</var>
+<arg>${jobs_id_list}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.164" endtime="20231129 15:45:50.164"/>
+</kw>
+<kw name="Get Random Number From Range" library="python_keywords">
+<var>${random_number_from_count}</var>
+<arg>${name_list_count}</arg>
+<status status="NOT RUN" starttime="20231129 15:45:50.164" endtime="20231129 15:45:50.164"/>
+</kw>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.164" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//td[@role='cell' and @class='cluster-name'])[${random_number_from_count}]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${job_details_view_spark_logs}</arg>
+<arg>30</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${job_details_delete_btn}</arg>
+<arg>${wait_min}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${job_id}</var>
+<arg>${job_details_name}</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${job_details_delete_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${confirm_deletion_dialog}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${confirm_deletion_cancel_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${confirm_deletion_delete_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Element Should Contain" library="Selenium2Library">
+<arg>${confirm_deletion_text}</arg>
+<arg>${job_id}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${confirm_deletion_cancel_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${job_details_delete_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${job_details_delete_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.165" endtime="20231129 15:45:50.165"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${confirm_deletion_dialog}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.166" endtime="20231129 15:45:50.166"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${confirm_deletion_cancel_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.166" endtime="20231129 15:45:50.166"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${confirm_deletion_delete_btn}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.166" endtime="20231129 15:45:50.166"/>
+</kw>
+<kw name="Element Should Contain" library="Selenium2Library">
+<arg>${confirm_deletion_text}</arg>
+<arg>${job_id}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.166" endtime="20231129 15:45:50.166"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${confirm_deletion_delete_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.166" endtime="20231129 15:45:50.166"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${toastify_success_message}</arg>
+<arg>30</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.166" endtime="20231129 15:45:50.166"/>
+</kw>
+<kw name="Element Should Contain" library="Selenium2Library">
+<arg>${toastify_success_message}</arg>
+<arg>${job_id}</arg>
+<doc>Verifies that element ``locator`` contains text ``expected``.</doc>
+<status status="NOT RUN" starttime="20231129 15:45:50.166" endtime="20231129 15:45:50.166"/>
+</kw>
+<status status="FAIL" starttime="20231129 15:45:42.384" endtime="20231129 15:45:50.166"/>
+</kw>
+<kw name="logout" library="login" type="TEARDOWN">
+<doc>closing the Browser</doc>
+<kw name="Close Browser" library="Selenium2Library">
+<doc>Closes the current browser.</doc>
+<status status="PASS" starttime="20231129 15:45:50.166" endtime="20231129 15:45:50.284"/>
+</kw>
+<status status="PASS" starttime="20231129 15:45:50.166" endtime="20231129 15:45:50.284"/>
+</kw>
+<status status="FAIL" starttime="20231129 15:45:27.193" endtime="20231129 15:45:50.284">WebDriverException: Message: disconnected: not connected to DevTools
+  (failed to check if window was closed: disconnected: not connected to DevTools)
+  (Session info: chrome=119.0.6045.199)
+Stacktrace:
+0   chromedriver                        0x000000010303e004 chromedriver + 4169732
+1   chromedriver                        0x0000000103035ff8 chromedriver + 4136952
+2   chromedriver                        0x0000000102c8b500 chromedriver + 292096
+3   chromedriver                        0x0000000102c73094 chromedriver + 192660
+4   chromedriver                        0x0000000102c72f9c chromedriver + 192412
+5   chromedriver                        0x0000000102d0afc8 chromedriver + 815048
+6   chromedriver                        0x0000000102cc45e8 chromedriver + 525800
+7   chromedriver                        0x0000000102cc54b8 chromedriver + 529592
+8   chromedriver                        0x0000000103004334 chromedriver + 3932980
+9   chromedriver                        0x0000000103008970 chromedriver + 3950960
+10  chromedriver                        0x0000000102fec774 chromedriver + 3835764
+11  chromedriver                        0x0000000103009478 chromedriver + 3953784
+12  chromedriver                        0x0000000102fdeab4 chromedriver + 3779252
+13  chromedriver                        0x0000000103025914 chromedriver + 4069652
+14  chromedriver                        0x0000000103025a90 chromedriver + 4070032
+15  chromedriver                        0x0000000103035c70 chromedriver + 4136048
+16  libsystem_pthread.dylib             0x000000018965d034 _pthread_start + 136
+17  libsystem_pthread.dylib             0x0000000189657e3c thread_start + 8
+</status>
+</test>
+<test id="s1-t7" name="test7" line="49">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231129 15:45:50.285" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231129 15:45:50.285" endtime="20231129 15:45:51.849"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231129 15:45:51.849" endtime="20231129 15:45:52.316"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 15:45:52.316" endtime="20231129 15:45:52.330"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:52.331" level="INFO">Typing text 'be566856f6e875f9e597006b44cec1877116ca737bfee239' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231129 15:45:52.330" endtime="20231129 15:45:52.438"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231129 15:45:52.438" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231129 15:45:52.438" endtime="20231129 15:45:52.480"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<msg timestamp="20231129 16:00:14.757" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-5.png"&gt;&lt;img src="selenium-screenshot-5.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg timestamp="20231129 16:00:14.757" level="FAIL">Element 'xpath://h2[text()='Dataproc Serverless Notebooks']' not visible after 2 minutes.</msg>
+<status status="FAIL" starttime="20231129 15:45:52.480" endtime="20231129 16:00:14.757"/>
+</kw>
+<status status="FAIL" starttime="20231129 15:45:50.284" endtime="20231129 16:00:14.757"/>
+</kw>
+<kw name="logout" library="login" type="TEARDOWN">
+<doc>closing the Browser</doc>
+<kw name="Close Browser" library="Selenium2Library">
+<doc>Closes the current browser.</doc>
+<status status="PASS" starttime="20231129 16:00:14.758" endtime="20231129 16:00:14.854"/>
+</kw>
+<status status="PASS" starttime="20231129 16:00:14.758" endtime="20231129 16:00:14.854"/>
+</kw>
+<status status="FAIL" starttime="20231129 15:45:50.284" endtime="20231129 16:00:14.856">Setup failed:
+Element 'xpath://h2[text()='Dataproc Serverless Notebooks']' not visible after 2 minutes.</status>
+</test>
+<test id="s1-t8" name="test8" line="54">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231129 16:00:14.857" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231129 16:00:14.857" endtime="20231129 16:00:21.670"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231129 16:00:21.670" endtime="20231129 16:00:22.128"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:00:22.128" endtime="20231129 16:00:22.141"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:22.142" level="INFO">Typing text 'be566856f6e875f9e597006b44cec1877116ca737bfee239' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231129 16:00:22.141" endtime="20231129 16:00:22.238"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:22.239" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231129 16:00:22.239" endtime="20231129 16:00:22.460"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:00:22.460" endtime="20231129 16:00:38.238"/>
+</kw>
+<status status="PASS" starttime="20231129 16:00:14.856" endtime="20231129 16:00:38.238"/>
+</kw>
+<kw name="change_project_for_extension_dev" library="runtimetemplate">
+<kw name="open_config_setup_page" library="config_setup">
+<doc>opening config setup page from launcher</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:00:38.239" endtime="20231129 16:00:38.251"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:38.252" level="INFO">Clicking element 'xpath://div[text()="Settings"]'.</msg>
+<status status="PASS" starttime="20231129 16:00:38.251" endtime="20231129 16:00:38.282"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:00:38.283" endtime="20231129 16:00:38.293"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:38.294" level="INFO">Clicking element 'xpath://div[text()="Cloud Dataproc Settings"]'.</msg>
+<status status="PASS" starttime="20231129 16:00:38.293" endtime="20231129 16:00:38.337"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:00:38.338" endtime="20231129 16:00:39.817"/>
+</kw>
+<status status="PASS" starttime="20231129 16:00:38.239" endtime="20231129 16:00:39.817"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${project_id_dropdown}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:39.817" level="INFO">Clicking element 'xpath://label[text()='Project ID']/parent::div//input'.</msg>
+<status status="PASS" starttime="20231129 16:00:39.817" endtime="20231129 16:00:39.859"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clear_project_id}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:39.860" level="INFO">Clicking element 'xpath://label[text()='Project ID']/parent::div/div/div/button[@class='MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium MuiAutocomplete-clearIndicator css-edpqz1']'.</msg>
+<status status="PASS" starttime="20231129 16:00:39.860" endtime="20231129 16:00:39.905"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${project_id_dropdown}</arg>
+<arg>dataproc-jupyter-extension-dev</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:39.906" level="INFO">Typing text 'dataproc-jupyter-extension-dev' into text field 'xpath://label[text()='Project ID']/parent::div//input'.</msg>
+<status status="PASS" starttime="20231129 16:00:39.905" endtime="20231129 16:00:40.051"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${select_project_id}</arg>
+<arg>${wait_max}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:00:40.051" endtime="20231129 16:00:40.075"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${select_project_id}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:40.076" level="INFO">Clicking element 'xpath://li[@class='MuiAutocomplete-option' and text()='dataproc-jupyter-extension-dev']'.</msg>
+<status status="PASS" starttime="20231129 16:00:40.075" endtime="20231129 16:00:40.108"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${project_region_dropdown}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:40.109" level="INFO">Clicking element 'xpath://label[text()='Region']/parent::div//input'.</msg>
+<status status="PASS" starttime="20231129 16:00:40.109" endtime="20231129 16:00:40.147"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clear_project_region}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:40.147" level="INFO">Clicking element 'xpath://label[text()='Region']/parent::div/div/div/button[@class='MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium MuiAutocomplete-clearIndicator css-edpqz1']'.</msg>
+<status status="PASS" starttime="20231129 16:00:40.147" endtime="20231129 16:00:40.180"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${project_region_dropdown}</arg>
+<arg>us-central1</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:40.181" level="INFO">Typing text 'us-central1' into text field 'xpath://label[text()='Region']/parent::div//input'.</msg>
+<status status="PASS" starttime="20231129 16:00:40.181" endtime="20231129 16:00:40.238"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${select_project_region}</arg>
+<arg>${wait_max}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:00:40.238" endtime="20231129 16:00:42.394"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${select_project_region}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:42.394" level="INFO">Clicking element 'xpath://li[text()='us-central1']'.</msg>
+<status status="PASS" starttime="20231129 16:00:42.394" endtime="20231129 16:00:42.433"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:42.434" level="INFO">Clicking element 'xpath://button[text()='Save']'.</msg>
+<status status="PASS" starttime="20231129 16:00:42.434" endtime="20231129 16:00:42.487"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${tostify_close_btn}</arg>
+<arg>60</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:00:42.487" endtime="20231129 16:00:53.622"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${tostify_close_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:53.623" level="INFO">Clicking element 'xpath://button[@class='jp-Button jp-mod-minimal jp-Notification-Toast-Close']//*[local-name()='svg' and @data-icon='ui-components:close']'.</msg>
+<status status="PASS" starttime="20231129 16:00:53.623" endtime="20231129 16:00:53.646"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${count}</var>
+<arg>${close_btn_on_tabs}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 16:00:53.646" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 16:00:53.654" level="INFO">${count} = 3</msg>
+<status status="PASS" starttime="20231129 16:00:53.646" endtime="20231129 16:00:53.654"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${a}</var>
+<arg>0</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 16:00:53.654" level="INFO">${a} = 0</msg>
+<status status="PASS" starttime="20231129 16:00:53.654" endtime="20231129 16:00:53.654"/>
+</kw>
+<for flavor="IN RANGE">
+<var>${a}</var>
+<value>1</value>
+<value>${count}</value>
+<iter>
+<var name="${a}">1</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 16:00:53.654" endtime="20231129 16:00:53.654"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:53.655" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 16:00:53.654" endtime="20231129 16:00:53.688"/>
+</kw>
+<status status="PASS" starttime="20231129 16:00:53.654" endtime="20231129 16:00:53.688"/>
+</iter>
+<iter>
+<var name="${a}">2</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 16:00:53.688" endtime="20231129 16:00:53.689"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:53.689" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 16:00:53.689" endtime="20231129 16:00:53.734"/>
+</kw>
+<status status="PASS" starttime="20231129 16:00:53.688" endtime="20231129 16:00:53.734"/>
+</iter>
+<status status="PASS" starttime="20231129 16:00:53.654" endtime="20231129 16:00:53.734"/>
+</for>
+<status status="PASS" starttime="20231129 16:00:53.646" endtime="20231129 16:00:53.734"/>
+</kw>
+<status status="PASS" starttime="20231129 16:00:38.239" endtime="20231129 16:00:53.734"/>
+</kw>
+<kw name="open_jobs_listing_page" library="jobs">
+<doc>launcher page to clusters listing page.</doc>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 16:00:53.735" endtime="20231129 16:00:54.031"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:54.031" level="INFO">Clicking element 'xpath://p[text()='Clusters']/parent::div/parent::div'.</msg>
+<status status="PASS" starttime="20231129 16:00:54.031" endtime="20231129 16:00:54.066"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:00:54.067" endtime="20231129 16:00:54.287"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:00:54.287" level="INFO">Clicking element 'xpath://div[text()='Jobs']'.</msg>
+<status status="PASS" starttime="20231129 16:00:54.287" endtime="20231129 16:00:54.315"/>
+</kw>
+<status status="PASS" starttime="20231129 16:00:53.734" endtime="20231129 16:00:54.315"/>
+</kw>
+<kw name="check_static_elements_jobs_listing" library="jobs">
+<doc>Check the static elements on the jobs listing page.</doc>
+<kw name="Wait Until Page Contains" library="Selenium2Library">
+<arg>Job ID</arg>
+<arg>${wait_20}</arg>
+<doc>Waits until ``text`` appears on the current page.</doc>
+<msg timestamp="20231129 16:01:14.591" level="INFO" html="true">&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan="3"&gt;&lt;a href="selenium-screenshot-1.png"&gt;&lt;img src="selenium-screenshot-1.png" width="800px"&gt;&lt;/a&gt;</msg>
+<msg timestamp="20231129 16:01:14.591" level="FAIL">Text 'Job ID' did not appear in 20 seconds.</msg>
+<status status="FAIL" starttime="20231129 16:00:54.315" endtime="20231129 16:01:14.591"/>
+</kw>
+<kw name="Page Should Contain" library="Selenium2Library">
+<arg>Job ID</arg>
+<doc>Verifies that current page contains ``text``.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.591" endtime="20231129 16:01:14.591"/>
+</kw>
+<kw name="Page Should Contain" library="Selenium2Library">
+<arg>Status</arg>
+<doc>Verifies that current page contains ``text``.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.591" endtime="20231129 16:01:14.591"/>
+</kw>
+<kw name="Page Should Contain" library="Selenium2Library">
+<arg>Region</arg>
+<doc>Verifies that current page contains ``text``.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.591" endtime="20231129 16:01:14.591"/>
+</kw>
+<kw name="Page Should Contain" library="Selenium2Library">
+<arg>Type</arg>
+<doc>Verifies that current page contains ``text``.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.591" endtime="20231129 16:01:14.591"/>
+</kw>
+<kw name="Page Should Contain" library="Selenium2Library">
+<arg>Start time</arg>
+<doc>Verifies that current page contains ``text``.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.592" endtime="20231129 16:01:14.592"/>
+</kw>
+<kw name="Page Should Contain" library="Selenium2Library">
+<arg>Elapsed time</arg>
+<doc>Verifies that current page contains ``text``.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.592" endtime="20231129 16:01:14.592"/>
+</kw>
+<kw name="Page Should Contain" library="Selenium2Library">
+<arg>Labels</arg>
+<doc>Verifies that current page contains ``text``.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.592" endtime="20231129 16:01:14.592"/>
+</kw>
+<kw name="Page Should Contain" library="Selenium2Library">
+<arg>Actions</arg>
+<doc>Verifies that current page contains ``text``.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.592" endtime="20231129 16:01:14.592"/>
+</kw>
+<status status="FAIL" starttime="20231129 16:00:54.315" endtime="20231129 16:01:14.592"/>
+</kw>
+<kw name="open_job_details_page" library="jobs">
+<doc>click on the random batch id and go to batch details.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.592" endtime="20231129 16:01:14.592"/>
+</kw>
+<kw name="check_static_elements_job_details" library="jobs">
+<doc>Check the static elements on the batch details page.</doc>
+<status status="NOT RUN" starttime="20231129 16:01:14.592" endtime="20231129 16:01:14.592"/>
+</kw>
+<kw name="logout" library="login" type="TEARDOWN">
+<doc>closing the Browser</doc>
+<kw name="Close Browser" library="Selenium2Library">
+<doc>Closes the current browser.</doc>
+<status status="PASS" starttime="20231129 16:01:14.592" endtime="20231129 16:01:14.717"/>
+</kw>
+<status status="PASS" starttime="20231129 16:01:14.592" endtime="20231129 16:01:14.717"/>
+</kw>
+<status status="FAIL" starttime="20231129 16:00:14.856" endtime="20231129 16:01:14.718">Text 'Job ID' did not appear in 20 seconds.</status>
+</test>
+<test id="s1-t9" name="test9" line="61">
+<kw name="login" library="login" type="SETUP">
+<doc>to tnter the jupyterlab</doc>
+<kw name="Open Browser" library="Selenium2Library">
+<arg>${url}</arg>
+<arg>${chrome}</arg>
+<doc>Opens a new browser instance to the optional ``url``.</doc>
+<msg timestamp="20231129 16:01:14.719" level="INFO">Opening browser 'headlesschrome' to base url 'http://localhost:8888/lab'.</msg>
+<status status="PASS" starttime="20231129 16:01:14.718" endtime="20231129 16:01:16.173"/>
+</kw>
+<kw name="Maximize Browser Window" library="Selenium2Library">
+<doc>Maximizes current browser window.</doc>
+<status status="PASS" starttime="20231129 16:01:16.173" endtime="20231129 16:01:16.630"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${password_input}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:01:16.630" endtime="20231129 16:01:16.644"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${password_input}</arg>
+<arg>${token}</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:16.644" level="INFO">Typing text 'be566856f6e875f9e597006b44cec1877116ca737bfee239' into text field 'xpath://input[@id="password_input"]'.</msg>
+<status status="PASS" starttime="20231129 16:01:16.644" endtime="20231129 16:01:16.748"/>
+</kw>
+<kw name="Click Button" library="Selenium2Library">
+<arg>${login_btn}</arg>
+<doc>Clicks the button identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:16.748" level="INFO">Clicking button 'xpath://button[@id="login_submit"]'.</msg>
+<status status="PASS" starttime="20231129 16:01:16.748" endtime="20231129 16:01:16.980"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${serverless_txt_launcher_screen}</arg>
+<arg>120</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:01:16.980" endtime="20231129 16:01:30.507"/>
+</kw>
+<status status="PASS" starttime="20231129 16:01:14.718" endtime="20231129 16:01:30.507"/>
+</kw>
+<kw name="change_project_for_extension_dev" library="runtimetemplate">
+<kw name="open_config_setup_page" library="config_setup">
+<doc>opening config setup page from launcher</doc>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:01:30.508" endtime="20231129 16:01:30.520"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jupyter_settings_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:30.520" level="INFO">Clicking element 'xpath://div[text()="Settings"]'.</msg>
+<status status="PASS" starttime="20231129 16:01:30.520" endtime="20231129 16:01:30.545"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:01:30.545" endtime="20231129 16:01:30.565"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_setup_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:30.566" level="INFO">Clicking element 'xpath://div[text()="Cloud Dataproc Settings"]'.</msg>
+<status status="PASS" starttime="20231129 16:01:30.565" endtime="20231129 16:01:30.600"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<arg>20</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:01:30.600" endtime="20231129 16:01:31.456"/>
+</kw>
+<status status="PASS" starttime="20231129 16:01:30.508" endtime="20231129 16:01:31.456"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${project_id_dropdown}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:31.457" level="INFO">Clicking element 'xpath://label[text()='Project ID']/parent::div//input'.</msg>
+<status status="PASS" starttime="20231129 16:01:31.456" endtime="20231129 16:01:31.509"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clear_project_id}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:31.509" level="INFO">Clicking element 'xpath://label[text()='Project ID']/parent::div/div/div/button[@class='MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium MuiAutocomplete-clearIndicator css-edpqz1']'.</msg>
+<status status="PASS" starttime="20231129 16:01:31.509" endtime="20231129 16:01:31.561"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${project_id_dropdown}</arg>
+<arg>dataproc-jupyter-extension-dev</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:31.561" level="INFO">Typing text 'dataproc-jupyter-extension-dev' into text field 'xpath://label[text()='Project ID']/parent::div//input'.</msg>
+<status status="PASS" starttime="20231129 16:01:31.561" endtime="20231129 16:01:31.730"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${select_project_id}</arg>
+<arg>${wait_max}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:01:31.730" endtime="20231129 16:01:31.763"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${select_project_id}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:31.763" level="INFO">Clicking element 'xpath://li[@class='MuiAutocomplete-option' and text()='dataproc-jupyter-extension-dev']'.</msg>
+<status status="PASS" starttime="20231129 16:01:31.763" endtime="20231129 16:01:31.827"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${project_region_dropdown}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:31.828" level="INFO">Clicking element 'xpath://label[text()='Region']/parent::div//input'.</msg>
+<status status="PASS" starttime="20231129 16:01:31.828" endtime="20231129 16:01:31.894"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clear_project_region}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:31.895" level="INFO">Clicking element 'xpath://label[text()='Region']/parent::div/div/div/button[@class='MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium MuiAutocomplete-clearIndicator css-edpqz1']'.</msg>
+<status status="PASS" starttime="20231129 16:01:31.894" endtime="20231129 16:01:31.950"/>
+</kw>
+<kw name="Input Text" library="Selenium2Library">
+<arg>${project_region_dropdown}</arg>
+<arg>us-central1</arg>
+<doc>Types the given ``text`` into the text field identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:31.950" level="INFO">Typing text 'us-central1' into text field 'xpath://label[text()='Region']/parent::div//input'.</msg>
+<status status="PASS" starttime="20231129 16:01:31.950" endtime="20231129 16:01:32.105"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${select_project_region}</arg>
+<arg>${wait_max}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:01:32.105" endtime="20231129 16:01:33.404"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${select_project_region}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:33.404" level="INFO">Clicking element 'xpath://li[text()='us-central1']'.</msg>
+<status status="PASS" starttime="20231129 16:01:33.404" endtime="20231129 16:01:33.431"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${config_save_button}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:33.432" level="INFO">Clicking element 'xpath://button[text()='Save']'.</msg>
+<status status="PASS" starttime="20231129 16:01:33.431" endtime="20231129 16:01:33.472"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${tostify_close_btn}</arg>
+<arg>60</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:01:33.472" endtime="20231129 16:01:44.420"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${tostify_close_btn}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:44.421" level="INFO">Clicking element 'xpath://button[@class='jp-Button jp-mod-minimal jp-Notification-Toast-Close']//*[local-name()='svg' and @data-icon='ui-components:close']'.</msg>
+<status status="PASS" starttime="20231129 16:01:44.420" endtime="20231129 16:01:44.445"/>
+</kw>
+<kw name="close_tabs" library="batches">
+<kw name="Get Element Count" library="Selenium2Library">
+<var>${count}</var>
+<arg>${close_btn_on_tabs}</arg>
+<doc>Returns the number of elements matching ``locator``.</doc>
+<msg timestamp="20231129 16:01:44.446" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 16:01:44.454" level="INFO">${count} = 3</msg>
+<status status="PASS" starttime="20231129 16:01:44.446" endtime="20231129 16:01:44.454"/>
+</kw>
+<kw name="Set Variable" library="BuiltIn">
+<var>${a}</var>
+<arg>0</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20231129 16:01:44.454" level="INFO">${a} = 0</msg>
+<status status="PASS" starttime="20231129 16:01:44.454" endtime="20231129 16:01:44.454"/>
+</kw>
+<for flavor="IN RANGE">
+<var>${a}</var>
+<value>1</value>
+<value>${count}</value>
+<iter>
+<var name="${a}">1</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 16:01:44.455" endtime="20231129 16:01:44.455"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:44.455" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 16:01:44.455" endtime="20231129 16:01:44.487"/>
+</kw>
+<status status="PASS" starttime="20231129 16:01:44.454" endtime="20231129 16:01:44.487"/>
+</iter>
+<iter>
+<var name="${a}">2</var>
+<kw name="Log To Console" library="BuiltIn">
+<arg>${a}</arg>
+<doc>Logs the given message to the console.</doc>
+<status status="PASS" starttime="20231129 16:01:44.487" endtime="20231129 16:01:44.487"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:44.488" level="INFO">Clicking element '(//*[local-name()='svg' and @data-icon='ui-components:close'])[2]'.</msg>
+<status status="PASS" starttime="20231129 16:01:44.487" endtime="20231129 16:01:44.534"/>
+</kw>
+<status status="PASS" starttime="20231129 16:01:44.487" endtime="20231129 16:01:44.534"/>
+</iter>
+<status status="PASS" starttime="20231129 16:01:44.454" endtime="20231129 16:01:44.534"/>
+</for>
+<status status="PASS" starttime="20231129 16:01:44.445" endtime="20231129 16:01:44.534"/>
+</kw>
+<status status="PASS" starttime="20231129 16:01:30.507" endtime="20231129 16:01:44.534"/>
+</kw>
+<kw name="open_jobs_listing_page" library="jobs">
+<doc>launcher page to clusters listing page.</doc>
+<kw name="Scroll Element Into View" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Scrolls the element identified by ``locator`` into view.</doc>
+<status status="PASS" starttime="20231129 16:01:44.534" endtime="20231129 16:01:44.831"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${clusters_card_launcher_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:44.831" level="INFO">Clicking element 'xpath://p[text()='Clusters']/parent::div/parent::div'.</msg>
+<status status="PASS" starttime="20231129 16:01:44.831" endtime="20231129 16:01:44.865"/>
+</kw>
+<kw name="Wait Until Element Is Visible" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Waits until the element ``locator`` is visible.</doc>
+<status status="PASS" starttime="20231129 16:01:44.865" endtime="20231129 16:01:45.083"/>
+</kw>
+<kw name="Click Element" library="Selenium2Library">
+<arg>${jobs_top_tabpanel_loc}</arg>
+<doc>Click the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:01:45.084" level="INFO">Clicking element 'xpath://div[text()='Jobs']'.</msg>
+<status status="PASS" starttime="20231129 16:01:45.083" endtime="20231129 16:01:45.108"/>
+</kw>
+<status status="PASS" starttime="20231129 16:01:44.534" endtime="20231129 16:01:45.108"/>
+</kw>
+<kw name="check_descending_order_of_datetime" library="batches">
+<doc>get first and last datetime and check if that is arranged in descending order.</doc>
+<kw name="Wait Until Page Contains Element" library="Selenium2Library">
+<arg>xpath://tr[1]/td[contains(text()," at ")]</arg>
+<arg>${wait_20}</arg>
+<doc>Waits until the element ``locator`` appears on the current page.</doc>
+<status status="PASS" starttime="20231129 16:01:45.109" endtime="20231129 16:02:03.461"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${temp1}</var>
+<arg>xpath://tr[1]/td[contains(text()," at ")]</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:02:03.473" level="INFO">${temp1} = November 29, 2023 at 10:52:37 AM</msg>
+<status status="PASS" starttime="20231129 16:02:03.461" endtime="20231129 16:02:03.473"/>
+</kw>
+<kw name="Get Text" library="Selenium2Library">
+<var>${temp2}</var>
+<arg>xpath://tr[50]/td[contains(text()," at ")]</arg>
+<doc>Returns the text value of the element identified by ``locator``.</doc>
+<msg timestamp="20231129 16:02:03.483" level="INFO">${temp2} = October 23, 2023 at 7:26:48 PM</msg>
+<status status="PASS" starttime="20231129 16:02:03.473" endtime="20231129 16:02:03.483"/>
+</kw>
+<kw name="Check Date Time Descending Order" library="python_keywords">
+<var>${sub}</var>
+<arg>${temp1}</arg>
+<arg>${temp2}</arg>
+<msg timestamp="20231129 16:02:03.486" level="INFO">${sub} = True</msg>
+<status status="PASS" starttime="20231129 16:02:03.483" endtime="20231129 16:02:03.486"/>
+</kw>
+<if>
+<branch type="IF" condition="$sub==True">
+<kw name="Pass Execution" library="BuiltIn">
+<arg>date and time is sorted in descending order.</arg>
+<doc>Skips rest of the current test, setup, or teardown with PASS status.</doc>
+<msg timestamp="20231129 16:02:03.486" level="INFO">Execution passed with message:
+date and time is sorted in descending order.</msg>
+<status status="PASS" starttime="20231129 16:02:03.486" endtime="20231129 16:02:03.486"/>
+</kw>
+<status status="PASS" starttime="20231129 16:02:03.486" endtime="20231129 16:02:03.486"/>
+</branch>
+<status status="PASS" starttime="20231129 16:02:03.486" endtime="20231129 16:02:03.486"/>
+</if>
+<status status="PASS" starttime="20231129 16:01:45.109" endtime="20231129 16:02:03.486"/>
+</kw>
+<kw name="logout" library="login" type="TEARDOWN">
+<doc>closing the Browser</doc>
+<kw name="Close Browser" library="Selenium2Library">
+<doc>Closes the current browser.</doc>
+<status status="PASS" starttime="20231129 16:02:03.486" endtime="20231129 16:02:03.605"/>
+</kw>
+<status status="PASS" starttime="20231129 16:02:03.486" endtime="20231129 16:02:03.605"/>
+</kw>
+<status status="PASS" starttime="20231129 16:01:14.718" endtime="20231129 16:02:03.606">date and time is sorted in descending order.</status>
+</test>
+<status status="FAIL" starttime="20231129 15:41:18.734" endtime="20231129 16:02:03.606"/>
+</suite>
+<statistics>
+<total>
+<stat pass="4" fail="5" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="4" fail="5" skip="0" id="s1" name="Jobs Listing">Jobs Listing</stat>
+</suite>
+</statistics>
+<errors>
+<msg timestamp="20231129 15:41:33.535" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:41:56.843" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:42:12.870" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:42:34.924" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:42:56.910" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:43:18.095" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:43:34.288" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:44:06.056" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:44:42.244" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:45:05.194" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:45:41.875" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 15:45:50.146" level="WARN">Keyword 'Capture Page Screenshot' could not be run on failure: Message: disconnected: not connected to DevTools
+  (failed to check if window was closed: disconnected: not connected to DevTools)
+  (Session info: chrome=119.0.6045.199)
+Stacktrace:
+0   chromedriver                        0x000000010303e004 chromedriver + 4169732
+1   chromedriver                        0x0000000103035ff8 chromedriver + 4136952
+2   chromedriver                        0x0000000102c8b500 chromedriver + 292096
+3   chromedriver                        0x0000000102c73094 chromedriver + 192660
+4   chromedriver                        0x0000000102c72f9c chromedriver + 192412
+5   chromedriver                        0x0000000102d0afc8 chromedriver + 815048
+6   chromedriver                        0x0000000102cc45e8 chromedriver + 525800
+7   chromedriver                        0x0000000102cc54b8 chromedriver + 529592
+8   chromedriver                        0x0000000103004334 chromedriver + 3932980
+9   chromedriver                        0x0000000103008970 chromedriver + 3950960
+10  chromedriver                        0x0000000102fec774 chromedriver + 3835764
+11  chromedriver                        0x0000000103009478 chromedriver + 3953784
+12  chromedriver                        0x0000000102fdeab4 chromedriver + 3779252
+13  chromedriver                        0x0000000103025914 chromedriver + 4069652
+14  chromedriver                        0x0000000103025a90 chromedriver + 4070032
+15  chromedriver                        0x0000000103035c70 chromedriver + 4136048
+16  libsystem_pthread.dylib             0x000000018965d034 _pthread_start + 136
+17  libsystem_pthread.dylib             0x0000000189657e3c thread_start + 8
+</msg>
+<msg timestamp="20231129 16:00:53.646" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+<msg timestamp="20231129 16:01:44.446" level="WARN">Keyword 'Get Element Count' found both from a custom library 'Selenium2Library' and a standard library 'XML'. The custom keyword is used. To select explicitly, and to get rid of this warning, use either 'Selenium2Library.Get Element Count' or 'XML.Get Element Count'.</msg>
+</errors>
+</robot>
