@@ -16,7 +16,7 @@ from jinja2 import Environment, FileSystemLoader
 import uuid
 
 unique_id = str(uuid.uuid4().hex)
-dag_file = f"pysparkTemplate_{unique_id}.py"
+job_id = ''
 def getBucket(runtime_env):
     credentials = get_cached_credentials()
     if 'access_token' and 'project_id' and 'region_id' in credentials:
@@ -43,6 +43,7 @@ class CustomExecutionManager(ExecutionManager):
     @staticmethod
     def uploadToGcloud(runtime_env):
         credentials = get_cached_credentials()
+        dag_file = f"dagfile_{job_id}.py"
         if 'region_id' in credentials:
             region = credentials['region_id']
             cmd = f"gcloud beta composer environments storage dags import --environment {runtime_env} --location {region} --source={dag_file}"
@@ -67,6 +68,7 @@ class CustomExecutionManager(ExecutionManager):
         environment = Environment(loader=FileSystemLoader(TEMPLATES_FOLDER_PATH))
         template = environment.get_template(DAG_TEMPLATE_V1)
         credentials = get_cached_credentials()
+        dag_file = f"dagFile_{job_id}.py"
         gcs_dag_bucket = getBucket(runtime_env)
         if 'project_id' in credentials:
             gcpProjectId = credentials['project_id']
@@ -76,6 +78,8 @@ class CustomExecutionManager(ExecutionManager):
 
     def execute(self):
         job = self.model
+        global job_id
+        job_id = job.job_id
         with open(self.staging_paths["input"], encoding="utf-8") as f:
             nb = nbformat.read(f, as_version=4)
 
