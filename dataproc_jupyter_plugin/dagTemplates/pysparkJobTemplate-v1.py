@@ -26,9 +26,9 @@ submit_pyspark_job = DataprocSubmitJobOperator(
     region='{{gcpRegion}}',  # This parameter can be overridden by the connection 
     job={
         'reference': {'project_id': '{{gcpProjectId}}', 'job_id': '{{job_id}}'},
-        'placement': {'cluster_name': '{{clusterName}}'},
+        'placement': {'cluster_name': 'cluster-9a5a'},
         'pyspark_job': {
-            'main_python_file_uri': 'file://{{inputFilePath}}'
+            'main_python_file_uri': '{{inputFilePath}}'
         },
     },
     gcp_conn_id='google_cloud_default',  # Reference to the GCP connection
