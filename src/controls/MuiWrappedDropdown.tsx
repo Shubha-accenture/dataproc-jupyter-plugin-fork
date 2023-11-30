@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { StyledComponent } from '@emotion/styled';
 import {
   Autocomplete,
   AutocompleteProps,
@@ -40,11 +41,13 @@ function DropdownInternal(props: Props) {
   );
 }
 
-export const Dropdown = styled(DropdownInternal)<Props>({
-  '& .MuiInputBase-root': {
-    padding: 0
-  },
-  '& .MuiOutlinedInput-notchedOutline': {
-    borderStyle: 'none'
+export const Dropdown: StyledComponent<Props> = styled(DropdownInternal)<Props>(
+  {
+    '& .MuiInputBase-root': {
+      padding: 0
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderStyle: 'none'
+    }
   }
-});
+);

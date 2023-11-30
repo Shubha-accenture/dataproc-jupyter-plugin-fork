@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { StyledComponent } from '@emotion/styled';
 import { styled } from '@mui/material';
 import { MuiChipsInput } from 'mui-chips-input';
 import React from 'react';
@@ -32,6 +33,8 @@ function TagsInputInternal(props: ReactTagsInputProps) {
   );
 }
 
-export const TagsInput = styled(TagsInputInternal)<ReactTagsInputProps>({
+export const TagsInput: StyledComponent<ReactTagsInputProps> = styled(
+  TagsInputInternal
+)<ReactTagsInputProps>({
   marginTop: '10px'
 });

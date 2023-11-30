@@ -14,12 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { StyledComponent } from '@emotion/styled';
 import { MenuItem, Select as MuiSelect, styled } from '@mui/material';
 import React from 'react';
 import type { SelectProps } from 'semantic-ui-react';
 
 function SelectInternal(props: SelectProps) {
-  const { className, value, onChange, options,disabled,onFocus, onBlur }= props;
+  const { className, value, onChange, options, disabled, onFocus, onBlur } =
+    props;
   return (
     <MuiSelect
       className={className}
@@ -33,7 +35,8 @@ function SelectInternal(props: SelectProps) {
       onFocus={e =>
         onFocus?.(e as unknown as React.FocusEvent<HTMLInputElement>, {
           value
-        })}
+        })
+      }
       onBlur={e =>
         onBlur?.(e as unknown as React.FocusEvent<HTMLInputElement>, {
           value: e.target.value
@@ -47,7 +50,9 @@ function SelectInternal(props: SelectProps) {
   );
 }
 
-export const Select = styled(SelectInternal)<SelectProps>({
+export const Select: StyledComponent<SelectProps> = styled(
+  SelectInternal
+)<SelectProps>({
   marginTop: '10px',
   '& .MuiInputBase-input': {
     padding: '9.5px 14px'

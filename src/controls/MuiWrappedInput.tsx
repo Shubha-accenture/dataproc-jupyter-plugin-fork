@@ -14,19 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {  TextField, styled } from '@mui/material';
+import { StyledComponent } from '@emotion/styled';
+import { TextField, styled } from '@mui/material';
 import React from 'react';
-import {  type InputProps } from 'semantic-ui-react';
+import { type InputProps } from 'semantic-ui-react';
 
 function InputInternal(props: InputProps) {
-  const { className, value, onChange, placeholder, disabled, defaultValue ,onBlur,Label} = props;
+  const {
+    className,
+    value,
+    onChange,
+    placeholder,
+    disabled,
+    defaultValue,
+    onBlur,
+    Label
+  } = props;
   return (
-  <TextField
+    <TextField
       className={className}
       value={value}
-      onChange={e => onChange?.(e as React.ChangeEvent<HTMLInputElement>, {
-        value: e.target.value
-      })}
+      onChange={e =>
+        onChange?.(e as React.ChangeEvent<HTMLInputElement>, {
+          value: e.target.value
+        })
+      }
       onBlur={onBlur}
       placeholder={placeholder}
       disabled={disabled}
@@ -36,7 +48,9 @@ function InputInternal(props: InputProps) {
   );
 }
 
-export const Input = styled(InputInternal)<InputProps>({
+export const Input: StyledComponent<InputProps> = styled(
+  InputInternal
+)<InputProps>({
   marginTop: '10px',
   '& .MuiInputBase-input': {
     padding: '9.5px 14px'

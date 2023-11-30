@@ -49,6 +49,7 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { GCSDrive } from './gcs/gcsDrive';
 import { GcsBrowserWidget } from './gcs/gcsBrowserWidget';
 import { DataprocLoggingService } from './utils/loggingService';
+import { schedulerAdvancedOptionsPlugin } from './scheduler/advancedOptionsPlugin';
 
 const iconDpms = new LabIcon({
   name: 'launcher:dpms-icon',
@@ -475,7 +476,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     // Long term we should just replace the toast calls across the plugin with
     // apputils:notify.
     commands.execute('apputils:notify', {
-      message: 'Dataproc Jupyter Plugin Successfully Loaded',
+      message: 'Dataproc Jupyter Plugin Successfully Loaded!!!',
       type: 'success',
       options: {
         autoClose: 1000
@@ -484,4 +485,4 @@ const extension: JupyterFrontEndPlugin<void> = {
   }
 };
 
-export default extension;
+export default [schedulerAdvancedOptionsPlugin, extension];
