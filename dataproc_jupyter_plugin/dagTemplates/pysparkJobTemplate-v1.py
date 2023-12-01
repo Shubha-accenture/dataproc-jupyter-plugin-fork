@@ -12,6 +12,9 @@ default_args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
+input_notebook = "gs://dag_inputs/sample_notebook.ipynb"
+output_notebook = "gs://dag_inputs/"+'{{name}}_{{job_id}}'+"output.ipynb"
+notebook_args= [input_notebook, output_notebook] 
 
 dag = DAG(
     '{{name}}', 
