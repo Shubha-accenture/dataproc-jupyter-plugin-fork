@@ -14,17 +14,163 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 import { Scheduler } from '@jupyterlab/scheduler';
+import { Input } from '../controls/MuiWrappedInput';
+import { Autocomplete, TextField } from '@mui/material';
+import { HTTP_METHOD, STATUS_RUNNING } from '../utils/const';
+import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
+import {
+  authenticatedFetch,
+  statusValue,
+  toastifyCustomStyle
+} from '../utils/utils';
+import { toast } from 'react-toastify';
+import { DropdownProps } from 'semantic-ui-react';
+import { MuiChipsInput } from 'mui-chips-input';
+
+const AdvancedOptionsComponent = (
+  // props: Scheduler.IAdvancedOptionsProps
+) =>
+  {
+    const [clusterList, setClusterList] = useState([{}]);
+    const [clusterSelected, setClusterSelected] = useState('');
+    const [retryCount, setRetryCount] = useState<number | undefined>(0);
+    const [emailList, setEmailList] = useState<string[]>([]);
+
+    const listClustersAPI = async (
+      nextPageToken?: string,
+      previousClustersList?: object
+    ) => {
+      const pageToken = nextPageToken ?? '';
+      try {
+        const queryParams = new URLSearchParams();
+        queryParams.append('pageSize', '50');
+        queryParams.append('pageToken', pageToken);
+
+        const response = await authenticatedFetch({
+          uri: 'clusters',
+          regionIdentifier: 'regions',
+          method: HTTP_METHOD.GET,
+          queryParams: queryParams
+        });
+        const formattedResponse = await response.json();
+        let transformClusterListData = [];
+        if (formattedResponse && formattedResponse.clusters) {
+          transformClusterListData = formattedResponse.clusters.map(
+            (data: any) => {
+              const statusVal = statusValue(data);
+              return {
+                status: statusVal,
+                clusterName: data.clusterName
+              };
+            }
+          );
+        }
+        const existingClusterData = previousClustersList ?? [];
+        //setStateAction never type issue
+        const allClustersData: any = [
+          ...(existingClusterData as []),
+          ...transformClusterListData
+        ];
+
+        if (formattedResponse.nextPageToken) {
+          listClustersAPI(formattedResponse.nextPageToken, allClustersData);
+        } else {
+          console.log(allClustersData);
+          let transformClusterListData = [];
+          transformClusterListData = allClustersData.filter((data: any) => {
+            if (data.status === STATUS_RUNNING) {
+              return data.clusterName;
+            }
+          });
+
+          const keyLabelStructure = transformClusterListData.map(
+            (obj: { clusterName: string }) => obj.clusterName
+          );
+
+          setClusterList(keyLabelStructure);
+        }
+        if (formattedResponse?.error?.code) {
+          toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+        }
+      } catch (error) {
+        DataprocLoggingService.log('Error listing clusters', LOG_LEVEL.ERROR);
+        console.error('Error listing clusters', error);
+        toast.error('Failed to fetch clusters', toastifyCustomStyle);
+      }
+    };
+
+    const handleClusterSelected = (data: DropdownProps | null) => {
+      if (data) {
+        const selectedCluster = data.toString();
+        setClusterSelected(selectedCluster);
+        // Here, you can add the selectedCluster to the create job model
+        // props.handleModelChange({
+        //   ...props.model,
+        //   'cluster': selectedCluster,
+        // });
+      }
+    };
+
+    const handleEmailList = (data: string[]) => {
+      setEmailList(data);
+      
+      // props.handleModelChange({
+      //   ...props.model,
+      //   'email': data
+      // });
+    };
+
+    useEffect(() => {
+      listClustersAPI();
+    }, []);
+    return (
+      <div>
+        {clusterList.length === 0 ? (
+          <Input
+            className="input-style-scheduler"
+            value="No clusters running"
+            readOnly
+          />
+        ) : (
+          <div className="select-text-overlay-scheduler">
+            <Autocomplete
+              options={clusterList}
+              value={clusterSelected}
+              onChange={(_event, val) => handleClusterSelected(val)}
+              renderInput={params => <TextField {...params} label="Cluster" />}
+            />
+            <Input
+              className="input-style-scheduler"
+              onChange={e => setRetryCount(Number(e.target.value))}
+              value={retryCount}
+              Label="Retry count"
+              type="number"
+            />
+            <MuiChipsInput
+              className="select-job-style-scheduler"
+              onChange={e => handleEmailList(e)}
+              addOnBlur={true}
+              value={emailList}
+              inputProps={{ placeholder: '' }}
+              label="Email recipients"
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
 
 export const schedulerAdvancedOptionsPlugin: JupyterFrontEndPlugin<Scheduler.IAdvancedOptions> =
   {
-    activate: (app: JupyterFrontEnd) => () => <div>hi</div>,
+    activate: (app: JupyterFrontEnd) => () => <AdvancedOptionsComponent />,
     id: 'dataproc_jupyter_plugin:IAdvancedOptions',
     provides: Scheduler.IAdvancedOptions,
     autoStart: true
   };
+  

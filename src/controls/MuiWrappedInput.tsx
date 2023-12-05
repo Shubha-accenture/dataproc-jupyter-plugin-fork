@@ -28,7 +28,8 @@ function InputInternal(props: InputProps) {
     disabled,
     defaultValue,
     onBlur,
-    Label
+    Label,
+    type
   } = props;
   return (
     <TextField
@@ -44,6 +45,7 @@ function InputInternal(props: InputProps) {
       disabled={disabled}
       defaultValue={defaultValue}
       label={Label}
+      type={type}
     ></TextField>
   );
 }
