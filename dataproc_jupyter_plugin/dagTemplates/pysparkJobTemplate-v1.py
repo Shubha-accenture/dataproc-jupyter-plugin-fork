@@ -12,8 +12,8 @@ default_args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
-input_notebook = "gs://dag_inputs/sample_notebook.ipynb"
-output_notebook = "gs://dag_inputs/"+'{{name}}_{{job_id}}'+"output.ipynb"
+input_notebook = '{{input_notebook}}'
+output_notebook = '{{output_notebook}}'
 notebook_args= [input_notebook, output_notebook] 
 
 dag = DAG(
@@ -28,7 +28,7 @@ submit_pyspark_job = DataprocSubmitJobOperator(
     project_id='{{gcpProjectId}}',  # This parameter can be overridden by the connection
     region='{{gcpRegion}}',  # This parameter can be overridden by the connection 
     job={
-        'reference': {'project_id': '{{gcpProjectId}}', 'job_id': '{{job_id}}'},
+        'reference': {'project_id': '{{gcpProjectId}}'},
         'placement': {'cluster_name': 'cluster-9a5a'},
         'pyspark_job': {
             'main_python_file_uri': '{{inputFilePath}}'

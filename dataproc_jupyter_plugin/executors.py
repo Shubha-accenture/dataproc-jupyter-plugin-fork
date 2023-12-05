@@ -14,7 +14,7 @@ import subprocess
 from dataproc_jupyter_plugin.handlers import get_cached_credentials
 from jinja2 import Environment, FileSystemLoader
 import uuid
-from google.cloud import storage
+from datetime import datetime
 
 unique_id = str(uuid.uuid4().hex)
 job_id = ''
@@ -36,14 +36,13 @@ def getBucket(runtime_env):
         response = requests.get(api_endpoint,headers=headers)
         if response.status_code == 200:
                 resp = response.json()
-                gcs_dag_path = resp.get('config', {}).get('dagGcsPrefix', '')
+                gcs_dag_path = resp.get('storageConfig', {}).get('bucket', '')
                 return gcs_dag_path
     except Exception as e:
             print(f"Error: {e}")
 
 def check_file_exists(bucket, file_path):
-    cmd = f"gsutil ls {bucket}/{file_path}"
-    print(cmd)
+    cmd = f"gsutil ls gs://{bucket}/data/{file_path}"
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     output, error = process.communicate()
 
@@ -73,14 +72,14 @@ class CustomExecutionManager(ExecutionManager):
     
     @staticmethod
     def uploadInputFileToGcs(input,gcs_dag_bucket):
-        cmd = f"gsutil cp '{input}' "+gcs_dag_bucket
+        cmd = f"gsutil cp '{input}' gs://{gcs_dag_bucket}/data"
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         output, _ = process.communicate()
         print(process.returncode,_,output)
 
     @staticmethod
     def uploadPapermillToGcs(gcs_dag_bucket):
-        cmd = f"gsutil cp '{TEMPLATES_FOLDER_PATH}/wrapper_papermill.py' "+gcs_dag_bucket
+        cmd = f"gsutil cp '{TEMPLATES_FOLDER_PATH}/wrapper_papermill.py' gs://{gcs_dag_bucket}/data"
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         output, _ = process.communicate()
         print(process.returncode,_,output)
@@ -92,10 +91,10 @@ class CustomExecutionManager(ExecutionManager):
         environment = Environment(loader=FileSystemLoader(TEMPLATES_FOLDER_PATH))
         template = environment.get_template(DAG_TEMPLATE_V1)
         credentials = get_cached_credentials()
-        if 'project_id' in credentials:
+        if 'project_id' and'region_id' in credentials:
             gcp_project_id = credentials['project_id']
-        content = template.render(self.model, inputFilePath= gcs_dag_bucket+"/wrapper_papermill.py", gcpProjectId=gcp_project_id)
-        print(content)
+            gcp_region_id = credentials['region_id']
+        content = template.render(self.model, inputFilePath=f"gs://{gcs_dag_bucket}/data/wrapper_papermill.py", gcpProjectId=gcp_project_id,gcpRegion=gcp_region_id,input_notebook=f"gs://{gcs_dag_bucket}/data/{self.model.name}", output_notebook=f"gs://{gcs_dag_bucket}/data/{self.model.name}_{self.model.job_id}.ipynb")
         with open(dag_file, mode="w", encoding="utf-8") as message:
             message.write(content)
 
@@ -109,7 +108,8 @@ class CustomExecutionManager(ExecutionManager):
         job_name = job.name
         with open(self.staging_paths["input"], encoding="utf-8") as f:
             nb = nbformat.read(f, as_version=4)
-        dag_file = f"{job_name}_{job_id}.py"
+        current_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        dag_file = f"dag_{job_name}_{current_timestamp}.py"
         gcs_dag_bucket = getBucket(job.runtime_environment_name)
         remote_file_path = "wrapper_papermill.py"
       
