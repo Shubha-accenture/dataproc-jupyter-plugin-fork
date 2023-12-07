@@ -33,144 +33,161 @@ import { toast } from 'react-toastify';
 import { DropdownProps } from 'semantic-ui-react';
 import { MuiChipsInput } from 'mui-chips-input';
 
-const AdvancedOptionsComponent = (
-  // props: Scheduler.IAdvancedOptionsProps
-) =>
-  {
-    const [clusterList, setClusterList] = useState([{}]);
-    const [clusterSelected, setClusterSelected] = useState('');
-    const [retryCount, setRetryCount] = useState<number | undefined>(0);
-    const [emailList, setEmailList] = useState<string[]>([]);
+const AdvancedOptionsComponent = (props: {
+  options: Scheduler.IAdvancedOptionsProps;
+}) => {
+  const [clusterList, setClusterList] = useState([{}]);
+  const [clusterSelected, setClusterSelected] = useState('');
+  const [retryCount, setRetryCount] = useState<number | undefined>(0);
+  const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
+  const [emailList, setEmailList] = useState<string[]>([]);
 
-    const listClustersAPI = async (
-      nextPageToken?: string,
-      previousClustersList?: object
-    ) => {
-      const pageToken = nextPageToken ?? '';
-      try {
-        const queryParams = new URLSearchParams();
-        queryParams.append('pageSize', '50');
-        queryParams.append('pageToken', pageToken);
+  const listClustersAPI = async (
+    nextPageToken?: string,
+    previousClustersList?: object
+  ) => {
+    const pageToken = nextPageToken ?? '';
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('pageSize', '50');
+      queryParams.append('pageToken', pageToken);
 
-        const response = await authenticatedFetch({
-          uri: 'clusters',
-          regionIdentifier: 'regions',
-          method: HTTP_METHOD.GET,
-          queryParams: queryParams
-        });
-        const formattedResponse = await response.json();
+      const response = await authenticatedFetch({
+        uri: 'clusters',
+        regionIdentifier: 'regions',
+        method: HTTP_METHOD.GET,
+        queryParams: queryParams
+      });
+      const formattedResponse = await response.json();
+      let transformClusterListData = [];
+      if (formattedResponse && formattedResponse.clusters) {
+        transformClusterListData = formattedResponse.clusters.map(
+          (data: any) => {
+            const statusVal = statusValue(data);
+            return {
+              status: statusVal,
+              clusterName: data.clusterName
+            };
+          }
+        );
+      }
+      const existingClusterData = previousClustersList ?? [];
+      //setStateAction never type issue
+      const allClustersData: any = [
+        ...(existingClusterData as []),
+        ...transformClusterListData
+      ];
+
+      if (formattedResponse.nextPageToken) {
+        listClustersAPI(formattedResponse.nextPageToken, allClustersData);
+      } else {
         let transformClusterListData = [];
-        if (formattedResponse && formattedResponse.clusters) {
-          transformClusterListData = formattedResponse.clusters.map(
-            (data: any) => {
-              const statusVal = statusValue(data);
-              return {
-                status: statusVal,
-                clusterName: data.clusterName
-              };
-            }
-          );
-        }
-        const existingClusterData = previousClustersList ?? [];
-        //setStateAction never type issue
-        const allClustersData: any = [
-          ...(existingClusterData as []),
-          ...transformClusterListData
-        ];
+        transformClusterListData = allClustersData.filter((data: any) => {
+          if (data.status === STATUS_RUNNING) {
+            return data.clusterName;
+          }
+        });
 
-        if (formattedResponse.nextPageToken) {
-          listClustersAPI(formattedResponse.nextPageToken, allClustersData);
-        } else {
-          console.log(allClustersData);
-          let transformClusterListData = [];
-          transformClusterListData = allClustersData.filter((data: any) => {
-            if (data.status === STATUS_RUNNING) {
-              return data.clusterName;
-            }
-          });
+        const keyLabelStructure = transformClusterListData.map(
+          (obj: { clusterName: string }) => obj.clusterName
+        );
 
-          const keyLabelStructure = transformClusterListData.map(
-            (obj: { clusterName: string }) => obj.clusterName
-          );
-
-          setClusterList(keyLabelStructure);
-        }
-        if (formattedResponse?.error?.code) {
-          toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
-        }
-      } catch (error) {
-        DataprocLoggingService.log('Error listing clusters', LOG_LEVEL.ERROR);
-        console.error('Error listing clusters', error);
-        toast.error('Failed to fetch clusters', toastifyCustomStyle);
+        setClusterList(keyLabelStructure);
       }
-    };
-
-    const handleClusterSelected = (data: DropdownProps | null) => {
-      if (data) {
-        const selectedCluster = data.toString();
-        setClusterSelected(selectedCluster);
-        // Here, you can add the selectedCluster to the create job model
-        // props.handleModelChange({
-        //   ...props.model,
-        //   'cluster': selectedCluster,
-        // });
+      if (formattedResponse?.error?.code) {
+        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
       }
-    };
+    } catch (error) {
+      DataprocLoggingService.log('Error listing clusters', LOG_LEVEL.ERROR);
+      console.error('Error listing clusters', error);
+      toast.error('Failed to fetch clusters', toastifyCustomStyle);
+    }
+  };
 
-    const handleEmailList = (data: string[]) => {
-      setEmailList(data);
-      
-      // props.handleModelChange({
-      //   ...props.model,
-      //   'email': data
+  const handleClusterSelected = (data: DropdownProps | null) => {
+    if (data) {
+      const selectedCluster = data.toString();
+      setClusterSelected(selectedCluster);
+
+      // const newTags = props.options.model.tags ?? [];
+      // props.options.handleModelChange({
+      //   ...props.options.model,
+      //   tags: newTags,
       // });
-    };
+    }
+  };
 
-    useEffect(() => {
-      listClustersAPI();
-    }, []);
-    return (
-      <div>
-        {clusterList.length === 0 ? (
-          <Input
-            className="input-style-scheduler"
-            value="No clusters running"
-            readOnly
-          />
-        ) : (
-          <div className="select-text-overlay-scheduler">
-            <Autocomplete
-              options={clusterList}
-              value={clusterSelected}
-              onChange={(_event, val) => handleClusterSelected(val)}
-              renderInput={params => <TextField {...params} label="Cluster" />}
-            />
+  const handleRetryCount = (data: number) => {
+    setRetryCount(data);
+  };
+
+  const handleRetryDelay = (data: number) => {
+    setRetryDelay(data);
+  };
+
+  const handleEmailList = (data: string[]) => {
+    setEmailList(data);
+  };
+
+  useEffect(() => {
+    listClustersAPI();
+  }, []);
+  return (
+    <>
+      {props.options.jobsView === 1 && (
+        <div>
+          {clusterList.length === 0 ? (
             <Input
               className="input-style-scheduler"
-              onChange={e => setRetryCount(Number(e.target.value))}
-              value={retryCount}
-              Label="Retry count"
-              type="number"
+              value="No clusters running"
+              readOnly
             />
-            <MuiChipsInput
-              className="select-job-style-scheduler"
-              onChange={e => handleEmailList(e)}
-              addOnBlur={true}
-              value={emailList}
-              inputProps={{ placeholder: '' }}
-              label="Email recipients"
-            />
-          </div>
-        )}
-      </div>
-    );
-  };
+          ) : (
+            <div className="select-text-overlay-scheduler">
+              <Autocomplete
+                options={clusterList}
+                value={clusterSelected}
+                onChange={(_event, val) => handleClusterSelected(val)}
+                renderInput={params => (
+                  <TextField {...params} label="Cluster" />
+                )}
+              />
+              <Input
+                className="input-style-scheduler"
+                onChange={e => handleRetryCount(Number(e.target.value))}
+                value={retryCount}
+                Label="Retry count"
+                type="number"
+              />
+              <Input
+                className="input-style-scheduler"
+                onChange={e => handleRetryDelay(Number(e.target.value))}
+                value={retryDelay}
+                Label="Retry delay (minutes)"
+                type="number"
+              />
+              <MuiChipsInput
+                className="select-job-style-scheduler"
+                onChange={e => handleEmailList(e)}
+                addOnBlur={true}
+                value={emailList}
+                inputProps={{ placeholder: '' }}
+                label="Email recipients"
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+};
 
 export const schedulerAdvancedOptionsPlugin: JupyterFrontEndPlugin<Scheduler.IAdvancedOptions> =
   {
-    activate: (app: JupyterFrontEnd) => () => <AdvancedOptionsComponent />,
+    activate:
+      (app: JupyterFrontEnd) => (props: Scheduler.IAdvancedOptionsProps) =>
+        <AdvancedOptionsComponent options={props} />,
     id: 'dataproc_jupyter_plugin:IAdvancedOptions',
     provides: Scheduler.IAdvancedOptions,
     autoStart: true
   };
-  
