@@ -21,7 +21,13 @@ import {
 } from '@jupyterlab/application';
 import { Scheduler } from '@jupyterlab/scheduler';
 import { Input } from '../controls/MuiWrappedInput';
-import { Autocomplete, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
+  TextField
+} from '@mui/material';
 import { HTTP_METHOD, STATUS_RUNNING } from '../utils/const';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import {
@@ -32,14 +38,27 @@ import {
 import { toast } from 'react-toastify';
 import { DropdownProps } from 'semantic-ui-react';
 import { MuiChipsInput } from 'mui-chips-input';
+import { ICreateJobModel } from '@jupyterlab/scheduler/lib/model';
+
+interface IExtendedModel extends ICreateJobModel {
+  cluster?: string;
+  retryCount?: number;
+  retryDelay?: number;
+  emailOnFailure?: boolean;
+  emailOnRetry?: boolean;
+  emailList?: string[];
+}
 
 const AdvancedOptionsComponent = (props: {
   options: Scheduler.IAdvancedOptionsProps;
 }) => {
   const [clusterList, setClusterList] = useState([{}]);
   const [clusterSelected, setClusterSelected] = useState('');
-  const [retryCount, setRetryCount] = useState<number | undefined>(0);
+  const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
+
+  const [emailOnFailure, setEmailOnFailure] = useState(true);
+  const [emailOnRetry, setEmailonRetry] = useState(true);
   const [emailList, setEmailList] = useState<string[]>([]);
 
   const listClustersAPI = async (
@@ -104,29 +123,74 @@ const AdvancedOptionsComponent = (props: {
     }
   };
 
+  const handleAdditionalOptionsModel = (tagKey: string, tagValue: any) => {
+    let additionalValues: string[];
+    let dataPresent: boolean = false;
+    if (props.options.model.tags) {
+      additionalValues = props.options.model.tags;
+      additionalValues.forEach((tagsData: string, index) => {
+        if (tagsData.split(':')[0] === tagKey) {
+          dataPresent = true;
+          additionalValues[index] = `${tagKey}:${tagValue}`;
+        }
+      });
+      if (!dataPresent) {
+        additionalValues.push(`${tagKey}:${tagValue}`);
+      }
+    } else {
+      additionalValues = [`${tagKey}:${tagValue}`];
+    }
+
+    //@ts-ignore
+    props.options.handleModelChange({
+      ...(props.options.model as IExtendedModel),
+      // [tagKey]: tagValue
+      tags: additionalValues
+    });
+    console.log(props.options.model)
+  };
+
   const handleClusterSelected = (data: DropdownProps | null) => {
     if (data) {
       const selectedCluster = data.toString();
       setClusterSelected(selectedCluster);
 
-      // const newTags = props.options.model.tags ?? [];
-      // props.options.handleModelChange({
-      //   ...props.options.model,
-      //   tags: newTags,
-      // });
+      handleAdditionalOptionsModel('cluster', selectedCluster);
     }
   };
 
   const handleRetryCount = (data: number) => {
-    setRetryCount(data);
+    if (data >= 0) {
+      setRetryCount(data);
+    }
+
+    handleAdditionalOptionsModel('retryCount', data);
   };
 
   const handleRetryDelay = (data: number) => {
-    setRetryDelay(data);
+    if (data >= 0) {
+      setRetryDelay(data);
+    }
+
+    handleAdditionalOptionsModel('retryRetry', data);
+  };
+
+  const handleFailureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmailOnFailure(event.target.checked);
+
+    handleAdditionalOptionsModel('emailOnFailure', event.target.checked);
+  };
+
+  const handleRetryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmailonRetry(event.target.checked);
+
+    handleAdditionalOptionsModel('emailOnRetry', event.target.checked);
   };
 
   const handleEmailList = (data: string[]) => {
     setEmailList(data);
+
+    handleAdditionalOptionsModel('emailList', data);
   };
 
   useEffect(() => {
@@ -166,14 +230,36 @@ const AdvancedOptionsComponent = (props: {
                 Label="Retry delay (minutes)"
                 type="number"
               />
-              <MuiChipsInput
-                className="select-job-style-scheduler"
-                onChange={e => handleEmailList(e)}
-                addOnBlur={true}
-                value={emailList}
-                inputProps={{ placeholder: '' }}
-                label="Email recipients"
-              />
+              <FormGroup row={true}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={emailOnFailure}
+                      onChange={handleFailureChange}
+                    />
+                  }
+                  label="Email on failure"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={emailOnRetry}
+                      onChange={handleRetryChange}
+                    />
+                  }
+                  label="Email on retry"
+                />
+              </FormGroup>
+              {(emailOnFailure || emailOnRetry) && (
+                <MuiChipsInput
+                  className="select-job-style-scheduler"
+                  onChange={e => handleEmailList(e)}
+                  addOnBlur={true}
+                  value={emailList}
+                  inputProps={{ placeholder: '' }}
+                  label="Email recipients"
+                />
+              )}
             </div>
           )}
         </div>
