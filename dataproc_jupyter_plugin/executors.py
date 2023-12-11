@@ -91,7 +91,7 @@ class CustomExecutionManager(ExecutionManager):
         DAG_TEMPLATE_V1 = "pysparkJobTemplate-v1.py"
         environment = Environment(loader=FileSystemLoader(TEMPLATES_FOLDER_PATH))
         template = environment.get_template(DAG_TEMPLATE_V1)
-        tags=['{"cluster":"cluster-test","retryCount":3,"retryDelay":6,"emailOnFailure":true,"emailOnDelay":true,"emailList":["test@google.com","abc@gmail.com"]}']
+        tags = self.model.tags
         cluster_name = json.loads(tags[0])['cluster']
         retry_count = json.loads(tags[0])['retryCount']
         retry_delay = json.loads(tags[0])['retryDelay']
