@@ -38,16 +38,6 @@ import {
 import { toast } from 'react-toastify';
 import { DropdownProps } from 'semantic-ui-react';
 import { MuiChipsInput } from 'mui-chips-input';
-import { ICreateJobModel } from '@jupyterlab/scheduler/lib/model';
-
-interface IExtendedModel extends ICreateJobModel {
-  cluster?: string;
-  retryCount?: number;
-  retryDelay?: number;
-  emailOnFailure?: boolean;
-  emailOnRetry?: boolean;
-  emailList?: string[];
-}
 
 const AdvancedOptionsComponent = (props: {
   options: Scheduler.IAdvancedOptionsProps;
@@ -125,36 +115,35 @@ const AdvancedOptionsComponent = (props: {
 
   const handleAdditionalOptionsModel = (tagKey: string, tagValue: any) => {
     let additionalValues: string[];
-    let dataPresent: boolean = false;
+    let defaultPayload: any = {
+      'cluster': "",
+      'retryCount': 2,
+      'retryDelay': 5,
+      'emailOnFailure': true,
+      'emailOnDelay': true,
+      'emailList': []
+    }
     if (props.options.model.tags) {
-      additionalValues = props.options.model.tags;
-      additionalValues.forEach((tagsData: string, index) => {
-        if (tagsData.split(':')[0] === tagKey) {
-          dataPresent = true;
-          additionalValues[index] = `${tagKey}:${tagValue}`;
-        }
-      });
-      if (!dataPresent) {
-        additionalValues.push(`${tagKey}:${tagValue}`);
-      }
+      let currentPayload = JSON.parse(props.options.model.tags[0]);
+      currentPayload[tagKey] = tagValue
+      additionalValues = [JSON.stringify(currentPayload)]
     } else {
-      additionalValues = [`${tagKey}:${tagValue}`];
+      defaultPayload[tagKey] = tagValue
+      additionalValues = [JSON.stringify(defaultPayload)]
     }
 
     //@ts-ignore
     props.options.handleModelChange({
-      ...(props.options.model as IExtendedModel),
-      // [tagKey]: tagValue
+      ...(props.options.model),
       tags: additionalValues
     });
-    console.log(props.options.model)
+    
   };
 
   const handleClusterSelected = (data: DropdownProps | null) => {
     if (data) {
       const selectedCluster = data.toString();
       setClusterSelected(selectedCluster);
-
       handleAdditionalOptionsModel('cluster', selectedCluster);
     }
   };
@@ -163,7 +152,6 @@ const AdvancedOptionsComponent = (props: {
     if (data >= 0) {
       setRetryCount(data);
     }
-
     handleAdditionalOptionsModel('retryCount', data);
   };
 
@@ -171,25 +159,21 @@ const AdvancedOptionsComponent = (props: {
     if (data >= 0) {
       setRetryDelay(data);
     }
-
-    handleAdditionalOptionsModel('retryRetry', data);
+    handleAdditionalOptionsModel('retryDelay', data);
   };
 
   const handleFailureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmailOnFailure(event.target.checked);
-
     handleAdditionalOptionsModel('emailOnFailure', event.target.checked);
   };
 
   const handleRetryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmailonRetry(event.target.checked);
-
     handleAdditionalOptionsModel('emailOnRetry', event.target.checked);
   };
 
   const handleEmailList = (data: string[]) => {
     setEmailList(data);
-
     handleAdditionalOptionsModel('emailList', data);
   };
 
