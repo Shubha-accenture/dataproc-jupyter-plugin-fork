@@ -7,10 +7,13 @@ yesterday = datetime.combine(
     datetime.min.time())
 
 default_args = {
-    'owner': 'airflow',
+    'owner': '{{owner}}',
     'start_date': yesterday,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retries': '{{retry_count}}',
+    'retry_delay': timedelta(minutes='{{retry_delay}}'), 
+    'email': '{{email_list}}',  #list of all the ids passed from UI
+    'email_on_failure': '{{email_failure}}',     # based on the value passed fro UI
+    'email_on_retry': '{{email_delay}}',      # based on the value passed fro UI
 }
 input_notebook = '{{input_notebook}}'
 output_notebook = '{{output_notebook}}'
@@ -29,7 +32,8 @@ submit_pyspark_job = DataprocSubmitJobOperator(
     region='{{gcpRegion}}',  # This parameter can be overridden by the connection 
     job={
         'reference': {'project_id': '{{gcpProjectId}}'},
-        'placement': {'cluster_name': 'cluster-9a5a'},
+        'placement': {'cluster_name': '{{cluster_name}}'},
+        'labels': {'client': 'dataproc-jupyter-plugin'},
         'pyspark_job': {
             'main_python_file_uri': '{{inputFilePath}}'
         },

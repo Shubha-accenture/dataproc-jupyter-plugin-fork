@@ -15,6 +15,7 @@ from dataproc_jupyter_plugin.handlers import get_cached_credentials
 from jinja2 import Environment, FileSystemLoader
 import uuid
 from datetime import datetime
+import json
 
 unique_id = str(uuid.uuid4().hex)
 job_id = ''
@@ -42,7 +43,7 @@ def getBucket(runtime_env):
             print(f"Error: {e}")
 
 def check_file_exists(bucket, file_path):
-    cmd = f"gsutil ls gs://{bucket}/data/{file_path}"
+    cmd = f"gsutil ls gs://{bucket}/dataproc-notebooks/{file_path}"
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     output, error = process.communicate()
 
@@ -72,14 +73,14 @@ class CustomExecutionManager(ExecutionManager):
     
     @staticmethod
     def uploadInputFileToGcs(input,gcs_dag_bucket):
-        cmd = f"gsutil cp '{input}' gs://{gcs_dag_bucket}/data"
+        cmd = f"gsutil cp '{input}' gs://{gcs_dag_bucket}/dataproc-notebooks/"
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         output, _ = process.communicate()
         print(process.returncode,_,output)
 
     @staticmethod
     def uploadPapermillToGcs(gcs_dag_bucket):
-        cmd = f"gsutil cp '{TEMPLATES_FOLDER_PATH}/wrapper_papermill.py' gs://{gcs_dag_bucket}/data"
+        cmd = f"gsutil cp '{TEMPLATES_FOLDER_PATH}/wrapper_papermill.py' gs://{gcs_dag_bucket}/dataproc-notebooks/"
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         output, _ = process.communicate()
         print(process.returncode,_,output)
@@ -90,11 +91,25 @@ class CustomExecutionManager(ExecutionManager):
         DAG_TEMPLATE_V1 = "pysparkJobTemplate-v1.py"
         environment = Environment(loader=FileSystemLoader(TEMPLATES_FOLDER_PATH))
         template = environment.get_template(DAG_TEMPLATE_V1)
+        tags=['{"cluster":"cluster-test","retryCount":3,"retryDelay":6,"emailOnFailure":true,"emailOnDelay":true,"emailList":["test@google.com","abc@gmail.com"]}']
+        cluster_name = json.loads(tags[0])['cluster']
+        retry_count = json.loads(tags[0])['retryCount']
+        retry_delay = json.loads(tags[0])['retryDelay']
+        email_failure = json.loads(tags[0])['emailOnFailure']
+        email_delay = json.loads(tags[0])['emailOnDelay']
+        email_list = json.loads(tags[0])['emailList']
         credentials = get_cached_credentials()
         if 'project_id' and'region_id' in credentials:
             gcp_project_id = credentials['project_id']
             gcp_region_id = credentials['region_id']
-        content = template.render(self.model, inputFilePath=f"gs://{gcs_dag_bucket}/data/wrapper_papermill.py", gcpProjectId=gcp_project_id,gcpRegion=gcp_region_id,input_notebook=f"gs://{gcs_dag_bucket}/data/{self.model.name}", output_notebook=f"gs://{gcs_dag_bucket}/data/{self.model.name}_{self.model.job_id}.ipynb")
+        cmd = "gcloud config get-value account"
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        owner, error = process.communicate()
+        content = template.render(self.model, inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py", \
+                                  gcpProjectId=gcp_project_id,gcpRegion=gcp_region_id,input_notebook=f"gs://{gcs_dag_bucket}/dataproc-notebooks/{self.model.name}",\
+                                  output_notebook=f"gs://{gcs_dag_bucket}/dataproc-output/{self.model.name}_{self.model.job_id}.ipynb",cluster_name=cluster_name,\
+                                  retry_count=retry_count,retry_delay=retry_delay,email_failure=email_failure,email_delay=email_delay, email_list=email_list, owner=owner)
+        print(content)
         with open(dag_file, mode="w", encoding="utf-8") as message:
             message.write(content)
 
@@ -106,6 +121,7 @@ class CustomExecutionManager(ExecutionManager):
         global job_name
         job_id = job.job_id
         job_name = job.name
+
         with open(self.staging_paths["input"], encoding="utf-8") as f:
             nb = nbformat.read(f, as_version=4)
         current_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
