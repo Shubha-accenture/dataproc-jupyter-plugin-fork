@@ -116,28 +116,27 @@ const AdvancedOptionsComponent = (props: {
   const handleAdditionalOptionsModel = (tagKey: string, tagValue: any) => {
     let additionalValues: string[];
     let defaultPayload: any = {
-      'cluster': "",
-      'retryCount': 2,
-      'retryDelay': 5,
-      'emailOnFailure': true,
-      'emailOnDelay': true,
-      'emailList': []
-    }
+      cluster: '',
+      retryCount: 2,
+      retryDelay: 5,
+      emailOnFailure: true,
+      emailOnDelay: true,
+      emailList: []
+    };
     if (props.options.model.tags) {
       let currentPayload = JSON.parse(props.options.model.tags[0]);
-      currentPayload[tagKey] = tagValue
-      additionalValues = [JSON.stringify(currentPayload)]
+      currentPayload[tagKey] = tagValue;
+      additionalValues = [JSON.stringify(currentPayload)];
     } else {
-      defaultPayload[tagKey] = tagValue
-      additionalValues = [JSON.stringify(defaultPayload)]
+      defaultPayload[tagKey] = tagValue;
+      additionalValues = [JSON.stringify(defaultPayload)];
     }
 
     //@ts-ignore
     props.options.handleModelChange({
-      ...(props.options.model),
+      ...props.options.model,
       tags: additionalValues
     });
-    
   };
 
   const handleClusterSelected = (data: DropdownProps | null) => {
@@ -184,22 +183,24 @@ const AdvancedOptionsComponent = (props: {
     <>
       {props.options.jobsView === 1 && (
         <div>
-          {clusterList.length === 0 ? (
-            <Input
-              className="input-style-scheduler"
-              value="No clusters running"
-              readOnly
-            />
-          ) : (
+          {
             <div className="select-text-overlay-scheduler">
-              <Autocomplete
-                options={clusterList}
-                value={clusterSelected}
-                onChange={(_event, val) => handleClusterSelected(val)}
-                renderInput={params => (
-                  <TextField {...params} label="Cluster" />
-                )}
-              />
+              {clusterList.length === 0 ? (
+                <Input
+                  className="input-style-scheduler"
+                  value="No clusters running"
+                  readOnly
+                />
+              ) : (
+                <Autocomplete
+                  options={clusterList}
+                  value={clusterSelected}
+                  onChange={(_event, val) => handleClusterSelected(val)}
+                  renderInput={params => (
+                    <TextField {...params} label="Cluster" />
+                  )}
+                />
+              )}
               <Input
                 className="input-style-scheduler"
                 onChange={e => handleRetryCount(Number(e.target.value))}
@@ -245,7 +246,7 @@ const AdvancedOptionsComponent = (props: {
                 />
               )}
             </div>
-          )}
+          }
         </div>
       )}
     </>
