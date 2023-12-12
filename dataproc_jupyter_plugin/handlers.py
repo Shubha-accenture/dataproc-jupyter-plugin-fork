@@ -19,7 +19,9 @@ import tornado
 import subprocess
 from cachetools import TTLCache
 import datetime
-
+from google.cloud.storage.blob import Blob
+from google.cloud.storage.bucket import Bucket
+import os
 from google.cloud.jupyter_config.config import gcp_kernel_gateway_url, get_gcloud_config
 
 
@@ -127,6 +129,11 @@ class RouteHandler(APIHandler):
     credentials_cache = None
     @tornado.web.authenticated
     def get(self):
+        cmd = 'pwd'
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        output, _ = process.communicate()
+        print('-----PATH----')
+        print(output)
         try:
             if credentials_cache is None or 'credentials' not in credentials_cache:
                 cached_credentials = get_cached_credentials(self.log)
@@ -175,6 +182,48 @@ class ConfigHandler(APIHandler):
                 self.finish({'config' : ERROR_MESSAGE + 'failed'})
         else:
             self.finish({'config' : ERROR_MESSAGE + 'failed'})
+
+class GcsHandler(APIHandler):
+    @tornado.web.authenticated
+    def get(self):
+        cmd = 'gsutil cp gs://us-central1-composer4-fe041c11-bucket/dataproc-notebooks/wrapper_papermill.py .'
+        gcs = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        output, _ = gcs.communicate()
+        if gcs.returncode == 0:
+            # Specify the path to the downloaded file
+            file_path = './'
+            file_name =  'wrapper_papermill.py'
+            self.set_header('Content-Type', 'application/octet-stream')
+            self.set_header('Content-Disposition', f'attachment; filename={file_name}')
+ 
+            with open(file_path+file_name, 'rb') as file:
+                self.write(file.read())
+            # downloaded_file_path = './'
+            # bucket_name = 'us-central1-composer4-fe041c11-bucket'
+            
+            # bucket = Bucket(bucket_name)
+            # # Specify the destination blob path in your Google Cloud Storage bucket
+            # gcs_blob_path = './'
+
+            # # Create a Blob without a Client
+            # blob = Blob(gcs_blob_path, bucket=bucket)
+            # Upload the file to the blob
+            # with open(downloaded_file_path, 'rb') as file:
+            #     blob.upload_from_file(file)
+
+            # # Optionally, you can delete the local file after uploading
+            # os.remove(downloaded_file_path)
+            # print(blob)
+            # # Respond with a success message or handle further processing
+            # self.write("File uploaded to GCS successfully.")
+        else:
+            # Handle the case where the gsutil cp command failed
+            error_message = f"Failed to download file. Error: {_}"
+            self.set_status(500)
+            self.write(error_message)
+
+
+ 
 
 
 class UrlHandler(APIHandler):
@@ -236,6 +285,10 @@ def setup_handlers(web_app):
 
     route_pattern = url_path_join(base_url, "dataproc-plugin", "getGcpServiceUrls")
     handlers = [(route_pattern, UrlHandler)]
+    web_app.add_handlers(host_pattern, handlers)
+
+    route_pattern = url_path_join(base_url, "dataproc-plugin", "gcsDownload")
+    handlers = [(route_pattern, GcsHandler)]
     web_app.add_handlers(host_pattern, handlers)
 
     route_pattern = url_path_join(base_url, "dataproc-plugin", "log")
