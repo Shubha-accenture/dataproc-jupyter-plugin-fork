@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { requestAPI } from '../handler/handler';
 import { API_HEADER_BEARER, API_HEADER_CONTENT_TYPE, gcpServiceUrls } from '../utils/const';
 import { authApi, loggedFetch } from '../utils/utils';
 import type { storage_v1 } from '@googleapis/storage';
@@ -169,29 +170,31 @@ export class GcsService {
     if (!credentials) {
       throw 'not logged in';
     }
-    const { STORAGE } = await gcpServiceUrls;
-    const requestUrl = new URL(
-      `${STORAGE}b/${bucket}/o/${encodeURIComponent(path)}`
-    );
-    requestUrl.searchParams.append('alt', 'media');
-    const response = await fetch(requestUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Content-Type': API_HEADER_CONTENT_TYPE,
-        Authorization: API_HEADER_BEARER + credentials.access_token,
-        'X-Goog-User-Project': credentials.project_id || ''
-      }
-    });
+    // const { STORAGE } = await gcpServiceUrls;
+    // const requestUrl = new URL(
+    //   `${STORAGE}b/${bucket}/o/${encodeURIComponent(path)}`
+    // );
+    // requestUrl.searchParams.append('alt', 'media');
+    // const response = await fetch(requestUrl.toString(), {
+    //   method: 'GET',
+    //   headers: {
+    //     'Content-Type': API_HEADER_CONTENT_TYPE,r
+    //     Authorization: API_HEADER_BEARER + credentials.access_token,
+    //     'X-Goog-User-Project': credentials.project_id || ''
+    //   }
+    // });
+    const response: any = await requestAPI('gcsDownload');
+    console.log(response)
     if (response.status !== 200) {
       throw response.statusText;
     }
 
-    let blob = await response.blob()
-    // Create blob link to download
-    const url = window.URL.createObjectURL(
-      new Blob([blob]),
-    );
-    return url;
+    // let blob = await response.blob()
+    // // Create blob link to download
+    // const url = window.URL.createObjectURL(
+    //   new Blob([blob]),
+    // );
+    return response.url;
   }
 
   /**
