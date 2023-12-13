@@ -24,17 +24,16 @@ import { Input } from '../controls/MuiWrappedInput';
 import {
   Autocomplete,
   Checkbox,
+  FormControl,
   FormControlLabel,
   FormGroup,
+  Radio,
+  RadioGroup,
   TextField
 } from '@mui/material';
-import { HTTP_METHOD, STATUS_RUNNING } from '../utils/const';
+import { HTTP_METHOD } from '../utils/const';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
-import {
-  authenticatedFetch,
-  statusValue,
-  toastifyCustomStyle
-} from '../utils/utils';
+import { authenticatedFetch, toastifyCustomStyle } from '../utils/utils';
 import { toast } from 'react-toastify';
 import { DropdownProps } from 'semantic-ui-react';
 import { MuiChipsInput } from 'mui-chips-input';
@@ -50,6 +49,8 @@ const AdvancedOptionsComponent = (props: {
   const [emailOnFailure, setEmailOnFailure] = useState(true);
   const [emailOnRetry, setEmailonRetry] = useState(true);
   const [emailList, setEmailList] = useState<string[]>([]);
+
+  const [toggleValue, setToggleValue] = useState('cluster');
 
   const listClustersAPI = async (
     nextPageToken?: string,
@@ -72,9 +73,7 @@ const AdvancedOptionsComponent = (props: {
       if (formattedResponse && formattedResponse.clusters) {
         transformClusterListData = formattedResponse.clusters.map(
           (data: any) => {
-            const statusVal = statusValue(data);
             return {
-              status: statusVal,
               clusterName: data.clusterName
             };
           }
@@ -90,12 +89,7 @@ const AdvancedOptionsComponent = (props: {
       if (formattedResponse.nextPageToken) {
         listClustersAPI(formattedResponse.nextPageToken, allClustersData);
       } else {
-        let transformClusterListData = [];
-        transformClusterListData = allClustersData.filter((data: any) => {
-          if (data.status === STATUS_RUNNING) {
-            return data.clusterName;
-          }
-        });
+        let transformClusterListData = allClustersData;
 
         const keyLabelStructure = transformClusterListData.map(
           (obj: { clusterName: string }) => obj.clusterName
@@ -120,7 +114,7 @@ const AdvancedOptionsComponent = (props: {
       retryCount: 2,
       retryDelay: 5,
       emailOnFailure: true,
-      emailOnDelay: true,
+      emailOnRetry: true,
       emailList: []
     };
     if (props.options.model.tags) {
@@ -137,6 +131,11 @@ const AdvancedOptionsComponent = (props: {
       ...props.options.model,
       tags: additionalValues
     });
+  };
+
+  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setToggleValue((event.target as HTMLInputElement).value);
+    handleAdditionalOptionsModel('toggleValue', event.target.value);
   };
 
   const handleClusterSelected = (data: DropdownProps | null) => {
@@ -185,6 +184,26 @@ const AdvancedOptionsComponent = (props: {
         <div>
           {
             <div className="select-text-overlay-scheduler">
+              <FormControl>
+                <RadioGroup
+                  aria-labelledby="demo-controlled-radio-buttons-group"
+                  name="controlled-radio-buttons-group"
+                  value={toggleValue}
+                  onChange={handleToggleChange}
+                  row={true}
+                >
+                  <FormControlLabel
+                    value="cluster"
+                    control={<Radio />}
+                    label="Cluster"
+                  />
+                  <FormControlLabel
+                    value="serverless"
+                    control={<Radio />}
+                    label="Serverless"
+                  />
+                </RadioGroup>
+              </FormControl>
               {clusterList.length === 0 ? (
                 <Input
                   className="input-style-scheduler"
