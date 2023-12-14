@@ -51,6 +51,7 @@ const AdvancedOptionsComponent = (props: {
   const [emailList, setEmailList] = useState<string[]>([]);
 
   const [toggleValue, setToggleValue] = useState('cluster');
+  const [jobDetailTags, setJobDetailTags] = useState<any>({});
 
   const listClustersAPI = async (
     nextPageToken?: string,
@@ -177,6 +178,11 @@ const AdvancedOptionsComponent = (props: {
 
   useEffect(() => {
     listClustersAPI();
+    if (props.options.jobsView === 5) {
+      if (props.options.model.tags) {
+        setJobDetailTags(JSON.parse(props.options.model.tags[0]));
+      }
+    }
   }, []);
   return (
     <>
@@ -266,6 +272,34 @@ const AdvancedOptionsComponent = (props: {
               )}
             </div>
           }
+        </div>
+      )}
+      {props.options.jobsView === 5 && jobDetailTags.retryCount && (
+        <div>
+          <div className="job-details-scheduler-wrapper">
+            <span className="jp-jobs-LabeledValue-label">Cluster</span>
+            {jobDetailTags.cluster}
+          </div>
+          <div className="job-details-scheduler-wrapper">
+            <span className="jp-jobs-LabeledValue-label">Retry count</span>
+            {jobDetailTags.retryCount}
+          </div>
+          <div className="job-details-scheduler-wrapper">
+            <span className="jp-jobs-LabeledValue-label">
+              Retry delay (in minutes)
+            </span>
+            {jobDetailTags.retryDelay}
+          </div>
+          {jobDetailTags.emailList && jobDetailTags.emailList.length > 0 && (
+            <div className="job-details-scheduler-wrapper">
+              <span className="jp-jobs-LabeledValue-label">
+                Email recipients
+              </span>
+              {jobDetailTags.emailList.map((emailData: string) => {
+                return <div>{emailData}</div>;
+              })}
+            </div>
+          )}
         </div>
       )}
     </>

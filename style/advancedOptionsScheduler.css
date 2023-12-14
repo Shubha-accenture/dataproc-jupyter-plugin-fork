@@ -19,3 +19,13 @@
   min-height: 36px;
   outline: none;
 }
+
+.job-details-scheduler-wrapper {
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px;
+}
+
+.email-data-scheduler {
+  margin-right: 5px
+}
