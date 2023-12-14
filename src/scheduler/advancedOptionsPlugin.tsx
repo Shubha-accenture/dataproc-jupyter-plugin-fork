@@ -42,7 +42,9 @@ const AdvancedOptionsComponent = (props: {
   options: Scheduler.IAdvancedOptionsProps;
 }) => {
   const [clusterList, setClusterList] = useState([{}]);
+  const [serverlessList, setServerlessList] = useState([{}]);
   const [clusterSelected, setClusterSelected] = useState('');
+  const [serverlessSelected, setServerlessSelected] = useState('');
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
 
@@ -50,7 +52,7 @@ const AdvancedOptionsComponent = (props: {
   const [emailOnRetry, setEmailonRetry] = useState(true);
   const [emailList, setEmailList] = useState<string[]>([]);
 
-  const [toggleValue, setToggleValue] = useState('cluster');
+  const [selectedMode, setSelectedMode] = useState('cluster');
   const [jobDetailTags, setJobDetailTags] = useState<any>({});
 
   const listClustersAPI = async (
@@ -108,10 +110,72 @@ const AdvancedOptionsComponent = (props: {
     }
   };
 
+  const listSessionTemplatesAPI = async (
+    nextPageToken?: string,
+    previousSessionTemplatesList?: object
+  ) => {
+    const pageToken = nextPageToken ?? '';
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('pageSize', '50');
+      queryParams.append('pageToken', pageToken);
+
+      const response = await authenticatedFetch({
+        uri: 'sessionTemplates',
+        regionIdentifier: 'locations',
+        method: HTTP_METHOD.GET,
+        queryParams: queryParams
+      });
+      const formattedResponse = await response.json();
+      let transformSessionTemplateListData = [];
+      if (formattedResponse && formattedResponse.sessionTemplates) {
+        transformSessionTemplateListData =
+          formattedResponse.sessionTemplates.map((data: any) => {
+            return {
+              serverlessName: data.jupyterSession.displayName
+            };
+          });
+      }
+      const existingSessionTemplateData = previousSessionTemplatesList ?? [];
+      //setStateAction never type issue
+      const allSessionTemplatesData: any = [
+        ...(existingSessionTemplateData as []),
+        ...transformSessionTemplateListData
+      ];
+
+      if (formattedResponse.nextPageToken) {
+        listSessionTemplatesAPI(
+          formattedResponse.nextPageToken,
+          allSessionTemplatesData
+        );
+      } else {
+        let transformSessionTemplateListData = allSessionTemplatesData;
+
+        const keyLabelStructure = transformSessionTemplateListData.map(
+          (obj: { serverlessName: string }) => obj.serverlessName
+        );
+
+        setServerlessList(keyLabelStructure);
+      }
+      if (formattedResponse?.error?.code) {
+        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+      }
+    } catch (error) {
+      DataprocLoggingService.log(
+        'Error listing session templates',
+        LOG_LEVEL.ERROR
+      );
+      console.error('Error listing session templates', error);
+      toast.error('Failed to fetch session templates', toastifyCustomStyle);
+    }
+  };
+
   const handleAdditionalOptionsModel = (tagKey: string, tagValue: any) => {
     let additionalValues: string[];
     let defaultPayload: any = {
+      selectedMode: 'cluster',
       cluster: '',
+      serverless: '',
       retryCount: 2,
       retryDelay: 5,
       emailOnFailure: true,
@@ -134,9 +198,11 @@ const AdvancedOptionsComponent = (props: {
     });
   };
 
-  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setToggleValue((event.target as HTMLInputElement).value);
-    handleAdditionalOptionsModel('toggleValue', event.target.value);
+  const handleSelectedModeChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSelectedMode((event.target as HTMLInputElement).value);
+    handleAdditionalOptionsModel('selectedMode', event.target.value);
   };
 
   const handleClusterSelected = (data: DropdownProps | null) => {
@@ -144,6 +210,14 @@ const AdvancedOptionsComponent = (props: {
       const selectedCluster = data.toString();
       setClusterSelected(selectedCluster);
       handleAdditionalOptionsModel('cluster', selectedCluster);
+    }
+  };
+
+  const handleServerlessSelected = (data: DropdownProps | null) => {
+    if (data) {
+      const selectedServerless = data.toString();
+      setServerlessSelected(selectedServerless);
+      handleAdditionalOptionsModel('serverless', selectedServerless);
     }
   };
 
@@ -178,7 +252,8 @@ const AdvancedOptionsComponent = (props: {
 
   useEffect(() => {
     listClustersAPI();
-    if (props.options.jobsView === 5) {
+    listSessionTemplatesAPI();
+    if (props.options.jobsView === 5 || props.options.jobsView === 6) {
       if (props.options.model.tags) {
         setJobDetailTags(JSON.parse(props.options.model.tags[0]));
       }
@@ -194,8 +269,8 @@ const AdvancedOptionsComponent = (props: {
                 <RadioGroup
                   aria-labelledby="demo-controlled-radio-buttons-group"
                   name="controlled-radio-buttons-group"
-                  value={toggleValue}
-                  onChange={handleToggleChange}
+                  value={selectedMode}
+                  onChange={handleSelectedModeChange}
                   row={true}
                 >
                   <FormControlLabel
@@ -210,22 +285,40 @@ const AdvancedOptionsComponent = (props: {
                   />
                 </RadioGroup>
               </FormControl>
-              {clusterList.length === 0 ? (
-                <Input
-                  className="input-style-scheduler"
-                  value="No clusters running"
-                  readOnly
-                />
-              ) : (
-                <Autocomplete
-                  options={clusterList}
-                  value={clusterSelected}
-                  onChange={(_event, val) => handleClusterSelected(val)}
-                  renderInput={params => (
-                    <TextField {...params} label="Cluster" />
-                  )}
-                />
-              )}
+              {selectedMode === 'cluster' &&
+                (clusterList.length === 0 ? (
+                  <Input
+                    className="input-style-scheduler"
+                    value="No clusters available"
+                    readOnly
+                  />
+                ) : (
+                  <Autocomplete
+                    options={clusterList}
+                    value={clusterSelected}
+                    onChange={(_event, val) => handleClusterSelected(val)}
+                    renderInput={params => (
+                      <TextField {...params} label="Cluster" />
+                    )}
+                  />
+                ))}
+              {selectedMode === 'serverless' &&
+                (serverlessList.length === 0 ? (
+                  <Input
+                    className="input-style-scheduler"
+                    value="No session templates available"
+                    readOnly
+                  />
+                ) : (
+                  <Autocomplete
+                    options={serverlessList}
+                    value={serverlessSelected}
+                    onChange={(_event, val) => handleServerlessSelected(val)}
+                    renderInput={params => (
+                      <TextField {...params} label="Serverless" />
+                    )}
+                  />
+                ))}
               <Input
                 className="input-style-scheduler"
                 onChange={e => handleRetryCount(Number(e.target.value))}
@@ -274,34 +367,42 @@ const AdvancedOptionsComponent = (props: {
           }
         </div>
       )}
-      {props.options.jobsView === 5 && jobDetailTags.retryCount && (
-        <div>
-          <div className="job-details-scheduler-wrapper">
-            <span className="jp-jobs-LabeledValue-label">Cluster</span>
-            {jobDetailTags.cluster}
-          </div>
-          <div className="job-details-scheduler-wrapper">
-            <span className="jp-jobs-LabeledValue-label">Retry count</span>
-            {jobDetailTags.retryCount}
-          </div>
-          <div className="job-details-scheduler-wrapper">
-            <span className="jp-jobs-LabeledValue-label">
-              Retry delay (in minutes)
-            </span>
-            {jobDetailTags.retryDelay}
-          </div>
-          {jobDetailTags.emailList && jobDetailTags.emailList.length > 0 && (
+      {(props.options.jobsView === 5 || props.options.jobsView === 6) &&
+        jobDetailTags.retryCount && (
+          <div>
+            {jobDetailTags.selectedMode === 'cluster' ? (
+              <div className="job-details-scheduler-wrapper">
+                <span className="jp-jobs-LabeledValue-label">Cluster</span>
+                {jobDetailTags.cluster}
+              </div>
+            ) : (
+              <div className="job-details-scheduler-wrapper">
+                <span className="jp-jobs-LabeledValue-label">Serverless</span>
+                {jobDetailTags.serverless}
+              </div>
+            )}
+            <div className="job-details-scheduler-wrapper">
+              <span className="jp-jobs-LabeledValue-label">Retry count</span>
+              {jobDetailTags.retryCount}
+            </div>
             <div className="job-details-scheduler-wrapper">
               <span className="jp-jobs-LabeledValue-label">
-                Email recipients
+                Retry delay (in minutes)
               </span>
-              {jobDetailTags.emailList.map((emailData: string) => {
-                return <div>{emailData}</div>;
-              })}
+              {jobDetailTags.retryDelay}
             </div>
-          )}
-        </div>
-      )}
+            {jobDetailTags.emailList && jobDetailTags.emailList.length > 0 && (
+              <div className="job-details-scheduler-wrapper">
+                <span className="jp-jobs-LabeledValue-label">
+                  Email recipients
+                </span>
+                {jobDetailTags.emailList.map((emailData: string) => {
+                  return <div>{emailData}</div>;
+                })}
+              </div>
+            )}
+          </div>
+        )}
     </>
   );
 };
