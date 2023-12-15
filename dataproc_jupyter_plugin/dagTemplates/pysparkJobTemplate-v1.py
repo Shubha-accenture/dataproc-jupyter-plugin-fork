@@ -13,7 +13,7 @@ default_args = {
     'retry_delay': timedelta(minutes='{{retry_delay}}'), 
     'email': '{{email_list}}',  #list of all the ids passed from UI
     'email_on_failure': '{{email_failure}}',     # based on the value passed fro UI
-    'email_on_retry': '{{email_delay}}',      # based on the value passed fro UI
+    'email_on_retry': '{{email_retry}}',      # based on the value passed fro UI
 }
 input_notebook = '{{input_notebook}}'
 output_notebook = '{{output_notebook}}'

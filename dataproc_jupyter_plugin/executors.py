@@ -92,11 +92,13 @@ class CustomExecutionManager(ExecutionManager):
         environment = Environment(loader=FileSystemLoader(TEMPLATES_FOLDER_PATH))
         template = environment.get_template(DAG_TEMPLATE_V1)
         tags = self.model.tags
+        selected_mode = json.loads(tags[0])['selectedMode']
         cluster_name = json.loads(tags[0])['cluster']
+        serverless_name = json.loads(tags[0])['serverless']
         retry_count = json.loads(tags[0])['retryCount']
         retry_delay = json.loads(tags[0])['retryDelay']
         email_failure = json.loads(tags[0])['emailOnFailure']
-        email_delay = json.loads(tags[0])['emailOnDelay']
+        email_retry = json.loads(tags[0])['emailOnRetry']
         email_list = json.loads(tags[0])['emailList']
         credentials = get_cached_credentials()
         if 'project_id' and'region_id' in credentials:
@@ -107,8 +109,8 @@ class CustomExecutionManager(ExecutionManager):
         owner, error = process.communicate()
         content = template.render(self.model, inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py", \
                                   gcpProjectId=gcp_project_id,gcpRegion=gcp_region_id,input_notebook=f"gs://{gcs_dag_bucket}/dataproc-notebooks/{self.model.name}",\
-                                  output_notebook=f"gs://{gcs_dag_bucket}/dataproc-output/{self.model.name}_{self.model.job_id}.ipynb",cluster_name=cluster_name,\
-                                  retry_count=retry_count,retry_delay=retry_delay,email_failure=email_failure,email_delay=email_delay, email_list=email_list, owner=owner)
+                                  output_notebook=f"gs://{gcs_dag_bucket}/dataproc-output/{self.model.name}_{self.model.job_id}.ipynb",selected_mode=selected_mode,cluster_name=cluster_name,serverless_name=serverless_name,\
+                                  retry_count=retry_count,retry_delay=retry_delay,email_failure=email_failure,email_retry=email_retry, email_list=email_list, owner=owner)
         print(content)
         with open(dag_file, mode="w", encoding="utf-8") as message:
             message.write(content)
