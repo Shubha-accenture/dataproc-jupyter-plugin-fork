@@ -23,8 +23,9 @@ dag = DAG(
     '{{name}}', 
     default_args=default_args,
     description='{{name}}',
-    schedule_interval=timedelta(days=1),
+    schedule_interval="@once",
 )
+
 
 submit_pyspark_job = DataprocSubmitJobOperator(
     task_id='submit_pyspark_job',

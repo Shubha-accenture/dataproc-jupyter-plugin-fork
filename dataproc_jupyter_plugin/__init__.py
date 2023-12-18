@@ -23,7 +23,7 @@ from traitlets import Unicode
 from traitlets.config import Configurable
 from dataproc_jupyter_plugin.executors import CustomExecutionManager
 from dataproc_jupyter_plugin.environments import CustomEnvironmentManager
-
+from dataproc_jupyter_plugin.scheduler import BaseScheduler
 from .handlers import setup_handlers, update_gateway_client_url
 
 class DataprocPluginConfig(Configurable):
@@ -57,6 +57,7 @@ def _link_jupyter_server_extension(server_app):
     c.GatewayClient.gateway_token_renewer_class = CommandTokenRenewer
     c.BaseScheduler.execution_manager_class = CustomExecutionManager
     c.SchedulerApp.environment_manager_class = CustomEnvironmentManager
+    c.SchedulerApp.scheduler_class = BaseScheduler
 
     c.CommandTokenRenewer.token_command = (
         'gcloud config config-helper --format="value(credential.access_token)"')
