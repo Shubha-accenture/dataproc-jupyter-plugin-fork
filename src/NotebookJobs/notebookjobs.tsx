@@ -11,11 +11,17 @@ const NotebookJobComponent = ({
     themeManager: IThemeManager;
 }): React.JSX.Element => {
     return (
+    <>
+       <div className="clusters-list-overlay" role="tab">
         <div>
             Notebook Scheduler
-            <ListNotebookScheduler
-             app={app}  />
         </div>
+        </div>
+        <div>
+            <ListNotebookScheduler
+            app={app}  />
+        </div>
+        </>
     );
 };
 

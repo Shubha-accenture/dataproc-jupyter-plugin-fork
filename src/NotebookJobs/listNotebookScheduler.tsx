@@ -1,14 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTable, usePagination } from 'react-table';
 import { ClipLoader } from 'react-spinners';
 import TableData from '../utils/tableData';
 //import { PaginationView } from '../utils/paginationView';
 import { ICellProps } from '../utils/utils';
+import { requestAPI } from '../handler/handler';
 import { JupyterFrontEnd } from '@jupyterlab/application';
+import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
+import { toast } from 'react-toastify';
+import { toastifyCustomStyle } from '../utils/utils';
+import { Autocomplete, TextField } from '@mui/material';
 
 function listNotebookScheduler({ app }: { app: JupyterFrontEnd }) {
         const [templateList ] = useState<any[]>([]);
         const [isLoading ] = useState(true);
+        const [composerList, setComposerList] = useState<string[]>([]);
+        const [composerSelected, setComposerSelected] = useState('');
         const data = templateList;
 
 
@@ -41,6 +48,34 @@ function listNotebookScheduler({ app }: { app: JupyterFrontEnd }) {
           ],
           []
         );
+        const handleComposerSelected = (data: string | null) => {
+          if (data) {
+            const selectedComposer = data.toString();
+            setComposerSelected(selectedComposer);
+          }
+        };
+
+        const listComposersAPI = async () => {
+          try {
+            const formattedResponse: any = await requestAPI('composer');
+            let composerEnvironmentList: string[] = [];
+            formattedResponse.forEach((data: any) => {
+              composerEnvironmentList.push(data.name);
+            });
+      
+            setComposerList(composerEnvironmentList);
+          } catch (error) {
+            DataprocLoggingService.log(
+              'Error listing composer environment list',
+              LOG_LEVEL.ERROR
+            );
+            console.error('Error listing composer environment list', error);
+            toast.error(
+              'Failed to fetch composer environment list',
+              toastifyCustomStyle
+            );
+          }
+        };
 
         const {
             getTableProps,
@@ -72,11 +107,23 @@ function listNotebookScheduler({ app }: { app: JupyterFrontEnd }) {
               </td>
             );
           };
-        
+          useEffect(() => {
+            listComposersAPI();
+          }, []);
           return (
             <div>
-                <>
-                 <div className="notebook-templates-list-table-parent">
+              <div>
+              <div className="create-scheduler-form-element">
+                <Autocomplete
+                  options={composerList}
+                  value={composerSelected}
+                  onChange={(_event, val) => handleComposerSelected(val)}
+                  renderInput={params => (
+                    <TextField {...params} label="Environment*" />
+                  )}
+                />
+                </div>
+                <div className="notebook-templates-list-table-parent">
                       <TableData
                         getTableProps={getTableProps}
                         headerGroups={headerGroups}
@@ -116,7 +163,7 @@ function listNotebookScheduler({ app }: { app: JupyterFrontEnd }) {
                       <div className="no-data-style">No rows to display</div>
                     )}
                   </div>
-              </>
+              </div>
             </div>
           );
 };

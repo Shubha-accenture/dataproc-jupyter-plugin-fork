@@ -20,7 +20,6 @@ import { IThemeManager } from '@jupyterlab/apputils';
 import { DataprocWidget } from '../controls/DataprocWidget';
 import { JupyterLab } from '@jupyterlab/application';
 import CreateNotebookScheduler from './createNotebookScheduler';
-
 import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { INotebookModel } from '@jupyterlab/notebook';
 
