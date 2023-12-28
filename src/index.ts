@@ -27,6 +27,7 @@ import { LabIcon } from '@jupyterlab/ui-components';
 import { IMainMenu } from '@jupyterlab/mainmenu';
 import { Cluster } from './cluster/cluster';
 import { Batches } from './batches/batches';
+import { NotebookJobs } from './NotebookJobs/notebookjobs';
 import clusterIcon from '../style/icons/cluster_icon.svg';
 import addRuntimeIcon from '../style/icons/add_runtime_template.svg';
 import serverlessIcon from '../style/icons/serverless_icon.svg';
@@ -94,6 +95,11 @@ const extension: JupyterFrontEndPlugin<void> = {
     });
     const iconServerless = new LabIcon({
       name: 'launcher:serverless-icon',
+      svgstr: serverlessIcon
+    });
+
+    const iconNotebookJobs = new LabIcon({
+      name: 'launcher:notebook-template-icon',
       svgstr: serverlessIcon
     });
     const iconStorage = new LabIcon({
@@ -355,6 +361,21 @@ const extension: JupyterFrontEndPlugin<void> = {
       }
     });
 
+    const createNotebookJobsComponentCommand = 'create-notebook-jobs-component';
+    commands.addCommand(createNotebookJobsComponentCommand, {
+      caption: 'Create a new Serverless Component',
+      label: 'Notebook Jobs',
+      // @ts-ignore jupyter lab icon command issue
+      icon: args => (args['isPalette'] ? null : iconNotebookJobs),
+      execute: () => {
+        const content = new NotebookJobs(app as JupyterLab,themeManager);
+        const widget = new MainAreaWidget<NotebookJobs>({ content });
+        widget.title.label = 'Notebook Scheduler';
+        widget.title.icon = iconServerless;
+        app.shell.add(widget, 'main');
+      }
+    });
+
     const createAuthLoginComponentCommand = 'cloud-dataproc-settings:configure';
     commands.addCommand(createAuthLoginComponentCommand, {
       label: 'Cloud Dataproc Settings',
@@ -466,6 +487,11 @@ const extension: JupyterFrontEndPlugin<void> = {
         command: createBatchesComponentCommand,
         category: TITLE_LAUNCHER_CATEGORY,
         rank: 2
+      });
+      launcher.add({
+        command: createNotebookJobsComponentCommand,
+        category: TITLE_LAUNCHER_CATEGORY,
+        rank: 3//it will be 4
       });
     }
 
