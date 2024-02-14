@@ -25,8 +25,13 @@ interface IBatch {
   location: string;
   creationTime: string;
   elapsedTime: string;
-  type: string;
+  type: string | undefined;
   actions: JSX.Element;
+}
+interface ITemplate {
+  title: string;
+  category: string;
+  description: string;
 }
 interface ICluster {
   clusterName: string;
@@ -42,7 +47,7 @@ interface IPaginationViewProps {
   pageSize: number;
   setPageSize: (value: number) => void;
   pageIndex: number;
-  allData: IBatch[] | ICluster[] | ISessionTemplateDisplay[];
+  allData: IBatch[] | ITemplate[]| ICluster[] | ISessionTemplateDisplay[];
   previousPage: () => void;
   nextPage: () => void;
   canPreviousPage: boolean;

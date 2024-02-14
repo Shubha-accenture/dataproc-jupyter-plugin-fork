@@ -21,11 +21,9 @@ import { authApi, loggedFetch, toastifyCustomStyle } from '../utils/utils';
 import {
   API_HEADER_BEARER,
   API_HEADER_CONTENT_TYPE,
-  BASE_URL_DATAPROC,
-  CATALOG_SEARCH,
-  COLUMN_API,
   QUERY_DATABASE,
-  QUERY_TABLE
+  QUERY_TABLE,
+  gcpServiceUrls
 } from '../utils/const';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 
@@ -96,8 +94,9 @@ export class DpmsService {
     data: any
   ) => {
     const credentials = await authApi();
+    const { COLUMN } = await gcpServiceUrls;
     if (credentials && notebookValue) {
-      loggedFetch(`${COLUMN_API}${name}`, {
+      loggedFetch(`${COLUMN}${name}`, {
         method: 'GET',
         headers: {
           'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -143,6 +142,7 @@ export class DpmsService {
     setTableDescription: (value: Record<string, string>) => void,
   ) => {
     const credentials = await authApi();
+    const { CATALOG } = await gcpServiceUrls;
     if (credentials && notebookValue) {
       const requestBody = {
         query: `${QUERY_TABLE}${credentials.project_id}.${credentials.region_id}.${dataprocMetastoreServices}.${database}`,
@@ -150,7 +150,7 @@ export class DpmsService {
           includeProjectIds: [credentials.project_id]
         }
       };
-      loggedFetch(`${CATALOG_SEARCH}`, {
+      loggedFetch(`${CATALOG}`, {
         method: 'POST',
         body: JSON.stringify(requestBody),
         headers: {
@@ -216,6 +216,7 @@ export class DpmsService {
     setApiMessage: (value: string) => void,
   ) => {
     const credentials = await authApi();
+    const { CATALOG } = await gcpServiceUrls;
     if (credentials && notebookValue) {
       const requestBody = {
         query: `${QUERY_DATABASE}${credentials.project_id}.${credentials.region_id}.${dataprocMetastoreServices}`,
@@ -223,7 +224,7 @@ export class DpmsService {
           includeProjectIds: [credentials.project_id]
         }
       };
-      loggedFetch(`${CATALOG_SEARCH}`, {
+      loggedFetch(`${CATALOG}`, {
         method: 'POST',
         body: JSON.stringify(requestBody),
         headers: {
@@ -290,9 +291,10 @@ export class DpmsService {
     setDataprocMetastoreServices: (value: string) => void
   ) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     if (credentials && notebookValue) {
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/clusters/${notebookValue}`,
+        `${DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/clusters/${notebookValue}`,
         {
           method: 'GET',
           headers: {
@@ -352,9 +354,10 @@ export class DpmsService {
     setDataprocMetastoreServices: (value: string) => void
   ) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     if (credentials && notebookValue) {
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/sessionTemplates/${notebookValue}`,
+        `${DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/sessionTemplates/${notebookValue}`,
         {
           method: 'GET',
           headers: {

@@ -22,14 +22,15 @@ import {
   API_HEADER_BEARER,
   API_HEADER_CONTENT_TYPE,
   ARTIFACT_REGISTERY,
-  BASE_URL_DATAPROC,
+  gcpServiceUrls,
   CONTAINER_REGISTERY,
   CUSTOM_CONTAINERS,
   CUSTOM_CONTAINER_MESSAGE,
   CUSTOM_CONTAINER_MESSAGE_PART,
   LOGIN_ERROR_MESSAGE,
   LOGIN_STATE,
-  SHARED_VPC
+  SHARED_VPC,
+  SERVICE_ACCOUNT
 } from '../utils/const';
 import LabelProperties from '../jobs/labelProperties';
 import {
@@ -107,6 +108,7 @@ function CreateRunTime({
   const [projectId, setProjectId] = useState<string | null>('');
   const [region, setRegion] = useState('');
   const [containerImageSelected, setContainerImageSelected] = useState('');
+  const [serviceAccountSelected, setServiceAccountSelected] = useState('');
   const [networkList, setNetworklist] = useState([{}]);
   const [subNetworkList, setSubNetworklist] = useState<string[]>([]);
   const [networkSelected, setNetworkSelected] = useState('');
@@ -281,6 +283,9 @@ function CreateRunTime({
         const peripheralsConfig = environmentConfig.peripheralsConfig;
 
         if (executionConfig) {
+          if (executionConfig.serviceAccount) {
+            setServiceAccountSelected(executionConfig.serviceAccount);
+          }
           const sharedVpcMatches =
             /projects\/(?<project>[\w\-]+)\/regions\/(?<region>[\w\-]+)\/subnetworks\/(?<subnetwork>[\w\-]+)/.exec(
               executionConfig.subnetworkUri
@@ -572,9 +577,10 @@ function CreateRunTime({
   }
   const createRuntimeApi = async (payload: any) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/sessionTemplates`,
+        `${DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/sessionTemplates`,
         {
           method: 'POST',
           body: JSON.stringify(payload),
@@ -768,6 +774,9 @@ function CreateRunTime({
         },
         environmentConfig: {
           executionConfig: {
+            ...(serviceAccountSelected !== '' && {
+              serviceAccount: serviceAccountSelected
+            }),
             ...(networkTagSelected.length > 0 && {
               networkTags: networkTagSelected
             }),
@@ -969,6 +978,30 @@ function CreateRunTime({
                   className="learn-more-url"
                   onClick={() => {
                     window.open(`${CUSTOM_CONTAINERS}`, '_blank');
+                  }}
+                >
+                  Learn more
+                </div>
+              </div>
+              <div className="submit-job-label-header">
+                Execution Configuration
+              </div>
+              <div className="select-text-overlay">
+                <Input
+                  className="create-batch-style "
+                  value={serviceAccountSelected}
+                  onChange={e => setServiceAccountSelected(e.target.value)}
+                  type="text"
+                  placeholder=""
+                  Label="Service account"
+                />
+              </div>
+              <div className="create-custom-messagelist">
+                If not provided, the default GCE service account will be used.
+                <div
+                  className="submit-job-learn-more"
+                  onClick={() => {
+                    window.open(`${SERVICE_ACCOUNT}`, '_blank');
                   }}
                 >
                   Learn more
@@ -1328,7 +1361,7 @@ function CreateRunTime({
       ) : (
         loginError && (
           <div role="alert" className="login-error">
-             {LOGIN_ERROR_MESSAGE}
+            {LOGIN_ERROR_MESSAGE}
           </div>
         )
       )}

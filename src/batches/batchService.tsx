@@ -17,15 +17,11 @@
 
 import {
   API_HEADER_CONTENT_TYPE,
-  BASE_URL_DATAPROC,
   API_HEADER_BEARER,
   BatchStatus,
-  REGION_URL,
-  BASE_URL_NETWORKS,
-  BASE_URL_KEY,
-  BASE_URL_META,
   HTTP_METHOD,
-  STATUS_RUNNING
+  STATUS_RUNNING,
+  gcpServiceUrls
 } from '../utils/const';
 import {
   authApi,
@@ -34,7 +30,8 @@ import {
   jobTimeFormat,
   elapsedTime,
   jobTypeDisplay,
-  authenticatedFetch
+  authenticatedFetch,
+  IAuthCredentials
 } from '../utils/utils';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -97,6 +94,16 @@ interface IBatchDetailsResponse {
   stateHistory: [{ state: ''; stateStartTime: '' }];
   stateTime: '';
   labels: {};
+}
+
+interface IBatchesList {
+  batchID: string;
+  status: string;
+  location: string;
+  creationTime: string;
+  type: string | undefined;
+  elapsedTime: string;
+  actions: React.JSX.Element;
 }
 
 interface IBatchData {
@@ -166,9 +173,10 @@ type Region = {
 export class BatchService {
   static deleteBatchAPIService = async (selectedBatch: string) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches/${selectedBatch}`,
+        `${DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches/${selectedBatch}`,
         {
           method: 'DELETE',
           headers: {
@@ -211,11 +219,12 @@ export class BatchService {
     setErrorView: (value: boolean) => void
   ) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     if (credentials) {
       setRegionName(credentials.region_id || '');
       setProjectName(credentials.project_id || '');
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches/${batchSelected}`,
+        `${DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches/${batchSelected}`,
         {
           method: 'GET',
           headers: {
@@ -270,19 +279,20 @@ export class BatchService {
     setRegionName: (value: string) => void,
     setProjectName: (value: string) => void,
     renderActions: (value: IBatchData) => React.JSX.Element,
-    setBatchesList: (value: any) => void,
+    setBatchesList: (value: IBatchesList[]) => void,
     setIsLoading: (value: boolean) => void,
     setLoggedIn: (value: boolean) => void,
     nextPageToken?: string,
     previousBatchesList?: object
   ) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     const pageToken = nextPageToken ?? '';
     if (credentials) {
       setRegionName(credentials.region_id || '');
       setProjectName(credentials.project_id || '');
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches?orderBy=create_time desc&&pageSize=50&pageToken=${pageToken}`,
+        `${DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches?orderBy=create_time desc&&pageSize=50&pageToken=${pageToken}`,
         {
           headers: {
             'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -294,15 +304,7 @@ export class BatchService {
           response
             .json()
             .then((responseResult: IBatchListResponse) => {
-              let transformBatchListData: {
-                batchID: string;
-                status: string;
-                location: string;
-                creationTime: string;
-                type: string | undefined;
-                elapsedTime: string;
-                actions: React.JSX.Element;
-              }[] = [];
+              let transformBatchListData: IBatchesList[] = [];
               if (responseResult && responseResult.batches) {
                 transformBatchListData = responseResult.batches.map(
                   (data: IBatchData) => {
@@ -342,10 +344,7 @@ export class BatchService {
               }
               const existingBatchData = previousBatchesList ?? [];
 
-              let allBatchesData: any = [
-                ...(existingBatchData as []),
-                ...transformBatchListData
-              ];
+              let allBatchesData: IBatchesList[] = [...(existingBatchData as []), ...transformBatchListData];
 
               if (responseResult.nextPageToken) {
                 this.listBatchAPIService(
@@ -384,6 +383,7 @@ export class BatchService {
   ) => {
     try {
       const credentials = await authApi();
+      const { REGION_URL } = await gcpServiceUrls;
       if (!credentials) {
         return false;
       }
@@ -433,6 +433,7 @@ export class BatchService {
     setSharedSubNetworkList: (value: string[]) => void
   ) => {
     const credentials = await authApi();
+    const { REGION_URL } = await gcpServiceUrls;
     if (credentials) {
       let apiURL = `${REGION_URL}/${credentials.project_id}/getXpnHost`;
       loggedFetch(apiURL, {
@@ -475,9 +476,10 @@ export class BatchService {
   ) => {
     setIsloadingNetwork(true);
     const credentials = await authApi();
+    const { COMPUTE } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_NETWORKS}/projects/${credentials.project_id}/regions/${credentials.region_id}/subnetworks/${subNetwork}`,
+        `${COMPUTE}/projects/${credentials.project_id}/regions/${credentials.region_id}/subnetworks/${subNetwork}`,
         {
           headers: {
             'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -526,9 +528,10 @@ export class BatchService {
     setNetworkSelected: (value: string) => void
   ) => {
     const credentials = await authApi();
+    const { COMPUTE } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_NETWORKS}/projects/${credentials.project_id}/global/networks`,
+        `${COMPUTE}/projects/${credentials.project_id}/global/networks`,
         {
           headers: {
             'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -584,9 +587,10 @@ export class BatchService {
     setKeyRinglist: (value: string[]) => void
   ) => {
     const credentials = await authApi();
+    const { CLOUD_KMS } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_KEY}/projects/${credentials.project_id}/locations/${credentials.region_id}/keyRings`,
+        `${CLOUD_KMS}/projects/${credentials.project_id}/locations/${credentials.region_id}/keyRings`,
         {
           headers: {
             'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -635,9 +639,10 @@ export class BatchService {
     setKeySelected: (value: string) => void
   ) => {
     const credentials = await authApi();
+    const { CLOUD_KMS } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_KEY}/projects/${credentials.project_id}/locations/${credentials.region_id}/keyRings/${keyRing}/cryptoKeys`,
+        `${CLOUD_KMS}/projects/${credentials.project_id}/locations/${credentials.region_id}/keyRings/${keyRing}/cryptoKeys`,
         {
           headers: {
             'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -688,9 +693,10 @@ export class BatchService {
     setSubNetworkSelected: (value: string) => void
   ) => {
     const credentials = await authApi();
+    const { COMPUTE } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_NETWORKS}/projects/${credentials.project_id}/regions/${credentials.region_id}/subnetworks`,
+        `${COMPUTE}/projects/${credentials.project_id}/regions/${credentials.region_id}/subnetworks`,
         {
           headers: {
             'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -756,9 +762,10 @@ export class BatchService {
   ) => {
     setIsLoadingService(true);
     const credentials = await authApi();
+    const { METASTORE } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_META}/projects/${projectId}/locations/${location}/services`,
+        `${METASTORE}/projects/${projectId}/locations/${location}/services`,
         {
           headers: {
             'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -830,6 +837,7 @@ export class BatchService {
     setServicesList: (value: string[]) => void
   ) => {
     const credentials = await authApi();
+    const { REGION_URL } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(`${REGION_URL}/${projectId}/regions`, {
         headers: {
@@ -895,7 +903,7 @@ export class BatchService {
   };
 
   static creatBatchSubmitService = async (
-    credentials: any,
+    credentials: IAuthCredentials,
     payload: any,
     batchIdSelected: string,
     setCreateBatchView: any,
@@ -903,8 +911,9 @@ export class BatchService {
     setError: any,
     error: any
   ) => {
+    const { DATAPROC } = await gcpServiceUrls;
     loggedFetch(
-      `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches?batchId=${batchIdSelected}`,
+      `${DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches?batchId=${batchIdSelected}`,
       {
         method: 'POST',
         body: JSON.stringify(payload),

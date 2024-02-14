@@ -18,12 +18,12 @@
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {
-  BASE_URL_DATAPROC,
   API_HEADER_CONTENT_TYPE,
   API_HEADER_BEARER,
   LABEL_TEXT,
   ClusterStatus,
-  HTTP_METHOD
+  HTTP_METHOD,
+  gcpServiceUrls
 } from '../utils/const';
 import {
   authApi,
@@ -35,7 +35,8 @@ import {
   jobTypeValue,
   jobTypeDisplay,
   authenticatedFetch,
-  statusValue
+  statusValue,
+  IAuthCredentials
 } from '../utils/utils';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import { IJobDetails } from '../utils/jobDetailsInterface';
@@ -67,12 +68,19 @@ interface IRenderActionsData {
   status: { state: ClusterStatus };
   clusterName: string;
 }
+
+interface IClusterResponse {
+  clusterUuid: string;
+  status: string;
+  clusterName: string;
+}
 export class JobService {
   static stopJobApi = async (jobId: string) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs/${jobId}:cancel`,
+        `${DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs/${jobId}:cancel`,
         {
           method: 'POST',
           headers: {
@@ -104,9 +112,10 @@ export class JobService {
   };
   static deleteJobApi = async (jobId: string) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs/${jobId}`,
+        `${DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs/${jobId}`,
         {
           method: 'DELETE',
           headers: {
@@ -145,9 +154,10 @@ export class JobService {
     setSelectedJobClone: any
   ) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs/${jobSelected}`,
+        `${DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs/${jobSelected}`,
         {
           method: 'GET',
           headers: {
@@ -207,9 +217,10 @@ export class JobService {
     jobSelected: string
   ) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs/${jobSelected}?updateMask=${LABEL_TEXT}`,
+        `${DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs/${jobSelected}?updateMask=${LABEL_TEXT}`,
         {
           method: 'PATCH',
           body: JSON.stringify(payloadJob),
@@ -257,11 +268,12 @@ export class JobService {
     previousJobsList?: object
   ) => {
     const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
     const clusterName = clusterSelected ?? '';
     const pageToken = nextPageToken ?? '';
     if (credentials) {
       loggedFetch(
-        `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs?pageSize=50&pageToken=${pageToken}&&clusterName=${clusterName}`,
+        `${DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs?pageSize=50&pageToken=${pageToken}&&clusterName=${clusterName}`,
         {
           headers: {
             'Content-Type': API_HEADER_CONTENT_TYPE,
@@ -394,7 +406,7 @@ export class JobService {
       }
       const existingClusterData = previousClustersList ?? [];
       //setStateAction never type issue
-      const allClustersData: any = [
+      const allClustersData: IClusterResponse[] = [
         ...(existingClusterData as []),
         ...transformClusterListData
       ];
@@ -418,12 +430,13 @@ export class JobService {
     }
   };
   static submitJobService = async (
-    payload: any, 
+    payload: any,
     jobIdSelected: string,
-    credentials: any
+    credentials: IAuthCredentials
   ) => {
+    const { DATAPROC } = await gcpServiceUrls;
     loggedFetch(
-      `${BASE_URL_DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs:submit`,
+      `${DATAPROC}/projects/${credentials.project_id}/regions/${credentials.region_id}/jobs:submit`,
       {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -458,5 +471,5 @@ export class JobService {
         DataprocLoggingService.log('Error submitting job', LOG_LEVEL.ERROR);
         toast.error('Failed to submit the job', toastifyCustomStyle);
       });
-  }
+  };
 }
