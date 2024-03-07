@@ -26,7 +26,7 @@ def test_list_clusters_success():
     page_size = 10
     page_token = ''
     service = RuntimeListService()
-    response = service.list_clusters(credentials, page_size, page_token,log)
+    response = service.list_runtime(credentials, page_size, page_token,log)
     assert len(response) >= 0 and 'error' not in response
 
 

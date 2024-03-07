@@ -31,7 +31,6 @@ class ClusterListService:
                 project_id = credentials["project_id"]
                 region_id = credentials["region_id"]
                 api_endpoint = f"{dataproc_url}/v1/projects/{project_id}/regions/{region_id}/clusters?pageSize={page_size}&pageToken={page_token}"
-                print(api_endpoint)
                 headers = {
                     "Content-Type": CONTENT_TYPE,
                     "Authorization": f"Bearer {access_token}",
