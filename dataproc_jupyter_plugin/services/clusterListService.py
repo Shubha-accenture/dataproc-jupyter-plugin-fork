@@ -18,6 +18,8 @@ from dataproc_jupyter_plugin.utils.constants import CONTENT_TYPE, dataproc_url
 
 
 class ClusterListService:
+    def __init__(self, requests_module=requests):
+        self.requests = requests_module
     def list_clusters(self, credentials, page_size, page_token, log):
         try:
             if (
@@ -29,6 +31,7 @@ class ClusterListService:
                 project_id = credentials["project_id"]
                 region_id = credentials["region_id"]
                 api_endpoint = f"{dataproc_url}/v1/projects/{project_id}/regions/{region_id}/clusters?pageSize={page_size}&pageToken={page_token}"
+                print(api_endpoint)
                 headers = {
                     "Content-Type": CONTENT_TYPE,
                     "Authorization": f"Bearer {access_token}",
@@ -36,8 +39,10 @@ class ClusterListService:
                 response = requests.get(api_endpoint, headers=headers)
                 if response.status_code == 200:
                     resp = response.json()
-
-                return resp
+                    return resp
+                else:
+                    log.exception(f"Error fetching cluster list")
+                    raise ValueError(response)
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")

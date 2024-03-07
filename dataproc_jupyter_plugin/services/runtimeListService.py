@@ -37,8 +37,11 @@ class RuntimeListService:
                 response = requests.get(api_endpoint, headers=headers)
                 if response.status_code == 200:
                     resp = response.json()
-
-                return resp
+                    return resp
+                else:
+                    log.exception(f"Error fetching cluster list")
+                    raise ValueError(response)
+                
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")
