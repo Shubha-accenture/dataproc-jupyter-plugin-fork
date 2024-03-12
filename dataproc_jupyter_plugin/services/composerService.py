@@ -20,6 +20,8 @@ from dataproc_jupyter_plugin.utils.constants import CONTENT_TYPE, ENVIRONMENT_AP
 
 
 class ComposerService:
+    def __init__(self, requests_module=requests):
+        self.requests = requests_module
     def list_environments(self, credentials, log) -> List[ComposerEnvironment]:
         try:
             if (
@@ -62,14 +64,13 @@ class ComposerService:
                         return environments
                 else:
                     log.exception(f"Error listing environments")
-                    print(f"Error: {response.status_code} - {response.text}")
+                    raise ValueError(response)
             else:
                 log.exception(f"Missing required credentials")
-                raise ValueError("Missing required credentials")
-
-        except FileNotFoundError:
-            environments = []
-            return environments
+                return {"error" : "Missing required credentials"}
+        except FileNotFoundError as e:
+            log.exception(f"Error fetching environment list")
+            return {"error": str(e)}
 
     def manage_environments_command(self) -> str:
         return ""
