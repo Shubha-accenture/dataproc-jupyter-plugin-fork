@@ -40,8 +40,10 @@ class DagEditService:
                 response = requests.get(api_endpoint, headers=headers)
                 if response.status_code == 200:
                     log.info("Dag file response fetched")
-
-                return response.content
+                    return response.content
+                else:
+                    log.exception(f"Error reading dag file: {str(e)}")
+                    return {"error": str(e)}
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")

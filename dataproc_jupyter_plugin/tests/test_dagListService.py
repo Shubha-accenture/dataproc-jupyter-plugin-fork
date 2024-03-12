@@ -16,28 +16,7 @@ import logging
 import pytest
 from unittest.mock import MagicMock, Mock, patch
 from dataproc_jupyter_plugin import handlers
-from dataproc_jupyter_plugin.services.clusterListService import ClusterListService
 from dataproc_jupyter_plugin.services.dagListService import DagListService
-
-# def test_list_dag():
-#     log = logging.getLogger(__name__)
-#     cred = handlers.get_cached_credentials(log)
-#     credentials = {"access_token": cred['access_token'] , "project_id": cred["project_id"], "region_id":cred['region_id'] }
-#     composer_name = Mock()
-#     service = DagListService()
-#     response = service.list_jobs(credentials, composer_name, TAGS,log)
-#     assert len(response) >= 0 and 'error' not in response
-
-
-# def test_list_dag_missing_credentials():
-#     credentials = {}
-#     log = logging.getLogger(__name__)
-#     composer_name = Mock()
-#     service = DagListService()
-#     result = service.list_jobs(credentials,composer_name, TAGS, log)
-#     assert "error" in result
-#     assert "Missing required credentials" in result["error"]
-
 
 
 @patch('dataproc_jupyter_plugin.services.dagListService.requests.get')
