@@ -18,14 +18,19 @@ from dataproc_jupyter_plugin.services.triggerDagService import TriggerDagService
 from unittest.mock import MagicMock, patch
 from dataproc_jupyter_plugin.services.triggerDagService import TriggerDagService
 
-@patch('dataproc_jupyter_plugin.services.dagListService.DagListService.get_airflow_uri')
-@patch('dataproc_jupyter_plugin.services.triggerDagService.requests.post')
+
+@patch("dataproc_jupyter_plugin.services.dagListService.DagListService.get_airflow_uri")
+@patch("dataproc_jupyter_plugin.services.triggerDagService.requests.post")
 def test_dag_trigger_success(mock_post, mock_get_airflow_uri):
-    mock_get_airflow_uri.return_value = ('mock_airflow_uri', 'mock_bucket')
+    mock_get_airflow_uri.return_value = ("mock_airflow_uri", "mock_bucket")
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = {"mock_key": "mock_value"}
     trigger_dag_service = TriggerDagService()
-    credentials = {"access_token": "mock_token", "project_id": "mock_project", "region_id": "mock_region"}
+    credentials = {
+        "access_token": "mock_token",
+        "project_id": "mock_project",
+        "region_id": "mock_region",
+    }
     dag_id = "mock_dag_id"
     composer = "mock_composer"
     log = MagicMock()
@@ -42,7 +47,3 @@ def test_dag_trigger_missing_credentials():
     result = trigger_dag_service.dag_trigger(credentials, dag_id, composer, log)
     assert "error" in result
     assert "Missing required credentials" in result["error"]
-
-
-
-

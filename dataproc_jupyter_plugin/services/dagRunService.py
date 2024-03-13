@@ -23,9 +23,6 @@ class DagRunListService:
     def list_dag_runs(
         self, credentials, composer_name, dag_id, start_date, end_date, offset, log
     ):
-        airflow_uri, bucket = DagListService.get_airflow_uri(
-            self, composer_name, credentials, log
-        )
         try:
             if (
                 ("access_token" in credentials)
@@ -33,6 +30,9 @@ class DagRunListService:
                 and ("region_id" in credentials)
             ):
                 access_token = credentials["access_token"]
+                airflow_uri, bucket = DagListService.get_airflow_uri(
+                    self, composer_name, credentials, log
+                )
                 api_endpoint = f"{airflow_uri}/api/v1/dags/{dag_id}/dagRuns?execution_date_gte={start_date}&execution_date_lte={end_date}&offset={offset}"
                 headers = {
                     "Content-Type": CONTENT_TYPE,
@@ -41,8 +41,10 @@ class DagRunListService:
                 response = requests.get(api_endpoint, headers=headers)
                 if response.status_code == 200:
                     resp = response.json()
-
-                return resp
+                    return resp
+                else:
+                    log.exception(f"Error fetching dag run list")
+                    raise ValueError(response)
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")

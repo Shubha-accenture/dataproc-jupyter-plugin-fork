@@ -20,7 +20,7 @@ from dataproc_jupyter_plugin.utils.constants import CONTENT_TYPE
 
 class ImportErrorService:
     def list_import_errors(self, credentials, composer, log):
-        
+
         try:
             if (
                 ("access_token" in credentials)
@@ -42,7 +42,10 @@ class ImportErrorService:
                 response = requests.get(api_endpoint, headers=headers)
                 if response.status_code == 200:
                     resp = response.json()
-                return resp
+                    return resp
+                else:
+                    log.exception(f"Error fetching import error list")
+                    raise ValueError(response)
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")

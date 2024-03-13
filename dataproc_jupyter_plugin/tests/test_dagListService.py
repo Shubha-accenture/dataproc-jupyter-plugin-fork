@@ -19,7 +19,7 @@ from dataproc_jupyter_plugin import handlers
 from dataproc_jupyter_plugin.services.dagListService import DagListService
 
 
-@patch('dataproc_jupyter_plugin.services.dagListService.requests.get')
+@patch("dataproc_jupyter_plugin.services.dagListService.requests.get")
 def test_list_jobs_success(mock_requests_get):
     credentials = {
         "access_token": "token",
