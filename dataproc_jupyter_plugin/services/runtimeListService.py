@@ -20,6 +20,7 @@ from dataproc_jupyter_plugin.utils.constants import CONTENT_TYPE, dataproc_url
 class RuntimeListService:
     def __init__(self, requests_module=requests):
         self.requests = requests_module
+
     def list_runtime(self, credentials, page_size, page_token, log):
         try:
             if (
@@ -41,9 +42,9 @@ class RuntimeListService:
                     resp = response.json()
                     return resp
                 else:
-                    log.exception(f"Error fetching cluster list")
+                    log.exception(f"Error fetching runtime list")
                     raise ValueError(response)
-                
+
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")

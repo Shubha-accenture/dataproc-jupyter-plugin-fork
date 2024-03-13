@@ -19,17 +19,16 @@ from dataproc_jupyter_plugin.utils.constants import CONTENT_TYPE
 
 
 class TriggerDagService:
+    def __init__(self, requests_module=requests):
+        self.requests = requests_module
+
     def dag_trigger(self, credentials, dag_id, composer, log):
-        airflow_uri, bucket = DagListService.get_airflow_uri(
-            self, composer, credentials, log
-        )
         try:
-            if (
-                ("access_token" in credentials)
-                and ("project_id" in credentials)
-                and ("region_id" in credentials)
-            ):
+            if "access_token" in credentials:
                 access_token = credentials["access_token"]
+                airflow_uri, bucket = DagListService.get_airflow_uri(
+                    self, composer, credentials, log
+                )
                 api_endpoint = f"{airflow_uri}/api/v1/dags/{dag_id}/dagRuns"
 
                 headers = {
@@ -40,11 +39,16 @@ class TriggerDagService:
                 response = requests.post(api_endpoint, headers=headers, json=body)
                 if response.status_code == 200:
                     resp = response.json()
-
-                return resp
+                    print("bbbbb", resp)
+                    return resp, bucket
+                else:
+                    log.exception(f"Error triggering dag")
+                    print("cccccc", response)
+                    raise ValueError(response)
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")
         except Exception as e:
             log.exception(f"Error triggering dag: {str(e)}")
+            print("dddddd", str(e))
             return {"error": str(e)}

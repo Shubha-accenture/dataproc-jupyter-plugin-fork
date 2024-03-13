@@ -18,13 +18,18 @@ from unittest.mock import Mock, patch
 from dataproc_jupyter_plugin import handlers
 from dataproc_jupyter_plugin.services.composerService import ComposerService
 
+
 def test_list_environments_success():
     log = logging.getLogger(__name__)
     cred = handlers.get_cached_credentials(log)
-    credentials = {"access_token": cred['access_token'] , "project_id": cred["project_id"], "region_id":cred['region_id'] }
+    credentials = {
+        "access_token": cred["access_token"],
+        "project_id": cred["project_id"],
+        "region_id": cred["region_id"],
+    }
     service = ComposerService()
     response = service.list_environments(credentials, log)
-    assert len(response) >= 0 and 'error' not in response
+    assert len(response) >= 0 and "error" not in response
 
 
 def test_list_environments_missing_credentials():
@@ -34,9 +39,3 @@ def test_list_environments_missing_credentials():
     result = service.list_environments(credentials, log)
     assert "error" in result
     assert "Missing required credentials" in result["error"]
-
-
-
-
-
-

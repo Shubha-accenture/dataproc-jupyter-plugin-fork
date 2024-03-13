@@ -20,6 +20,7 @@ from dataproc_jupyter_plugin.utils.constants import CONTENT_TYPE, dataproc_url
 class ClusterListService:
     def __init__(self, requests_module=requests):
         self.requests = requests_module
+
     def list_clusters(self, credentials, page_size, page_token, log):
         try:
             if (

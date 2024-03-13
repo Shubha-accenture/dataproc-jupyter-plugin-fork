@@ -43,14 +43,14 @@ class DagListService:
                     bucket = resp.get("storageConfig", {}).get("bucket", "")
                     return airflow_uri, bucket
                 else:
-                    log.exception(f"Error getting airflow uri",response)
+                    log.exception(f"Error getting airflow uri", response)
                     raise ValueError(response)
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")
         except Exception as e:
             log.exception(f"Error getting airflow uri: {str(e)}")
-            return {"error": "Error getting airflow uri" }
+            return {"error": "Error getting airflow uri"}
 
     def list_jobs(self, credentials, composer_name, tags, log):
 
@@ -58,7 +58,8 @@ class DagListService:
             if "access_token" in credentials:
                 access_token = credentials["access_token"]
                 airflow_uri, bucket = DagListService.get_airflow_uri(
-                self, composer_name, credentials, log)
+                    self, composer_name, credentials, log
+                )
                 api_endpoint = f"{airflow_uri}/api/v1/dags?tags={tags}"
                 headers = {
                     "Content-Type": CONTENT_TYPE,
