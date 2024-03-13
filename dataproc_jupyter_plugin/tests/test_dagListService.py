@@ -21,7 +21,11 @@ from dataproc_jupyter_plugin.services.dagListService import DagListService
 
 @patch('dataproc_jupyter_plugin.services.dagListService.requests.get')
 def test_list_jobs_success(mock_requests_get):
-    credentials = {"access_token": "token", "project_id": "project", "region_id": "region"}
+    credentials = {
+        "access_token": "token",
+        "project_id": "project",
+        "region_id": "region",
+    }
     composer_name = "composer"
     tags = "tags"
     log = MagicMock()
@@ -44,26 +48,25 @@ def test_list_jobs_missing_credentials():
     assert "error" in result
     assert "Missing required credentials" in result["error"]
 
-@patch('dataproc_jupyter_plugin.services.dagListService.requests.get')
+
+@patch("dataproc_jupyter_plugin.services.dagListService.requests.get")
 def test_get_airflow_uri_success(mock_requests_get):
     log = logging.getLogger(__name__)
     cred = handlers.get_cached_credentials(log)
-    credentials = {"access_token": cred['access_token'] , "project_id": cred["project_id"], "region_id":cred['region_id'] }
+    credentials = {
+        "access_token": cred["access_token"],
+        "project_id": cred["project_id"],
+        "region_id": cred["region_id"],
+    }
     composer_name = "composer"
     response = Mock()
     response.status_code = 200
     response.json.return_value = {
         "config": {"airflowUri": "airflow_uri"},
-        "storageConfig": {"bucket": "bucket"}
+        "storageConfig": {"bucket": "bucket"},
     }
     mock_requests_get.return_value = response
     service = DagListService()
     airflow_uri, bucket = service.get_airflow_uri(composer_name, credentials, log)
     assert airflow_uri == "airflow_uri"
     assert bucket == "bucket"
-
-
-
-
-
-
