@@ -20,9 +20,7 @@ from dataproc_jupyter_plugin.utils.constants import CONTENT_TYPE
 
 class ImportErrorService:
     def list_import_errors(self, credentials, composer, log):
-        airflow_uri, bucket = DagListService.get_airflow_uri(
-            self, composer, credentials, log
-        )
+        
         try:
             if (
                 ("access_token" in credentials)
@@ -30,6 +28,9 @@ class ImportErrorService:
                 and ("region_id" in credentials)
             ):
                 access_token = credentials["access_token"]
+                airflow_uri, bucket = DagListService.get_airflow_uri(
+                    self, composer, credentials, log
+                )
                 api_endpoint = (
                     f"{airflow_uri}/api/v1/importErrors?order_by=-import_error_id"
                 )
