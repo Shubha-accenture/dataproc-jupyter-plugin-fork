@@ -405,7 +405,7 @@ const extension: JupyterFrontEndPlugin<void> = {
       execute: () => {
         const content = new NotebookTemplates(
           app as JupyterLab,
-          defaultFileBrowser as IDefaultFileBrowser,
+          defaultFileBrowser,
           themeManager
         );
         const widget = new MainAreaWidget<NotebookTemplates>({ content });
