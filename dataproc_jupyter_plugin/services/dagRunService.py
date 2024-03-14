@@ -55,9 +55,6 @@ class DagRunListService:
 
 class DagRunTaskListService:
     def list_dag_run_task(self, credentials, composer_name, dag_id, dag_run_id, log):
-        airflow_uri, bucket = DagListService.get_airflow_uri(
-            self, composer_name, credentials, log
-        )
         try:
             if (
                 ("access_token" in credentials)
@@ -65,6 +62,9 @@ class DagRunTaskListService:
                 and ("region_id" in credentials)
             ):
                 access_token = credentials["access_token"]
+                airflow_uri, bucket = DagListService.get_airflow_uri(
+                    self, composer_name, credentials, log
+                )
                 api_endpoint = f"{airflow_uri}/api/v1/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances"
                 headers = {
                     "Content-Type": CONTENT_TYPE,
@@ -73,8 +73,10 @@ class DagRunTaskListService:
                 response = requests.get(api_endpoint, headers=headers)
                 if response.status_code == 200:
                     resp = response.json()
-
-                return resp
+                    return resp
+                else:
+                    log.exception(f"Error fetching dag run task list")
+                    raise ValueError(response)
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")
@@ -94,9 +96,6 @@ class DagRunTaskLogsListService:
         task_try_number,
         log,
     ):
-        airflow_uri, bucket = DagListService.get_airflow_uri(
-            self, composer_name, credentials, log
-        )
         try:
             if (
                 ("access_token" in credentials)
@@ -104,6 +103,9 @@ class DagRunTaskLogsListService:
                 and ("region_id" in credentials)
             ):
                 access_token = credentials["access_token"]
+                airflow_uri, bucket = DagListService.get_airflow_uri(
+                    self, composer_name, credentials, log
+                )
                 api_endpoint = f"{airflow_uri}/api/v1/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/logs/{task_try_number}"
                 headers = {
                     "Content-Type": CONTENT_TYPE,
@@ -113,8 +115,11 @@ class DagRunTaskLogsListService:
                 if response.status_code == 200:
                     resp = response.text
                     resp_to_json = {"content": resp}
-
-                return resp_to_json
+                    print("aaaa", resp_to_json)
+                    return resp_to_json
+                else:
+                    log.exception(f"Error fetching dag run task logs")
+                    raise ValueError(response)
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")

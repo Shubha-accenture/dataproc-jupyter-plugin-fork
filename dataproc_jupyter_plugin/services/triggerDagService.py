@@ -39,16 +39,13 @@ class TriggerDagService:
                 response = requests.post(api_endpoint, headers=headers, json=body)
                 if response.status_code == 200:
                     resp = response.json()
-                    print("bbbbb", resp)
-                    return resp, bucket
+                    return resp
                 else:
                     log.exception(f"Error triggering dag")
-                    print("cccccc", response)
                     raise ValueError(response)
             else:
                 log.exception(f"Missing required credentials")
                 raise ValueError("Missing required credentials")
         except Exception as e:
             log.exception(f"Error triggering dag: {str(e)}")
-            print("dddddd", str(e))
             return {"error": str(e)}

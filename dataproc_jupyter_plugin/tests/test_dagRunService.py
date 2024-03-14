@@ -16,7 +16,11 @@ import logging
 import pytest
 from unittest.mock import MagicMock, Mock, patch
 from dataproc_jupyter_plugin import handlers
-from dataproc_jupyter_plugin.services.dagRunService import DagRunListService
+from dataproc_jupyter_plugin.services.dagRunService import (
+    DagRunListService,
+    DagRunTaskListService,
+    DagRunTaskLogsListService,
+)
 
 
 @patch("dataproc_jupyter_plugin.services.dagRunService.requests.get")
@@ -54,6 +58,82 @@ def test_dag_run_list_missing_credentials():
     service = DagRunListService()
     result = service.list_dag_runs(
         credentials, composer_name, dag_id, start_date, end_date, offset, log
+    )
+    assert "error" in result
+    assert "Missing required credentials" in result["error"]
+
+
+@patch("dataproc_jupyter_plugin.services.dagRunService.requests.get")
+def test_dag_run_task_list_success(mock_requests_get):
+    credentials = {
+        "access_token": "token",
+        "project_id": "project",
+        "region_id": "region",
+    }
+    composer_name = "composer"
+    dag_id = "mock_dag_id"
+    dag_run_id = "mock_dag_run_id"
+    log = MagicMock()
+    response = MagicMock()
+    response.status_code = 200
+    response.json.return_value = {"task_instances": [], "total_entries": 0}
+    mock_requests_get.return_value = response
+    service = DagRunTaskListService()
+    result = service.list_dag_run_task(
+        credentials, composer_name, dag_id, dag_run_id, log
+    )
+    assert result == {"task_instances": [], "total_entries": 0}
+
+
+def test_dag_run_task_list_missing_credentials():
+    credentials = {}
+    composer_name = "composer"
+    dag_id = "mock_dag_id"
+    dag_run_id = "mock_dag_run_id"
+    log = MagicMock()
+    service = DagRunTaskListService()
+    result = service.list_dag_run_task(
+        credentials, composer_name, dag_id, dag_run_id, log
+    )
+    assert "error" in result
+    assert "Missing required credentials" in result["error"]
+
+
+@patch("dataproc_jupyter_plugin.services.dagRunService.requests.get")
+def test_dag_run_task_logs_success(mock_requests_get):
+    credentials = {
+        "access_token": "token",
+        "project_id": "project",
+        "region_id": "region",
+    }
+    composer_name = "composer"
+    dag_id = "mock_dag_id"
+    dag_run_id = "mock_dag_run_id"
+    task_id = "mock_task_id"
+    task_try_number = "mock_task_try_number"
+    log = MagicMock()
+    response = MagicMock()
+    response.status_code = 200
+    response.json.return_value = {"content": {}}
+    mock_requests_get.return_value = response
+    service = DagRunTaskLogsListService()
+    result = service.list_dag_run_task_logs(
+        credentials, composer_name, dag_id, dag_run_id, task_id, task_try_number, log
+    )
+    assert result == {"content": {}}
+
+
+def test_dag_run_task_logs_missing_credentials():
+    credentials = {}
+    composer_name = "composer"
+    dag_id = "mock_dag_id"
+    dag_run_id = "mock_dag_run_id"
+    task_id = "mock_task_id"
+    task_try_number = "mock_task_try_number"
+    log = MagicMock()
+    service = DagRunTaskLogsListService()
+    result = service.list_dag_run_task_logs(
+        credentials, composer_name, dag_id, dag_run_id, task_id, task_try_number, log
     )
     assert "error" in result
     assert "Missing required credentials" in result["error"]
