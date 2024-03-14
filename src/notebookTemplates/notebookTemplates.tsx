@@ -10,12 +10,12 @@ import { IDefaultFileBrowser } from '@jupyterlab/filebrowser';
 
 const NotebookTemplatesComponent = ({
   app,
-  themeManager,
-  defaultFileBrowser
+  defaultFileBrowser,
+  themeManager
 }: {
   app: JupyterLab;
-  themeManager: IThemeManager;
   defaultFileBrowser: IDefaultFileBrowser;
+  themeManager: IThemeManager;
 }): JSX.Element => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [configError, setConfigError] = useState(false);
@@ -76,8 +76,8 @@ export class NotebookTemplates extends DataprocWidget {
 
   constructor(
     app: JupyterLab,
-    themeManager: IThemeManager,
-    defaultFileBrowser: IDefaultFileBrowser
+    defaultFileBrowser: IDefaultFileBrowser,
+    themeManager: IThemeManager
   ) {
     super(themeManager);
     this.app = app;

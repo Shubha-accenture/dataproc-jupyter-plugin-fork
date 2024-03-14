@@ -67,6 +67,7 @@ const PLUGIN_ID = 'dataproc_jupyter_plugin:plugin';
 const extension: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
   autoStart: true,
+  // requires: [IDefaultFileBrowser],
   optional: [
     IFileBrowserFactory,
     IDefaultFileBrowser,
@@ -78,6 +79,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     ISettingRegistry,
     IDocumentManager
   ],
+  
   activate: async (
     app: JupyterFrontEnd,
     factory: IFileBrowserFactory,
@@ -403,8 +405,8 @@ const extension: JupyterFrontEndPlugin<void> = {
       execute: () => {
         const content = new NotebookTemplates(
           app as JupyterLab,
-          themeManager,
-          defaultFileBrowser as IDefaultFileBrowser
+          defaultFileBrowser as IDefaultFileBrowser,
+          themeManager
         );
         const widget = new MainAreaWidget<NotebookTemplates>({ content });
         widget.title.label = 'Notebook Templates';

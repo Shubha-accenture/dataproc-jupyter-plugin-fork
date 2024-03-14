@@ -15,12 +15,12 @@ import NotebookTemplateService from './notebookTemplatesService';
 
 function ListNotebookTemplates({
   app,
-  themeManager,
-  defaultFileBrowser
+  defaultFileBrowser,
+  themeManager
 }: {
   app: JupyterFrontEnd;
-  themeManager: IThemeManager;
   defaultFileBrowser: IDefaultFileBrowser;
+  themeManager: IThemeManager;
 }) {
   const iconFilter = new LabIcon({
     name: 'launcher:filter-icon',
