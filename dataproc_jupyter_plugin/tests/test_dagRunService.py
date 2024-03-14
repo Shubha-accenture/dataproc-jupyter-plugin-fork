@@ -110,17 +110,17 @@ def test_dag_run_task_logs_success(mock_requests_get):
     dag_id = "mock_dag_id"
     dag_run_id = "mock_dag_run_id"
     task_id = "mock_task_id"
-    task_try_number = "mock_task_try_number"
+    task_try_number = 1
     log = MagicMock()
     response = MagicMock()
     response.status_code = 200
-    response.json.return_value = {"content": {}}
+    response.text = "dummy_response"
     mock_requests_get.return_value = response
     service = DagRunTaskLogsListService()
     result = service.list_dag_run_task_logs(
         credentials, composer_name, dag_id, dag_run_id, task_id, task_try_number, log
     )
-    assert result == {"content": {}}
+    assert result == {"content": "dummy_response"}
 
 
 def test_dag_run_task_logs_missing_credentials():
