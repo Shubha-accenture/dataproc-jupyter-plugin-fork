@@ -13,10 +13,12 @@
 # limitations under the License.
 
 import logging
+import subprocess
+import unittest
 import pytest
 from unittest.mock import MagicMock, Mock, patch
 from dataproc_jupyter_plugin import handlers
-from dataproc_jupyter_plugin.services.dagListService import DagListService
+from dataproc_jupyter_plugin.services.dagListService import DagDeleteService, DagListService, DagUpdateService
 
 
 @patch("dataproc_jupyter_plugin.services.dagListService.requests.get")
@@ -70,3 +72,53 @@ def test_get_airflow_uri_success(mock_requests_get):
     airflow_uri, bucket = service.get_airflow_uri(composer_name, credentials, log)
     assert airflow_uri == "airflow_uri"
     assert bucket == "bucket"
+   
+
+@patch('dataproc_jupyter_plugin.services.dagListService.DagListService.get_airflow_uri')
+def test_update_job_success(mock_get_airflow_uri):
+    mock_get_airflow_uri.return_value = ('http://example.com', 'bucket_name')
+    service = DagUpdateService()
+    credentials = {'access_token': 'valid_token'}
+    composer_name = 'test_composer'
+    dag_id = 'test_dag'
+    status = 'true'
+    log = MagicMock()
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    with patch('dataproc_jupyter_plugin.services.dagListService.requests.patch') as mock_patch:
+        mock_patch.return_value = mock_response
+        result = service.update_job(credentials, composer_name, dag_id, status, log)
+        assert result == 0
+
+
+
+@patch('dataproc_jupyter_plugin.services.dagListService.DagListService.get_airflow_uri')
+@patch('dataproc_jupyter_plugin.services.dagListService.requests.delete')
+@patch('dataproc_jupyter_plugin.services.dagListService.subprocess.Popen')
+def test_delete_job_success(mock_popen, mock_delete, mock_get_airflow_uri):
+        # Mocking dependencies
+        mock_get_airflow_uri.return_value = ('http://example.com', 'bucket_name')
+        mock_delete.return_value.status_code = 200
+        mock_popen.return_value.communicate.return_value = (b'', b'')
+        mock_popen.return_value.returncode = 0
+        
+        # Mocking credentials and logger
+        credentials = {'access_token': 'valid_token'}
+        composer_name = 'test_composer'
+        dag_id = 'test_dag'
+        from_page = None
+        log = MagicMock()
+
+        # Creating instance of DagDeleteService
+        dag_delete_service = DagDeleteService()
+
+        # Calling the delete_job method
+        result = dag_delete_service.delete_job(credentials, composer_name, dag_id, from_page, log)
+        assert result == 0
+
+
+
+
+
+
+

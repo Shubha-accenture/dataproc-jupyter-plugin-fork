@@ -27,8 +27,9 @@ class TriggerDagService:
             if "access_token" in credentials:
                 access_token = credentials["access_token"]
                 airflow_uri, bucket = DagListService.get_airflow_uri(
-                    self, composer, credentials, log
+                self, composer, credentials, log
                 )
+                # print(airflow_uri)
                 api_endpoint = f"{airflow_uri}/api/v1/dags/{dag_id}/dagRuns"
 
                 headers = {

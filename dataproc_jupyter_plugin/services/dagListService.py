@@ -20,6 +20,8 @@ from dataproc_jupyter_plugin.utils.constants import CONTENT_TYPE
 
 
 class DagListService:
+    def __init__(self, requests_module=requests):
+        self.requests = requests_module
     def get_airflow_uri(self, composer_name, credentials, log):
         try:
             if (
@@ -81,13 +83,15 @@ class DagListService:
 
 
 class DagDeleteService:
+    def __init__(self, requests_module=requests):
+        self.requests = requests_module
     def delete_job(self, credentials, composer_name, dag_id, from_page, log):
-        airflow_uri, bucket = DagListService.get_airflow_uri(
-            self, composer_name, credentials, log
-        )
         try:
             if "access_token" in credentials:
                 access_token = credentials["access_token"]
+                airflow_uri, bucket = DagListService.get_airflow_uri(
+                self, composer_name, credentials, log
+                )
                 api_endpoint = f"{airflow_uri}/api/v1/dags/{dag_id}"
                 headers = {
                     "Content-Type": CONTENT_TYPE,
@@ -114,7 +118,10 @@ class DagDeleteService:
             return {"error": str(e)}
 
 
-class DagUpdateService:
+class DagUpdateService:    
+    def __init__(self, requests_module=requests):
+        self.requests = requests_module
+
     def update_job(self, credentials, composer_name, dag_id, status, log):
         airflow_uri, bucket = DagListService.get_airflow_uri(
             self, composer_name, credentials, log
