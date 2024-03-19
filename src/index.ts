@@ -351,7 +351,7 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     const createClusterComponentCommand = 'create-cluster-component';
     commands.addCommand(createClusterComponentCommand, {
-      caption: 'Create a new Cluster Component',
+      caption: 'Clusters',
       label: 'Clusters',
       // @ts-ignore jupyter lab icon command issue
       icon: args => (args['isPalette'] ? null : iconCluster),
@@ -366,7 +366,7 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     const createBatchesComponentCommand = 'create-batches-component';
     commands.addCommand(createBatchesComponentCommand, {
-      caption: 'Create a new Serverless Component',
+      caption: 'Serverless',
       label: 'Serverless',
       // @ts-ignore jupyter lab icon command issue
       icon: args => (args['isPalette'] ? null : iconServerless),
@@ -380,7 +380,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     });
     const createNotebookJobsComponentCommand = 'create-notebook-jobs-component';
     commands.addCommand(createNotebookJobsComponentCommand, {
-      caption: 'Create a new Serverless Component',
+      caption: 'Scheduled Jobs',
       label: 'Scheduled Jobs',
       icon: iconScheduledNotebooks,
       execute: () => {
@@ -398,15 +398,15 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     const createTemplateComponentCommand = 'create-template-component';
     commands.addCommand(createTemplateComponentCommand, {
-      caption: 'Create a new Template Component',
+      caption: 'Notebook Templates',
       label: 'Notebook Templates',
       // @ts-ignore jupyter lab icon command issue
       icon: args => (args['isPalette'] ? null : iconNotebookTemplate),
       execute: () => {
         const content = new NotebookTemplates(
           app as JupyterLab,
-          defaultFileBrowser,
-          themeManager
+          themeManager,
+          factory as IFileBrowserFactory
         );
         const widget = new MainAreaWidget<NotebookTemplates>({ content });
         widget.title.label = 'Notebook Templates';
