@@ -82,6 +82,7 @@
         "react-spinners": "^0.13.8",
         "react-table": "^7.8.0",
         "react-toastify": "^9.1.3",
+        "reactflow": "11.10.4",
         "tzdata": "^1.0.39",
         "yup": "^1.2.0"
     },

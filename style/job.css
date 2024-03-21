@@ -46,6 +46,15 @@
   padding-bottom: 20px;
 }
 
+.job-label-react-flow-parent {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--jp-ui-font-color2);
+  padding-bottom: 20px;
+}
+
 .job-label-edit-row {
   display: flex;
   margin: 15px 0px;
