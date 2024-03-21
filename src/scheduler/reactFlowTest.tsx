@@ -12,7 +12,7 @@ import {
   nodes as initialNodes,
   edges as initialEdges
 } from './initial-element';
-import CustomNode from './CustomNode';
+import CustomNode from './customNode';
 
 import 'reactflow/dist/style.css';
 import '../../style/overview.css';
