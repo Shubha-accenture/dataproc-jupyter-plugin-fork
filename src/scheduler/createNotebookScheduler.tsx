@@ -46,7 +46,8 @@ import { scheduleMode } from '../utils/const';
 import { scheduleValueExpression } from '../utils/const';
 import { ClipLoader } from 'react-spinners';
 import Grid from '@mui/material/Grid';
-import ReactFlowTest from './reactFlowTest';
+// import ReactFlowTest from './reactFlowTest';
+import GraphicalScheduler from './graphicalScheduler';
 
 interface IDagList {
   jobid: string;
@@ -802,7 +803,7 @@ const CreateNotebookScheduler = ({
             </div>
           </Grid>
           <Grid item xs={6}>
-            <ReactFlowTest />
+            <GraphicalScheduler />
           </Grid>
         </Grid>
       )}
