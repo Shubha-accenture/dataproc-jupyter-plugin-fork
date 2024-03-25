@@ -186,7 +186,13 @@ function LabelProperties({
 
   return (
     <div>
-      <div className={fromPage =="react-flow" ?"job-label-react-flow-parent":"job-label-edit-parent"}   >
+      <div
+        className={
+          fromPage == 'react-flow'
+            ? 'job-label-react-flow-parent'
+            : 'job-label-edit-parent'
+        }
+      >
         {labelDetail.length > 0 &&
           labelDetail.map((label: string, index: number) => {
             /*
@@ -369,8 +375,13 @@ function LabelProperties({
           )}
           <span
             className={
-              labelDetail.length === 0 ||
-              labelDetail[labelDetail.length - 1].split(':')[0].length > 0
+              fromPage == 'react-flow'
+                ? labelDetail.length === 0 ||
+                  labelDetail[labelDetail.length - 1].split(':')[0].length > 0
+                  ? 'job-react-flow-text'
+                  : 'job-react-flow-text-disabled'
+                : labelDetail.length === 0 ||
+                  labelDetail[labelDetail.length - 1].split(':')[0].length > 0
                 ? 'job-edit-text'
                 : 'job-edit-text-disabled'
             }

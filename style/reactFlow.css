@@ -5,16 +5,16 @@
   background-color: #784be8;
 }
 
-.react-flow .react-flow__handle-top {
+/* .react-flow .react-flow__handle-top {
   top: -45px;
 }
 
 .react-flow .react-flow__handle-bottom {
   bottom: -45px;
-}
+} */
 
 .react-flow .react-flow__node {
-  height: 40px;
+  height: fit-content;
   width: 150px;
   justify-content: center;
   align-items: center;
