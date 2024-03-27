@@ -33,7 +33,6 @@ function NotebookNode({ data, isConnectable }: NodeProps) {
   }, []);
 
   useEffect(() => {
-    console.log(parameterDetail);
     data.parameter = parameterDetail;
   }, [parameterDetail]);
 
@@ -45,12 +44,13 @@ function NotebookNode({ data, isConnectable }: NodeProps) {
           position={Position.Top}
           isConnectable={isConnectable}
         />
-        <div className="custom-node__header">Notebook Name</div>
+        <div className="custom-node__header">Notebook Name:</div>
         <div className="custom-node__body">
-          <Input
+        <label htmlFor="file-input">Input file*</label>
+          <input
             className="nodrag"
             value={inputFileSelected}
-            Label="Input file*"
+            type="file"
             onChange={e => onInputFileNameChange(e)}
           />
           <Input
