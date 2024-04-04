@@ -122,6 +122,19 @@ const CreateNotebookScheduler = ({
   const [dagListCall, setDagListCall] = useState(false);
   const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
 
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
+
+  const handleNodesChange = (updatedNodes: []) => {
+    setNodes(updatedNodes);
+    console.log('from create comp nodes', nodes);
+  };
+
+  const handleEdgesChange = (updatedEdges: []) => {
+    setEdges(updatedEdges);
+    console.log('from create comp edges', edges);
+  };
+
   const listClustersAPI = async () => {
     await SchedulerService.listClustersAPIService(setClusterList);
   };
@@ -262,8 +275,12 @@ const CreateNotebookScheduler = ({
       dag_id: randomDagId,
       time_zone: scheduleMode !== 'runNow' ? timeZoneSelected : '',
       [selectedMode === 'cluster' ? 'cluster_name' : 'serverless_name']:
-        selectedMode === 'cluster' ? clusterSelected : serverlessDataSelected
+        selectedMode === 'cluster' ? clusterSelected : serverlessDataSelected,
+      nodes: nodes,
+      edges: edges
     };
+
+    console.log('payload for create', payload);
 
     await SchedulerService.createJobSchedulerService(
       payload,
@@ -803,7 +820,10 @@ const CreateNotebookScheduler = ({
             </div>
           </Grid>
           <Grid item xs={6}>
-            <GraphicalScheduler />
+            <GraphicalScheduler
+              NodesChange={handleNodesChange}
+              EdgesChange={handleEdgesChange}
+            />
           </Grid>
         </Grid>
       )}

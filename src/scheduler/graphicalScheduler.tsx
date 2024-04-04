@@ -20,6 +20,11 @@ import NotebookNode from './notebookNode';
 import '../../style/reactFlow.css';
 import '../../style/notebookNode.css';
 
+interface IGraphicalSchedulerProps {
+  NodesChange: (updatedNodes: any) => void;
+  EdgesChange: (updatedEdges: any) => void;
+}
+
 const initialNodes = [
   {
     id: '0',
@@ -39,16 +44,21 @@ const nodeTypes = { notebookNode: NotebookNode };
 let id = 1;
 const getId = () => `${id++}`;
 
-const GraphicalScheduler = () => {
+const GraphicalScheduler = ({
+  NodesChange,
+  EdgesChange
+}: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  //const [nodes, setNodes] = useNodesState(initialNodes);
+  //const [edges, setEdges] = useEdgesState([]);
   const { screenToFlowPosition } = useReactFlow();
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections
     connectingNodeId.current = null;
-    setEdges(eds => addEdge(params, eds));
+    setEdges((eds: any) => addEdge(params, eds));
   }, []);
 
   const onConnectStart = useCallback(
@@ -99,8 +109,10 @@ const GraphicalScheduler = () => {
     [screenToFlowPosition]
   );
 
-  console.log(nodes);
-  console.log(edges);
+  console.log('from graphical scheduler1 ', nodes);
+  console.log('from graphical scheduler ', edges);
+  NodesChange(nodes);
+  EdgesChange(edges);
 
   return (
     <div className="wrapper" ref={reactFlowWrapper}>
@@ -125,8 +137,16 @@ const GraphicalScheduler = () => {
 };
 
 // export default GraphicalScheduler;
-export default () => (
+// export default () => (
+//   <ReactFlowProvider>
+//     <GraphicalScheduler/>
+//   </ReactFlowProvider>
+// );
+export default (props: IGraphicalSchedulerProps) => (
   <ReactFlowProvider>
-    <GraphicalScheduler />
+    <GraphicalScheduler
+      NodesChange={props.NodesChange}
+      EdgesChange={props.EdgesChange}
+    />
   </ReactFlowProvider>
 );
