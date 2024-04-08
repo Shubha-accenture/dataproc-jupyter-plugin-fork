@@ -21,39 +21,39 @@ import '../../style/reactFlow.css';
 import '../../style/notebookNode.css';
 
 interface IGraphicalSchedulerProps {
+  inputFileSelected:string;
   NodesChange: (updatedNodes: any) => void;
   EdgesChange: (updatedEdges: any) => void;
 }
-
-const initialNodes = [
-  {
-    id: '0',
-    type: 'notebookNode',
-    position: { x: 0, y: 0 },
-    data: {
-      inputFile: '',
-      retryCount: 0,
-      retryDelay: 0,
-      parameter: []
-    }
-  }
-];
-
 const nodeTypes = { notebookNode: NotebookNode };
-
+  
 let id = 1;
 const getId = () => `${id++}`;
 
 const GraphicalScheduler = ({
+  inputFileSelected,
   NodesChange,
-  EdgesChange
+  EdgesChange,
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
+
+  const initialNodes = [
+    {
+      id: '0',
+      type: 'notebookNode',
+      position: { x: 0, y: 0 },
+      data: {
+        inputFile: inputFileSelected,
+        retryCount: 0,
+        retryDelay: 0,
+        parameter: []
+      }
+    }
+  ];
+  
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  //const [nodes, setNodes] = useNodesState(initialNodes);
-  //const [edges, setEdges] = useEdgesState([]);
   const { screenToFlowPosition } = useReactFlow();
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections
@@ -61,6 +61,7 @@ const GraphicalScheduler = ({
     setEdges((eds: any) => addEdge(params, eds));
   }, []);
 
+  //console.log("from node",inputFileSelected)
   const onConnectStart = useCallback(
     (
       _: ReactMouseEvent | ReactTouchEvent,
@@ -109,8 +110,8 @@ const GraphicalScheduler = ({
     [screenToFlowPosition]
   );
 
-  console.log('from graphical scheduler1 ', nodes);
-  console.log('from graphical scheduler ', edges);
+  // console.log('from graphical scheduler1 ', nodes);
+  // console.log('from graphical scheduler ', edges);
   NodesChange(nodes);
   EdgesChange(edges);
 
@@ -145,8 +146,9 @@ const GraphicalScheduler = ({
 export default (props: IGraphicalSchedulerProps) => (
   <ReactFlowProvider>
     <GraphicalScheduler
+      inputFileSelected={props.inputFileSelected}
       NodesChange={props.NodesChange}
-      EdgesChange={props.EdgesChange}
+      EdgesChange={props.EdgesChange} 
     />
   </ReactFlowProvider>
 );

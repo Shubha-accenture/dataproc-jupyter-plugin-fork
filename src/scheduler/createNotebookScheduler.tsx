@@ -30,7 +30,7 @@ import {
 import { MuiChipsInput } from 'mui-chips-input';
 import { IThemeManager } from '@jupyterlab/apputils';
 import { JupyterLab } from '@jupyterlab/application';
-import LabelProperties from '../jobs/labelProperties';
+//import LabelProperties from '../jobs/labelProperties';
 import { v4 as uuidv4 } from 'uuid';
 import { Cron } from 'react-js-cron';
 import 'react-js-cron/dist/styles.css';
@@ -56,6 +56,13 @@ interface IDagList {
   scheduleInterval: string;
 }
 
+interface INodeData {
+  data: {
+    inputFile: string;
+    retryCount: number;
+    retryDelay: number;
+  };
+}
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
   svgstr: LeftArrowIcon
@@ -82,9 +89,6 @@ const CreateNotebookScheduler = ({
 
   const [parameterDetail, setParameterDetail] = useState(['']);
   const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
-  const [keyValidation, setKeyValidation] = useState(-1);
-  const [valueValidation, setValueValidation] = useState(-1);
-  const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
 
   const [selectedMode, setSelectedMode] = useState('cluster');
   const [clusterList, setClusterList] = useState<string[]>([]);
@@ -121,18 +125,31 @@ const CreateNotebookScheduler = ({
   const [editMode, setEditMode] = useState(false);
   const [dagListCall, setDagListCall] = useState(false);
   const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
+  const allInputFiles: string[] = [];
+  const [inputFilesValidation, setInputFilesValidation] = useState(false);
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
-    console.log('from create comp nodes', nodes);
+    let allNodesHaveInputFiles = true;
+    nodes.forEach((e: INodeData) => {
+      const inputFile = e.data.inputFile;
+      if (!inputFile || inputFile.trim() === '') {
+        allNodesHaveInputFiles = false;
+      } else {
+        allInputFiles.push(inputFile);
+      }
+    });
+    console.log('all inputfiles', allInputFiles);
+    console.log('inputFilesValidation before ', inputFilesValidation);
+    setInputFilesValidation(allNodesHaveInputFiles);
+    console.log('inputFilesValidation after', inputFilesValidation);
   };
 
   const handleEdgesChange = (updatedEdges: []) => {
     setEdges(updatedEdges);
-    console.log('from create comp edges', edges);
   };
 
   const listClustersAPI = async () => {
@@ -309,6 +326,7 @@ const CreateNotebookScheduler = ({
 
   const isSaveDisabled = () => {
     return (
+      !inputFilesValidation ||
       dagListCall ||
       creatingScheduler ||
       jobNameSelected === '' ||
@@ -382,6 +400,7 @@ const CreateNotebookScheduler = ({
     setJobNameSelected('');
     if (!editMode) {
       setParameterDetail([]);
+      console.log(parameterDetail);
       setParameterDetailUpdated([]);
     }
   }, []);
@@ -503,14 +522,14 @@ const CreateNotebookScheduler = ({
                   </div>
                 )}
 
-                <div className="create-scheduler-form-element-input-file">
+                {/* <div className="create-scheduler-form-element-input-file">
                   <Input
                     className="create-scheduler-style"
                     value={inputFileSelected}
                     Label="Input file*"
                     disabled={true}
                   />
-                </div>
+                </div> */}
                 <div className="create-scheduler-form-element">
                   <Autocomplete
                     className="create-scheduler-style"
@@ -542,7 +561,7 @@ const CreateNotebookScheduler = ({
                     />
                   </FormGroup>
                 </div>
-                <div className="create-scheduler-label">Parameters</div>
+                {/* <div className="create-scheduler-label">Parameters</div>
                 <>
                   <LabelProperties
                     labelDetail={parameterDetail}
@@ -558,7 +577,7 @@ const CreateNotebookScheduler = ({
                     setDuplicateKeyError={setDuplicateKeyError}
                     fromPage="scheduler"
                   />
-                </>
+                </> */}
                 <div className="create-scheduler-form-element">
                   <FormControl>
                     <RadioGroup
@@ -821,6 +840,7 @@ const CreateNotebookScheduler = ({
           </Grid>
           <Grid item xs={6}>
             <GraphicalScheduler
+              inputFileSelected={context.path}
               NodesChange={handleNodesChange}
               EdgesChange={handleEdgesChange}
             />
