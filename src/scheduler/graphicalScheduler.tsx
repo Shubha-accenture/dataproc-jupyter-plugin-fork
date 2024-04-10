@@ -61,7 +61,6 @@ const GraphicalScheduler = ({
     setEdges((eds: any) => addEdge(params, eds));
   }, []);
 
-  //console.log("from node",inputFileSelected)
   const onConnectStart = useCallback(
     (
       _: ReactMouseEvent | ReactTouchEvent,
@@ -109,9 +108,6 @@ const GraphicalScheduler = ({
     },
     [screenToFlowPosition]
   );
-
-  // console.log('from graphical scheduler1 ', nodes);
-  // console.log('from graphical scheduler ', edges);
   NodesChange(nodes);
   EdgesChange(edges);
 
@@ -137,12 +133,6 @@ const GraphicalScheduler = ({
   );
 };
 
-// export default GraphicalScheduler;
-// export default () => (
-//   <ReactFlowProvider>
-//     <GraphicalScheduler/>
-//   </ReactFlowProvider>
-// );
 export default (props: IGraphicalSchedulerProps) => (
   <ReactFlowProvider>
     <GraphicalScheduler

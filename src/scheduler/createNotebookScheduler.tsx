@@ -46,7 +46,6 @@ import { scheduleMode } from '../utils/const';
 import { scheduleValueExpression } from '../utils/const';
 import { ClipLoader } from 'react-spinners';
 import Grid from '@mui/material/Grid';
-// import ReactFlowTest from './reactFlowTest';
 import GraphicalScheduler from './graphicalScheduler';
 
 interface IDagList {
@@ -133,19 +132,6 @@ const CreateNotebookScheduler = ({
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
-    let allNodesHaveInputFiles = true;
-    nodes.forEach((e: INodeData) => {
-      const inputFile = e.data.inputFile;
-      if (!inputFile || inputFile.trim() === '') {
-        allNodesHaveInputFiles = false;
-      } else {
-        allInputFiles.push(inputFile);
-      }
-    });
-    console.log('all inputfiles', allInputFiles);
-    console.log('inputFilesValidation before ', inputFilesValidation);
-    setInputFilesValidation(allNodesHaveInputFiles);
-    console.log('inputFilesValidation after', inputFilesValidation);
   };
 
   const handleEdgesChange = (updatedEdges: []) => {
@@ -238,18 +224,6 @@ const CreateNotebookScheduler = ({
 
   const handleStopCluster = (event: React.ChangeEvent<HTMLInputElement>) => {
     setStopCluster(event.target.checked);
-  };
-
-  const handleRetryCount = (data: number) => {
-    if (data >= 0) {
-      setRetryCount(data);
-    }
-  };
-
-  const handleRetryDelay = (data: number) => {
-    if (data >= 0) {
-      setRetryDelay(data);
-    }
   };
 
   const handleFailureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -419,6 +393,19 @@ const CreateNotebookScheduler = ({
       getKernelDetail();
     }
   }, [serverlessDataList]);
+
+  useEffect(() => {
+    let allNodesHaveInputFiles = true;
+    nodes.forEach((e: INodeData) => {
+      const inputFile = e.data.inputFile;
+      if (!inputFile || inputFile.trim() === '') {
+        allNodesHaveInputFiles = false;
+      } else {
+        allInputFiles.push(inputFile);
+      }
+    });
+    setInputFilesValidation(allNodesHaveInputFiles);
+  }, [nodes]);
 
   return (
     <>
@@ -664,24 +651,6 @@ const CreateNotebookScheduler = ({
                     </FormGroup>
                   </div>
                 )}
-                <div className="create-scheduler-form-element">
-                  <Input
-                    className="create-scheduler-style"
-                    onChange={e => handleRetryCount(Number(e.target.value))}
-                    value={retryCount}
-                    Label="Retry count"
-                    type="number"
-                  />
-                </div>
-                <div className="create-scheduler-form-element">
-                  <Input
-                    className="create-scheduler-style"
-                    onChange={e => handleRetryDelay(Number(e.target.value))}
-                    value={retryDelay}
-                    Label="Retry delay (minutes)"
-                    type="number"
-                  />
-                </div>
                 <div className="create-scheduler-form-element">
                   <FormGroup row={true}>
                     <FormControlLabel
