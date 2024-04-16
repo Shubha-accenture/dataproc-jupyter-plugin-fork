@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type {
   MouseEvent as ReactMouseEvent,
   TouchEvent as ReactTouchEvent
@@ -21,19 +21,19 @@ import '../../style/reactFlow.css';
 import '../../style/notebookNode.css';
 
 interface IGraphicalSchedulerProps {
-  inputFileSelected:string;
+  inputFileSelected: string;
   NodesChange: (updatedNodes: any) => void;
   EdgesChange: (updatedEdges: any) => void;
 }
 const nodeTypes = { notebookNode: NotebookNode };
-  
+
 let id = 1;
 const getId = () => `${id++}`;
 
 const GraphicalScheduler = ({
   inputFileSelected,
   NodesChange,
-  EdgesChange,
+  EdgesChange
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
@@ -51,9 +51,58 @@ const GraphicalScheduler = ({
       }
     }
   ];
-  
+
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  //const [sortedNodes, setSortedNodes]= useState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  // const [id,setId] = useState(1);
+  // const getId = () => {
+  //   const newId = id + 1;
+  //   setId(newId);
+  //   return `${newId}`;
+  // };
+
+  const findRootNode = (nodes: any[], edges: any[], deletedNodeId: string) => {
+    if (deletedNodeId === '0') {
+      const incomingNodes = new Set(edges.map(edge => edge.target));
+      for (const node of nodes) {
+        if (!incomingNodes.has(node.id)) {
+          return node.id;
+        }
+      }
+    }
+    return '0';
+  };
+
+  const deletedNodeId = '0';
+  const rootId = findRootNode(nodes, edges, deletedNodeId);
+  console.log('Root Node Id:', rootId);
+
+  const createNodeOrder = (node: any[], edges: any[]) => {
+    const priorityNodes = ['0'];
+    const remainingNodes = new Set();
+    for (const edge of edges) {
+      // for level 1
+      if (edge.source === '0') {
+        priorityNodes.push(edge.target);
+      } else {
+        remainingNodes.add(edge.target);
+      }
+    }
+    //for next level
+    for (const edge of edges) {
+      if (!priorityNodes.includes(edge.target)) {
+        priorityNodes.push(edge.target);
+      }
+    }
+    console.log('priorityNodes', priorityNodes);
+    const sortedNodes = priorityNodes
+      .map((nodeId: any) => node.find(node => node.id === nodeId))
+      .filter(Boolean);
+    console.log('sorted nodes', sortedNodes);
+    // return sortedNodes;
+  };
+
   const { screenToFlowPosition } = useReactFlow();
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections
@@ -108,8 +157,15 @@ const GraphicalScheduler = ({
     },
     [screenToFlowPosition]
   );
+  // console.log('nodes', nodes);
+  // console.log('edges', edges);
   NodesChange(nodes);
   EdgesChange(edges);
+  //createNodeOrder(nodes, edges);
+
+  useEffect(() => {
+    createNodeOrder(nodes, edges);
+  }, [edges]);
 
   return (
     <div className="wrapper" ref={reactFlowWrapper}>
@@ -138,7 +194,7 @@ export default (props: IGraphicalSchedulerProps) => (
     <GraphicalScheduler
       inputFileSelected={props.inputFileSelected}
       NodesChange={props.NodesChange}
-      EdgesChange={props.EdgesChange} 
+      EdgesChange={props.EdgesChange}
     />
   </ReactFlowProvider>
 );

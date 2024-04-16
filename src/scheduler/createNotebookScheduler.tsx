@@ -548,23 +548,6 @@ const CreateNotebookScheduler = ({
                     />
                   </FormGroup>
                 </div>
-                {/* <div className="create-scheduler-label">Parameters</div>
-                <>
-                  <LabelProperties
-                    labelDetail={parameterDetail}
-                    setLabelDetail={setParameterDetail}
-                    labelDetailUpdated={parameterDetailUpdated}
-                    setLabelDetailUpdated={setParameterDetailUpdated}
-                    buttonText="ADD PARAMETER"
-                    keyValidation={keyValidation}
-                    setKeyValidation={setKeyValidation}
-                    valueValidation={valueValidation}
-                    setValueValidation={setValueValidation}
-                    duplicateKeyError={duplicateKeyError}
-                    setDuplicateKeyError={setDuplicateKeyError}
-                    fromPage="scheduler"
-                  />
-                </> */}
                 <div className="create-scheduler-form-element">
                   <FormControl>
                     <RadioGroup
