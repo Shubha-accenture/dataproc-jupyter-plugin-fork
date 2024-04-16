@@ -129,6 +129,7 @@ const CreateNotebookScheduler = ({
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
+  const [nodesOrder, setNodesOrder] = useState<any[]>([]);
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
@@ -136,6 +137,10 @@ const CreateNotebookScheduler = ({
 
   const handleEdgesChange = (updatedEdges: []) => {
     setEdges(updatedEdges);
+  };
+
+  const handleNodesOrderChange = (newNodesOrder: any[]) => {
+    setNodesOrder(newNodesOrder);
   };
 
   const listClustersAPI = async () => {
@@ -247,7 +252,6 @@ const CreateNotebookScheduler = ({
     outputFormats.push('ipynb');
 
     let randomDagId = uuidv4();
-
     const payload = {
       input_filename: inputFileSelected,
       composer_environment_name: composerSelected,
@@ -267,11 +271,9 @@ const CreateNotebookScheduler = ({
       time_zone: scheduleMode !== 'runNow' ? timeZoneSelected : '',
       [selectedMode === 'cluster' ? 'cluster_name' : 'serverless_name']:
         selectedMode === 'cluster' ? clusterSelected : serverlessDataSelected,
-      nodes: nodes,
+      nodes: nodesOrder, //nodes,
       edges: edges
     };
-
-    console.log('payload for create', payload);
 
     await SchedulerService.createJobSchedulerService(
       payload,
@@ -795,6 +797,7 @@ const CreateNotebookScheduler = ({
               inputFileSelected={context.path}
               NodesChange={handleNodesChange}
               EdgesChange={handleEdgesChange}
+              NodesOrderChange={handleNodesOrderChange}
             />
           </Grid>
         </Grid>
