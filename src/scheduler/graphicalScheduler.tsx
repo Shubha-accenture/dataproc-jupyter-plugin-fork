@@ -40,8 +40,9 @@ const GraphicalScheduler = ({
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
   const nodesOrderRef = useRef<any[]>([]);
+  //let rootId =0;
 
-  const initialNodes = [
+  const initialNode = [
     {
       id: '0',
       type: 'notebookNode',
@@ -55,7 +56,7 @@ const GraphicalScheduler = ({
     }
   ];
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const findRootNode = (nodes: any[], edges: any[], deletedNodeId: string) => {
@@ -171,6 +172,7 @@ const GraphicalScheduler = ({
         onConnect={onConnect}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
+        //deleteKeyCode={null : 'Delete'}
         fitView
         fitViewOptions={{ padding: 2 }}
         nodeOrigin={[0.5, 0]}

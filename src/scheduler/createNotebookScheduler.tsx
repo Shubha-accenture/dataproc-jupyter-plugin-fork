@@ -98,8 +98,6 @@ const CreateNotebookScheduler = ({
   const [serverlessDataSelected, setServerlessDataSelected] = useState({});
   const [stopCluster, setStopCluster] = useState(false);
 
-  const [retryCount, setRetryCount] = useState<number | undefined>(2);
-  const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
   const [emailOnFailure, setEmailOnFailure] = useState(false);
   const [emailOnRetry, setEmailonRetry] = useState(false);
   const [emailOnSuccess, setEmailOnSuccess] = useState(false);
@@ -258,8 +256,6 @@ const CreateNotebookScheduler = ({
       output_formats: outputFormats,
       parameters: parameterDetailUpdated,
       mode_selected: selectedMode,
-      retry_count: retryCount,
-      retry_delay: retryDelay,
       email_failure: emailOnFailure,
       email_delay: emailOnRetry,
       email_success: emailOnSuccess,
@@ -274,7 +270,6 @@ const CreateNotebookScheduler = ({
       nodes: nodesOrder, //nodes,
       edges: edges
     };
-
     await SchedulerService.createJobSchedulerService(
       payload,
       app,
@@ -431,8 +426,6 @@ const CreateNotebookScheduler = ({
           serverlessDataList={serverlessDataList}
           setServerlessDataList={setServerlessDataList}
           setServerlessList={setServerlessList}
-          setRetryCount={setRetryCount}
-          setRetryDelay={setRetryDelay}
           setEmailOnFailure={setEmailOnFailure}
           setEmailonRetry={setEmailonRetry}
           setEmailOnSuccess={setEmailOnSuccess}

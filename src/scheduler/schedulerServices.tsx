@@ -30,8 +30,6 @@ interface IPayload {
   cluster_name?: string;
   serverless_name?: {} | undefined;
   mode_selected: string;
-  retry_count: number | undefined;
-  retry_delay: number | undefined;
   email_failure: boolean;
   email_delay: boolean;
   email: string[];
