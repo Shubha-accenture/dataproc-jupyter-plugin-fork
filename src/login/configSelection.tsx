@@ -21,6 +21,7 @@ import settingsIcon from '../../style/icons/settings_icon.svg';
 import {
   API_HEADER_BEARER,
   API_HEADER_CONTENT_TYPE,
+  PLUGIN_ID,
   USER_INFO_URL,
   VERSION_DETAIL
 } from '../utils/const';
@@ -30,15 +31,13 @@ import {
   toastifyCustomStyle,
   loggedFetch
 } from '../utils/utils';
-import { requestAPI } from '../handler/handler';
-import ClipLoader from 'react-spinners/ClipLoader';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import THIRD_PARTY_LICENSES from '../../third-party-licenses.txt';
 import ListRuntimeTemplates from '../runtime/listRuntimeTemplates';
 import expandLessIcon from '../../style/icons/expand_less.svg';
 import expandMoreIcon from '../../style/icons/expand_more.svg';
-import { Button } from '@mui/material';
+import { Button, CircularProgress } from '@mui/material';
 import { RegionDropdown } from '../controls/RegionDropdown';
 import { projectListAPI } from '../utils/projectService';
 import { DynamicDropdown } from '../controls/DynamicDropdown';
@@ -47,6 +46,11 @@ import { ISessionTemplate } from '../utils/listRuntimeTemplateInterface';
 import { JupyterLab } from '@jupyterlab/application';
 import { ILauncher } from '@jupyterlab/launcher';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
+
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { BigQueryRegionDropdown } from '../controls/BigQueryRegionDropdown';
+import { eventEmitter } from '../utils/signalEmitter';
+import { requestAPI } from '../handler/handler';
 
 const iconExpandLess = new LabIcon({
   name: 'launcher:expand-less-icon',
@@ -61,13 +65,15 @@ interface IConfigSelectionProps {
   setConfigError: (error: boolean) => void;
   app: JupyterLab;
   launcher: ILauncher;
+  settingRegistry: ISettingRegistry;
 }
 
 function ConfigSelection({
   configError,
   setConfigError,
   app,
-  launcher
+  launcher,
+  settingRegistry
 }: IConfigSelectionProps) {
   const Iconsettings = new LabIcon({
     name: 'launcher:settings_icon',
@@ -76,6 +82,7 @@ function ConfigSelection({
 
   const [projectId, setProjectId] = useState('');
   const [region, setRegion] = useState('');
+  const [bigQueryRegion, setBigQueryRegion] = useState<any>('');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [userInfo, setUserInfo] = useState({
@@ -102,15 +109,25 @@ function ConfigSelection({
           if (configStatus.includes('Failed')) {
             toast.error(configStatus, toastifyCustomStyle);
           } else {
+            const settings = await settingRegistry.load(PLUGIN_ID);
+            settings.set('bqRegion', bigQueryRegion);
             toast.success(
               `${configStatus} - You will need to restart Jupyter in order for the new project and region to fully take effect.`,
               toastifyCustomStyle
+            );
+            // Emit signal after toast success
+            eventEmitter.emit(
+              'dataprocConfigChange',
+              `${configStatus} - Configuration updated successfully.`
             );
           }
         }
       }
     } catch (reason) {
-      console.error(`Error on POST {dataToSend}.\n${reason}`);
+      toast.error(
+        `Error on POST {dataToSend}.\n${reason}`,
+        toastifyCustomStyle
+      );
     } finally {
       setIsSaving(false);
     }
@@ -147,16 +164,18 @@ function ConfigSelection({
                 setIsLoadingUser(false);
               }
             })
-            .catch((e: Error) => console.log(e));
+            .catch((e: Error) => console.error(e));
         })
         .catch((err: Error) => {
           setIsLoadingUser(false);
-          console.error('Error displaying user info', err);
           DataprocLoggingService.log(
             'Error displaying user info',
             LOG_LEVEL.ERROR
           );
-          toast.error('Failed to fetch user information', toastifyCustomStyle);
+          toast.error(
+            `Failed to fetch user information : ${err}`,
+            toastifyCustomStyle
+          );
         });
     }
   };
@@ -178,7 +197,14 @@ function ConfigSelection({
     setExpandRuntimeTemplate(runTimeMode);
   };
 
+  const handleSettingsRegistry = async () => {
+    const settings = await settingRegistry.load(PLUGIN_ID);
+    setBigQueryRegion(settings.get('bqRegion')['composite']);
+  };
+
   useEffect(() => {
+    handleSettingsRegistry();
+
     authApi().then(credentials => {
       displayUserInfo(credentials);
       setSelectedRuntimeClone(undefined);
@@ -196,9 +222,8 @@ function ConfigSelection({
     <div>
       {isLoadingUser && !configError ? (
         <div className="spin-loader-main">
-          <ClipLoader
-            color="#3367d6"
-            loading={true}
+          <CircularProgress
+            className = "spin-loader-custom-style"
             size={20}
             aria-label="Loading Spinner"
             data-testid="loader"
@@ -222,7 +247,7 @@ function ConfigSelection({
             <div className="settings-text">Settings</div>
           </div>
           <div className="settings-separator"></div>
-          <div className="project-header">Project Info </div>
+          <div className="project-header">Google Cloud Project Settings </div>
           <div className="config-overlay">
             <div className="config-form">
               <div className="project-overlay">
@@ -230,7 +255,7 @@ function ConfigSelection({
                   value={projectId}
                   onChange={(_, projectId) => setProjectId(projectId ?? '')}
                   fetchFunc={projectListAPI}
-                  label="Project ID"
+                  label="Project ID*"
                   // Always show the clear indicator and hide the dropdown arrow
                   // make it very clear that this is an autocomplete.
                   sx={{
@@ -247,6 +272,16 @@ function ConfigSelection({
                   projectId={projectId}
                   region={region}
                   onRegionChange={region => setRegion(region)}
+                />
+              </div>
+              <div className="bigquery-region-header">BigQuery Settings </div>
+              <div className="region-overlay">
+                <BigQueryRegionDropdown
+                  projectId={projectId}
+                  region={bigQueryRegion}
+                  onRegionChange={bigQueryRegion =>
+                    setBigQueryRegion(bigQueryRegion)
+                  }
                 />
               </div>
               <div className="save-overlay">
@@ -321,7 +356,7 @@ function ConfigSelection({
           <div>
             <div className="runtime-title-section">
               <div className="runtime-title-part">
-                Serverless Runtime Templates
+                Dataproc Serverless Runtime Templates
               </div>
               <div
                 className="expand-icon"

@@ -37,17 +37,19 @@ import storageIcon from '../style/icons/storage_icon.svg';
 import { Panel, Title, Widget } from '@lumino/widgets';
 import { AuthLogin } from './login/authLogin';
 import { KernelAPI, KernelSpecAPI } from '@jupyterlab/services';
-import { iconDisplay } from './utils/utils';
+import { authApi, iconDisplay } from './utils/utils';
 import { dpmsWidget } from './dpms/dpmsWidget';
 import dpmsIcon from '../style/icons/dpms_icon.svg';
+import datasetExplorerIcon from '../style/icons/dataset_explorer_icon.svg';
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
-import { TITLE_LAUNCHER_CATEGORY } from './utils/const';
+import { PLUGIN_ID, TITLE_LAUNCHER_CATEGORY } from './utils/const';
 import { RuntimeTemplate } from './runtime/runtimeTemplate';
 import {
   IFileBrowserFactory,
   IDefaultFileBrowser
 } from '@jupyterlab/filebrowser';
 import dpmsIconDark from '../style/icons/dpms_icon_dark.svg';
+import datasetExplorerIconDark from '../style/icons/dataset_explorer_dark_icon.svg';
 import storageIconDark from '../style/icons/Storage-icon-dark.svg';
 import { NotebookButtonExtension } from './controls/NotebookButtonExtension';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
@@ -56,13 +58,25 @@ import { GCSDrive } from './gcs/gcsDrive';
 import { GcsBrowserWidget } from './gcs/gcsBrowserWidget';
 import { DataprocLoggingService } from './utils/loggingService';
 import { NotebookScheduler } from './scheduler/notebookScheduler';
+import pythonLogo from '../third_party/icons/python_logo.svg';
+import NotebookTemplateService from './notebookTemplates/notebookTemplatesService';
+import * as path from 'path';
+import { requestAPI } from './handler/handler';
+import { eventEmitter } from './utils/signalEmitter';
+import { BigQueryWidget } from './dpms/bigQueryWidget';
 
 const iconDpms = new LabIcon({
   name: 'launcher:dpms-icon',
   svgstr: dpmsIcon
 });
-
-const PLUGIN_ID = 'dataproc_jupyter_plugin:plugin';
+const iconDatasetExplorer = new LabIcon({
+  name: 'launcher:dataset-explorer-icon',
+  svgstr: datasetExplorerIcon
+});
+const iconPythonLogo = new LabIcon({
+  name: 'launcher:python-bigquery-logo-icon',
+  svgstr: pythonLogo
+});
 
 const extension: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
@@ -121,6 +135,10 @@ const extension: JupyterFrontEndPlugin<void> = {
       name: 'launcher:dpms-icon-dark',
       svgstr: dpmsIconDark
     });
+    const iconDatasetExplorerDark = new LabIcon({
+      name: 'launcher:dataset-explorer-icon-dark',
+      svgstr: datasetExplorerIconDark
+    });
     const iconStorageDark = new LabIcon({
       name: 'launcher:storage-icon-dark',
       svgstr: storageIconDark
@@ -128,16 +146,28 @@ const extension: JupyterFrontEndPlugin<void> = {
     window.addEventListener('beforeunload', () => {
       localStorage.removeItem('notebookValue');
     });
-
+    interface SettingsResponse {
+      enable_bigquery_integration?: boolean;
+    }
+    let bqFeature: SettingsResponse = await requestAPI('settings');
     // START -- Enable Preview Features.
     const settings = await settingRegistry.load(PLUGIN_ID);
 
     // The current value of whether or not preview features are enabled.
     let previewEnabled = settings.get('previewEnabled').composite as boolean;
-    let panelDpms: Panel | undefined, panelGcs: Panel | undefined;
+    let panelDpms: Panel | undefined,
+      panelGcs: Panel | undefined,
+      panelDatasetExplorer: Panel | undefined;
     let gcsDrive: GCSDrive | undefined;
     settings.changed.connect(() => {
       onPreviewEnabledChanged();
+    });
+
+    // Capture the signal
+    eventEmitter.on('dataprocConfigChange', (message: string) => {
+      if (bqFeature.enable_bigquery_integration) {
+        loadBigQueryWidget('');
+      }
     });
 
     /**
@@ -150,9 +180,15 @@ const extension: JupyterFrontEndPlugin<void> = {
         : true;
       if (isLightTheme) {
         panelDpms.title.icon = iconDpms;
+        if (bqFeature.enable_bigquery_integration && panelDatasetExplorer) {
+          panelDatasetExplorer.title.icon = iconDatasetExplorer;
+        }
         panelGcs.title.icon = iconStorage;
       } else {
         panelDpms.title.icon = iconDpmsDark;
+        if (bqFeature.enable_bigquery_integration && panelDatasetExplorer) {
+          panelDatasetExplorer.title.icon = iconDatasetExplorerDark;
+        }
         panelGcs.title.icon = iconStorageDark;
       }
     };
@@ -168,27 +204,49 @@ const extension: JupyterFrontEndPlugin<void> = {
       if (!previewEnabled) {
         // Preview was disabled, tear everything down.
         panelDpms?.dispose();
+        panelDatasetExplorer?.dispose();
         panelGcs?.dispose();
         gcsDrive?.dispose();
         panelDpms = undefined;
+        panelDatasetExplorer = undefined;
         panelGcs = undefined;
         gcsDrive = undefined;
       } else {
         // Preview was enabled, (re)create DPMS and GCS.
-        panelDpms = new Panel();
-        panelDpms.id = 'dpms-tab';
-        panelDpms.addWidget(new dpmsWidget(app as JupyterLab, themeManager));
-        panelGcs = new Panel();
-        panelGcs.id = 'GCS-bucket-tab';
-        gcsDrive = new GCSDrive();
-        documentManager.services.contents.addDrive(gcsDrive);
-        panelGcs.addWidget(
-          new GcsBrowserWidget(gcsDrive, factory as IFileBrowserFactory)
-        );
-        // Update the icons.
-        onThemeChanged();
-        app.shell.add(panelGcs, 'left', { rank: 1001 });
-        app.shell.add(panelDpms, 'left', { rank: 1000 });
+        if (!panelDpms && !panelGcs) {
+          panelDpms = new Panel();
+          panelDpms.id = 'dpms-tab';
+          panelDpms.title.caption = 'Dataset Explorer - DPMS';
+          panelDpms.addWidget(new dpmsWidget(app as JupyterLab, themeManager));
+          if (bqFeature.enable_bigquery_integration && !panelDatasetExplorer) {
+            panelDatasetExplorer = new Panel();
+            panelDatasetExplorer.id = 'dataset-explorer-tab';
+            panelDatasetExplorer.title.caption = 'Dataset Explorer - BigQuery';
+            panelDatasetExplorer.addWidget(
+              new BigQueryWidget(
+                app as JupyterLab,
+                settingRegistry as ISettingRegistry,
+                bqFeature.enable_bigquery_integration as boolean,
+                themeManager
+              )
+            );
+          }
+          panelGcs = new Panel();
+          panelGcs.id = 'GCS-bucket-tab';
+          panelGcs.title.caption = 'Google Cloud Storage';
+          gcsDrive = new GCSDrive();
+          documentManager.services.contents.addDrive(gcsDrive);
+          panelGcs.addWidget(
+            new GcsBrowserWidget(gcsDrive, factory as IFileBrowserFactory)
+          );
+          // Update the icons.
+          onThemeChanged();
+          app.shell.add(panelGcs, 'left', { rank: 1002 });
+          if (bqFeature.enable_bigquery_integration && panelDatasetExplorer) {
+            app.shell.add(panelDatasetExplorer, 'left', { rank: 1000 });
+          }
+          app.shell.add(panelDpms, 'left', { rank: 1001 });
+        }
       }
     };
 
@@ -211,6 +269,24 @@ const extension: JupyterFrontEndPlugin<void> = {
       });
       const newWidget = new dpmsWidget(app as JupyterLab, themeManager);
       panelDpms.addWidget(newWidget);
+    };
+
+    const loadBigQueryWidget = (value: string) => {
+      // If DPMS is not enabled, no-op.
+      if (!panelDatasetExplorer) return;
+      const existingWidgets = panelDatasetExplorer.widgets;
+      existingWidgets.forEach(widget => {
+        if (widget instanceof dpmsWidget) {
+          widget.dispose();
+        }
+      });
+      const newWidget = new BigQueryWidget(
+        app as JupyterLab,
+        settingRegistry as ISettingRegistry,
+        bqFeature.enable_bigquery_integration as boolean,
+        themeManager
+      );
+      panelDatasetExplorer.addWidget(newWidget);
     };
 
     let lastClusterName = localStorage.getItem('notebookValue') || '';
@@ -269,6 +345,7 @@ const extension: JupyterFrontEndPlugin<void> = {
         document.title = title.label;
       }
     };
+
     labShell.currentChanged.connect(async (_, change) => {
       await KernelAPI.listRunning();
       const { oldValue, newValue } = change;
@@ -283,7 +360,6 @@ const extension: JupyterFrontEndPlugin<void> = {
       }
       if (newValue) {
         // Check if the new value is an instance of NotebookPanel
-
         if (newValue instanceof NotebookPanel) {
           newValue.title.changed.connect(onTitleChanged);
           newValue.toolbar.update();
@@ -326,6 +402,78 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     const kernelSpecs = await KernelSpecAPI.getSpecs();
     const kernels = kernelSpecs.kernelspecs;
+
+    const downloadNotebook = async (
+      notebookContent: any,
+      notebookUrl: string
+    ) => {
+      const contentsManager = app.serviceManager.contents;
+      // Get the current file browser tracker
+      const { tracker } = factory;
+      // Get the current active widget in the file browser
+      const widget = tracker.currentWidget;
+      if (!widget) {
+        console.error('No active file browser widget found.');
+        return;
+      }
+
+      // Define the path to the 'bigQueryNotebookDownload' folder within the local application directory
+      const bigQueryNotebookDownloadFolderPath = widget.model.path.includes(
+        'gs:'
+      )
+        ? ''
+        : widget.model.path;
+
+      // Define the path to the 'bigQueryNotebookDownload' folder within the local application directory
+
+      const urlParts = notebookUrl.split('/');
+      const filePath = `${bigQueryNotebookDownloadFolderPath}${path.sep}${
+        urlParts[urlParts.length - 1]
+      }`;
+
+      const credentials = await authApi();
+      if (credentials) {
+        notebookContent.cells[2].source[1] = `PROJECT_ID = '${credentials.project_id}' \n`;
+        notebookContent.cells[2].source[2] = `REGION = '${
+          settings.get('bqRegion')['composite']
+        }'\n`;
+      }
+
+      // Save the file to the workspace
+      await contentsManager.save(filePath, {
+        type: 'file',
+        format: 'text',
+        content: JSON.stringify(notebookContent)
+      });
+
+      // Refresh the file fileBrowser to reflect the new file
+      app.shell.currentWidget?.update();
+
+      app.commands.execute('docmanager:open', {
+        path: filePath
+      });
+    };
+
+    const openBigQueryNotebook = async () => {
+      const template = {
+        url: 'https://raw.githubusercontent.com/GoogleCloudPlatform/dataproc-ml-quickstart-notebooks/main/public_datasets/bigframes/bigframes_quickstart.ipynb'
+      };
+      await NotebookTemplateService.handleClickService(
+        template,
+        downloadNotebook
+      );
+    };
+
+    const createBigQueryNotebookComponentCommand =
+      'create-bigquery-notebook-component';
+    commands.addCommand(createBigQueryNotebookComponentCommand, {
+      caption: 'BigQuery DataFrames',
+      label: 'BigQuery DataFrames',
+      icon: iconPythonLogo,
+      execute: async () => {
+        await openBigQueryNotebook();
+      }
+    });
 
     const createRuntimeTemplateComponentCommand =
       'create-runtime-template-component';
@@ -416,11 +564,12 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     const createAuthLoginComponentCommand = 'cloud-dataproc-settings:configure';
     commands.addCommand(createAuthLoginComponentCommand, {
-      label: 'Cloud Dataproc Settings',
+      label: 'Google BigQuery Settings',
       execute: () => {
         const content = new AuthLogin(
           app as JupyterLab,
           launcher as ILauncher,
+          settingRegistry as ISettingRegistry,
           themeManager
         );
         const widget = new MainAreaWidget<AuthLogin>({ content });
@@ -433,6 +582,15 @@ const extension: JupyterFrontEndPlugin<void> = {
     let serverlessIndex = -1;
 
     if (launcher) {
+      if (bqFeature.enable_bigquery_integration) {
+        loadBigQueryWidget('');
+
+        launcher.add({
+          command: createBigQueryNotebookComponentCommand,
+          category: 'BigQuery Notebooks',
+          rank: 1
+        });
+      }
       Object.values(kernels).forEach((kernelsData, index) => {
         if (
           kernelsData?.resources.endpointParentResource &&
@@ -543,13 +701,23 @@ const extension: JupyterFrontEndPlugin<void> = {
     // so jupyter would give us a toast container.
     // Long term we should just replace the toast calls across the plugin with
     // apputils:notify.
-    commands.execute('apputils:notify', {
-      message: 'Dataproc Jupyter Plugin Successfully Loaded',
-      type: 'success',
-      options: {
-        autoClose: 1000
-      }
-    });
+    if (bqFeature.enable_bigquery_integration) {
+      commands.execute('apputils:notify', {
+        message: 'BigQuery Plugin Successfully Loaded',
+        type: 'success',
+        options: {
+          autoClose: 1000
+        }
+      });
+    } else {
+      commands.execute('apputils:notify', {
+        message: 'Dataproc Jupyter Plugin Successfully Loaded',
+        type: 'success',
+        options: {
+          autoClose: 1000
+        }
+      });
+    }
   }
 };
 

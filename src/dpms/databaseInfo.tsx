@@ -37,21 +37,20 @@ const DatabaseInfo = ({
   };
   const renderTable = () => {
     return (
-      <div className="table-container">
-        <table className="db-table">
-          <tbody>
-            {Object.entries(database).map(([key, value], index) => (
-              <tr
-                key={key}
-                className={index % 2 === 0 ? 'tr-row-even' : 'tr-row-odd'}
-              >
-                <td className="bold-column">{key}</td>
-                <td>{value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <>
+        <div className="table-container">
+          <table className="db-table">
+            <tbody>
+              {Object.entries(database).map(([key, value], index) => (
+                <tr key={key} className="tr-row">
+                  <td className="bold-column">{key}</td>
+                  <td>{value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
     );
   };
 

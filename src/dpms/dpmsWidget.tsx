@@ -41,13 +41,18 @@ import {
 } from '../utils/const';
 import { authApi, toastifyCustomStyle, loggedFetch } from '../utils/utils';
 import { Table } from './tableInfo';
-import { ClipLoader } from 'react-spinners';
 import { toast } from 'react-toastify';
 import { DataprocWidget } from '../controls/DataprocWidget';
 import { IThemeManager } from '@jupyterlab/apputils';
-import { IconButton, InputAdornment, TextField } from '@mui/material';
+import {
+  CircularProgress,
+  IconButton,
+  InputAdornment,
+  TextField
+} from '@mui/material';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import { TitleComponent } from '../controls/SidePanelTitleWidget';
+
 const iconDatasets = new LabIcon({
   name: 'launcher:datasets-icon',
   svgstr: datasetsIcon
@@ -88,7 +93,6 @@ const DpmsComponent = ({
     name: 'launcher:database-icon',
     svgstr: databaseIcon
   });
-
   const iconTable = new LabIcon({
     name: 'launcher:table-icon',
     svgstr: tableIcon
@@ -151,19 +155,22 @@ const DpmsComponent = ({
               }
             })
             .catch((e: Error) => {
-              console.log(e);
+              console.error(e);
             });
         })
         .catch((err: Error) => {
-          console.error('Error getting column details', err);
           DataprocLoggingService.log(
             'Error getting column details',
             LOG_LEVEL.ERROR
           );
-          toast.error('Error getting column details', toastifyCustomStyle);
+          toast.error(
+            `Error getting column details : ${err}`,
+            toastifyCustomStyle
+          );
         });
     }
   };
+
   interface ITableResponse {
     results: Array<{
       displayName: string;
@@ -217,19 +224,21 @@ const DpmsComponent = ({
               setTotalTables(tableNames.length);
             })
             .catch((e: Error) => {
-              console.log(e);
+              console.error(e);
               if (totalDatabases !== undefined) {
                 setTotalDatabases(totalDatabases - 1 || 0);
               }
             });
         })
         .catch((err: Error) => {
-          console.error('Error getting table details', err);
           DataprocLoggingService.log(
             'Error getting table details',
             LOG_LEVEL.ERROR
           );
-          toast.error('Error getting table details', toastifyCustomStyle);
+          toast.error(
+            `Error getting table details : ${err}`,
+            toastifyCustomStyle
+          );
         });
     }
   };
@@ -253,15 +262,17 @@ const DpmsComponent = ({
   interface IDataEntry {
     id: string;
     name: string;
+    type: string;
     description: string;
-    children: Table[];
+    children: any;
   }
+
   const databases: { [dbName: string]: { [tableName: string]: IColumn[] } } =
     {};
 
   columnResponse.forEach((res: IColumn) => {
     /* fullyQualifiedName : dataproc_metastore:projectId.location.metastore_instance.database_name.table_name
-fetching database name from fully qualified name structure */
+      fetching database name from fully qualified name structure */
     const dbName = res.fullyQualifiedName.split('.').slice(-2, -1)[0];
     const tableName = res.displayName;
     const columns: IColumn[] = res.schema.columns.map(
@@ -271,13 +282,13 @@ fetching database name from fully qualified name structure */
         mode: string;
         description: string;
       }) => ({
-        name: column.column,
+        name: `${column.column}`,
         schema: res.schema, // Include the schema object
         fullyQualifiedName: res.fullyQualifiedName,
         displayName: res.displayName,
-        column: res.column,
-        type: res.type,
-        mode: res.mode,
+        column: res.column, //no response
+        type: column.type,
+        mode: column.mode,
         description: res.description
       })
     );
@@ -292,13 +303,14 @@ fetching database name from fully qualified name structure */
 
     databases[dbName][tableName].push(...columns);
   });
+
   const data = Object.entries(databases).map(([dbName, tables]) => ({
     id: uuidv4(),
     name: dbName,
     children: Object.entries(tables).map(([tableName, columns]) => ({
       id: uuidv4(),
       name: tableName,
-      desciption: '',
+      description: '',
       children: columns.map((column: IColumn) => ({
         id: uuidv4(),
         name: column.name,
@@ -308,6 +320,7 @@ fetching database name from fully qualified name structure */
       }))
     }))
   }));
+
   data.sort((a, b) => a.name.localeCompare(b.name));
 
   data.forEach(db => {
@@ -349,6 +362,7 @@ fetching database name from fully qualified name structure */
       } else if (depth === 2 && node.parent) {
         const database = node.parent.data.name;
         const column = node.data.children;
+
         const content = new Table(
           node.data.name,
           dataprocMetastoreServices,
@@ -422,8 +436,8 @@ fetching database name from fully qualified name structure */
         )
       ) : null;
       if (searchTerm) {
-        const arrowIcon =
-          hasChildren && node.isOpen ? (
+        const arrowIcon = hasChildren ? (
+          node.isOpen ? (
             <>
               <div
                 role="treeitem"
@@ -447,7 +461,8 @@ fetching database name from fully qualified name structure */
                 className="icon-white logo-alignment-style"
               />
             </div>
-          );
+          )
+        ) : null;
         if (depth === 1) {
           return (
             <>
@@ -522,9 +537,18 @@ fetching database name from fully qualified name structure */
     return (
       <div style={style}>
         {renderNodeIcon()}
-        <div role="treeitem" onClick={handleTextClick}>
+        <div
+          role="treeitem"
+          title={
+            node.data.children && node.data.children.length > 0
+              ? node.data.children[0]?.description
+              : ''
+          }
+          onClick={handleTextClick}
+        >
           {node.data.name}
         </div>
+        <div className="dpms-column-type-text">{node.data.type}</div>
       </div>
     );
   };
@@ -593,19 +617,22 @@ fetching database name from fully qualified name structure */
               }
             })
             .catch((e: Error) => {
-              console.log(e);
+              console.error(e);
             });
         })
         .catch((err: Error) => {
-          console.error('Error getting database details', err);
           DataprocLoggingService.log(
             'Error getting database details',
             LOG_LEVEL.ERROR
           );
-          toast.error('Error getting database details', toastifyCustomStyle);
+          toast.error(
+            `Error getting database details : ${err}`,
+            toastifyCustomStyle
+          );
         });
     }
   };
+
   interface IClusterDetailsResponse {
     error: {
       code: number;
@@ -659,17 +686,19 @@ fetching database name from fully qualified name structure */
               }
             })
             .catch((e: Error) => {
-              console.log(e);
+              console.error(e);
             });
         })
         .catch((err: Error) => {
           setIsLoading(false);
-          console.error('Error listing session details', err);
           DataprocLoggingService.log(
             'Error listing session details',
             LOG_LEVEL.ERROR
           );
-          toast.error('Failed to fetch session details', toastifyCustomStyle);
+          toast.error(
+            `Failed to fetch session details : ${err}`,
+            toastifyCustomStyle
+          );
         });
     }
   };
@@ -727,17 +756,19 @@ fetching database name from fully qualified name structure */
               }
             })
             .catch((e: Error) => {
-              console.log(e);
+              console.error(e);
             });
         })
         .catch((err: Error) => {
           setIsLoading(false);
-          console.error('Error listing clusters details', err);
           DataprocLoggingService.log(
             'Error listing clusters details',
             LOG_LEVEL.ERROR
           );
-          toast.error('Failed to fetch cluster details', toastifyCustomStyle);
+          toast.error(
+            `Failed to fetch cluster details : ${err}`,
+            toastifyCustomStyle
+          );
         });
     }
   };
@@ -786,16 +817,15 @@ fetching database name from fully qualified name structure */
 
   return (
     <div className="dpms-Wrapper">
-      <TitleComponent titleStr="Metadata Explorer" isPreview />
+      <TitleComponent titleStr="Dataset Explorer" isPreview />
       {!noDpmsInstance ? (
         <>
           <div>
             {isLoading ? (
               <div className="database-loader">
                 <div>
-                  <ClipLoader
-                    color="#3367d6"
-                    loading={true}
+                  <CircularProgress
+                    className = "spin-loader-custom-style"
                     size={20}
                     aria-label="Loading Spinner"
                     data-testid="loader"
@@ -842,7 +872,7 @@ fetching database name from fully qualified name structure */
                     ? data[totalDatabases - 1].children.length ===
                         totalTables && (
                         <Tree
-                          className="Tree"
+                          className="database-tree"
                           initialData={data}
                           openByDefault={false}
                           indent={24}
@@ -890,8 +920,14 @@ fetching database name from fully qualified name structure */
 };
 
 export class dpmsWidget extends DataprocWidget {
-  constructor(private app: JupyterLab, themeManager: IThemeManager) {
+  app: JupyterLab;
+
+  constructor(
+    app: JupyterLab,
+    themeManager: IThemeManager
+  ) {
     super(themeManager);
+    this.app = app;
   }
 
   renderInternal(): JSX.Element {

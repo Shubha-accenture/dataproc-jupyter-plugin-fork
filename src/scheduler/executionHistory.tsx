@@ -25,7 +25,9 @@ import ListDagRuns from './listDagRuns';
 import { LabIcon } from '@jupyterlab/ui-components';
 import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
 import ListDagTaskInstances from './listDagTaskInstances';
+import { Box, LinearProgress } from '@mui/material';
 
+const height = window.innerHeight - 145;
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
   svgstr: LeftArrowIcon
@@ -47,17 +49,13 @@ const ExecutionHistory = ({
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
+  const [isLoading, setIsLoading] = useState(true);
   const [blueListDates, setBlueListDates] = useState<string[]>([]);
   const [greyListDates, setGreyListDates] = useState<string[]>([]);
   const [orangeListDates, setOrangeListDates] = useState<string[]>([]);
   const [redListDates, setRedListDates] = useState<string[]>([]);
   const [greenListDates, setGreenListDates] = useState<string[]>([]);
-
-  const handleMonthChange = () => {
-    setDagRunId('');
-    setSelectedDate(null);
-  };
+  const [darkGreenListDates, setDarkGreenListDates] = useState<string[]>([]);
 
   const handleDateSelection = (selectedValue: any) => {
     setDagRunId('');
@@ -98,59 +96,59 @@ const ExecutionHistory = ({
     const isGreenExecution =
       greenListDates.length > 0 &&
       greenListDates.includes(formattedTotalViewDate);
+    //Green color code for multiple success status
+    const isDarkGreenExecution =
+      darkGreenListDates.length > 0 &&
+      darkGreenListDates.includes(formattedTotalViewDate);
 
-    const isSelectedExecution = [selectedDate?.date()].includes(totalViewDates);
+    const isSelectedExecution =
+      [selectedDate?.date()].includes(totalViewDates) &&
+      selectedDate?.month() === day?.month();
+    const currentDataExecution =
+      [dayjs(currentDate)?.date()].includes(totalViewDates) &&
+      [dayjs(currentDate)?.month()].includes(day.month());
 
     return (
       <PickersDay
         {...props}
         style={{
-          border:
-            isSelectedExecution &&
-            !isRedExecution &&
-            !isGreenExecution &&
-            !isOrangeExecution &&
-            !isBlueExecution &&
-            !isGreyExecution
-              ? '3px solid var(--jp-ui-font-color0)'
-              : 'none',
+          border: 'none',
           borderRadius:
+            isSelectedExecution ||
+            isDarkGreenExecution ||
             isGreenExecution ||
             isRedExecution ||
-            isSelectedExecution ||
             isOrangeExecution ||
             isGreyExecution ||
             isBlueExecution
               ? '50%'
               : 'none',
-          backgroundColor: isGreenExecution
-            ? isSelectedExecution
-              ? '#2A8642'
-              : '#34A853'
+          backgroundColor: isSelectedExecution
+            ? '#3B78E7'
+            : isDarkGreenExecution
+            ? '#1E6631'
+            : isGreenExecution
+            ? '#34A853'
             : isOrangeExecution
-            ? isSelectedExecution
-              ? '#F78702'
-              : '#FFA52C'
+            ? '#FFA52C'
             : isRedExecution
-            ? isSelectedExecution
-              ? '#C4271A'
-              : '#EA3323'
+            ? '#EA3323'
             : isBlueExecution
-            ? isSelectedExecution
-              ? '#0066b2'
-              : '#7CB9E8'
+            ? '#00BFA5'
             : isGreyExecution
-            ? isSelectedExecution
-              ? '#808080'
-              : '#AEAEAE'
+            ? '#AEAEAE'
             : 'transparent',
           color:
+            isSelectedExecution ||
+            isDarkGreenExecution ||
             isGreenExecution ||
             isRedExecution ||
             isOrangeExecution ||
             isGreyExecution ||
             isBlueExecution
               ? 'white'
+              : currentDataExecution
+              ? '#3367D6'
               : 'inherit'
         }}
       />
@@ -179,9 +177,24 @@ const ExecutionHistory = ({
             Execution History: {dagId}
           </div>
         </div>
-        <div className="execution-history-main-wrapper">
+        <div
+          className="execution-history-main-wrapper"
+          style={{ height: height }}
+        >
           <div className="execution-history-left-wrapper">
             <LocalizationProvider dateAdapter={AdapterDayjs}>
+              {isLoading ? (
+                <div className="spin-loader-main-calender">
+                  <Box sx={{ width: '100%' }}>
+                    <LinearProgress />
+                  </Box>
+                </div>
+              ) : (
+                <div
+                  className="spin-loader-main-calender"
+                  style={{ height: '4px' }}
+                ></div>
+              )}
               <DateCalendar
                 minDate={dayjs().year(2024).startOf('year')}
                 maxDate={dayjs(currentDate)}
@@ -190,7 +203,6 @@ const ExecutionHistory = ({
                 slots={{
                   day: CustomDay
                 }}
-                onMonthChange={() => handleMonthChange()}
               />
             </LocalizationProvider>
             {startDate !== '' && endDate !== '' && (
@@ -206,7 +218,10 @@ const ExecutionHistory = ({
                 setOrangeListDates={setOrangeListDates}
                 setRedListDates={setRedListDates}
                 setGreenListDates={setGreenListDates}
+                setDarkGreenListDates={setDarkGreenListDates}
                 bucketName={bucketName}
+                setIsLoading={setIsLoading}
+                isLoading={isLoading}
               />
             )}
           </div>

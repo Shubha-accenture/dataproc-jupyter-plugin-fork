@@ -40,7 +40,6 @@ import {
   loggedFetch,
   checkConfig
 } from '../utils/utils';
-import { ClipLoader } from 'react-spinners';
 import ErrorPopup from '../utils/errorPopup';
 import errorIcon from '../../style/icons/error_icon.svg';
 import { toast } from 'react-toastify';
@@ -54,7 +53,12 @@ import { DropdownProps } from 'semantic-ui-react';
 
 import { DynamicDropdown } from '../controls/DynamicDropdown';
 import { projectListAPI } from '../utils/projectService';
-import { Autocomplete, Radio, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  CircularProgress,
+  Radio,
+  TextField
+} from '@mui/material';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import { MuiChipsInput } from 'mui-chips-input';
 import { RunTimeSerive } from './runtimeService';
@@ -709,7 +713,10 @@ function CreateRunTime({
             'Error Creating template',
             LOG_LEVEL.ERROR
           );
-          toast.error('Failed to create the template', toastifyCustomStyle);
+          toast.error(
+            `Failed to create the template : ${err}`,
+            toastifyCustomStyle
+          );
         });
     }
   };
@@ -842,9 +849,8 @@ function CreateRunTime({
     <div>
       {configLoading && !loggedIn && !configError && !loginError && (
         <div className="spin-loader-main">
-          <ClipLoader
-            color="#3367d6"
-            loading={true}
+          <CircularProgress
+            className = "spin-loader-custom-style"
             size={18}
             aria-label="Loading Spinner"
             data-testid="loader"
@@ -1059,8 +1065,7 @@ function CreateRunTime({
                   <div className="create-batch-network">
                     {isloadingNetwork ? (
                       <div className="metastore-loader">
-                        <ClipLoader
-                          loading={true}
+                        <CircularProgress
                           size={25}
                           aria-label="Loading Spinner"
                           data-testid="loader"
@@ -1096,15 +1101,27 @@ function CreateRunTime({
                 )}
                 {selectedNetworkRadio === 'projectNetwork' &&
                   networkList.length === 0 && (
-                    <div className="create-no-list-message">
-                      No local networks are available.
+                    <div className="error-key-parent">
+                      <iconError.react
+                        tag="div"
+                        className="logo-alignment-style"
+                      />
+                      <div className="error-key-missing">
+                        No local networks are available.
+                      </div>
                     </div>
                   )}
                 {selectedNetworkRadio === 'projectNetwork' &&
                   networkList.length !== 0 &&
                   subNetworkList.length === 0 && (
-                    <div className="create-no-list-message">
-                      Please select a valid network and subnetwork.
+                    <div className="error-key-parent">
+                      <iconError.react
+                        tag="div"
+                        className="logo-alignment-style"
+                      />
+                      <div className="error-key-missing">
+                        Please select a valid network and subnetwork.
+                      </div>
                     </div>
                   )}
                 {selectedNetworkRadio === 'sharedVpc' && (
@@ -1121,8 +1138,14 @@ function CreateRunTime({
                 )}
                 {selectedNetworkRadio === 'sharedVpc' &&
                   sharedSubNetworkList.length === 0 && (
-                    <div className="create-no-list-message">
-                      No shared subnetworks are available in this region.
+                    <div className="error-key-parent">
+                      <iconError.react
+                        tag="div"
+                        className="logo-alignment-style"
+                      />
+                      <div className="error-key-missing">
+                        No shared subnetworks are available in this region.
+                      </div>
                     </div>
                   )}
               </div>
@@ -1177,8 +1200,7 @@ function CreateRunTime({
               <div className="select-text-overlay">
                 {isLoadingService ? (
                   <div className="metastore-loader">
-                    <ClipLoader
-                      loading={true}
+                    <CircularProgress
                       size={25}
                       aria-label="Loading Spinner"
                       data-testid="loader"
@@ -1289,6 +1311,7 @@ function CreateRunTime({
                   options={clustersList}
                   value={clusterSelected}
                   onChange={(_event, val) => handleClusterSelected(val)}
+                  noOptionsText="No history server clusters available"
                   renderInput={params => (
                     <TextField {...params} label="History server cluster" />
                   )}

@@ -19,6 +19,7 @@ import { Input } from '../controls/MuiWrappedInput';
 import {
   Autocomplete,
   Checkbox,
+  CircularProgress,
   FormControl,
   FormControlLabel,
   FormGroup,
@@ -44,7 +45,6 @@ import errorIcon from '../../style/icons/error_icon.svg';
 import { Button } from '@mui/material';
 import { scheduleMode } from '../utils/const';
 import { scheduleValueExpression } from '../utils/const';
-import { ClipLoader } from 'react-spinners';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
@@ -143,6 +143,8 @@ const CreateNotebookScheduler = ({
   const handleNodesOrderChange = (newNodesOrder: any[]) => {
     setNodesOrder(newNodesOrder);
   };
+
+  const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
 
   const listClustersAPI = async () => {
     await SchedulerService.listClustersAPIService(setClusterList);
@@ -370,6 +372,10 @@ const CreateNotebookScheduler = ({
     listSessionTemplatesAPI();
     if (context !== '') {
       setInputFileSelected(context.path);
+      if (context.path.toLowerCase().startsWith('bigframes')) {
+        setIsBigQueryNotebook(true);
+        setSelectedMode('serverless');
+      }
     }
     setJobNameSelected('');
     if (!editMode) {
@@ -546,46 +552,48 @@ const CreateNotebookScheduler = ({
                     />
                   </FormGroup>
                 </div>
-                <div className="create-scheduler-form-element">
-                  <FormControl>
-                    <RadioGroup
-                      aria-labelledby="demo-controlled-radio-buttons-group"
-                      name="controlled-radio-buttons-group"
-                      value={selectedMode}
-                      onChange={handleSelectedModeChange}
-                      row={true}
-                    >
-                      <FormControlLabel
-                        value="cluster"
-                        control={<Radio size="small" />}
-                        label={
-                          <Typography sx={{ fontSize: 13 }}>Cluster</Typography>
-                        }
-                      />
-                      <FormControlLabel
-                        value="serverless"
-                        className="create-scheduler-label-style"
-                        control={<Radio size="small" />}
-                        label={
-                          <Typography sx={{ fontSize: 13 }}>
-                            Serverless
-                          </Typography>
-                        }
-                      />
-                    </RadioGroup>
-                  </FormControl>
-                </div>
+                {!isBigQueryNotebook && (
+                  <div className="create-scheduler-form-element">
+                    <FormControl>
+                      <RadioGroup
+                        aria-labelledby="demo-controlled-radio-buttons-group"
+                        name="controlled-radio-buttons-group"
+                        value={selectedMode}
+                        onChange={handleSelectedModeChange}
+                        row={true}
+                      >
+                        <FormControlLabel
+                          value="cluster"
+                          control={<Radio size="small" />}
+                          label={
+                            <Typography sx={{ fontSize: 13 }}>
+                              Cluster
+                            </Typography>
+                          }
+                        />
+                        <FormControlLabel
+                          value="serverless"
+                          className="create-scheduler-label-style"
+                          control={<Radio size="small" />}
+                          label={
+                            <Typography sx={{ fontSize: 13 }}>
+                              Serverless
+                            </Typography>
+                          }
+                        />
+                      </RadioGroup>
+                    </FormControl>
+                  </div>
+                )}
                 <div className="create-scheduler-form-element">
                   {isLoadingKernelDetail && (
-                    <ClipLoader
-                      color="#3367d6"
-                      loading={true}
+                    <CircularProgress
                       size={18}
                       aria-label="Loading Spinner"
                       data-testid="loader"
                     />
                   )}
-                  {selectedMode === 'cluster' && !isLoadingKernelDetail && (
+                  {!isBigQueryNotebook && selectedMode === 'cluster' && !isLoadingKernelDetail && (
                     <Autocomplete
                       className="create-scheduler-style"
                       options={clusterList}
@@ -608,7 +616,7 @@ const CreateNotebookScheduler = ({
                     />
                   )}
                 </div>
-                {selectedMode === 'cluster' && (
+                {!isBigQueryNotebook && selectedMode === 'cluster' && (
                   <div className="create-scheduler-form-element">
                     <FormGroup row={true}>
                       <FormControlLabel

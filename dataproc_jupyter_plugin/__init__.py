@@ -19,19 +19,8 @@ from kernels_mixer.kernels import MixingMappingKernelManager
 from kernels_mixer.websockets import DelegatingWebsocketConnection
 
 from jupyter_server.services.sessions.sessionmanager import SessionManager
-from traitlets import Unicode
-from traitlets.config import Configurable
 
-
-from .handlers import setup_handlers, update_gateway_client_url
-
-
-class DataprocPluginConfig(Configurable):
-    log_path = Unicode(
-        "",
-        config=True,
-        help="File to log ServerApp and Dataproc Jupyter Plugin events.",
-    )
+from .handlers import setup_handlers, configure_gateway_client_url, DataprocPluginConfig
 
 
 def _jupyter_labextension_paths():
@@ -43,7 +32,27 @@ def _jupyter_server_extension_points():
 
 
 def _link_jupyter_server_extension(server_app):
+    plugin_config = DataprocPluginConfig.instance(parent=server_app)
+    if plugin_config.log_path != "":
+        file_handler = logging.handlers.RotatingFileHandler(
+            plugin_config.log_path, maxBytes=2 * 1024 * 1024, backupCount=5
+        )
+        file_handler.setFormatter(
+            logging.Formatter("[%(levelname)s %(asctime)s %(name)s] %(message)s")
+        )
+        server_app.log.addHandler(file_handler)
+
     c = server_app.config
+    if not configure_gateway_client_url(c, server_app.log):
+        # We were not able to configure the gateway client URL so do not modify
+        # any of the server settings that rely on that.
+
+        # Short-circuiting these remaining configurations should not have any
+        # impact on the UI components of the Dataproc Jupyter Plugin, as these
+        # are only related to running remote kernels and are independent of
+        # the UI extensions provided by the plugin.
+        return
+
     c.ServerApp.kernel_spec_manager_class = MixingKernelSpecManager
     c.ServerApp.kernel_manager_class = MixingMappingKernelManager
     c.ServerApp.session_manager_class = SessionManager
@@ -65,18 +74,6 @@ def _link_jupyter_server_extension(server_app):
     # See https://github.com/jupyter-server/jupyter_server/issues/1339 for more
     # details and discussion.
     c.GatewayClient.auth_token = "Initial, invalid value"
-
-    update_gateway_client_url(c, server_app.log)
-
-    plugin_config = DataprocPluginConfig(config=server_app.config)
-    if plugin_config.log_path != "":
-        file_handler = logging.handlers.RotatingFileHandler(
-            plugin_config.log_path, maxBytes=2 * 1024 * 1024, backupCount=5
-        )
-        file_handler.setFormatter(
-            logging.Formatter("[%(levelname)s %(asctime)s %(name)s] %(message)s")
-        )
-        server_app.log.addHandler(file_handler)
 
 
 def _load_jupyter_server_extension(server_app):

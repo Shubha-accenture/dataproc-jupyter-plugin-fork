@@ -40,12 +40,16 @@ import {
 } from '../utils/const';
 import LabelProperties from '../jobs/labelProperties';
 import { authApi } from '../utils/utils';
-import { ClipLoader } from 'react-spinners';
 import ErrorPopup from '../utils/errorPopup';
 import errorIcon from '../../style/icons/error_icon.svg';
 import { Select } from '../controls/MuiWrappedSelect';
 import { Input } from '../controls/MuiWrappedInput';
-import { Autocomplete, Radio, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  CircularProgress,
+  Radio,
+  TextField
+} from '@mui/material';
 import { DropdownProps } from 'semantic-ui-react';
 import { DynamicDropdown } from '../controls/DynamicDropdown';
 import { projectListAPI } from '../utils/projectService';
@@ -812,10 +816,10 @@ function CreateBatch({
           metastoreService: servicesSelected
         }),
         ...(clusterSelected !== '' && {
-            sparkHistoryServerConfig: {
-              dataprocCluster: `projects/${projectName}/regions/${regionName}/clusters/${clusterSelected}`
-            } as SparkHistoryServerConfig
-          })
+          sparkHistoryServerConfig: {
+            dataprocCluster: `projects/${projectName}/regions/${regionName}/clusters/${clusterSelected}`
+          } as SparkHistoryServerConfig
+        })
       }
     };
 
@@ -1598,8 +1602,7 @@ function CreateBatch({
               <div className="create-batch-network">
                 {isloadingNetwork ? (
                   <div className="metastore-loader">
-                    <ClipLoader
-                      loading={true}
+                    <CircularProgress
                       size={25}
                       aria-label="Loading Spinner"
                       data-testid="loader"
@@ -1633,15 +1636,21 @@ function CreateBatch({
             )}
             {selectedNetworkRadio === 'projectNetwork' &&
               networkList.length === 0 && (
-                <div className="create-no-list-message">
-                  No local networks are available.
+                <div className="error-key-parent">
+                  <iconError.react tag="div" className="logo-alignment-style" />
+                  <div className="error-key-missing">
+                    No local networks are available.
+                  </div>
                 </div>
               )}
             {selectedNetworkRadio === 'projectNetwork' &&
               networkList.length !== 0 &&
               subNetworkList.length === 0 && (
-                <div className="create-no-list-message">
-                  Please select a valid network and subnetwork.
+                <div className="error-key-parent">
+                  <iconError.react tag="div" className="logo-alignment-style" />
+                  <div className="error-key-missing">
+                    Please select a valid network and subnetwork.
+                  </div>
                 </div>
               )}
 
@@ -1659,8 +1668,11 @@ function CreateBatch({
             )}
             {selectedNetworkRadio === 'sharedVpc' &&
               sharedSubNetworkList.length === 0 && (
-                <div className="create-no-list-message">
-                  No shared subnetworks are available in this region.
+                <div className="error-key-parent">
+                  <iconError.react tag="div" className="logo-alignment-style" />
+                  <div className="error-key-missing">
+                    No shared subnetworks are available in this region.
+                  </div>
                 </div>
               )}
           </div>
@@ -1846,8 +1858,7 @@ function CreateBatch({
           <div className="select-text-overlay">
             {isLoadingService ? (
               <div className="metastore-loader">
-                <ClipLoader
-                  loading={true}
+                <CircularProgress
                   size={25}
                   aria-label="Loading Spinner"
                   data-testid="loader"
@@ -1873,6 +1884,7 @@ function CreateBatch({
               options={clustersList}
               value={clusterSelected}
               onChange={(_event, val) => handleClusterSelected(val)}
+              noOptionsText="No history server clusters available"
               renderInput={params => (
                 <TextField {...params} label="History server cluster" />
               )}

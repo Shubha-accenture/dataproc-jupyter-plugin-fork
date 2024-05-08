@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
+import { CircularProgress } from '@mui/material';
 import React from 'react';
-import { ClipLoader } from 'react-spinners';
 import { Cell, Row } from 'react-table';
-
+const listDagRunHeight = window.innerHeight - 505;
 function TableData({
   getTableProps,
   headerGroups,
@@ -51,12 +51,15 @@ function TableData({
           </tr>
         ))}
       </thead>
-      <tbody {...getTableBodyProps()} className={'clusters-table-body'}>
+      <tbody
+        {...getTableBodyProps()}
+        className={'clusters-table-body'}
+        style={fromPage === 'Dag Runs' ? { maxHeight: listDagRunHeight } : null}
+      >
         {isLoading ? (
           <div className="spin-loader">
-            <ClipLoader
-              color="#3367d6"
-              loading={true}
+            <CircularProgress
+              className="spin-loader-custom-style"
               size={18}
               aria-label="Loading Spinner"
               data-testid="loader"
@@ -67,10 +70,7 @@ function TableData({
           displayData.map((row: Row, index: number) => {
             prepareRow(row);
             return (
-              <tr
-                {...row.getRowProps()}
-                className={'cluster-list-data-parent'}
-              >
+              <tr {...row.getRowProps()} className={'cluster-list-data-parent'}>
                 {row.cells.map((cell: Cell) => {
                   return tableDataCondition(cell);
                 })}
