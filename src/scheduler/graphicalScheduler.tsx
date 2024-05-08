@@ -19,14 +19,31 @@ import 'reactflow/dist/style.css';
 import NotebookNode from './notebookNode';
 import '../../style/reactFlow.css';
 import '../../style/notebookNode.css';
+import { JupyterLab } from '@jupyterlab/application';
+//import GraphicalScheduler from './graphicalScheduler';
+import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
+
 
 interface IGraphicalSchedulerProps {
   inputFileSelected: string;
   NodesChange: (updatedNodes: any) => void;
   EdgesChange: (updatedEdges: any) => void;
   NodesOrderChange: (nodesOrder: any) => void;
+  app: JupyterLab;
+  factory :IFileBrowserFactory;
 }
 const nodeTypes = { notebookNode: NotebookNode };
+// const nodeTypes = {
+//   notebookNode: {
+//     component: NotebookNode,
+//     extraParams: {
+//       // Add extra parameters here
+//       exampleParam: 'exampleValue',
+//       anotherParam: 123
+//     }
+//   }
+// };
+
 
 let id = 1;
 const getId = () => `${id++}`;
@@ -35,7 +52,9 @@ const GraphicalScheduler = ({
   inputFileSelected,
   NodesChange,
   EdgesChange,
-  NodesOrderChange
+  NodesOrderChange,
+  app, 
+  factory
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
@@ -58,7 +77,6 @@ const GraphicalScheduler = ({
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-
   const findRootNode = (nodes: any[], edges: any[], deletedNodeId: string) => {
     if (deletedNodeId === '0') {
       const incomingNodes = new Set(edges.map(edge => edge.target));
@@ -192,6 +210,9 @@ export default (props: IGraphicalSchedulerProps) => (
       NodesChange={props.NodesChange}
       EdgesChange={props.EdgesChange}
       NodesOrderChange={props.NodesOrderChange}
+      app={props.app}
+      factory={props.factory}
     />
   </ReactFlowProvider>
 );
+

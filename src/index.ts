@@ -197,7 +197,7 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     app.docRegistry.addWidgetExtension(
       'Notebook',
-      new NotebookButtonExtension(app as JupyterLab, launcher, themeManager)
+      new NotebookButtonExtension(app as JupyterLab, launcher, themeManager,factory as IFileBrowserFactory)
     );
 
     const loadDpmsWidget = (value: string) => {
@@ -385,7 +385,8 @@ const extension: JupyterFrontEndPlugin<void> = {
         const content = new NotebookScheduler(
           app as JupyterLab,
           themeManager,
-          ''
+          '',
+          factory as IFileBrowserFactory
         );
         const widget = new MainAreaWidget<NotebookScheduler>({ content });
         widget.title.label = 'Scheduled Jobs';

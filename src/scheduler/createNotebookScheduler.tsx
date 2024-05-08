@@ -47,6 +47,7 @@ import { scheduleValueExpression } from '../utils/const';
 import { ClipLoader } from 'react-spinners';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
+import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
 interface IDagList {
   jobid: string;
@@ -75,11 +76,13 @@ const iconError = new LabIcon({
 const CreateNotebookScheduler = ({
   themeManager,
   app,
-  context
+  context,
+  factory
 }: {
   themeManager: IThemeManager;
   app: JupyterLab;
   context: any;
+  factory: IFileBrowserFactory;
 }): JSX.Element => {
   const [jobNameSelected, setJobNameSelected] = useState('');
   const [inputFileSelected, setInputFileSelected] = useState('');
@@ -791,6 +794,8 @@ const CreateNotebookScheduler = ({
               NodesChange={handleNodesChange}
               EdgesChange={handleEdgesChange}
               NodesOrderChange={handleNodesOrderChange}
+              app={app}
+              factory={factory}
             />
           </Grid>
         </Grid>
