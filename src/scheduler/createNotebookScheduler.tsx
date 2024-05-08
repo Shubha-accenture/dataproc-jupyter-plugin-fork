@@ -47,7 +47,6 @@ import { scheduleMode } from '../utils/const';
 import { scheduleValueExpression } from '../utils/const';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
-import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
 interface IDagList {
   jobid: string;
@@ -77,12 +76,10 @@ const CreateNotebookScheduler = ({
   themeManager,
   app,
   context,
-  factory
 }: {
   themeManager: IThemeManager;
   app: JupyterLab;
   context: any;
-  factory: IFileBrowserFactory;
 }): JSX.Element => {
   const [jobNameSelected, setJobNameSelected] = useState('');
   const [inputFileSelected, setInputFileSelected] = useState('');
@@ -802,8 +799,6 @@ const CreateNotebookScheduler = ({
               NodesChange={handleNodesChange}
               EdgesChange={handleEdgesChange}
               NodesOrderChange={handleNodesOrderChange}
-              app={app}
-              factory={factory}
             />
           </Grid>
         </Grid>

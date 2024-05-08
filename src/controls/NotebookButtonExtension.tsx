@@ -31,7 +31,6 @@ import { SessionTemplate } from '../sessions/sessionTemplate';
 import serverlessIcon from '../../style/icons/serverless_icon.svg';
 import notebookSchedulerIcon from '../../style/icons/scheduler_calendar_month.svg';
 import { NotebookScheduler } from '../scheduler/notebookScheduler';
-import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
 const iconLogs = new LabIcon({
   name: 'launcher:logs-icon',
@@ -72,7 +71,6 @@ class NotebookButtonExtensionPoint implements IDisposable {
     private readonly app: JupyterLab,
     private readonly launcher: ILauncher,
     private readonly themeManager: IThemeManager,
-    private readonly factory:IFileBrowserFactory,
   ) {
     this.isDisposed = false;
     this.context.sessionContext.sessionChanged.connect(this.onSessionChanged);
@@ -116,7 +114,6 @@ class NotebookButtonExtensionPoint implements IDisposable {
       this.app as JupyterLab,
       this.themeManager,
       this.context,
-      this.factory as IFileBrowserFactory
     );
     const widget = new MainAreaWidget<NotebookScheduler>({ content });
     widget.title.label = 'Job Scheduler';
@@ -233,7 +230,6 @@ export class NotebookButtonExtension
     private app: JupyterLab,
     private launcher: ILauncher,
     private themeManager: IThemeManager,
-    private factory:IFileBrowserFactory
   ) {}
 
   createNew(
@@ -247,7 +243,6 @@ export class NotebookButtonExtension
       this.app,
       this.launcher,
       this.themeManager,
-      this.factory
     );
   }
 }

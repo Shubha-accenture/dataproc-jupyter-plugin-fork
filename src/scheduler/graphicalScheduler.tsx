@@ -19,32 +19,14 @@ import 'reactflow/dist/style.css';
 import NotebookNode from './notebookNode';
 import '../../style/reactFlow.css';
 import '../../style/notebookNode.css';
-import { JupyterLab } from '@jupyterlab/application';
-//import GraphicalScheduler from './graphicalScheduler';
-import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
-
 
 interface IGraphicalSchedulerProps {
   inputFileSelected: string;
   NodesChange: (updatedNodes: any) => void;
   EdgesChange: (updatedEdges: any) => void;
   NodesOrderChange: (nodesOrder: any) => void;
-  app: JupyterLab;
-  factory :IFileBrowserFactory;
 }
 const nodeTypes = { notebookNode: NotebookNode };
-// const nodeTypes = {
-//   notebookNode: {
-//     component: NotebookNode,
-//     extraParams: {
-//       // Add extra parameters here
-//       exampleParam: 'exampleValue',
-//       anotherParam: 123
-//     }
-//   }
-// };
-
-
 let id = 1;
 const getId = () => `${id++}`;
 
@@ -53,13 +35,10 @@ const GraphicalScheduler = ({
   NodesChange,
   EdgesChange,
   NodesOrderChange,
-  app, 
-  factory
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
   const nodesOrderRef = useRef<any[]>([]);
-  //let rootId =0;
 
   const initialNode = [
     {
@@ -210,9 +189,6 @@ export default (props: IGraphicalSchedulerProps) => (
       NodesChange={props.NodesChange}
       EdgesChange={props.EdgesChange}
       NodesOrderChange={props.NodesOrderChange}
-      app={props.app}
-      factory={props.factory}
     />
   </ReactFlowProvider>
 );
-
