@@ -203,8 +203,12 @@ const extension: JupyterFrontEndPlugin<void> = {
               widget.model.path.includes('gs:') ? '' : widget.model.path;
             // const urlParts = file.name
             const filePath = `${notebookTemplateDownloadFolderPath}${path.sep}${file.name}`;
-            setInputFileSelected(filePath);
-            data.inputFile = filePath;
+            const newFilePath = filePath.startsWith('/')
+              ? filePath.substring(1)
+              : filePath;
+            setInputFileSelected(newFilePath);
+            data.inputFile = newFilePath;
+
             // Save the file to the workspace
             await contentsManager.save(filePath, {
               type: 'file',
@@ -305,11 +309,7 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     app.docRegistry.addWidgetExtension(
       'Notebook',
-      new NotebookButtonExtension(
-        app as JupyterLab,
-        launcher,
-        themeManager,
-      )
+      new NotebookButtonExtension(app as JupyterLab, launcher, themeManager)
     );
 
     const loadDpmsWidget = (value: string) => {
@@ -587,7 +587,7 @@ const extension: JupyterFrontEndPlugin<void> = {
         const content = new NotebookScheduler(
           app as JupyterLab,
           themeManager,
-          '',
+          ''
         );
         const widget = new MainAreaWidget<NotebookScheduler>({ content });
         widget.title.label = 'Scheduled Jobs';
