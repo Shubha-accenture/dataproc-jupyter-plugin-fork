@@ -170,60 +170,6 @@ const extension: JupyterFrontEndPlugin<void> = {
       }
     });
 
-    eventEmitter.on(
-      'uploadProgress',
-      (event: any, data: any, setInputFileSelected: any) => {
-        handleFileUpload(event, data, setInputFileSelected);
-      }
-    );
-
-    const handleFileUpload = async (
-      event: any,
-      data: any,
-      setInputFileSelected: any
-    ) => {
-      const input = event.target as HTMLInputElement;
-      const files = Array.from(input.files || []);
-      if (files && files.length > 0) {
-        files.forEach((fileData: any) => {
-          const file = fileData;
-          const reader = new FileReader();
-          // Read the file as text
-          reader.onloadend = async () => {
-            const contentsManager = app.serviceManager.contents;
-            const { tracker } = factory;
-            // Get the current active widget in the file browser
-            const widget = tracker.currentWidget;
-            if (!widget) {
-              console.error('No active file browser widget found.');
-              return;
-            }
-            // Define the path to the 'notebookTemplateDownload' folder within the local application directory
-            const notebookTemplateDownloadFolderPath =
-              widget.model.path.includes('gs:') ? '' : widget.model.path;
-            // const urlParts = file.name
-            const filePath = `${notebookTemplateDownloadFolderPath}${path.sep}${file.name}`;
-            const newFilePath = filePath.startsWith('/')
-              ? filePath.substring(1)
-              : filePath;
-            setInputFileSelected(newFilePath);
-            data.inputFile = newFilePath;
-
-            // Save the file to the workspace
-            await contentsManager.save(filePath, {
-              type: 'file',
-              format: 'text',
-              content: JSON.stringify(reader.result)
-            });
-
-            // Refresh the file fileBrowser to reflect the new file
-            app.shell.currentWidget?.update();
-          };
-          reader.readAsText(file);
-        });
-      }
-    };
-
     /**
      * Handler for when the Jupyter Lab theme changes.
      */
@@ -309,7 +255,12 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     app.docRegistry.addWidgetExtension(
       'Notebook',
-      new NotebookButtonExtension(app as JupyterLab, launcher, themeManager)
+      new NotebookButtonExtension(
+        app as JupyterLab,
+        launcher,
+        themeManager,
+        factory
+      )
     );
 
     const loadDpmsWidget = (value: string) => {
@@ -587,7 +538,8 @@ const extension: JupyterFrontEndPlugin<void> = {
         const content = new NotebookScheduler(
           app as JupyterLab,
           themeManager,
-          ''
+          '',
+          factory as IFileBrowserFactory
         );
         const widget = new MainAreaWidget<NotebookScheduler>({ content });
         widget.title.label = 'Scheduled Jobs';

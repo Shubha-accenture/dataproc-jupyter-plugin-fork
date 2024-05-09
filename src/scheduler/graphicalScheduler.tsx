@@ -19,12 +19,18 @@ import 'reactflow/dist/style.css';
 import NotebookNode from './notebookNode';
 import '../../style/reactFlow.css';
 import '../../style/notebookNode.css';
+import { eventEmitter } from '../utils/signalEmitter';
+import * as path from 'path';
+import { JupyterLab } from '@jupyterlab/application';
+import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
 interface IGraphicalSchedulerProps {
   inputFileSelected: string;
   NodesChange: (updatedNodes: any) => void;
   EdgesChange: (updatedEdges: any) => void;
   NodesOrderChange: (nodesOrder: any) => void;
+  app: JupyterLab;
+  factory: IFileBrowserFactory;
 }
 const nodeTypes = { notebookNode: NotebookNode };
 let id = 1;
@@ -35,6 +41,8 @@ const GraphicalScheduler = ({
   NodesChange,
   EdgesChange,
   NodesOrderChange,
+  app,
+  factory
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
@@ -150,6 +158,70 @@ const GraphicalScheduler = ({
     [screenToFlowPosition]
   );
 
+  eventEmitter.on(
+    'uploadProgress',
+    (event: any, data: any, setInputFileSelected: any) => {
+      handleFileUpload(event, data, setInputFileSelected);
+    }
+  );
+
+  const handleFileUpload = async (
+    event: any,
+    data: any,
+    setInputFileSelected: any
+  ) => {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+    if (files && files.length > 0) {
+      files.forEach((fileData: any) => {
+        const file = fileData;
+        const reader = new FileReader();
+        // Read the file as text
+        reader.onloadend = async () => {
+          const contentsManager = app.serviceManager.contents;
+          const { tracker } = factory;
+          // Get the current active widget in the file browser
+          const widget = tracker.currentWidget;
+          if (!widget) {
+            console.error('No active file browser widget found.');
+            return;
+          }
+          // Define the path to the 'notebookTemplateDownload' folder within the local application directory
+          const notebookTemplateDownloadFolderPath = widget.model.path.includes(
+            'gs:'
+          )
+            ? ''
+            : widget.model.path;
+          // const urlParts = file.name
+          const filePath = `${notebookTemplateDownloadFolderPath}${path.sep}${file.name}`;
+          const newFilePath = filePath.startsWith('/')
+            ? filePath.substring(1)
+            : filePath;
+          setInputFileSelected(newFilePath);
+          data.inputFile = newFilePath;
+
+          // const fileExtension = filePath.split('.').pop(); // Get the file extension
+          // if (fileExtension && fileExtension.toLowerCase() !== 'ipynb') {
+          //   // If the file extension is not 'ipynb', display an error message or handle it as required
+          //   console.error('Only .ipynb files are allowed.');
+          //   // Additional handling if necessary
+          // }
+
+          // Save the file to the workspace
+          await contentsManager.save(filePath, {
+            type: 'file',
+            format: 'text',
+            content: JSON.stringify(reader.result)
+          });
+
+          // Refresh the file fileBrowser to reflect the new file
+          app.shell.currentWidget?.update();
+        };
+        reader.readAsText(file);
+      });
+    }
+  };
+
   useEffect(() => {
     const nodePriority = createNodeOrder(nodes, edges);
     nodesOrderRef.current = nodePriority;
@@ -189,6 +261,8 @@ export default (props: IGraphicalSchedulerProps) => (
       NodesChange={props.NodesChange}
       EdgesChange={props.EdgesChange}
       NodesOrderChange={props.NodesOrderChange}
+      app={props.app}
+      factory={props.factory}
     />
   </ReactFlowProvider>
 );
