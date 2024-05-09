@@ -25,9 +25,9 @@ import requests
 
 from dataproc_jupyter_plugin.services.composerService import ENVIRONMENT_API
 from dataproc_jupyter_plugin.models.models import DescribeJob
-from dataproc_jupyter_plugin.utils.constants import CONTENT_TYPE, GCS
-from dataproc_jupyter_plugin.utils.graphSort import Graph
+from dataproc_jupyter_plugin.commons.graphSort import Graph
 import pendulum
+from dataproc_jupyter_plugin.commons.constants import CONTENT_TYPE, GCS
 
 unique_id = str(uuid.uuid4().hex)
 job_id = ""

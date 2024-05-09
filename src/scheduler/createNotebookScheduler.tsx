@@ -47,6 +47,7 @@ import { scheduleMode } from '../utils/const';
 import { scheduleValueExpression } from '../utils/const';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
+import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
 interface IDagList {
   jobid: string;
@@ -76,10 +77,12 @@ const CreateNotebookScheduler = ({
   themeManager,
   app,
   context,
+  factory
 }: {
   themeManager: IThemeManager;
   app: JupyterLab;
   context: any;
+  factory: IFileBrowserFactory;
 }): JSX.Element => {
   const [jobNameSelected, setJobNameSelected] = useState('');
   const [inputFileSelected, setInputFileSelected] = useState('');
@@ -590,17 +593,19 @@ const CreateNotebookScheduler = ({
                       data-testid="loader"
                     />
                   )}
-                  {!isBigQueryNotebook && selectedMode === 'cluster' && !isLoadingKernelDetail && (
-                    <Autocomplete
-                      className="create-scheduler-style"
-                      options={clusterList}
-                      value={clusterSelected}
-                      onChange={(_event, val) => handleClusterSelected(val)}
-                      renderInput={params => (
-                        <TextField {...params} label="Cluster*" />
-                      )}
-                    />
-                  )}
+                  {!isBigQueryNotebook &&
+                    selectedMode === 'cluster' &&
+                    !isLoadingKernelDetail && (
+                      <Autocomplete
+                        className="create-scheduler-style"
+                        options={clusterList}
+                        value={clusterSelected}
+                        onChange={(_event, val) => handleClusterSelected(val)}
+                        renderInput={params => (
+                          <TextField {...params} label="Cluster*" />
+                        )}
+                      />
+                    )}
                   {selectedMode === 'serverless' && !isLoadingKernelDetail && (
                     <Autocomplete
                       className="create-scheduler-style"
@@ -799,6 +804,8 @@ const CreateNotebookScheduler = ({
               NodesChange={handleNodesChange}
               EdgesChange={handleEdgesChange}
               NodesOrderChange={handleNodesOrderChange}
+              app={app}
+              factory={factory}
             />
           </Grid>
         </Grid>
