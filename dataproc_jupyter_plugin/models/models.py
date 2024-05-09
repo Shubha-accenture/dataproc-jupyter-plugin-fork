@@ -53,6 +53,7 @@ class DescribeJob(BaseModel):
     stop_cluster: bool = False
     time_zone: str = None
     email_success: bool = False
+    nodes: object = None
 
     @classmethod
     def from_dict(cls, data):
