@@ -17,6 +17,7 @@ import json
 from jupyter_server.base.handlers import APIHandler
 import tornado
 from dataproc_jupyter_plugin import handlers
+from dataproc_jupyter_plugin.commons.gcloudOperations import GetCachedCredentials
 from dataproc_jupyter_plugin.services.downloadOutputService import DownloadOutputService
 
 
@@ -28,8 +29,9 @@ class downloadOutputController(APIHandler):
             bucket_name = self.get_argument("bucket_name")
             dag_id = self.get_argument("dag_id")
             dag_run_id = self.get_argument("dag_run_id")
+            credentials = GetCachedCredentials.get_cached_credentials(self.log)
             download_status = download_dag.download_dag_output(
-                bucket_name, dag_id, dag_run_id, self.log
+                bucket_name, dag_id, dag_run_id,credentials, self.log
             )
             self.finish(json.dumps({"status": download_status}))
         except Exception as e:

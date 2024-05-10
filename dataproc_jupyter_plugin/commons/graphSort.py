@@ -36,5 +36,4 @@ class Graph:
                 self.topological_sort_util(i, visited, stack)
 
         # Print contents of stack
-        print("order--------------",stack)
         return stack
