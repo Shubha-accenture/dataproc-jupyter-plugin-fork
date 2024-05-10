@@ -125,7 +125,6 @@ const CreateNotebookScheduler = ({
   const [editMode, setEditMode] = useState(false);
   const [dagListCall, setDagListCall] = useState(false);
   const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
-  const allInputFiles: string[] = [];
   const [inputFilesValidation, setInputFilesValidation] = useState(false);
 
   const [nodes, setNodes] = useState([]);
@@ -134,6 +133,16 @@ const CreateNotebookScheduler = ({
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
+    console.log(nodes)
+   //const allInputFiles: string[] = [];
+    let allNodesHaveInputFiles = true;
+    updatedNodes.forEach((e: INodeData) => {
+      const inputFile = e.data.inputFile;
+      if (!inputFile || inputFile.trim() === '') {
+        allNodesHaveInputFiles = false;
+      }
+    });
+    setInputFilesValidation(allNodesHaveInputFiles);
   };
 
   const handleEdgesChange = (updatedEdges: []) => {
@@ -399,19 +408,6 @@ const CreateNotebookScheduler = ({
       getKernelDetail();
     }
   }, [serverlessDataList]);
-
-  useEffect(() => {
-    let allNodesHaveInputFiles = true;
-    nodes.forEach((e: INodeData) => {
-      const inputFile = e.data.inputFile;
-      if (!inputFile || inputFile.trim() === '') {
-        allNodesHaveInputFiles = false;
-      } else {
-        allInputFiles.push(inputFile);
-      }
-    });
-    setInputFilesValidation(allNodesHaveInputFiles);
-  }, [nodes]);
 
   return (
     <>

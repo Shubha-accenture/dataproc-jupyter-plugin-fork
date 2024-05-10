@@ -64,21 +64,21 @@ const GraphicalScheduler = ({
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const findRootNode = (nodes: any[], edges: any[], deletedNodeId: string) => {
-    if (deletedNodeId === '0') {
-      const incomingNodes = new Set(edges.map(edge => edge.target));
-      for (const node of nodes) {
-        if (!incomingNodes.has(node.id)) {
-          return node.id;
-        }
-      }
-    }
-    return '0';
-  };
+  // const findRootNode = (nodes: any[], edges: any[], deletedNodeId: string) => {
+  //   if (deletedNodeId === '0') {
+  //     const incomingNodes = new Set(edges.map(edge => edge.target));
+  //     for (const node of nodes) {
+  //       if (!incomingNodes.has(node.id)) {
+  //         return node.id;
+  //       }
+  //     }
+  //   }
+  //   return '0';
+  // };
 
-  const deletedNodeId = '0';
-  const rootId = findRootNode(nodes, edges, deletedNodeId);
-  console.log('Root Node Id:', rootId);
+  // const deletedNodeId = '0';
+  // // const rootId = findRootNode(nodes, edges, deletedNodeId);
+  // // console.log('Root Node Id:', rootId);
 
   const createNodeOrder = (nodes: any[], edges: any[]) => {
     const priorityNodes = ['0'];
@@ -206,12 +206,11 @@ const GraphicalScheduler = ({
           //   console.error('Only .ipynb files are allowed.');
           //   // Additional handling if necessary
           // }
-
           // Save the file to the workspace
           await contentsManager.save(filePath, {
             type: 'file',
             format: 'text',
-            content: JSON.stringify(reader.result)
+            content: reader.result as string
           });
 
           // Refresh the file fileBrowser to reflect the new file
@@ -226,8 +225,11 @@ const GraphicalScheduler = ({
     const nodePriority = createNodeOrder(nodes, edges);
     nodesOrderRef.current = nodePriority;
   }, [edges]);
+  
+  useEffect(() => {
+    NodesChange(nodes);
+  }, [nodes]);
 
-  NodesChange(nodes);
   EdgesChange(edges);
   NodesOrderChange(nodesOrderRef.current);
 
