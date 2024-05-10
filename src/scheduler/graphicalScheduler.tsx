@@ -33,8 +33,6 @@ interface IGraphicalSchedulerProps {
   factory: IFileBrowserFactory;
 }
 const nodeTypes = { notebookNode: NotebookNode };
-let id = 1;
-const getId = () => `${id++}`;
 
 const GraphicalScheduler = ({
   inputFileSelected,
@@ -47,6 +45,8 @@ const GraphicalScheduler = ({
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
   const nodesOrderRef = useRef<any[]>([]);
+let id = 1;
+const getId = () => `${id++}`;
 
   const initialNode = [
     {

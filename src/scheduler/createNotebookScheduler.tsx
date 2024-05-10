@@ -133,7 +133,6 @@ const CreateNotebookScheduler = ({
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
-    console.log(nodes)
    //const allInputFiles: string[] = [];
     let allNodesHaveInputFiles = true;
     updatedNodes.forEach((e: INodeData) => {
@@ -141,6 +140,9 @@ const CreateNotebookScheduler = ({
       if (!inputFile || inputFile.trim() === '') {
         allNodesHaveInputFiles = false;
       }
+      // } else {
+      //   allInputFiles.push(inputFile);
+      // }
     });
     setInputFilesValidation(allNodesHaveInputFiles);
   };
@@ -408,6 +410,21 @@ const CreateNotebookScheduler = ({
       getKernelDetail();
     }
   }, [serverlessDataList]);
+
+  useEffect(() => {
+    // console.log("nodes",nodes)
+    // let allNodesHaveInputFiles = true;
+    // nodes.forEach((e: INodeData) => {
+    //   const inputFile = e.data.inputFile;
+    //   if (!inputFile || inputFile.trim() === '') {
+    //     allNodesHaveInputFiles = false;
+    //   } else {
+    //     allInputFiles.push(inputFile);
+    //   }
+    // });
+    // console.log("flag", allNodesHaveInputFiles)
+    // setInputFilesValidation(allNodesHaveInputFiles);
+  }, [nodes]);
 
   return (
     <>
