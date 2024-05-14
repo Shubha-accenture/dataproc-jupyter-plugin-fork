@@ -37,13 +37,13 @@ import {
 } from '../utils/const';
 import DeletePopup from '../utils/deletePopup';
 import GlobalFilter from '../utils/globalFilter';
-import { PaginationView } from '../utils/paginationView';
 import PollingTimer from '../utils/pollingTimer';
 import { SessionService } from './sessionService';
 import TableData from '../utils/tableData';
 import { ICellProps } from '../utils/utils';
 import SessionDetails from './sessionDetails';
 import { CircularProgress } from '@mui/material';
+import { PaginationViewNew } from '../utils/paginationViewNew';
 
 const iconFilter = new LabIcon({
   name: 'launcher:filter-icon',
@@ -81,6 +81,10 @@ function ListSessions() {
   const [deletePopupOpen, setDeletePopupOpen] = useState(false);
   const [selectedSessionValue, setSelectedSessionValue] = useState('');
   const timer = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageTokenStack, setPageTokenStack] = useState(['']);
+  const [nextPageToken, setNextPageToken] = useState('');
 
   const pollingSessions = async (
     pollingFunction: () => void,
@@ -130,9 +134,13 @@ function ListSessions() {
   );
 
   const listSessionsAPI = async () => {
+    console.log(pageIndex, pageTokenStack);
     await SessionService.listSessionsAPIService(
       renderActions,
       setIsLoading,
+      pageSize,
+      setNextPageToken,
+      pageTokenStack,
       setSessionsList
     );
   };
@@ -160,17 +168,33 @@ function ListSessions() {
     preGlobalFilteredRows,
     setGlobalFilter,
     page,
-    canPreviousPage,
-    canNextPage,
-    nextPage,
-    previousPage,
     setPageSize,
-    state: { pageIndex, pageSize }
+    state: { pageSize }
   } = useTable(
     { columns, data, autoResetPage: false, initialState: { pageSize: 50 } },
     useGlobalFilter,
     usePagination
   );
+
+  const handlePageChange = (newPageIndex: number, action: string) => {
+    setPageIndex(newPageIndex);
+    if (action === 'next') {
+      let tempStackList = [...pageTokenStack];
+      tempStackList.push(nextPageToken);
+      setPageTokenStack(tempStackList);
+    } else if (action === 'previous') {
+      let tempStackList = [...pageTokenStack];
+      tempStackList.pop();
+      setPageTokenStack(tempStackList);
+    } else {
+      setPageTokenStack(['']);
+    }
+    listSessionsAPI();
+  };
+
+  // useEffect(() => {
+  //   pollingSessions(listSessionsAPI, pollingDisable);
+  // }, [pageTokenStack]);
 
   useEffect(() => {
     if (!pollingDisable) {
@@ -179,12 +203,14 @@ function ListSessions() {
     return () => {
       pollingSessions(listSessionsAPI, true);
     };
-  }, [pollingDisable, detailedSessionView]);
+  }, [pollingDisable, detailedSessionView, pageTokenStack]);
+
   useEffect(() => {
     if (!detailedSessionView && !isLoading) {
       pollingSessions(listSessionsAPI, pollingDisable);
     }
   }, [isLoading]);
+
   const renderActions = (data: { state: ClusterStatus; name: string }) => {
     /*
       Extracting sessionId from sessionInfo
@@ -348,7 +374,7 @@ function ListSessions() {
               tableDataCondition={tableDataCondition}
               fromPage="Sessions"
             />
-            {sessionsList.length > 50 && (
+            {/* {sessionsList.length >= 50 && (
               <PaginationView
                 pageSize={pageSize}
                 setPageSize={setPageSize}
@@ -359,6 +385,17 @@ function ListSessions() {
                 canPreviousPage={canPreviousPage}
                 canNextPage={canNextPage}
               />
+            )} */}
+            {sessionsList.length >= 50 && (
+              <PaginationViewNew
+                pageSize={pageSize}
+                setPageSize={setPageSize}
+                pageIndex={pageIndex}
+                totalRowSize={sessionsList.length.toString()}
+                canPreviousPage={pageIndex !== 0}
+                canNextPage={true}
+                onPageChange={handlePageChange}
+              />
             )}
           </div>
         </div>
@@ -367,7 +404,7 @@ function ListSessions() {
           {isLoading && (
             <div className="spin-loader-main">
               <CircularProgress
-                className = "spin-loader-custom-style"
+                className="spin-loader-custom-style"
                 size={18}
                 aria-label="Loading Spinner"
                 data-testid="loader"

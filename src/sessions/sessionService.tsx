@@ -165,15 +165,15 @@ export class SessionService {
   static listSessionsAPIService = async (
     renderActions: (value: IRenderActionsData) => React.JSX.Element,
     setIsLoading: (value: boolean) => void,
-    setSessionsList: any,
-    nextPageToken?: string,
-    previousSessionsList?: object
+    pageSize: number,
+    setNextPageToken: (value: string) => void,
+    pageTokenStack: string[],
+    setSessionsList: any
   ) => {
     try {
-      const pageToken = nextPageToken ?? '';
       const queryParams = new URLSearchParams();
-      queryParams.append('pageSize', '50');
-      queryParams.append('pageToken', pageToken);
+      queryParams.append('pageSize', pageSize.toString());
+      queryParams.append('pageToken', pageTokenStack[pageTokenStack.length-1]);
 
       const response = await authenticatedFetch({
         uri: 'sessions',
@@ -184,58 +184,39 @@ export class SessionService {
       const formattedResponse = await response.json();
       let transformSessionListData: React.SetStateAction<never[]> = [];
       if (formattedResponse && formattedResponse.sessions) {
-        let sessionsListNew = formattedResponse.sessions;
+        setNextPageToken(formattedResponse.nextPageToken);
+        let allSessionsData = formattedResponse.sessions;
+        allSessionsData.sort(
+          (a: { createTime: string }, b: { createTime: string }) => {
+            const dateA = new Date(a.createTime);
+            const dateB = new Date(b.createTime);
+            return Number(dateB) - Number(dateA);
+          }
+        );
+        transformSessionListData = allSessionsData.map((data: any) => {
+          const startTimeDisplay = jobTimeFormat(data.createTime);
+          const startTime = new Date(data.createTime);
+          let elapsedTimeString = '';
+          if (data.state === STATUS_TERMINATED || data.state === STATUS_FAIL) {
+            elapsedTimeString = elapsedTime(data.stateTime, startTime);
+          }
 
-        const existingSessionsData = previousSessionsList ?? [];
-        // setStateAction never type issue
-        let allSessionsData: any = [
-          ...(existingSessionsData as []),
-          ...sessionsListNew
-        ];
+          // Extracting sessionID, location from sessionInfo.name
+          // Example: "projects/{project}/locations/{location}/sessions/{sessionID}"
 
-        if (formattedResponse.nextPageToken) {
-          this.listSessionsAPIService(
-            renderActions,
-            setIsLoading,
-            setSessionsList,
-            formattedResponse.nextPageToken,
-            allSessionsData
-          );
-        } else {
-          allSessionsData.sort(
-            (a: { createTime: string }, b: { createTime: string }) => {
-              const dateA = new Date(a.createTime);
-              const dateB = new Date(b.createTime);
-              return Number(dateB) - Number(dateA);
-            }
-          );
-          transformSessionListData = allSessionsData.map((data: any) => {
-            const startTimeDisplay = jobTimeFormat(data.createTime);
-            const startTime = new Date(data.createTime);
-            let elapsedTimeString = '';
-            if (
-              data.state === STATUS_TERMINATED ||
-              data.state === STATUS_FAIL
-            ) {
-              elapsedTimeString = elapsedTime(data.stateTime, startTime);
-            }
-
-            // Extracting sessionID, location from sessionInfo.name
-            // Example: "projects/{project}/locations/{location}/sessions/{sessionID}"
-
-            return {
-              sessionID: data.name.split('/')[5],
-              status: data.state,
-              location: data.name.split('/')[3],
-              creator: data.creator,
-              creationTime: startTimeDisplay,
-              elapsedTime: elapsedTimeString,
-              actions: renderActions(data)
-            };
-          });
-          setSessionsList(transformSessionListData);
-          setIsLoading(false);
-        }
+          return {
+            sessionID: data.name.split('/')[5],
+            status: data.state,
+            location: data.name.split('/')[3],
+            creator: data.creator,
+            creationTime: startTimeDisplay,
+            elapsedTime: elapsedTimeString,
+            actions: renderActions(data)
+          };
+        });
+        setSessionsList(transformSessionListData);
+        setIsLoading(false);
+        // }
       } else {
         setSessionsList([]);
         setIsLoading(false);
