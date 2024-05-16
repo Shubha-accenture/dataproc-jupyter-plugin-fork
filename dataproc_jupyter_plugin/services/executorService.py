@@ -28,6 +28,7 @@ from dataproc_jupyter_plugin.models.models import DescribeJob
 from dataproc_jupyter_plugin.commons.graphSort import Graph
 import pendulum
 from dataproc_jupyter_plugin.commons.constants import CONTENT_TYPE, GCS
+import networkx as nx
 
 unique_id = str(uuid.uuid4().hex)
 job_id = ""
@@ -109,7 +110,6 @@ class ExecutorService:
         )
         output, error = process.communicate()
         if process.returncode == 0:
-            print(gcs_path)
             log.info(f"Input file uploaded to gcs successfully")
             return gcs_path
         else:
@@ -128,10 +128,8 @@ class ExecutorService:
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )
         output, error = process.communicate()
-        print(process.returncode, error, output)
         if process.returncode == 0:
             log.info(f"Papermill file uploaded to gcs successfully")
-            print(process.returncode, error, output)
         else:
             log.exception(f"Error uploading papermill file to gcs: {error.decode()}")
             raise IOError(error.decode)
@@ -139,9 +137,9 @@ class ExecutorService:
     @staticmethod
     def prepare_dag(job, gcs_dag_bucket, dag_file, credentials, execution_order, log):
         log.info(f"Generating dag file")
-        # DAG_TEMPLATE_CLUSTER_V1 = "pysparkJobTemplate-v1.txt"
-        DAG_TEMPLATE_CLUSTER_V1 = "test_dag.txt"
-        DAG_TEMPLATE_SERVERLESS_V1 = "pysparkBatchTemplate-v1.txt"
+        DAG_TEMPLATE_CLUSTER_V2 = "pysparkJobTemplate-v2.txt"
+        # DAG_TEMPLATE_SERVERLESS_V1 = "pysparkBatchTemplate-v1.txt"
+        DAG_TEMPLATE_SERVERLESS_V2 = "pysparkBatchTemplate-v2.txt"
         environment = Environment(
             loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH)
         )
@@ -172,7 +170,7 @@ class ExecutorService:
         else:
             parameters = ""
         if job.mode_selected == "cluster":
-            template = environment.get_template(DAG_TEMPLATE_CLUSTER_V1)
+            template = environment.get_template(DAG_TEMPLATE_CLUSTER_V2)
             if not job.input_filename.startswith(GCS):
                 input_notebook = f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job.name}/input_notebooks/{job.input_filename}"
             else:
@@ -193,7 +191,7 @@ class ExecutorService:
                 time_zone=time_zone,
                 )
         else:
-            template = environment.get_template(DAG_TEMPLATE_SERVERLESS_V1)
+            template = environment.get_template(DAG_TEMPLATE_SERVERLESS_V2)
             job_dict = job.dict()
             phs_path = (
                 job_dict.get("serverless_name", {})
@@ -229,8 +227,8 @@ class ExecutorService:
                 input_notebook = job.input_filename
             content = template.render(
                 job,
-                input_files = job.nodes,
                 inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
+                input_files = input_files,
                 execution_order = execution_order,
                 gcpProjectId=gcp_project_id,
                 gcpRegion=gcp_region_id,
@@ -247,117 +245,14 @@ class ExecutorService:
                 metastore_service=metastore_service,
                 version=version,
             )
-        print(job.nodes)
         print(content)
         with open(dag_file, mode="w", encoding="utf-8") as message:
             message.write(content)
 
     def execute(self, credentials, input_data, log):
-        # job = DescribeJob(**input_data)
         global job_id
         global job_name
-        # input_data1 = {
-        # "input_filename": "Untitled.ipynb",
-        # "composer_environment_name": "composer3",
-        # "output_formats": [
-        #     "ipynb"
-        # ],
-        # "parameters": [],
-        # "mode_selected": "cluster",
-        # "retry_count": 2,
-        # "retry_delay": 5,
-        # "email_failure": 'false',
-        # "email_delay": 'false',
-        # "email_success": 'false',
-        # "email": [],
-        # "name": "multiple-check-graph",
-        # "schedule_value": "",
-        # "stop_cluster": 'false',
-        # "dag_id": "b22de6c8-13ed-485e-a93a-d9565327a7e7",
-        # "time_zone": "",
-        # "cluster_name": "cluster-9a5a",
-        # "nodes": [
-        #     {
-        #         "id": "0",
-        #         "type": "notebookNode",
-        #         "position": {
-        #             "x": -84,
-        #             "y": -650
-        #         },
-        #         "data": {
-        #             "inputFile": "test1.ipynb",
-        #             "retryCount": 0,
-        #             "retryDelay": 0,
-        #             "parameter": [
-        #             "num1: 3"
-        #         ]
-        #         },
-        #         "width": 150,
-        #         "height": 258,
-        #         "selected": 'true',
-        #         "positionAbsolute": {
-        #             "x": -84,
-        #             "y": -650
-        #         },
-        #         "dragging": 'false'
-        #     },
-        #     {
-        #         "id": "1",
-        #         "type": "notebookNode",
-        #         "position": {
-        #             "x": -5.4475168948804376,
-        #             "y": 355.9322022721083
-        #         },
-        #         "data": {
-        #             "inputFile": "test2.ipynb",
-        #             "retryCount": 0,
-        #             "retryDelay": 0,
-        #             "parameter": []
-        #         },
-        #         "origin": [
-        #             0.5,
-        #             0
-        #         ],
-        #         "width": 150,
-        #         "height": 258
-        #     },
-        #     {
-        #         "id": "2",
-        #         "type": "notebookNode",
-        #         "position": {
-        #             "x": -367.28303536925466,
-        #             "y": 599.6246933328949
-        #         },
-        #         "data": {
-        #             "inputFile": "test3.ipynb",
-        #             "retryCount": 0,
-        #             "retryDelay": 0,
-        #             "parameter": []
-        #         },
-        #         "origin": [
-        #             0.5,
-        #             0
-        #         ],
-        #         "width": 150,
-        #         "height": 258
-        #     }
-        # ],
-        # "edges": [
-        #     {
-        #         "id": "1",
-        #         "source": "1",
-        #         "target": "0"
-        #     },
-        #     {
-        #         "id": "2",
-        #         "source": "0",
-        #         "target": "2"
-        #     }
-        # ]
-        #     }
-        # job_id = job.dag_id
         job = DescribeJob(**input_data)
-        print("type---------",type(job.nodes))
         job_name = job.name
         dag_file = f"dag_{job_name}.py"
         gcs_dag_bucket = get_bucket(job.composer_environment_name, credentials, log)
@@ -375,20 +270,18 @@ class ExecutorService:
             print(gcs_path)
             file_name = item['data']['inputFile']
             item['data']['inputFile'] = gcs_path+file_name
-        print(job.nodes)
-        edges = input_data["edges"]
+        edges_input = input_data["edges"]
+        edges = []
+        for edge in edges_input:
+            if "source" in edge and "target" in edge:
+                source = int(edge["source"])
+                target = int(edge["target"])
+                edges.append((source, target))
+        graph = nx.DiGraph()
+        graph.add_edges_from(edges)
+        nx.is_directed(graph) # => True
+        nx.is_directed_acyclic_graph(graph) # => True
+        execution_order = list(nx.topological_sort(graph))
 
-        # Create a graph with the number of vertices equal to the length of the edges list
-        max_vertex = max(max(int(edge["source"]), int(edge["target"])) for edge in edges) + 1
-        g = Graph(max_vertex)
-
-        # Now you can add edges to the graph
-        for edge in edges:
-            source = int(edge["source"])
-            target = int(edge["target"])
-            g.add_edge(source, target)
-
-        print("Following is a Topological Sort of the given graph")
-        execution_order = g.topological_sort()
         self.prepare_dag(job, gcs_dag_bucket, dag_file, credentials, execution_order, log)
         self.upload_dag_to_gcs(dag_file, credentials, gcs_dag_bucket, log)
