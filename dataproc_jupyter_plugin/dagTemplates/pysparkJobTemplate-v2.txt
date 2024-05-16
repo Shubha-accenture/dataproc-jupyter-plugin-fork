@@ -59,40 +59,44 @@ stop_cluster_check = '{{stop_cluster}}'
 {{execution_order}}
 {% set task_ids = [] %} 
 {% for id in execution_order %}
-{% set data = input_files[id] %}
+{% for data in input_files %}
+{% if data['id'] == id|string %}
 input_file = '{{data["data"]["inputFile"]}}'
-parameter = {{data["data"]["parameter"]}}
+parameter = {{data["data"]["parameter"] }}
 
 write_output_task_{{ id }} = PythonOperator(
     task_id='generate_output_file_{{ id }}',
     python_callable=write_output_to_file,
     provide_context=True,  
-    op_kwargs={'run_id': {% raw %}'{{run_id}}'{% endraw %}, 'task_id':'generate_output_file_{{ id }}'},  
+    op_kwargs={'run_id': '{{ run_id }}', 'task_id':'generate_output_file_{{ id }}'},  
     dag=dag
 )
 
 submit_pyspark_job_{{ id }} = DataprocSubmitJobOperator(
     task_id='submit_pyspark_job_{{ id }}',
-    project_id='{{gcpProjectId}}',  # This parameter can be overridden by the connection
-    region='{{gcpRegion}}',  # This parameter can be overridden by the connection 
+    project_id='{{ gcpProjectId }}',  
+    region='{{ gcpRegion }}',  
     job={
-        'reference': {'project_id': '{{gcpProjectId}}'},
-        'placement': {'cluster_name': '{{cluster_name}}'},
+        'reference': {'project_id': '{{ gcpProjectId }}'},
+        'placement': {'cluster_name': '{{ cluster_name }}'},
         'labels': {'client': 'dataproc-jupyter-plugin'},
         'pyspark_job': {
-            'main_python_file_uri': '{{inputFilePath}}',
-            'args' : get_notebook_args(input_file,parameter,'generate_output_file_{{ id }}')
+            'main_python_file_uri': '{{ inputFilePath }}',
+            'args' : get_notebook_args(input_file, parameter, 'generate_output_file_{{ id }}')
         },
     },
-    retries = {{data["data"]["retryCount"]}},
-    gcp_conn_id='google_cloud_default',  # Reference to the GCP connection
+    retries={{ data["data"]["retryCount"] }},
+    gcp_conn_id='google_cloud_default',  
     dag=dag,
 )
 {% set _ = task_ids.append('write_output_task_' + id|string) %}
 {% set _ = task_ids.append('submit_pyspark_job_' + id|string) %}
+{% endif %}
+{% endfor %}
 {% endfor %}
 
 {{ task_ids | join(' >> ') }}
+
 
 
 

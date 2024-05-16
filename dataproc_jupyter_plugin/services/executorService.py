@@ -271,17 +271,24 @@ class ExecutorService:
             file_name = item['data']['inputFile']
             item['data']['inputFile'] = gcs_path+file_name
         edges_input = input_data["edges"]
-        edges = []
-        for edge in edges_input:
-            if "source" in edge and "target" in edge:
-                source = int(edge["source"])
-                target = int(edge["target"])
-                edges.append((source, target))
-        graph = nx.DiGraph()
-        graph.add_edges_from(edges)
-        nx.is_directed(graph) # => True
-        nx.is_directed_acyclic_graph(graph) # => True
-        execution_order = list(nx.topological_sort(graph))
+        execution_order = []
+        if len(edges_input) != 0:
+            edges = []
+            for edge in edges_input:
+                if "source" in edge and "target" in edge:
+                    source = int(edge["source"])
+                    target = int(edge["target"])
+                    edges.append((source, target))
+            graph = nx.DiGraph()
+            graph.add_edges_from(edges)
+            nx.is_directed(graph) # => True
+            nx.is_directed_acyclic_graph(graph) # => True
+            execution_order = list(nx.topological_sort(graph))
+        else:
+            nodes = job.nodes
+            for item in nodes:
+                execution_order.append(int(item['id']))
 
+            print(execution_order)
         self.prepare_dag(job, gcs_dag_bucket, dag_file, credentials, execution_order, log)
         self.upload_dag_to_gcs(dag_file, credentials, gcs_dag_bucket, log)
