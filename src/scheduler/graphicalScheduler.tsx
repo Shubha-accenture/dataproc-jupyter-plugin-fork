@@ -228,7 +228,7 @@ console.log(nodes,edges)
           </ReactFlow>
         </div>
       </Grid>
-     {isFormVisible && ( <Grid item xs={6}>
+     {isFormVisible && clickedNodeData!==null && ( <Grid item xs={6}>
         <SchedulerForm
         id={clickedNodeId}
         data={clickedNodeData}/>
