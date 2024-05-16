@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState} from 'react';
 import type {
   MouseEvent as ReactMouseEvent,
   TouchEvent as ReactTouchEvent
@@ -13,7 +13,7 @@ import ReactFlow, {
   Edge,
   ReactFlowProvider,
   Controls,
-  Background
+  Background,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import NotebookNode from './notebookNode';
@@ -23,12 +23,13 @@ import { eventEmitter } from '../utils/signalEmitter';
 import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
+import Grid from '@mui/material/Grid';
+ import SchedulerForm from './schedulerForm';
 
 interface IGraphicalSchedulerProps {
   inputFileSelected: string;
   NodesChange: (updatedNodes: any) => void;
   EdgesChange: (updatedEdges: any) => void;
-  NodesOrderChange: (nodesOrder: any) => void;
   app: JupyterLab;
   factory: IFileBrowserFactory;
 }
@@ -38,15 +39,14 @@ const GraphicalScheduler = ({
   inputFileSelected,
   NodesChange,
   EdgesChange,
-  NodesOrderChange,
   app,
   factory
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
-  const nodesOrderRef = useRef<any[]>([]);
-let id = 1;
-const getId = () => `${id++}`;
+
+  let id = 1;
+  const getId = () => `${id++}`;
 
   const initialNode = [
     {
@@ -61,47 +61,11 @@ const getId = () => `${id++}`;
       }
     }
   ];
-
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  // const findRootNode = (nodes: any[], edges: any[], deletedNodeId: string) => {
-  //   if (deletedNodeId === '0') {
-  //     const incomingNodes = new Set(edges.map(edge => edge.target));
-  //     for (const node of nodes) {
-  //       if (!incomingNodes.has(node.id)) {
-  //         return node.id;
-  //       }
-  //     }
-  //   }
-  //   return '0';
-  // };
-
-  // const deletedNodeId = '0';
-  // // const rootId = findRootNode(nodes, edges, deletedNodeId);
-  // // console.log('Root Node Id:', rootId);
-
-  const createNodeOrder = (nodes: any[], edges: any[]) => {
-    const priorityNodes = ['0'];
-    const remainingNodes = new Set();
-    for (const edge of edges) {
-      // for level 1
-      if (edge.source === '0') {
-        priorityNodes.push(edge.target);
-      } else {
-        remainingNodes.add(edge.target);
-      }
-    }
-    //for next level
-    for (const edge of edges) {
-      if (!priorityNodes.includes(edge.target)) {
-        priorityNodes.push(edge.target);
-      }
-    }
-    const sortedNodes = priorityNodes
-      .map((nodeId: any) => nodes.find(node => node.id === nodeId))
-      .filter(Boolean);
-    return sortedNodes;
-  };
+  const [isFormVisible, setIsFormVisible] =useState(true)
+  const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
+  const [clickedNodeData, setClickedNodeData] = useState<any>(null);
 
   const { screenToFlowPosition } = useReactFlow();
   const onConnect = useCallback((params: Connection) => {
@@ -129,9 +93,11 @@ const getId = () => `${id++}`;
         if (targetIsPane) {
           // we need to remove the wrapper bounds, in order to get the correct position
           const nodeId = getId();
+          //console.log(nodeId)
           const e = event as MouseEvent;
           const newNode = {
             id: nodeId,
+            label:`Notebook ${id}`,
             type: 'notebookNode',
             position: screenToFlowPosition({
               x: e.clientX,
@@ -200,12 +166,6 @@ const getId = () => `${id++}`;
           setInputFileSelected(newFilePath);
           data.inputFile = newFilePath;
 
-          // const fileExtension = filePath.split('.').pop(); // Get the file extension
-          // if (fileExtension && fileExtension.toLowerCase() !== 'ipynb') {
-          //   // If the file extension is not 'ipynb', display an error message or handle it as required
-          //   console.error('Only .ipynb files are allowed.');
-          //   // Additional handling if necessary
-          // }
           // Save the file to the workspace
           await contentsManager.save(filePath, {
             type: 'file',
@@ -221,38 +181,60 @@ const getId = () => `${id++}`;
     }
   };
 
-  useEffect(() => {
-    const nodePriority = createNodeOrder(nodes, edges);
-    nodesOrderRef.current = nodePriority;
-  }, [edges]);
-  
+  eventEmitter.on(
+    'nodeClick',
+    ( id: string, isNodeClicked:boolean) => {
+     setClickedNodeId(id)
+     setIsFormVisible(isNodeClicked)
+    }
+  );
   useEffect(() => {
     NodesChange(nodes);
   }, [nodes]);
 
-  EdgesChange(edges);
-  NodesOrderChange(nodesOrderRef.current);
+  useEffect(() => {
+    // If a node is clicked, find its data and show the form
+    if (clickedNodeId) {
+      const clickedNode = nodes.find(node => node.id === clickedNodeId);
+      setClickedNodeData(clickedNode?.data);
+      setIsFormVisible(true);
+    } else {
+      setIsFormVisible(false);
+    }
+  }, [clickedNodeId, nodes]);
 
+  EdgesChange(edges);
+console.log(nodes,edges)
   return (
-    <div className="wrapper" ref={reactFlowWrapper}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onConnectStart={onConnectStart}
-        onConnectEnd={onConnectEnd}
-        //deleteKeyCode={null : 'Delete'}
-        fitView
-        fitViewOptions={{ padding: 2 }}
-        nodeOrigin={[0.5, 0]}
-        nodeTypes={nodeTypes}
-      >
-        <Controls />
-        <Background color="#aaa" gap={6} />
-      </ReactFlow>
-    </div>
+    <Grid container spacing={0} style={{ height: '100vh' }}>
+      <Grid item xs={6}>
+        <div className="wrapper" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onConnectStart={onConnectStart}
+            onConnectEnd={onConnectEnd}
+            //deleteKeyCode={null : 'Delete'}
+            fitView
+            fitViewOptions={{ padding: 2 }}
+            nodeOrigin={[0.5, 0]}
+            nodeTypes={nodeTypes}
+          >
+            <Controls />
+            <Background color="#aaa" gap={6} />
+          </ReactFlow>
+        </div>
+      </Grid>
+     {isFormVisible && ( <Grid item xs={6}>
+        <SchedulerForm
+        id={clickedNodeId}
+        data={clickedNodeData}/>
+      </Grid>
+      )}
+    </Grid>
   );
 };
 
@@ -262,7 +244,6 @@ export default (props: IGraphicalSchedulerProps) => (
       inputFileSelected={props.inputFileSelected}
       NodesChange={props.NodesChange}
       EdgesChange={props.EdgesChange}
-      NodesOrderChange={props.NodesOrderChange}
       app={props.app}
       factory={props.factory}
     />

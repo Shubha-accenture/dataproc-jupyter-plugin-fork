@@ -129,7 +129,6 @@ const CreateNotebookScheduler = ({
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
-  const [nodesOrder, setNodesOrder] = useState<any[]>([]);
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
@@ -151,9 +150,7 @@ const CreateNotebookScheduler = ({
     setEdges(updatedEdges);
   };
 
-  const handleNodesOrderChange = (newNodesOrder: any[]) => {
-    setNodesOrder(newNodesOrder);
-  };
+ 
 
   const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
 
@@ -283,7 +280,7 @@ const CreateNotebookScheduler = ({
       time_zone: scheduleMode !== 'runNow' ? timeZoneSelected : '',
       [selectedMode === 'cluster' ? 'cluster_name' : 'serverless_name']:
         selectedMode === 'cluster' ? clusterSelected : serverlessDataSelected,
-      nodes: nodesOrder, //nodes,
+      nodes: nodes,
       edges: edges
     };
     await SchedulerService.createJobSchedulerService(
@@ -816,7 +813,6 @@ const CreateNotebookScheduler = ({
               inputFileSelected={context.path}
               NodesChange={handleNodesChange}
               EdgesChange={handleEdgesChange}
-              NodesOrderChange={handleNodesOrderChange}
               app={app}
               factory={factory}
             />
