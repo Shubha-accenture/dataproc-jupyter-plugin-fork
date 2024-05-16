@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Handle, NodeProps, Position } from 'reactflow';
+
 import { eventEmitter } from '../utils/signalEmitter';
 
 function NotebookNode({ id, data, isConnectable}: NodeProps) {
-  const [inputFileSelectedLocal] = useState('');
   const [isNodeClicked, setIsNodeClicked] = useState('');
   const handleNodeClick = () => {
     setIsNodeClicked(id);
@@ -18,9 +18,9 @@ function NotebookNode({ id, data, isConnectable}: NodeProps) {
           isConnectable={isConnectable}
         />
         <div className="custom-node__header">
-          {inputFileSelectedLocal
-            ? inputFileSelectedLocal.split('\\').pop()
-            : 'Notebook Name:'}{' '}
+          {data.inputFile
+            ? data.inputFile
+            : 'Notebook:'}{id}
         </div>
         <Handle
           type="source"
