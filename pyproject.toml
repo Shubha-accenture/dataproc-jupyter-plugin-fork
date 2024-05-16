@@ -28,7 +28,8 @@ dependencies = [
     "kernels-mixer>=0.0.10",
     "pendulum>=3.0.0",
     "pydantic~=1.10.0",
-    "bigframes~=0.22.0"
+    "bigframes~=0.22.0",
+    "networkx~= 3.3",
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 
