@@ -25,7 +25,6 @@ import requests
 
 from dataproc_jupyter_plugin.services.composerService import ENVIRONMENT_API
 from dataproc_jupyter_plugin.models.models import DescribeJob
-from dataproc_jupyter_plugin.commons.graphSort import Graph
 import pendulum
 from dataproc_jupyter_plugin.commons.constants import CONTENT_TYPE, GCS
 import networkx as nx
