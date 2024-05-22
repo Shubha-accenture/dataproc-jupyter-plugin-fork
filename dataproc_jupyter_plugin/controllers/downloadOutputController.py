@@ -20,7 +20,7 @@ from dataproc_jupyter_plugin import handlers
 from dataproc_jupyter_plugin.services.downloadOutputService import DownloadOutputService
 
 
-class downloadOutputController(APIHandler):
+class DownloadOutputController(APIHandler):
     @tornado.web.authenticated
     def get(self):
         try:

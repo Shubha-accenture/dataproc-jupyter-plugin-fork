@@ -63,7 +63,7 @@ from dataproc_jupyter_plugin.controllers.dagRunController import (
     DagRunTaskLogsController,
 )
 from dataproc_jupyter_plugin.controllers.downloadOutputController import (
-    downloadOutputController,
+    DownloadOutputController
 )
 from dataproc_jupyter_plugin.controllers.editDagController import EditDagController
 from dataproc_jupyter_plugin.controllers.executorController import ExecutorController
@@ -264,7 +264,7 @@ def setup_handlers(web_app):
     def full_path(name):
         return url_path_join(base_url, application_url, name)
 
-    handlersMap = {
+    handlers_map = {
         "settings": SettingsHandler,
         "credentials": CredentialsHandler,
         "login": LoginHandler,
@@ -285,7 +285,7 @@ def setup_handlers(web_app):
         "editJobScheduler": EditDagController,
         "importErrorsList": ImportErrorController,
         "triggerDag": TriggerDagController,
-        "downloadOutput": downloadOutputController,
+        "downloadOutput": DownloadOutputController,
         "bigQueryDataset": BigqueryDatasetController,
         "bigQueryTable": BigqueryTableController,
         "bigQueryDatasetInfo": BigqueryDatasetInfoController,
@@ -294,5 +294,5 @@ def setup_handlers(web_app):
         "bigQueryProjectsList": BigqueryProjectsController,
         "bigQuerySearch": BigquerySearchController,
     }
-    handlers = [(full_path(name), handler) for name, handler in handlersMap.items()]
+    handlers = [(full_path(name), handler) for name, handler in handlers_map.items()]
     web_app.add_handlers(host_pattern, handlers)
