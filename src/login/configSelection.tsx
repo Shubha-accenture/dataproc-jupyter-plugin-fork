@@ -17,7 +17,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { LabIcon } from '@jupyterlab/ui-components';
-import settingsIcon from '../../style/icons/settings_icon.svg';
+import googleCloudIcon from '../../style/icons/google-cloud.svg';
 import {
   API_HEADER_BEARER,
   API_HEADER_CONTENT_TYPE,
@@ -75,11 +75,12 @@ function ConfigSelection({
   launcher,
   settingRegistry
 }: IConfigSelectionProps) {
-  const Iconsettings = new LabIcon({
-    name: 'launcher:settings_icon',
-    svgstr: settingsIcon
+  const IconGoogleCloud = new LabIcon({
+    name: 'launcher:google_cloud_icon',
+    svgstr: googleCloudIcon
   });
 
+  const [bigQueryFeatureEnable, setbigQueryFeatureEnable] = useState(false);
   const [projectId, setProjectId] = useState('');
   const [region, setRegion] = useState('');
   const [bigQueryRegion, setBigQueryRegion] = useState<any>('');
@@ -109,8 +110,10 @@ function ConfigSelection({
           if (configStatus.includes('Failed')) {
             toast.error(configStatus, toastifyCustomStyle);
           } else {
-            const settings = await settingRegistry.load(PLUGIN_ID);
-            settings.set('bqRegion', bigQueryRegion);
+            if (bigQueryFeatureEnable) {
+              const settings = await settingRegistry.load(PLUGIN_ID);
+              settings.set('bqRegion', bigQueryRegion);
+            }
             toast.success(
               `${configStatus} - You will need to restart Jupyter in order for the new project and region to fully take effect.`,
               toastifyCustomStyle
@@ -202,8 +205,20 @@ function ConfigSelection({
     setBigQueryRegion(settings.get('bqRegion')['composite']);
   };
 
+  const handleBigQueryFeature = async () => {
+    interface SettingsResponse {
+      enable_bigquery_integration?: boolean;
+    }
+    let bqFeature: SettingsResponse = await requestAPI('settings');
+
+    if (bqFeature.enable_bigquery_integration) {
+      setbigQueryFeatureEnable(true);
+    }
+  };
+
   useEffect(() => {
     handleSettingsRegistry();
+    handleBigQueryFeature();
 
     authApi().then(credentials => {
       displayUserInfo(credentials);
@@ -223,7 +238,7 @@ function ConfigSelection({
       {isLoadingUser && !configError ? (
         <div className="spin-loader-main">
           <CircularProgress
-            className = "spin-loader-custom-style"
+            className="spin-loader-custom-style"
             size={20}
             aria-label="Loading Spinner"
             data-testid="loader"
@@ -242,7 +257,10 @@ function ConfigSelection({
         <div className="settings-component">
           <div className="settings-overlay">
             <div>
-              <Iconsettings.react tag="div" className="logo-alignment-style" />
+              <IconGoogleCloud.react
+                tag="div"
+                className="logo-alignment-style"
+              />
             </div>
             <div className="settings-text">Settings</div>
           </div>
@@ -274,16 +292,22 @@ function ConfigSelection({
                   onRegionChange={region => setRegion(region)}
                 />
               </div>
-              <div className="bigquery-region-header">BigQuery Settings </div>
-              <div className="region-overlay">
-                <BigQueryRegionDropdown
-                  projectId={projectId}
-                  region={bigQueryRegion}
-                  onRegionChange={bigQueryRegion =>
-                    setBigQueryRegion(bigQueryRegion)
-                  }
-                />
-              </div>
+              {bigQueryFeatureEnable && (
+                <>
+                  <div className="bigquery-region-header">
+                    BigQuery Settings{' '}
+                  </div>
+                  <div className="region-overlay">
+                    <BigQueryRegionDropdown
+                      projectId={projectId}
+                      region={bigQueryRegion}
+                      onRegionChange={bigQueryRegion =>
+                        setBigQueryRegion(bigQueryRegion)
+                      }
+                    />
+                  </div>
+                </>
+              )}
               <div className="save-overlay">
                 <Button
                   variant="contained"
@@ -354,9 +378,10 @@ function ConfigSelection({
             </div>
           </div>
           <div>
+            <div className="dataproc-settings-header">Dataproc Settings </div>
             <div className="runtime-title-section">
               <div className="runtime-title-part">
-                Dataproc Serverless Runtime Templates
+                Serverless Runtime Templates
               </div>
               <div
                 className="expand-icon"

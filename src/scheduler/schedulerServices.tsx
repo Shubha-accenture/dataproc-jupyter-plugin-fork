@@ -132,7 +132,12 @@ export class SchedulerService {
         setClusterList(keyLabelStructure);
       }
       if (formattedResponse?.error?.code) {
-        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+        if (!toast.isActive('clusterError')) {
+          toast.error(formattedResponse?.error?.message, {
+            ...toastifyCustomStyle,
+            toastId: 'clusterError'
+          });
+        }
       }
     } catch (error) {
       DataprocLoggingService.log('Error listing clusters', LOG_LEVEL.ERROR);
@@ -190,7 +195,12 @@ export class SchedulerService {
         setServerlessList(keyLabelStructure);
       }
       if (formattedResponse?.error?.code) {
-        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+        if (!toast.isActive('sessionTemplateError')) {
+          toast.error(formattedResponse?.error?.message, {
+            ...toastifyCustomStyle,
+            toastId: 'sessionTemplateError'
+          });
+        }
       }
     } catch (error) {
       DataprocLoggingService.log(
@@ -455,7 +465,7 @@ export class SchedulerService {
     setRedListDates([]);
     setGreenListDates([]);
     setDarkGreenListDates([]);
-    try {     
+    try {
       const data: any = await requestAPI(
         `dagRun?composer=${composerName}&dag_id=${dagId}&start_date=${start_date}&end_date=${end_date}&offset=${offset}`
       );
@@ -583,7 +593,12 @@ export class SchedulerService {
         setIsLoading(false);
       }
     } catch (reason) {
-      toast.error(`Error on GET credentials..\n${reason}`, toastifyCustomStyle);
+      if (!toast.isActive('credentialsError')) {
+        toast.error(`Error on GET credentials..\n${reason}`, {
+          ...toastifyCustomStyle,
+          toastId: 'credentialsError'
+        });
+      }
     }
   };
   static listDagInfoAPIService = async (
@@ -618,10 +633,12 @@ export class SchedulerService {
         'Error listing dag Scheduler list',
         LOG_LEVEL.ERROR
       );
-      toast.error(
-        `Failed to fetch dag Scheduler list : ${error}`,
-        toastifyCustomStyle
-      );
+      if (!toast.isActive('dagListError')) {
+        toast.error(`Failed to fetch clusters : ${error}`, {
+          ...toastifyCustomStyle,
+          toastId: 'clusterError'
+        });
+      }
     }
   };
   static listDagInfoAPIServiceForCreateNotebook = async (
@@ -651,28 +668,12 @@ export class SchedulerService {
         'Error listing dag Scheduler list',
         LOG_LEVEL.ERROR
       );
-      toast.error(
-        `Failed to fetch dag Scheduler list : ${error}`,
-        toastifyCustomStyle
-      );
-    }
-  };
-  static handleDownloadSchedulerAPIService = async (
-    composerSelected: string,
-    jobid: string,
-    bucketName: string
-  ) => {
-    try {
-      const serviceURL = `dagDownload?composer=${composerSelected}&dag_id=${jobid}&bucket_name=${bucketName}`;
-      const formattedResponse: any = await requestAPI(serviceURL);
-      if (formattedResponse.status === 0) {
-        toast.success(`${jobid} downloaded successfully`, toastifyCustomStyle);
-      } else {
-        toast.error(`Failed to download the ${jobid}`, toastifyCustomStyle);
+      if (!toast.isActive('dagListError')) {
+        toast.error(`Failed to fetch clusters : ${error}`, {
+          ...toastifyCustomStyle,
+          toastId: 'clusterError'
+        });
       }
-    } catch (error) {
-      DataprocLoggingService.log('Error in Download api', LOG_LEVEL.ERROR);
-      toast.error(`Error in Download api : ${error}`, toastifyCustomStyle);
     }
   };
   static handleDownloadOutputNotebookAPIService = async (
@@ -804,7 +805,12 @@ export class SchedulerService {
       setDagTaskInstancesList(transformDagRunTaskInstanceListData);
       setIsLoading(false);
     } catch (reason) {
-      toast.error(`Error on GET credentials.\n${reason}`, toastifyCustomStyle);
+      if (!toast.isActive('credentialsError')) {
+        toast.error(`Error on GET credentials..\n${reason}`, {
+          ...toastifyCustomStyle,
+          toastId: 'credentialsError'
+        });
+      }
     }
   };
   static listDagTaskLogsListService = async (
@@ -825,7 +831,12 @@ export class SchedulerService {
       setLogList(data.content);
       setIsLoadingLogs(false);
     } catch (reason) {
-      toast.error(`Error on GET credentials.\n${reason}`, toastifyCustomStyle);
+      if (!toast.isActive('credentialsError')) {
+        toast.error(`Error on GET credentials..\n${reason}`, {
+          ...toastifyCustomStyle,
+          toastId: 'credentialsError'
+        });
+      }
     }
   };
   static handleImportErrordataService = async (
@@ -840,7 +851,12 @@ export class SchedulerService {
       setImportErrorData(data.import_errors);
       setImportErrorEntries(data.total_entries);
     } catch (reason) {
-      toast.error(`Error on GET credentials.\n${reason}`, toastifyCustomStyle);
+      if (!toast.isActive('credentialsError')) {
+        toast.error(`Error on GET credentials..\n${reason}`, {
+          ...toastifyCustomStyle,
+          toastId: 'credentialsError'
+        });
+      }
     }
   };
 
