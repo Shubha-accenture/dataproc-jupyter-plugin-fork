@@ -89,10 +89,12 @@ interface IDagRunList {
 export class SchedulerService {
   static listClustersAPIService = async (
     setClusterList: (value: string[]) => void,
+    setIsLoadingKernelDetail: (value: boolean) => void,
     nextPageToken?: string,
     previousClustersList?: (value: string[]) => void
   ) => {
     const pageToken = nextPageToken ?? '';
+    setIsLoadingKernelDetail(true);
     try {
       const serviceURL = `clusterList?pageSize=500&pageToken=${pageToken}`;
 
@@ -128,9 +130,15 @@ export class SchedulerService {
         );
 
         setClusterList(keyLabelStructure);
+        setIsLoadingKernelDetail(false);
       }
       if (formattedResponse?.error?.code) {
-        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+        if (!toast.isActive('clusterError')) {
+          toast.error(formattedResponse?.error?.message, {
+            ...toastifyCustomStyle,
+            toastId: 'clusterError'
+          });
+        }
       }
     } catch (error) {
       DataprocLoggingService.log('Error listing clusters', LOG_LEVEL.ERROR);
@@ -145,10 +153,14 @@ export class SchedulerService {
   static listSessionTemplatesAPIService = async (
     setServerlessDataList: (value: string[]) => void,
     setServerlessList: (value: string[]) => void,
+    setIsLoadingKernelDetail?: (value: boolean) => void,
     nextPageToken?: string,
     previousSessionTemplatesList?: object
   ) => {
     const pageToken = nextPageToken ?? '';
+    if (setIsLoadingKernelDetail) {
+      setIsLoadingKernelDetail(true);
+    }
     try {
       const serviceURL = `runtimeList?pageSize=500&pageToken=${pageToken}`;
 
@@ -186,9 +198,17 @@ export class SchedulerService {
 
         setServerlessDataList(transformSessionTemplateListData);
         setServerlessList(keyLabelStructure);
+        if (setIsLoadingKernelDetail) {
+          setIsLoadingKernelDetail(false);
+        }
       }
       if (formattedResponse?.error?.code) {
-        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+        if (!toast.isActive('sessionTemplateError')) {
+          toast.error(formattedResponse?.error?.message, {
+            ...toastifyCustomStyle,
+            toastId: 'sessionTemplateError'
+          });
+        }
       }
     } catch (error) {
       DataprocLoggingService.log(
@@ -327,7 +347,8 @@ export class SchedulerService {
     setEmailList?: (value: string[]) => void,
     setStopCluster?: (value: boolean) => void,
     setTimeZoneSelected?: (value: string) => void,
-    setEditMode?: (value: boolean) => void
+    setEditMode?: (value: boolean) => void,
+    setIsLoadingKernelDetail?: (value: boolean) => void
   ) => {
     setEditDagLoading(dagId);
     try {
@@ -371,7 +392,8 @@ export class SchedulerService {
         if (formattedResponse.mode_selected === 'serverless') {
           await this.listSessionTemplatesAPIService(
             setServerlessDataList,
-            setServerlessList
+            setServerlessList,
+            setIsLoadingKernelDetail
           );
           if (serverlessDataList.length > 0) {
             const selectedData: any = serverlessDataList.filter(
@@ -453,7 +475,7 @@ export class SchedulerService {
     setRedListDates([]);
     setGreenListDates([]);
     setDarkGreenListDates([]);
-    try {     
+    try {
       const data: any = await requestAPI(
         `dagRun?composer=${composerName}&dag_id=${dagId}&start_date=${start_date}&end_date=${end_date}&offset=${offset}`
       );
@@ -662,24 +684,6 @@ export class SchedulerService {
           toastId: 'clusterError'
         });
       }
-    }
-  };
-  static handleDownloadSchedulerAPIService = async (
-    composerSelected: string,
-    jobid: string,
-    bucketName: string
-  ) => {
-    try {
-      const serviceURL = `dagDownload?composer=${composerSelected}&dag_id=${jobid}&bucket_name=${bucketName}`;
-      const formattedResponse: any = await requestAPI(serviceURL);
-      if (formattedResponse.status === 0) {
-        toast.success(`${jobid} downloaded successfully`, toastifyCustomStyle);
-      } else {
-        toast.error(`Failed to download the ${jobid}`, toastifyCustomStyle);
-      }
-    } catch (error) {
-      DataprocLoggingService.log('Error in Download api', LOG_LEVEL.ERROR);
-      toast.error(`Error in Download api : ${error}`, toastifyCustomStyle);
     }
   };
   static handleDownloadOutputNotebookAPIService = async (

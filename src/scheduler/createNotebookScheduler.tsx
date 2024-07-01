@@ -155,13 +155,17 @@ const CreateNotebookScheduler = ({
   const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
 
   const listClustersAPI = async () => {
-    await SchedulerService.listClustersAPIService(setClusterList);
+    await SchedulerService.listClustersAPIService(
+      setClusterList,
+      setIsLoadingKernelDetail
+    );
   };
 
   const listSessionTemplatesAPI = async () => {
     await SchedulerService.listSessionTemplatesAPIService(
       setServerlessDataList,
-      setServerlessList
+      setServerlessList,
+      setIsLoadingKernelDetail
     );
   };
 
@@ -336,15 +340,10 @@ const CreateNotebookScheduler = ({
   };
 
   const getKernelDetail = async () => {
-    setIsLoadingKernelDetail(true);
     const kernelSpecs: any = await KernelSpecAPI.getSpecs();
     const kernels = kernelSpecs.kernelspecs;
-    if (
-      kernels &&
-      context.sessionContext.kernelPreference.name &&
-      clusterList.length > 0 &&
-      serverlessDataList.length > 0
-    ) {
+
+    if (kernels && context.sessionContext.kernelPreference.name) {
       if (
         kernels[context.sessionContext.kernelPreference.name].resources
           .endpointParentResource
@@ -361,23 +360,30 @@ const CreateNotebookScheduler = ({
               );
             }
           );
-          setServerlessDataSelected(selectedData[0].serverlessData);
-          setServerlessSelected(selectedData[0].serverlessName);
+          if (selectedData.length > 0) {
+            setServerlessDataSelected(selectedData[0].serverlessData);
+            setServerlessSelected(selectedData[0].serverlessName);
+          } else {
+            setServerlessDataSelected({});
+            setServerlessSelected('');
+          }
         } else {
           const selectedData: any = clusterList.filter((cluster: string) => {
             return context.sessionContext.kernelDisplayName.includes(cluster);
           });
-          setClusterSelected(selectedData[0]);
+          if (selectedData.length > 0) {
+            setClusterSelected(selectedData[0]);
+          } else {
+            setClusterSelected('');
+          }
         }
       }
-      setIsLoadingKernelDetail(false);
     }
   };
 
   useEffect(() => {
     listComposersAPI();
-    listClustersAPI();
-    listSessionTemplatesAPI();
+
     if (context !== '') {
       setInputFileSelected(context.path);
       if (context.path.toLowerCase().startsWith('bigframes')) {
@@ -406,7 +412,15 @@ const CreateNotebookScheduler = ({
     if (context !== '') {
       getKernelDetail();
     }
-  }, [serverlessDataList]);
+  }, [serverlessDataList, clusterList]);
+
+  useEffect(() => {
+    if (selectedMode === 'cluster') {
+      listClustersAPI();
+    } else {
+      listSessionTemplatesAPI();
+    }
+  }, [selectedMode]);
 
   useEffect(() => {
     // console.log("nodes",nodes)
@@ -452,6 +466,7 @@ const CreateNotebookScheduler = ({
           setStopCluster={setStopCluster}
           setTimeZoneSelected={setTimeZoneSelected}
           setEditMode={setEditMode}
+          setIsLoadingKernelDetail={setIsLoadingKernelDetail}
         />
       ) : (
         <Grid container spacing={0} style={{ height: '100vh' }}>
