@@ -22,7 +22,16 @@ import { IThemeManager } from '@jupyterlab/apputils';
 import ListNotebookScheduler from './listNotebookScheduler';
 import ExecutionHistory from './executionHistory';
 import { scheduleMode } from '../utils/const';
+import { LabIcon } from '@jupyterlab/ui-components';
+import SubmitJobIcon from '../../style/icons/submit_job_icon.svg';
+import { DocumentRegistry } from '@jupyterlab/docregistry';
+import { INotebookModel } from '@jupyterlab/notebook';
+import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
+const iconSubmitJob = new LabIcon({
+  name: 'launcher:submit-job-icon',
+  svgstr: SubmitJobIcon
+});
 const NotebookJobComponent = ({
   app,
   composerSelectedFromCreate,
@@ -88,6 +97,11 @@ const NotebookJobComponent = ({
   const [bucketName, setBucketName] = useState('');
   const [dagId, setDagId] = useState('');
   const [backComposerName, setBackComposerName] = useState('');
+
+  const handleCreateJobClick = () => {
+    if(setCreateCompleted)
+    setCreateCompleted(false);
+  };
   const handleDagIdSelection = (composerName: string, dagId: string) => {
     setShowExecutionHistory(true);
     setComposerName(composerName);
@@ -108,10 +122,13 @@ const NotebookJobComponent = ({
           handleBackButton={handleBackButton}
           bucketName={bucketName}
         />
-      ) : (
+      ) :
+       (
         <div>
           <div className="clusters-list-overlay" role="tab">
             <div className="cluster-details-title">Scheduled Jobs</div>
+            <div className="create-icon"><iconSubmitJob.react tag="div" className="logo-alignment-style" /></div>
+            <div className="create-text"onClick={handleCreateJobClick}>CREATE JOB</div>
           </div>
           <div>
             <ListNotebookScheduler
@@ -157,15 +174,21 @@ const NotebookJobComponent = ({
 export class NotebookJobs extends DataprocWidget {
   app: JupyterLab;
   composerSelectedFromCreate: string;
+  context: DocumentRegistry.IContext<INotebookModel> | string;
+  factory: IFileBrowserFactory;
 
   constructor(
     app: JupyterLab,
     themeManager: IThemeManager,
-    composerSelectedFromCreate: string
+    composerSelectedFromCreate: string,
+    context: DocumentRegistry.IContext<INotebookModel> | string,
+    factory: IFileBrowserFactory,
   ) {
     super(themeManager);
     this.app = app;
     this.composerSelectedFromCreate = composerSelectedFromCreate;
+    this.context=context;
+    this.factory=factory;
   }
   renderInternal(): React.JSX.Element {
     return (

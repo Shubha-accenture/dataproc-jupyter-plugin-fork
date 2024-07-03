@@ -48,6 +48,7 @@ import { scheduleValueExpression } from '../utils/const';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
+import LabelProperties from '../jobs/labelProperties';
 
 interface IDagList {
   jobid: string;
@@ -91,6 +92,9 @@ const CreateNotebookScheduler = ({
 
   const [parameterDetail, setParameterDetail] = useState(['']);
   const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
+  const [keyValidation, setKeyValidation] = useState(-1);
+  const [valueValidation, setValueValidation] = useState(-1);
+  const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
 
   const [selectedMode, setSelectedMode] = useState('cluster');
   const [clusterList, setClusterList] = useState<string[]>([]);
@@ -100,6 +104,9 @@ const CreateNotebookScheduler = ({
   const [serverlessSelected, setServerlessSelected] = useState('');
   const [serverlessDataSelected, setServerlessDataSelected] = useState({});
   const [stopCluster, setStopCluster] = useState(false);
+
+  const [retryCount, setRetryCount] = useState<number | undefined>(2);
+  const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
 
   const [emailOnFailure, setEmailOnFailure] = useState(false);
   const [emailOnRetry, setEmailonRetry] = useState(false);
@@ -132,7 +139,7 @@ const CreateNotebookScheduler = ({
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
-   //const allInputFiles: string[] = [];
+    //const allInputFiles: string[] = [];
     let allNodesHaveInputFiles = true;
     updatedNodes.forEach((e: INodeData) => {
       const inputFile = e.data.inputFile;
@@ -149,8 +156,6 @@ const CreateNotebookScheduler = ({
   const handleEdgesChange = (updatedEdges: []) => {
     setEdges(updatedEdges);
   };
-
- 
 
   const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
 
@@ -246,6 +251,18 @@ const CreateNotebookScheduler = ({
     setStopCluster(event.target.checked);
   };
 
+  const handleRetryCount = (data: number) => {
+    if (data >= 0) {
+      setRetryCount(data);
+    }
+  };
+
+  const handleRetryDelay = (data: number) => {
+    if (data >= 0) {
+      setRetryDelay(data);
+    }
+  };
+
   const handleFailureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmailOnFailure(event.target.checked);
   };
@@ -273,6 +290,8 @@ const CreateNotebookScheduler = ({
       output_formats: outputFormats,
       parameters: parameterDetailUpdated,
       mode_selected: selectedMode,
+      retry_count: retryCount,
+      retry_delay: retryDelay,
       email_failure: emailOnFailure,
       email_delay: emailOnRetry,
       email_success: emailOnSuccess,
@@ -459,6 +478,8 @@ const CreateNotebookScheduler = ({
           serverlessDataList={serverlessDataList}
           setServerlessDataList={setServerlessDataList}
           setServerlessList={setServerlessList}
+          setRetryCount={setRetryCount}
+          setRetryDelay={setRetryDelay}
           setEmailOnFailure={setEmailOnFailure}
           setEmailonRetry={setEmailonRetry}
           setEmailOnSuccess={setEmailOnSuccess}
@@ -470,7 +491,16 @@ const CreateNotebookScheduler = ({
         />
       ) : (
         <Grid container spacing={0} style={{ height: '100vh' }}>
-          <Grid item xs={6}>
+          <Grid item xs={7}>
+            <GraphicalScheduler
+              inputFileSelected={context.path}
+              NodesChange={handleNodesChange}
+              EdgesChange={handleEdgesChange}
+              app={app}
+              factory={factory}
+            />
+          </Grid>
+          <Grid item xs={5}>
             <div>
               <div className="cluster-details-header">
                 <div
@@ -537,15 +567,14 @@ const CreateNotebookScheduler = ({
                     </div>
                   </div>
                 )}
-
-                {/* <div className="create-scheduler-form-element-input-file">
+                <div className="create-scheduler-form-element-input-file">
                   <Input
                     className="create-scheduler-style"
                     value={inputFileSelected}
                     Label="Input file*"
                     disabled={true}
                   />
-                </div> */}
+                </div>
                 <div className="create-scheduler-form-element">
                   <Autocomplete
                     className="create-scheduler-style"
@@ -577,6 +606,23 @@ const CreateNotebookScheduler = ({
                     />
                   </FormGroup>
                 </div>
+                <div className="create-scheduler-label">Parameters</div>
+                <>
+                  <LabelProperties
+                    labelDetail={parameterDetail}
+                    setLabelDetail={setParameterDetail}
+                    labelDetailUpdated={parameterDetailUpdated}
+                    setLabelDetailUpdated={setParameterDetailUpdated}
+                    buttonText="ADD PARAMETER"
+                    keyValidation={keyValidation}
+                    setKeyValidation={setKeyValidation}
+                    valueValidation={valueValidation}
+                    setValueValidation={setValueValidation}
+                    duplicateKeyError={duplicateKeyError}
+                    setDuplicateKeyError={setDuplicateKeyError}
+                    fromPage="scheduler"
+                  />
+                </>
                 {!isBigQueryNotebook && (
                   <div className="create-scheduler-form-element">
                     <FormControl>
@@ -667,6 +713,24 @@ const CreateNotebookScheduler = ({
                     </FormGroup>
                   </div>
                 )}
+                <div className="create-scheduler-form-element">
+                  <Input
+                    className="create-scheduler-style"
+                    onChange={e => handleRetryCount(Number(e.target.value))}
+                    value={retryCount}
+                    Label="Retry count"
+                    type="number"
+                  />
+                </div>
+                <div className="create-scheduler-form-element">
+                  <Input
+                    className="create-scheduler-style"
+                    onChange={e => handleRetryDelay(Number(e.target.value))}
+                    value={retryDelay}
+                    Label="Retry delay (minutes)"
+                    type="number"
+                  />
+                </div>
                 <div className="create-scheduler-form-element">
                   <FormGroup row={true}>
                     <FormControlLabel
@@ -822,15 +886,6 @@ const CreateNotebookScheduler = ({
                 </div>
               </div>
             </div>
-          </Grid>
-          <Grid item xs={6}>
-            <GraphicalScheduler
-              inputFileSelected={context.path}
-              NodesChange={handleNodesChange}
-              EdgesChange={handleEdgesChange}
-              app={app}
-              factory={factory}
-            />
           </Grid>
         </Grid>
       )}

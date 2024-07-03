@@ -23,8 +23,8 @@ import { eventEmitter } from '../utils/signalEmitter';
 import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
-import Grid from '@mui/material/Grid';
- import SchedulerForm from './schedulerForm';
+// import Grid from '@mui/material/Grid';
+//  import SchedulerForm from './schedulerForm';
 
 interface IGraphicalSchedulerProps {
   inputFileSelected: string;
@@ -63,9 +63,9 @@ const GraphicalScheduler = ({
   ];
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [isFormVisible, setIsFormVisible] =useState(true)
+  //const [isFormVisible, setIsFormVisible] =useState(true)
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
-  const [clickedNodeData, setClickedNodeData] = useState<any>(null);
+  //const [clickedNodeData, setClickedNodeData] = useState<any>(null);
 
   const { screenToFlowPosition } = useReactFlow();
   const onConnect = useCallback((params: Connection) => {
@@ -185,7 +185,7 @@ const GraphicalScheduler = ({
     'nodeClick',
     ( id: string, isNodeClicked:boolean) => {
      setClickedNodeId(id)
-     setIsFormVisible(isNodeClicked)
+   // setIsFormVisible(isNodeClicked)
     }
   );
   useEffect(() => {
@@ -195,19 +195,20 @@ const GraphicalScheduler = ({
   useEffect(() => {
     // If a node is clicked, find its data and show the form
     if (clickedNodeId) {
-      const clickedNode = nodes.find(node => node.id === clickedNodeId);
-      setClickedNodeData(clickedNode?.data);
-      setIsFormVisible(true);
+      // const clickedNode = nodes.find(node => node.id === clickedNodeId);
+     // setClickedNodeData(clickedNode?.data);
+     // setIsFormVisible(true);
     } else {
-      setIsFormVisible(false);
+     //setIsFormVisible(false);
     }
   }, [clickedNodeId, nodes]);
 
   EdgesChange(edges);
 console.log(nodes,edges)
   return (
-    <Grid container spacing={0} style={{ height: '100vh' }}>
-      <Grid item xs={6}>
+    <>
+    {/* // <Grid container spacing={0} style={{ height: '100vh' }}>
+    //   <Grid item xs={6}> */}
         <div className="wrapper" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
@@ -227,14 +228,15 @@ console.log(nodes,edges)
             <Background color="#aaa" gap={6} />
           </ReactFlow>
         </div>
-      </Grid>
-     {isFormVisible && clickedNodeData!==null && ( <Grid item xs={6}>
+      {/* // </Grid> */}
+     {/* {isFormVisible && clickedNodeData!==null && ( <Grid item xs={6}>
         <SchedulerForm
         id={clickedNodeId}
         data={clickedNodeData}/>
       </Grid>
-      )}
-    </Grid>
+      )} */}
+    {/* // </Grid> */}
+    </>
   );
 };
 
