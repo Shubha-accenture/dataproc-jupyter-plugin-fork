@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Input } from '../controls/MuiWrappedInput';
 import LabelProperties from '../jobs/labelProperties';
 import { eventEmitter } from '../utils/signalEmitter';
+import { Button } from '@mui/material';
 
 function SchedulerForm({ id, data }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
@@ -13,6 +14,9 @@ function SchedulerForm({ id, data }: any) {
   const [keyValidation, setKeyValidation] = useState(-1);
   const [valueValidation, setValueValidation] = useState(-1);
   const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
+  const [isFormVisible, setIsFormVisible] =useState(true)
+
+  // console.log('############## in form element');
 
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
@@ -20,6 +24,7 @@ function SchedulerForm({ id, data }: any) {
       setInputFileSelectedLocal(evt.target.value);
       eventEmitter.emit(`uploadProgress`, evt, data, setInputFileSelected);
       console.log(inputFileSelected);
+     //console.log("isFormVisible",isFormVisible)
     }
   };
 
@@ -33,6 +38,13 @@ function SchedulerForm({ id, data }: any) {
     setRetryDelay(e);
   };
 
+  const handleCancel = () =>{
+    setIsFormVisible(false)
+    console.log("cancel is clicked")
+    console.log("form cancel",isFormVisible)
+    eventEmitter.emit(`closeForm`,setIsFormVisible);
+  }
+
   useEffect(() => {
     setInputFileSelectedLocal(data.inputFile);
     setRetryCount(data.retryCount);
@@ -42,6 +54,7 @@ function SchedulerForm({ id, data }: any) {
 
   return (
     <>
+    {/* { isFormVisible && */}
       <div className="notebook-node">
         <form>
           <div className="custom-node__body">
@@ -79,9 +92,17 @@ function SchedulerForm({ id, data }: any) {
               setDuplicateKeyError={setDuplicateKeyError}
               fromPage="react-flow"
             />
+            <Button
+              variant="outlined"
+              aria-label="cancel"
+              onClick={handleCancel}
+            >
+              <div>CANCEL</div>
+            </Button>
           </div>
         </form>
       </div>
+{/* } */}
     </>
   );
 }

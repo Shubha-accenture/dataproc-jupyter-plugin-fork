@@ -24,7 +24,7 @@ import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 // import Grid from '@mui/material/Grid';
-//  import SchedulerForm from './schedulerForm';
+import SchedulerForm from './schedulerForm';
 
 interface IGraphicalSchedulerProps {
   inputFileSelected: string;
@@ -63,9 +63,9 @@ const GraphicalScheduler = ({
   ];
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  //const [isFormVisible, setIsFormVisible] =useState(true)
+  const [isFormVisible, setIsFormVisible] =useState(false)
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
-  //const [clickedNodeData, setClickedNodeData] = useState<any>(null);
+  const [clickedNodeData, setClickedNodeData] = useState<any>(null);
 
   const { screenToFlowPosition } = useReactFlow();
   const onConnect = useCallback((params: Connection) => {
@@ -185,9 +185,19 @@ const GraphicalScheduler = ({
     'nodeClick',
     ( id: string, isNodeClicked:boolean) => {
      setClickedNodeId(id)
-   // setIsFormVisible(isNodeClicked)
+     setIsFormVisible(isNodeClicked)
+     console.log("event emitter from graphical scheduler for id",id)
     }
   );
+
+  eventEmitter.on(
+    'closeForm',
+    ( isFormVisible:boolean) => {
+      console.log("cancel emiter catch form ",isFormVisible)
+     setIsFormVisible(isFormVisible)
+    }
+  );
+
   useEffect(() => {
     NodesChange(nodes);
   }, [nodes]);
@@ -195,11 +205,11 @@ const GraphicalScheduler = ({
   useEffect(() => {
     // If a node is clicked, find its data and show the form
     if (clickedNodeId) {
-      // const clickedNode = nodes.find(node => node.id === clickedNodeId);
-     // setClickedNodeData(clickedNode?.data);
-     // setIsFormVisible(true);
+      const clickedNode = nodes.find(node => node.id === clickedNodeId);
+     setClickedNodeData(clickedNode?.data);
+     setIsFormVisible(true);
     } else {
-     //setIsFormVisible(false);
+     setIsFormVisible(false);
     }
   }, [clickedNodeId, nodes]);
 
@@ -228,6 +238,12 @@ console.log(nodes,edges)
             <Background color="#aaa" gap={6} />
           </ReactFlow>
         </div>
+        {isFormVisible && 
+          //console.log("here node is clicked",clickedNodeData , isFormVisible)
+          <SchedulerForm
+          id={clickedNodeId}
+          data={clickedNodeData}/>
+        }
       {/* // </Grid> */}
      {/* {isFormVisible && clickedNodeData!==null && ( <Grid item xs={6}>
         <SchedulerForm
