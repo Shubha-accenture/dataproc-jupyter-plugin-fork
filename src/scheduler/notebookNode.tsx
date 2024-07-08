@@ -29,12 +29,16 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
           style={{}}
         />
         <div>
-        <iconCalendarRange.react tag="div" className="logo-alignment-react-flow" />
-        <div className="custom-node__header">
-          {id}.{data.inputFile ? data.inputFile : 'Notebook'}
+          //html for rectangle with class
+          <iconCalendarRange.react
+            tag="div"
+            className="logo-alignment-react-flow"
+          />
+          <div className="custom-node__header">
+            {id}.{data.inputFile ? data.inputFile : 'Notebook'}
+          </div>
         </div>
-        </div>
-        
+
         <Handle
           type="source"
           position={Position.Bottom}

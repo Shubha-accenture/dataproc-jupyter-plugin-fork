@@ -1,10 +1,45 @@
 .notebook-node {
+  /* height: 100px; */ 
+  border: 1px solid #eee;
+  padding: 5px;
+  border-radius: 5px;
+  background: white;
+  /* by json 
+   width: 230px;
+  height: 72px;
+  top: 292px;
+  left: 289px;
+  gap: 0px;
+  border-radius: 8px 0px 0px 0px;
+  opacity: 0px;
+  box-shadow: 0px 1px 16px 0px #0000000f; */
+    /* height: 100px; */
+    height: 86px;
+    width: 220px;
+    top: -7px;
+    border: 1px solid #eee;
+    /* padding: 5px; */
+    /* border-radius: 5px; */
+    background: white;
+}
+
+.notebook-node {
   /* height: 100px; */
   border: 1px solid #eee;
   padding: 5px;
   border-radius: 5px;
   background: white;
+  /* height: 100px; */
+  min-height: 86px;
+  min-width: 220px;
+  top: -7px;
+  border: 1px solid #eee;
+  /* padding: 5px; */
+  /* border-radius: 5px; */
+  background: white;
 }
+
+
 
 .notebook-node label {
   display: block;
@@ -14,9 +49,14 @@
 
 .custom-node__header {
   padding: 8px 10px;
-  border-bottom: 1px solid #e2e8f0;
+  /* border-bottom: 1px solid #e2e8f0; */
 }
 
 .custom-node__body {
   padding: 10px;
+}
+
+.logo-alignment-react-flow {
+  align-items: center;
+  justify-content: center;
 }

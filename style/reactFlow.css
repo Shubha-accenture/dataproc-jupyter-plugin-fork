@@ -1,10 +1,14 @@
 .react-flow .react-flow__handle {
-  width: 30px;
-  height: 14px;
-  border-radius: 3px;
-  background-color: 	#4285F4
+  width: 12px; /* Set the size of the handle to match the SVG */
+  height: 12px; /* Set the size of the handle to match the SVG */
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7 0H5V5H0V7H5V12H7V7H12V5H7V0Z' fill='%233367D6'/%3E%3C/svg%3E");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: #fff;
+  border-radius: 50%;
+  margin-top: -25px;
 }
-
 /* .react-flow .react-flow__handle-top {
   top: -45px;
 }
@@ -20,7 +24,32 @@
   align-items: center;
   display: flex;
   border-width: 2px;
-  font-weight: 700;
+  font-weight: 700; 
+
+  /* by jason 
+  width: 230px;
+  height: 72px;
+  top: 292px;
+  left: 289px;
+  gap: 0px;
+  border-radius: 8px 0px 0px 0px;
+  opacity: 0px; */
+}
+
+.react-flow .react-flow__node::before {
+  content: '';
+  width: 10px;
+  background-color: black;
+  height: 100%;
+  position: relative;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.react-flow .react-flow__node-content {
+  padding-left: 10px; /* Same width as the pseudo-element */
+  z-index: 1; /* Ensure content is above the pseudo-element */
 }
 
 .react-flow .react-flow__edge path,

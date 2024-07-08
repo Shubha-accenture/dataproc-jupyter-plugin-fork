@@ -141,19 +141,6 @@ const CreateNotebookScheduler = ({
   // console.log('form form create component', isFormVisible);
 
   //const [jobType, setJobType]=useState<string[]>([]);
-  const jobType = [
-    'Run a notebook on dataproc serverless',
-    'Run a notebook on dataproc cluster',
-    'Execute a SQL on BigQuery',
-    'Move, copy, delete, etc. files & folders on GCS',
-    'Ingest data into a BQ table from GCS',
-    'Export data from BQ table to GCS'
-  ];
-  const [jobTypeSelected, setJobTypeSelected] = useState('');
-
-  const handleJobTypeChange = (_event:any, value:any) => {
-    setJobTypeSelected(value);
-  };
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
@@ -514,8 +501,30 @@ const CreateNotebookScheduler = ({
           setIsLoadingKernelDetail={setIsLoadingKernelDetail}
         />
       ) : (
+        <>
+        <div className="cluster-details-header">
+        <div
+          role="button"
+          className="back-arrow-icon"
+          onClick={handleCancel}
+        >
+          <iconLeftArrow.react
+            tag="div"
+            className="icon-white logo-alignment-style"
+          />
+        </div>
+        {editMode ? (
+          <div className="create-job-scheduler-title">
+            Update A Scheduled Job
+          </div>
+        ) : (
+          <div className="create-job-scheduler-title">
+            Create A Scheduled Job
+          </div>
+        )}
+      </div>
         <Grid container spacing={0} style={{ height: '100vh' }}>
-          <Grid item xs={7}>
+          <Grid item xs={9}>
             <GraphicalScheduler
               inputFileSelected={context.path}
               NodesChange={handleNodesChange}
@@ -525,39 +534,9 @@ const CreateNotebookScheduler = ({
             />
           </Grid>
           {/* { isFormVisible && ( */}
-          <Grid item xs={5}>
+          <Grid item xs={3}>
             <div>
-              <div className="cluster-details-header">
-                <div
-                  role="button"
-                  className="back-arrow-icon"
-                  onClick={handleCancel}
-                >
-                  <iconLeftArrow.react
-                    tag="div"
-                    className="icon-white logo-alignment-style"
-                  />
-                </div>
-                {editMode ? (
-                  <div className="create-job-scheduler-title">
-                    Update A Scheduled Job
-                  </div>
-                ) : (
-                  <div className="create-job-scheduler-title">
-                    Create A Scheduled Job
-                  </div>
-                )}
-              </div>
               <div className="submit-job-container">
-                <Autocomplete
-                  className="create-scheduler-style"
-                  options={jobType}
-                  value={jobTypeSelected}
-                  onChange={handleJobTypeChange}
-                  renderInput={params => (
-                    <TextField {...params} label="Job Type" />
-                  )}
-                />
                 <div className="create-scheduler-form-element">
                   <Input
                     className="create-scheduler-style"
@@ -923,6 +902,7 @@ const CreateNotebookScheduler = ({
           </Grid>
           {/* ) } */}
         </Grid>
+        </>
       )}
     </>
   );

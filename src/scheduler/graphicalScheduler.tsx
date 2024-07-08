@@ -23,8 +23,9 @@ import { eventEmitter } from '../utils/signalEmitter';
 import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
-// import Grid from '@mui/material/Grid';
-import SchedulerForm from './schedulerForm';
+import Grid from '@mui/material/Grid';
+//import SchedulerForm from './schedulerForm';
+import ConfigureForm from './configureForms';
 
 interface IGraphicalSchedulerProps {
   inputFileSelected: string;
@@ -63,7 +64,7 @@ const GraphicalScheduler = ({
   ];
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [isFormVisible, setIsFormVisible] =useState(false)
+  const [isFormVisible, setIsFormVisible] =useState(true)
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
 
@@ -217,8 +218,8 @@ const GraphicalScheduler = ({
 console.log(nodes,edges)
   return (
     <>
-    {/* // <Grid container spacing={0} style={{ height: '100vh' }}>
-    //   <Grid item xs={6}> */}
+  <Grid container spacing={0} style={{ height: '100vh' }}>
+    <Grid item xs={9}>
         <div className="wrapper" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
@@ -238,26 +239,28 @@ console.log(nodes,edges)
             <Background color="#aaa" gap={6} />
           </ReactFlow>
         </div>
-        {isFormVisible && 
+        {/* {isFormVisible && 
           //console.log("here node is clicked",clickedNodeData , isFormVisible)
           <SchedulerForm
           id={clickedNodeId}
           data={clickedNodeData}/>
-        }
-      {/* // </Grid> */}
-     {/* {isFormVisible && clickedNodeData!==null && ( <Grid item xs={6}>
-        <SchedulerForm
+        } */}
+       </Grid>
+     {isFormVisible && clickedNodeData!==null && ( <Grid item xs={3}>
+        <ConfigureForm
+        //rename to configure node form 
         id={clickedNodeId}
         data={clickedNodeData}/>
       </Grid>
-      )} */}
-    {/* // </Grid> */}
+      )} 
+    </Grid>
     </>
   );
 };
 
 export default (props: IGraphicalSchedulerProps) => (
   <ReactFlowProvider>
+    
     <GraphicalScheduler
       inputFileSelected={props.inputFileSelected}
       NodesChange={props.NodesChange}
