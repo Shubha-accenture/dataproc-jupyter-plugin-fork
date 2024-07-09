@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { eventEmitter } from '../utils/signalEmitter';
 import { Autocomplete, IconButton, TextField } from '@mui/material';
-import SchedulerForm from './schedulerForm';
+import ClusterServerlessForm from './clusterServerlessForm';
+import TriggerJobForm from './triggerJobForm';
 import { LabIcon } from '@jupyterlab/ui-components';
 import searchClearIcon from '../../style/icons/search_clear_icon.svg';
 
@@ -18,9 +19,12 @@ function ConfigureForm({ id, data }: any) {
     'Execute a SQL on BigQuery',
     'Move, copy, delete, etc. files & folders on GCS',
     'Ingest data into a BQ table from GCS',
-    'Export data from BQ table to GCS'
+    'Export data from BQ table to GCS',
+    'Trigger Node'
   ];
-  const [nodeTypeSelected, setnodeTypeSelected] = useState('');
+
+  const defaultNodeType = data.inputFile ? 'Trigger Node' : '';
+  const [nodeTypeSelected, setnodeTypeSelected] = useState(defaultNodeType);
 
   const handleNodeTypeChange = (_event: any, value: any) => {
     setnodeTypeSelected(value);
@@ -40,10 +44,7 @@ function ConfigureForm({ id, data }: any) {
           <div className="submit-job-container">
             <div className="submit-job-label-header">
               Configure Node
-              <IconButton
-                aria-label="cancel"
-                onClick={handleCancel}
-              >
+              <IconButton aria-label="cancel" onClick={handleCancel}>
                 <iconSearchClear.react
                   tag="div"
                   className="icon-white logo-alignment-style search-clear-icon"
@@ -59,17 +60,14 @@ function ConfigureForm({ id, data }: any) {
                 <TextField {...params} label="Node Type*" />
               )}
             />
+            {(nodeTypeSelected==='Trigger Node') && 
+            <TriggerJobForm
+               id={id} data={data} />
+            }
             {(nodeTypeSelected === 'Run a notebook on dataproc serverless' ||
               nodeTypeSelected === 'Run a notebook on dataproc cluster') && (
-              <SchedulerForm id={id} data={data} />
+              <ClusterServerlessForm id={id} data={data} />
             )}
-            {/* <Button
-              variant="outlined"
-              aria-label="cancel"
-              onClick={handleCancel}
-            >
-              <div>CANCEL</div>
-            </Button> */}
           </div>
         </form>
       </>

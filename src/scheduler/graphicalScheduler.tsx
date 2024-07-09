@@ -190,7 +190,9 @@ const GraphicalScheduler = ({
   eventEmitter.on('closeForm', (isFormVisible: boolean) => {
     setIsFormVisible(isFormVisible);
   });
-
+  eventEmitter.on('closeForm1', (isFormVisible: boolean) => {
+    setIsFormVisible(isFormVisible);
+  });
   useEffect(() => {
     NodesChange(nodes);
   }, [nodes]);
