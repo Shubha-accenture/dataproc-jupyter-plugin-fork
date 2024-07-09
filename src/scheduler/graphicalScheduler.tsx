@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   MouseEvent as ReactMouseEvent,
   TouchEvent as ReactTouchEvent
@@ -13,7 +13,7 @@ import ReactFlow, {
   Edge,
   ReactFlowProvider,
   Controls,
-  Background,
+  Background
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import NotebookNode from './notebookNode';
@@ -64,7 +64,7 @@ const GraphicalScheduler = ({
   ];
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [isFormVisible, setIsFormVisible] =useState(true)
+  const [isFormVisible, setIsFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
 
@@ -98,7 +98,7 @@ const GraphicalScheduler = ({
           const e = event as MouseEvent;
           const newNode = {
             id: nodeId,
-            label:`Notebook ${id}`,
+            label: `Notebook ${id}`,
             type: 'notebookNode',
             position: screenToFlowPosition({
               x: e.clientX,
@@ -182,22 +182,14 @@ const GraphicalScheduler = ({
     }
   };
 
-  eventEmitter.on(
-    'nodeClick',
-    ( id: string, isNodeClicked:boolean) => {
-     setClickedNodeId(id)
-     setIsFormVisible(isNodeClicked)
-     console.log("event emitter from graphical scheduler for id",id)
-    }
-  );
+  eventEmitter.on('nodeClick', (id: string, isNodeClicked: boolean) => {
+    setClickedNodeId(id);
+    setIsFormVisible(isNodeClicked);
+  });
 
-  eventEmitter.on(
-    'closeForm',
-    ( isFormVisible:boolean) => {
-      console.log("cancel emiter catch form ",isFormVisible)
-     setIsFormVisible(isFormVisible)
-    }
-  );
+  eventEmitter.on('closeForm', (isFormVisible: boolean) => {
+    setIsFormVisible(isFormVisible);
+  });
 
   useEffect(() => {
     NodesChange(nodes);
@@ -207,60 +199,51 @@ const GraphicalScheduler = ({
     // If a node is clicked, find its data and show the form
     if (clickedNodeId) {
       const clickedNode = nodes.find(node => node.id === clickedNodeId);
-     setClickedNodeData(clickedNode?.data);
-     setIsFormVisible(true);
+      setClickedNodeData(clickedNode?.data);
+      setIsFormVisible(true);
     } else {
-     setIsFormVisible(false);
+      setIsFormVisible(false);
     }
   }, [clickedNodeId, nodes]);
 
   EdgesChange(edges);
-console.log(nodes,edges)
+  console.log(nodes, edges);
   return (
     <>
-  <Grid container spacing={0} style={{ height: '100vh' }}>
-    <Grid item xs={9}>
-        <div className="wrapper" ref={reactFlowWrapper}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onConnectStart={onConnectStart}
-            onConnectEnd={onConnectEnd}
-            //deleteKeyCode={null : 'Delete'}
-            fitView
-            fitViewOptions={{ padding: 2 }}
-            nodeOrigin={[0.5, 0]}
-            nodeTypes={nodeTypes}
-          >
-            <Controls />
-            <Background color="#aaa" gap={6} />
-          </ReactFlow>
-        </div>
-        {/* {isFormVisible && 
-          //console.log("here node is clicked",clickedNodeData , isFormVisible)
-          <SchedulerForm
-          id={clickedNodeId}
-          data={clickedNodeData}/>
-        } */}
-       </Grid>
-     {isFormVisible && clickedNodeData!==null && ( <Grid item xs={3}>
-        <ConfigureForm
-        //rename to configure node form 
-        id={clickedNodeId}
-        data={clickedNodeData}/>
+      <Grid container spacing={0} style={{ height: '100vh' }}>
+        <Grid item xs={9}>
+          <div className="wrapper" ref={reactFlowWrapper}>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onConnectStart={onConnectStart}
+              onConnectEnd={onConnectEnd}
+              //deleteKeyCode={null : 'Delete'}
+              fitView
+              fitViewOptions={{ padding: 2 }}
+              nodeOrigin={[0.5, 0]}
+              nodeTypes={nodeTypes}
+            >
+              <Controls />
+              <Background color="#aaa" gap={6} />
+            </ReactFlow>
+          </div>
+        </Grid>
+        {isFormVisible && clickedNodeData !== null && (
+          <Grid item xs={3}>
+            <ConfigureForm id={clickedNodeId} data={clickedNodeData} />
+          </Grid>
+        )}
       </Grid>
-      )} 
-    </Grid>
     </>
   );
 };
 
 export default (props: IGraphicalSchedulerProps) => (
   <ReactFlowProvider>
-    
     <GraphicalScheduler
       inputFileSelected={props.inputFileSelected}
       NodesChange={props.NodesChange}

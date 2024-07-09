@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { eventEmitter } from '../utils/signalEmitter';
-import { Autocomplete, Button, TextField } from '@mui/material';
+import { Autocomplete, IconButton, TextField } from '@mui/material';
+import SchedulerForm from './schedulerForm';
+import { LabIcon } from '@jupyterlab/ui-components';
+import searchClearIcon from '../../style/icons/search_clear_icon.svg';
+
+const iconSearchClear = new LabIcon({
+  name: 'launcher:search-clear-icon',
+  svgstr: searchClearIcon
+});
 
 function ConfigureForm({ id, data }: any) {
   const [isFormVisible, setIsFormVisible] = useState(true);
-
-  // console.log('############## in form element');
-  const jobType = [
+  const nodeType = [
     'Run a notebook on dataproc serverless',
     'Run a notebook on dataproc cluster',
     'Execute a SQL on BigQuery',
@@ -14,45 +20,59 @@ function ConfigureForm({ id, data }: any) {
     'Ingest data into a BQ table from GCS',
     'Export data from BQ table to GCS'
   ];
-  const [jobTypeSelected, setJobTypeSelected] = useState('');
+  const [nodeTypeSelected, setnodeTypeSelected] = useState('');
 
-  const handleJobTypeChange = (_event: any, value: any) => {
-    setJobTypeSelected(value);
+  const handleNodeTypeChange = (_event: any, value: any) => {
+    setnodeTypeSelected(value);
+    eventEmitter.emit(`nodeType`, value, id);
   };
 
   const handleCancel = () => {
     setIsFormVisible(false);
-    console.log('cancel is clicked');
     console.log('form cancel', isFormVisible);
     eventEmitter.emit(`closeForm`, setIsFormVisible);
   };
 
   return (
     <>
-      {/* { isFormVisible && */}
       <>
         <form>
-
           <div className="submit-job-container">
-           <div className="submit-job-label-header">Configure Node</div>
+            <div className="submit-job-label-header">
+              Configure Node
+              <IconButton
+                aria-label="cancel"
+                onClick={handleCancel}
+              >
+                <iconSearchClear.react
+                  tag="div"
+                  className="icon-white logo-alignment-style search-clear-icon"
+                />
+              </IconButton>
+            </div>
             <Autocomplete
               className="create-scheduler-style"
-              options={jobType}
-              value={jobTypeSelected}
-              onChange={handleJobTypeChange}
-              renderInput={params => <TextField {...params} label="Node Type*" />}
+              options={nodeType}
+              value={nodeTypeSelected}
+              onChange={handleNodeTypeChange}
+              renderInput={params => (
+                <TextField {...params} label="Node Type*" />
+              )}
             />
-            <Button
+            {(nodeTypeSelected === 'Run a notebook on dataproc serverless' ||
+              nodeTypeSelected === 'Run a notebook on dataproc cluster') && (
+              <SchedulerForm id={id} data={data} />
+            )}
+            {/* <Button
               variant="outlined"
               aria-label="cancel"
               onClick={handleCancel}
             >
               <div>CANCEL</div>
-            </Button>
-            </div>
+            </Button> */}
+          </div>
         </form>
       </>
-      {/* } */}
     </>
   );
 }
