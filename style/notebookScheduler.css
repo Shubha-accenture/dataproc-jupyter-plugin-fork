@@ -59,6 +59,26 @@
   color: var(--jp-ui-font-color0);
 }
 
+
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-right: 5px;
+  float: right;
+  margin-left: 750px;
+  position: relative;
+}
+
+.button-container button {
+  width: 70px;
+  height: 40px;
+  flex-shrink: 0;
+  margin-top: 4px;
+  margin-right: 10px;
+}
+
+
 .create-scheduler-label {
   margin-top: 15px;
   font-style: normal;

@@ -1,11 +1,31 @@
 .notebook-node {
+  /* height: 100px; */
   border: 1px solid #eee;
   padding: 5px;
+  border-radius: 5px;
   background: white;
+  height: 86px;
+  width: 220px;
+  top: -7px;
+  border: 1px solid #eee;
+  /* padding: 5px; */
+  /* border-radius: 5px; */
+  background: white;
+}
+
+.notebook-node {
+  /* height: 100px; */
+  border: 1px solid #eee;
+  padding: 5px;
+  /* border-radius: 5px; */
+  background: white;
+  /* height: 100px; */
   min-height: 86px;
   min-width: 220px;
   top: -7px;
   border: 1px solid #eee;
+  /* padding: 5px; */
+  /* border-radius: 5px; */
   background: white;
   border-radius: 8px;
   box-shadow: 0px 1px 16px 0px rgba(0, 0, 0, 0.06);
@@ -19,6 +39,7 @@
 
 .custom-node__header {
   padding: 8px 10px;
+  /* border-bottom: 1px solid #e2e8f0; */
 }
 
 .custom-node__body {
@@ -43,7 +64,6 @@
   left: 0px;
   top: 0;
 }
-
 .black {
   background-color: #000;
 }

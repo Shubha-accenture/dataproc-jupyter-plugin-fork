@@ -213,7 +213,7 @@ const GraphicalScheduler = ({
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
-        <Grid item xs={9}>
+        {/* <Grid item xs={9}>  */}
           <div className="wrapper" ref={reactFlowWrapper}>
             <ReactFlow
               nodes={nodes}
@@ -233,11 +233,11 @@ const GraphicalScheduler = ({
               <Background color="#aaa" gap={6} />
             </ReactFlow>
           </div>
-        </Grid>
+        {/* </Grid> */}
         {isFormVisible && clickedNodeData !== null && (
-          <Grid item xs={3}>
+          // <Grid item xs={3}>
             <ConfigureForm id={clickedNodeId} data={clickedNodeData} />
-          </Grid>
+          // </Grid>
         )}
       </Grid>
     </>

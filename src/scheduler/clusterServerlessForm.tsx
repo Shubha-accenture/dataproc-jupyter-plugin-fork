@@ -4,7 +4,6 @@ import LabelProperties from '../jobs/labelProperties';
 import { eventEmitter } from '../utils/signalEmitter';
 import {
   Autocomplete,
-  Button,
   Checkbox,
   CircularProgress,
   FormControlLabel,
@@ -24,7 +23,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [keyValidation, setKeyValidation] = useState(-1);
   const [valueValidation, setValueValidation] = useState(-1);
   const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
-  const [isFormVisible, setIsFormVisible] = useState(true);
   const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
   const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
   const [selectedMode, setSelectedMode] = useState(mode);
@@ -36,7 +34,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [serverlessDataSelected, setServerlessDataSelected] = useState({});
   const [stopCluster, setStopCluster] = useState(false);
 
-  console.log('############## in cluster form element');
   console.log(serverlessDataSelected);
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
@@ -44,7 +41,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       setInputFileSelectedLocal(evt.target.value);
       eventEmitter.emit(`uploadProgress`, evt, data, setInputFileSelected);
       console.log(inputFileSelected);
-      //console.log("isFormVisible",isFormVisible)
     }
   };
 
@@ -56,13 +52,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const handleRetryDelayChange = (e: number) => {
     data.retryDelay = e;
     setRetryDelay(e);
-  };
-
-  const handleCancel = () => {
-    setIsFormVisible(false);
-    // console.log('cancel is clicked');
-    console.log('form cancel', isFormVisible);
-    eventEmitter.emit(`closeForm`, setIsFormVisible);
   };
 
   const listClustersAPI = async () => {
@@ -222,14 +211,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
               Label="Retry Delay"
               onChange={e => handleRetryDelayChange(Number(e.target.value))}
             />
-
-            <Button
-              variant="outlined"
-              aria-label="cancel"
-              onClick={handleCancel}
-            >
-              <div>CANCEL</div>
-            </Button>
           </div>
         </form>
       </div>

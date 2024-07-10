@@ -1,15 +1,19 @@
-import { Autocomplete, Button, FormControl, FormControlLabel, Radio, RadioGroup, TextField, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  TextField,
+  Typography
+} from '@mui/material';
 import React, { useState } from 'react';
 import { Cron } from 'react-js-cron';
 import tzdata from 'tzdata';
 import { scheduleValueExpression } from '../utils/const';
 import { scheduleMode } from '../utils/const';
-import { eventEmitter } from '../utils/signalEmitter';
 
 function TriggerJobForm({ id, data }: any) {
-
-  console.log('############## in trigger form element',id,data);
-
   const [scheduleMode, setScheduleMode] = useState<scheduleMode>('runNow');
   const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
   const [timeZoneSelected, setTimeZoneSelected] = useState(
@@ -31,13 +35,6 @@ function TriggerJobForm({ id, data }: any) {
       const selectedTimeZone = data.toString();
       setTimeZoneSelected(selectedTimeZone);
     }
-  };
-
-  const handleCancel = () => {
-    setIsFormVisible(false);
-    // console.log('cancel is clicked');
-    // console.log('form cancel', isFormVisible);
-    eventEmitter.emit(`closeForm1`, setIsFormVisible);
   };
 
   return (
@@ -90,13 +87,6 @@ function TriggerJobForm({ id, data }: any) {
               </div>
             </>
           )}
-            <Button
-              variant="outlined"
-              aria-label="cancel"
-              onClick={handleCancel}
-            >
-              <div>CANCEL</div>
-            </Button>
         </form>
       </div>
     </>
@@ -104,7 +94,3 @@ function TriggerJobForm({ id, data }: any) {
 }
 
 export default TriggerJobForm;
-function setIsFormVisible(arg0: boolean) {
-    throw new Error('Function not implemented.');
-}
-
