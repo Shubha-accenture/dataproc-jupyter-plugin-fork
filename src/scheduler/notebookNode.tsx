@@ -33,15 +33,15 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
 
   return (
     <>
-      <div className="notebook-node"onClick={handleNodeClick}>
-      <div className= "box black">
+      <div className="notebook-node" onClick={handleNodeClick}>
+        <div className="box black" />
         <Handle
           type="target"
+          id="a"
           position={Position.Top}
-          isConnectable={isConnectable}
-          // style={{display:'none'}}
+          isConnectable={false}
         />
-        <div className='node-content'>
+        <div className="node-content">
           <div>
             {(nodeType === 'Run a notebook on dataproc serverless' ||
               nodeType === 'Run a notebook on dataproc cluster') && (
@@ -60,7 +60,7 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
           <div className="custom-node__header">
             {id}.{data.inputFile ? data.inputFile : 'Notebook'}
           </div>
-          {data.inputFile && ("Trigger node")}
+          {data.inputFile && 'Trigger node'}
         </div>
         <Handle
           type="source"
@@ -68,7 +68,6 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
           id="b"
           isConnectable={isConnectable}
         />
-      </div>
       </div>
     </>
   );
