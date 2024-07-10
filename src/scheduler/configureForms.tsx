@@ -60,13 +60,14 @@ function ConfigureForm({ id, data }: any) {
                 <TextField {...params} label="Node Type*" />
               )}
             />
-            {(nodeTypeSelected==='Trigger Node') && 
-            <TriggerJobForm
-               id={id} data={data} />
-            }
-            {(nodeTypeSelected === 'Run a notebook on dataproc serverless' ||
-              nodeTypeSelected === 'Run a notebook on dataproc cluster') && (
-              <ClusterServerlessForm id={id} data={data} />
+            {nodeTypeSelected === 'Trigger Node' && (
+              <TriggerJobForm id={id} data={data} />
+            )}
+            {nodeTypeSelected === 'Run a notebook on dataproc serverless' && (
+              <ClusterServerlessForm id={id} data={data} mode={'serverless'} />
+            )}
+            {nodeTypeSelected === 'Run a notebook on dataproc cluster' && (
+              <ClusterServerlessForm id={id} data={data} mode={'cluster'} />
             )}
           </div>
         </form>

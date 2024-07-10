@@ -7,17 +7,14 @@ import {
   Button,
   Checkbox,
   CircularProgress,
-  FormControl,
   FormControlLabel,
   FormGroup,
-  Radio,
-  RadioGroup,
   TextField,
   Typography
 } from '@mui/material';
 import { SchedulerService } from './schedulerServices';
 
-function ClusterServerlessForm({ id, data }: any) {
+function ClusterServerlessForm({ id, data, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
   const [inputFileSelected, setInputFileSelected] = useState('');
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
@@ -30,7 +27,7 @@ function ClusterServerlessForm({ id, data }: any) {
   const [isFormVisible, setIsFormVisible] = useState(true);
   const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
   const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
-  const [selectedMode, setSelectedMode] = useState('cluster');
+  const [selectedMode, setSelectedMode] = useState(mode);
   const [clusterList, setClusterList] = useState<string[]>([]);
   const [serverlessList, setServerlessList] = useState<string[]>([]);
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
@@ -104,12 +101,6 @@ function ClusterServerlessForm({ id, data }: any) {
     setStopCluster(event.target.checked);
   };
 
-  const handleSelectedModeChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setSelectedMode((event.target as HTMLInputElement).value);
-  };
-
   useEffect(() => {
     setInputFileSelectedLocal(data.inputFile);
     setRetryCount(data.retryCount);
@@ -162,37 +153,6 @@ function ClusterServerlessForm({ id, data }: any) {
               setDuplicateKeyError={setDuplicateKeyError}
               fromPage="react-flow"
             />
-            {!isBigQueryNotebook && (
-              <div className="create-scheduler-form-element">
-                <FormControl>
-                  <RadioGroup
-                    aria-labelledby="demo-controlled-radio-buttons-group"
-                    name="controlled-radio-buttons-group"
-                    value={selectedMode}
-                    onChange={handleSelectedModeChange}
-                    row={true}
-                  >
-                    <FormControlLabel
-                      value="cluster"
-                      control={<Radio size="small" />}
-                      label={
-                        <Typography sx={{ fontSize: 13 }}>Cluster</Typography>
-                      }
-                    />
-                    <FormControlLabel
-                      value="serverless"
-                      className="create-scheduler-label-style"
-                      control={<Radio size="small" />}
-                      label={
-                        <Typography sx={{ fontSize: 13 }}>
-                          Serverless
-                        </Typography>
-                      }
-                    />
-                  </RadioGroup>
-                </FormControl>
-              </div>
-            )}
             <div className="create-scheduler-form-element">
               {isLoadingKernelDetail && (
                 <CircularProgress
