@@ -34,8 +34,7 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
   return (
     <>
       <div className="notebook-node"onClick={handleNodeClick}>
-      {/* <div className={(nodeType === 'Execute a SQL on BigQuery')?("box orange"): ("box black")}>  */}
-      <div className={(nodeType === 'Trigger Node') ? "box red" : (nodeType === 'Execute a SQL on BigQuery') ? "box orange" : "box black"}>
+      <div className= "box black">
         <Handle
           type="target"
           position={Position.Top}
