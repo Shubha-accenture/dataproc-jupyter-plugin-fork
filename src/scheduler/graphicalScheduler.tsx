@@ -59,11 +59,47 @@ const GraphicalScheduler = ({
         retryCount: 0,
         retryDelay: 0,
         parameter: []
-      }
+      } //need to modify this for generation of payload
     }
   ];
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  const triggerNode = [
+    {
+      id: '0',
+      type: 'notebookNode',
+      position: { x: 0, y: -100 }, //{ x: 0, y: 0 },
+      data: {
+        inputFile: inputFileSelected,
+        retryCount: 0,
+        retryDelay: 0,
+        parameter: []
+      }
+    },
+    {
+      id: '1',
+      type: 'notebookNode',
+      position: { x: 0, y: 100 }, // { x: , y: },
+      data: {
+        inputFile: inputFileSelected,
+        retryCount: 0,
+        retryDelay: 0,
+        parameter: []
+      } //need to modify this for generation of payload
+    }
+  ];
+
+  const triggerEdge = [
+    {
+      id: '1',
+      source: '0',
+      target: '1'
+    }
+  ];
+
+  const defaultNode = inputFileSelected ? triggerNode : initialNode;
+  const defaultEdge = inputFileSelected ? triggerEdge : [];
+  const [nodes, setNodes, onNodesChange] = useNodesState(defaultNode);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdge);
   const [isFormVisible, setIsFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
@@ -109,7 +145,7 @@ const GraphicalScheduler = ({
               retryCount: 0,
               retryDelay: 0,
               parameter: []
-            },
+            }, //need to modify this for generation of payload
             origin: [0.5, 0.0]
           };
           setNodes(nds => nds.concat(newNode));
@@ -214,29 +250,29 @@ const GraphicalScheduler = ({
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
         {/* <Grid item xs={9}>  */}
-          <div className="wrapper" ref={reactFlowWrapper}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onConnectStart={onConnectStart}
-              onConnectEnd={onConnectEnd}
-              //deleteKeyCode={null : 'Delete'}
-              fitView
-              fitViewOptions={{ padding: 2 }}
-              nodeOrigin={[0.5, 0]}
-              nodeTypes={nodeTypes}
-            >
-              <Controls />
-              <Background color="#aaa" gap={6} />
-            </ReactFlow>
-          </div>
+        <div className="wrapper" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onConnectStart={onConnectStart}
+            onConnectEnd={onConnectEnd}
+            //deleteKeyCode={null : 'Delete'}
+            fitView
+            fitViewOptions={{ padding: 2 }}
+            nodeOrigin={[0.5, 0]}
+            nodeTypes={nodeTypes}
+          >
+            <Controls />
+            <Background color="#aaa" gap={6} />
+          </ReactFlow>
+        </div>
         {/* </Grid> */}
         {isFormVisible && clickedNodeData !== null && (
           // <Grid item xs={3}>
-            <ConfigureForm id={clickedNodeId} data={clickedNodeData} />
+          <ConfigureForm id={clickedNodeId} data={clickedNodeData} />
           // </Grid>
         )}
       </Grid>

@@ -58,9 +58,8 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
             )}
           </div>
           <div className="custom-node__header">
-            {id}.{data.inputFile ? data.inputFile : 'Notebook'}
+            {id}.{id === '0' && data.inputFile ? 'Trigger node' : 'Notebook'}
           </div>
-          {data.inputFile && 'Trigger node'}
         </div>
         <Handle
           type="source"
