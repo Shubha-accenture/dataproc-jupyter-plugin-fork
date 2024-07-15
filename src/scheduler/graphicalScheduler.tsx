@@ -100,7 +100,7 @@ const GraphicalScheduler = ({
   const defaultEdge = inputFileSelected ? triggerEdge : [];
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdge);
-  const [isFormVisible, setIsFormVisible] = useState(true);
+  const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
 
@@ -220,15 +220,15 @@ const GraphicalScheduler = ({
 
   eventEmitter.on('nodeClick', (id: string, isNodeClicked: boolean) => {
     setClickedNodeId(id);
-    setIsFormVisible(isNodeClicked);
+    setIsTaskFormVisible(isNodeClicked);
+    eventEmitter.emit(`closeJobForm`, setIsTaskFormVisible); //check if we can pass only isTaskFormVisible
   });
 
   eventEmitter.on('closeForm', (isFormVisible: boolean) => {
-    setIsFormVisible(isFormVisible);
+    setIsTaskFormVisible(isFormVisible);
+    eventEmitter.emit(`closeTaskForm`, setIsTaskFormVisible); //check if we can pass only isTaskFormVisible
   });
-  eventEmitter.on('closeForm1', (isFormVisible: boolean) => {
-    setIsFormVisible(isFormVisible);
-  });
+
   useEffect(() => {
     NodesChange(nodes);
   }, [nodes]);
@@ -238,9 +238,9 @@ const GraphicalScheduler = ({
     if (clickedNodeId) {
       const clickedNode = nodes.find(node => node.id === clickedNodeId);
       setClickedNodeData(clickedNode?.data);
-      setIsFormVisible(true);
+      setIsTaskFormVisible(true);
     } else {
-      setIsFormVisible(false);
+      setIsTaskFormVisible(false);
     }
   }, [clickedNodeId, nodes]);
 
@@ -270,7 +270,7 @@ const GraphicalScheduler = ({
           </ReactFlow>
         </div>
         {/* </Grid> */}
-        {isFormVisible && clickedNodeData !== null && (
+        {isTaskFormVisible && clickedNodeData !== null && (
           // <Grid item xs={3}>
           <ConfigureForm id={clickedNodeId} data={clickedNodeData} />
           // </Grid>

@@ -13,7 +13,7 @@ const iconSearchClear = new LabIcon({
 
 function ConfigureForm({ id, data }: any) {
   const [isFormVisible, setIsFormVisible] = useState(true);
-  const nodeType = [
+  const nodeTypes = [
     'Run a notebook on dataproc serverless',
     'Run a notebook on dataproc cluster',
     'Execute a SQL on BigQuery',
@@ -23,7 +23,9 @@ function ConfigureForm({ id, data }: any) {
     'Trigger Node'
   ];
 
-  const defaultNodeType = data.inputFile ? 'Trigger Node' : '';
+  //const filteredNodeTypes = id === 0 ? nodeTypes : nodeTypes.filter(type => type !== 'Trigger Node');
+  const defaultNodeType = id === '0' ? 'Trigger Node' : '';
+  //const defaultNodeType = data.inputFile ? 'Trigger Node' : '';
   const [nodeTypeSelected, setnodeTypeSelected] = useState(defaultNodeType);
 
   const handleNodeTypeChange = (_event: any, value: any) => {
@@ -33,8 +35,10 @@ function ConfigureForm({ id, data }: any) {
 
   const handleCancel = () => {
     setIsFormVisible(false);
+    console.log('form cancel of config', isFormVisible);
+    //eventEmitter.emit(`closeForm`, isFormVisible);
     console.log('form cancel', isFormVisible);
-    eventEmitter.emit(`closeForm`, setIsFormVisible);
+    eventEmitter.emit(`closeForm`, false);
   };
 
   return (
@@ -53,9 +57,10 @@ function ConfigureForm({ id, data }: any) {
             </div>
             <Autocomplete
               className="create-scheduler-style"
-              options={nodeType}
+              options={nodeTypes} //{filteredNodeTypes}
               value={nodeTypeSelected}
               onChange={handleNodeTypeChange}
+              // disabled={id==="0"}
               renderInput={params => (
                 <TextField {...params} label="Node Type*" />
               )}
