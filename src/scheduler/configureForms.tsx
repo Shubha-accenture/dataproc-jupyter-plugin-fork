@@ -33,7 +33,7 @@ function ConfigureForm({ id, data, nodes }: any) {
   const handleNodeTypeChange = (value: any) => {
     setnodeTypeSelected(value);
     eventEmitter.emit(`nodeType`, value, id);
-    data.type = value;
+    data.nodetype = value;
     setPreviousNodeType(nodeTypeSelected);
   };
 
@@ -47,7 +47,7 @@ function ConfigureForm({ id, data, nodes }: any) {
   useEffect(() => {
     const clickedNode = nodes.find((node: any) => node.id === id);
     setClickedNodeData(clickedNode ? clickedNode.data : '');
-    setnodeTypeSelected(clickedNode ? clickedNode.data.type : null);
+    setnodeTypeSelected(clickedNode ? clickedNode.data.nodetype : null);
   }, [nodes, id]);
 
   useEffect(() => {

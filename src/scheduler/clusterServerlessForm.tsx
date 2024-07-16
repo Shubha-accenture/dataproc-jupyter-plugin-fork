@@ -31,10 +31,9 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [clusterSelected, setClusterSelected] = useState('');
   const [serverlessSelected, setServerlessSelected] = useState('');
-  const [serverlessDataSelected, setServerlessDataSelected] = useState({});
   const [stopCluster, setStopCluster] = useState(false);
 
-  console.log('###data', data, serverlessDataSelected);
+  console.log('###data', data);
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -62,40 +61,52 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   };
 
   const listSessionTemplatesAPI = async () => {
+    console.log(serverlessDataList);
     await SchedulerService.listSessionTemplatesAPIService(
       setServerlessDataList,
       setServerlessList,
       setIsLoadingKernelDetail
     );
   };
-  const handleClusterSelected = (data: string | null) => {
-    if (data) {
-      const selectedCluster = data.toString();
+  const handleClusterSelected = (value: any) => {
+    //its string--> string | null
+    if (value) {
+      const selectedCluster = value.toString();
+      data.cluster_name = selectedCluster;
       setClusterSelected(selectedCluster);
     }
   };
 
-  const handleServerlessSelected = (data: string | null) => {
-    if (data) {
-      const selectedServerless = data.toString();
-      const selectedData: any = serverlessDataList.filter((serverless: any) => {
-        return serverless.serverlessName === selectedServerless;
-      });
-      setServerlessDataSelected(selectedData[0].serverlessData);
+  const handleServerlessSelected = (value: any) => {
+    //its string--> string | null
+    if (value) {
+      const selectedServerless = value.toString();
+      data.serverless = selectedServerless;
       setServerlessSelected(selectedServerless);
     }
   };
+  // const handleServerlessSelected = (value: any) => {
+  //   if (value) {
+  //     const selectedServerless = data.toString();
+  //     const selectedData: any = serverlessDataList.filter((serverless: any) => {
+  //       return serverless.serverlessName === selectedServerless;
+  //     });
+  //     setServerlessDataSelected(selectedData[0].serverlessData);
+  //     data.serverless=data;
+  //     setServerlessSelected(selectedServerless);
+  //   }
+  // };
 
   const handleStopCluster = (event: React.ChangeEvent<HTMLInputElement>) => {
     setStopCluster(event.target.checked);
+    data.stop_cluster = event.target.checked;
   };
-
-  // useEffect(() => {
-  //   setInputFileSelectedLocal(data.inputFile);
-  //   setRetryCount(data.retryCount);
-  //   setRetryDelay(data.retryDelay);
-  //  // data.parameter = parameterDetail;
-  // }, [data]);
+  useEffect(() => {
+    // setInputFileSelectedLocal(data.inputFile);
+    // setRetryCount(data.retryCount);
+    // setRetryDelay(data.retryDelay);
+    data.parameter = parameterDetail;
+  }, [data]);
 
   useEffect(() => {
     if (selectedMode === 'cluster') {
@@ -184,7 +195,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                       <Checkbox
                         size="small"
                         checked={stopCluster}
-                        onChange={handleStopCluster}
+                        onChange={e => handleStopCluster(e)}
                       />
                     }
                     className="create-scheduler-label-style"

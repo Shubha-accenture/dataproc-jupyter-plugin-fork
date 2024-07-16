@@ -24,7 +24,6 @@ import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import Grid from '@mui/material/Grid';
-//import SchedulerForm from './schedulerForm';
 import ConfigureForm from './configureForms';
 
 interface IGraphicalSchedulerProps {
@@ -55,12 +54,15 @@ const GraphicalScheduler = ({
       type: 'notebookNode',
       position: { x: 0, y: 0 },
       data: {
-        type:'Run a notebook on dataproc cluster',
+        nodetype: '',
         inputFile: inputFileSelected,
         retryCount: 0,
         retryDelay: 0,
-        parameter: []
-      } //need to modify this for generation of payload
+        parameter: [],
+        stop_cluster: '',
+        cluster_name: '',
+        serverless: ''
+      }
     }
   ];
 
@@ -70,11 +72,14 @@ const GraphicalScheduler = ({
       type: 'notebookNode',
       position: { x: 0, y: -100 }, //{ x: 0, y: 0 },
       data: {
-        type: 'Trigger Node',
+        nodetype: '',
         inputFile: inputFileSelected,
         retryCount: 0,
         retryDelay: 0,
-        parameter: []
+        parameter: [],
+        stop_cluster: '',
+        cluster_name: '',
+        serverless: ''
       }
     },
     {
@@ -82,12 +87,15 @@ const GraphicalScheduler = ({
       type: 'notebookNode',
       position: { x: 0, y: 100 }, // { x: , y: },
       data: {
-        type:'Run a notebook on dataproc cluster',
+        nodetype: '',
         inputFile: inputFileSelected,
         retryCount: 0,
         retryDelay: 0,
-        parameter: []
-      } //need to modify this for generation of payload
+        parameter: [],
+        stop_cluster: '',
+        cluster_name: '',
+        serverless: ''
+      }
     }
   ];
 
@@ -144,12 +152,15 @@ const GraphicalScheduler = ({
               y: e.clientY
             }),
             data: {
-              type:'',
-              inputFile: '',
+              nodetype: '',
+              inputFile: inputFileSelected,
               retryCount: 0,
               retryDelay: 0,
-              parameter: []
-            }, //need to modify this for generation of payload
+              parameter: [],
+              stop_cluster: '',
+              cluster_name: '',
+              serverless: ''
+            },
             origin: [0.5, 0.0]
           };
           setNodes(nds => nds.concat(newNode));
@@ -276,8 +287,12 @@ const GraphicalScheduler = ({
         {/* </Grid> */}
         {isTaskFormVisible && clickedNodeData !== null && (
           <Grid item xs={3}>
-          <ConfigureForm id={clickedNodeId} data={clickedNodeData} nodes={nodes} />
-           </Grid>
+            <ConfigureForm
+              id={clickedNodeId}
+              data={clickedNodeData}
+              nodes={nodes}
+            />
+          </Grid>
         )}
       </Grid>
     </>
