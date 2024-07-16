@@ -55,6 +55,7 @@ const GraphicalScheduler = ({
       type: 'notebookNode',
       position: { x: 0, y: 0 },
       data: {
+        type:'Run a notebook on dataproc cluster',
         inputFile: inputFileSelected,
         retryCount: 0,
         retryDelay: 0,
@@ -69,6 +70,7 @@ const GraphicalScheduler = ({
       type: 'notebookNode',
       position: { x: 0, y: -100 }, //{ x: 0, y: 0 },
       data: {
+        type: 'Trigger Node',
         inputFile: inputFileSelected,
         retryCount: 0,
         retryDelay: 0,
@@ -80,6 +82,7 @@ const GraphicalScheduler = ({
       type: 'notebookNode',
       position: { x: 0, y: 100 }, // { x: , y: },
       data: {
+        type:'Run a notebook on dataproc cluster',
         inputFile: inputFileSelected,
         retryCount: 0,
         retryDelay: 0,
@@ -141,6 +144,7 @@ const GraphicalScheduler = ({
               y: e.clientY
             }),
             data: {
+              type:'',
               inputFile: '',
               retryCount: 0,
               retryDelay: 0,
@@ -271,9 +275,9 @@ const GraphicalScheduler = ({
         </div>
         {/* </Grid> */}
         {isTaskFormVisible && clickedNodeData !== null && (
-          // <Grid item xs={3}>
-          <ConfigureForm id={clickedNodeId} data={clickedNodeData} />
-          // </Grid>
+          <Grid item xs={3}>
+          <ConfigureForm id={clickedNodeId} data={clickedNodeData} nodes={nodes} />
+           </Grid>
         )}
       </Grid>
     </>

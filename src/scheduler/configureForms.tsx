@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { eventEmitter } from '../utils/signalEmitter';
 import { Autocomplete, IconButton, TextField } from '@mui/material';
 import ClusterServerlessForm from './clusterServerlessForm';
@@ -11,8 +11,8 @@ const iconSearchClear = new LabIcon({
   svgstr: searchClearIcon
 });
 
-function ConfigureForm({ id, data }: any) {
-  const [isFormVisible, setIsFormVisible] = useState(true);
+function ConfigureForm({ id, data, nodes }: any) {
+ // const [isFormVisible, setIsFormVisible] = useState(true);
   const nodeTypes = [
     'Run a notebook on dataproc serverless',
     'Run a notebook on dataproc cluster',
@@ -27,19 +27,34 @@ function ConfigureForm({ id, data }: any) {
   const defaultNodeType = id === '0' ? 'Trigger Node' : '';
   //const defaultNodeType = data.inputFile ? 'Trigger Node' : '';
   const [nodeTypeSelected, setnodeTypeSelected] = useState(defaultNodeType);
+  const [clickedNodeData, setClickedNodeData] = useState<any>(null);
+  const [previousNodeType, setPreviousNodeType] = useState(defaultNodeType);
 
-  const handleNodeTypeChange = (_event: any, value: any) => {
+  const handleNodeTypeChange = (value: any) => {
     setnodeTypeSelected(value);
     eventEmitter.emit(`nodeType`, value, id);
+    data.type = value;
+    setPreviousNodeType(nodeTypeSelected);
   };
 
   const handleCancel = () => {
-    setIsFormVisible(false);
-    console.log('form cancel of config', isFormVisible);
-    //eventEmitter.emit(`closeForm`, isFormVisible);
-    console.log('form cancel', isFormVisible);
+    // setIsFormVisible(false);
+    // //eventEmitter.emit(`closeForm`, isFormVisible);
+    // console.log('form cancel', isFormVisible);
     eventEmitter.emit(`closeForm`, false);
   };
+
+  useEffect(() => {
+    const clickedNode = nodes.find((node: any) => node.id === id);
+    setClickedNodeData(clickedNode ? clickedNode.data : '');
+    setnodeTypeSelected(clickedNode ? clickedNode.data.type : null);
+  }, [nodes, id]);
+
+  useEffect(() => {
+    if (previousNodeType && previousNodeType !== nodeTypeSelected) {
+      setClickedNodeData('');
+    }
+  }, [nodeTypeSelected, previousNodeType]);
 
   return (
     <>
@@ -59,20 +74,28 @@ function ConfigureForm({ id, data }: any) {
               className="create-scheduler-style"
               options={nodeTypes} //{filteredNodeTypes}
               value={nodeTypeSelected}
-              onChange={handleNodeTypeChange}
+              onChange={(_event, value) => handleNodeTypeChange(value)}
               // disabled={id==="0"}
               renderInput={params => (
                 <TextField {...params} label="Node Type*" />
               )}
             />
             {nodeTypeSelected === 'Trigger Node' && (
-              <TriggerJobForm id={id} data={data} />
+              <TriggerJobForm id={id} data={clickedNodeData} />
             )}
             {nodeTypeSelected === 'Run a notebook on dataproc serverless' && (
-              <ClusterServerlessForm id={id} data={data} mode={'serverless'} />
+              <ClusterServerlessForm
+                id={id}
+                data={clickedNodeData}
+                mode={'serverless'}
+              />
             )}
             {nodeTypeSelected === 'Run a notebook on dataproc cluster' && (
-              <ClusterServerlessForm id={id} data={data} mode={'cluster'} />
+              <ClusterServerlessForm
+                id={id}
+                data={clickedNodeData}
+                mode={'cluster'}
+              />
             )}
           </div>
         </form>

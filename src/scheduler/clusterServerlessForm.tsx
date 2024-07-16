@@ -34,7 +34,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [serverlessDataSelected, setServerlessDataSelected] = useState({});
   const [stopCluster, setStopCluster] = useState(false);
 
-  console.log(serverlessDataSelected);
+  console.log('###data', data, serverlessDataSelected);
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -90,12 +90,12 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     setStopCluster(event.target.checked);
   };
 
-  useEffect(() => {
-    setInputFileSelectedLocal(data.inputFile);
-    setRetryCount(data.retryCount);
-    setRetryDelay(data.retryDelay);
-    //data.parameter = parameterDetail;
-  }, [data]);
+  // useEffect(() => {
+  //   setInputFileSelectedLocal(data.inputFile);
+  //   setRetryCount(data.retryCount);
+  //   setRetryDelay(data.retryDelay);
+  //  // data.parameter = parameterDetail;
+  // }, [data]);
 
   useEffect(() => {
     if (selectedMode === 'cluster') {
@@ -124,7 +124,8 @@ function ClusterServerlessForm({ id, data, mode }: any) {
             <input
               className="nodrag"
               type="file"
-              value={inputFileSelectedLocal}
+              value={''}
+              // {inputFileSelectedLocal}
               onChange={e => onInputFileNameChange(e)}
             />
             {<div>{inputFileSelectedLocal}</div>}

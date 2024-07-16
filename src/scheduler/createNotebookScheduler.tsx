@@ -585,6 +585,7 @@ const CreateNotebookScheduler = ({
               </Button>
             </div>
           </div>
+          {/* { isJobFormVisible ? ( */}
           <Grid container spacing={0} style={{ height: '100vh' }}>
             <Grid item xs={9}>
               <GraphicalScheduler
@@ -1008,6 +1009,18 @@ const CreateNotebookScheduler = ({
               </Grid>
             )}
           </Grid>
+          {/* // ) */}
+          {/* :(
+            <Grid container spacing={0} style={{ height: '100vh' }}>
+              <GraphicalScheduler
+                inputFileSelected={context.path}
+                NodesChange={handleNodesChange}
+                EdgesChange={handleEdgesChange}
+                app={app}
+                factory={factory}
+              />
+            </Grid>
+          )} */}
         </>
       )}
     </>
