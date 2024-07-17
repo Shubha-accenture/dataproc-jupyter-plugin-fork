@@ -19,12 +19,8 @@ import { Input } from '../controls/MuiWrappedInput';
 import {
   Autocomplete,
   Checkbox,
-  CircularProgress,
-  FormControl,
   FormControlLabel,
   FormGroup,
-  Radio,
-  RadioGroup,
   TextField,
   Typography
 } from '@mui/material';
@@ -32,11 +28,11 @@ import { MuiChipsInput } from 'mui-chips-input';
 import { IThemeManager } from '@jupyterlab/apputils';
 import { JupyterLab } from '@jupyterlab/application';
 //import LabelProperties from '../jobs/labelProperties';
-import { v4 as uuidv4 } from 'uuid';
-import { Cron } from 'react-js-cron';
+//import { v4 as uuidv4 } from 'uuid';
+//import { Cron } from 'react-js-cron';
 import 'react-js-cron/dist/styles.css';
 import { KernelSpecAPI } from '@jupyterlab/services';
-import tzdata from 'tzdata';
+//import tzdata from 'tzdata';
 import { SchedulerService } from './schedulerServices';
 import NotebookJobComponent from './notebookJobs';
 import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
@@ -48,7 +44,7 @@ import { scheduleValueExpression } from '../utils/const';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
-import LabelProperties from '../jobs/labelProperties';
+//import LabelProperties from '../jobs/labelProperties';
 import { eventEmitter } from '../utils/signalEmitter';
 
 interface IDagList {
@@ -91,23 +87,20 @@ const CreateNotebookScheduler = ({
   const [composerList, setComposerList] = useState<string[]>([]);
   const [composerSelected, setComposerSelected] = useState('');
 
-  const [parameterDetail, setParameterDetail] = useState(['']);
-  const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
-  const [keyValidation, setKeyValidation] = useState(-1);
-  const [valueValidation, setValueValidation] = useState(-1);
-  const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
+  // const [parameterDetail, setParameterDetail] = useState(['']);
+  // const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
 
   const [selectedMode, setSelectedMode] = useState('cluster');
-  const [clusterList, setClusterList] = useState<string[]>([]);
+  const [clusterList] = useState<string[]>([]);
   const [serverlessList, setServerlessList] = useState<string[]>([]);
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [clusterSelected, setClusterSelected] = useState('');
   const [serverlessSelected, setServerlessSelected] = useState('');
   const [serverlessDataSelected, setServerlessDataSelected] = useState({});
-  const [stopCluster, setStopCluster] = useState(false);
+ // const [stopCluster, setStopCluster] = useState(false);
 
-  const [retryCount, setRetryCount] = useState<number | undefined>(2);
-  const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
+  // const [retryCount, setRetryCount] = useState<number | undefined>(2);
+  // const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
 
   const [emailOnFailure, setEmailOnFailure] = useState(false);
   const [emailOnRetry, setEmailonRetry] = useState(false);
@@ -120,7 +113,7 @@ const CreateNotebookScheduler = ({
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
 
-  const timezones = Object.keys(tzdata.zones).sort();
+  //const timezones = Object.keys(tzdata.zones).sort();
 
   const [createCompleted, setCreateCompleted] =
     context !== '' ? useState(false) : useState(true);
@@ -137,7 +130,6 @@ const CreateNotebookScheduler = ({
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
-  const [isHiddenField] = useState(false);
 
   const [isJobFormVisible, setIsJobFormVisible] = useState(true);
 
@@ -148,21 +140,6 @@ const CreateNotebookScheduler = ({
   eventEmitter.on('closeTaskForm', () => {
     setIsJobFormVisible(true);
   });
-
-  //const [jobType, setJobType]=useState<string[]>([]);
-  const jobType = [
-    'Run a notebook on dataproc serverless',
-    'Run a notebook on dataproc cluster',
-    'Execute a SQL on BigQuery',
-    'Move, copy, delete, etc. files & folders on GCS',
-    'Ingest data into a BQ table from GCS',
-    'Export data from BQ table to GCS'
-  ];
-  const [jobTypeSelected, setJobTypeSelected] = useState('');
-
-  const handleJobTypeChange = (_event: any, value: any) => {
-    setJobTypeSelected(value);
-  };
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
@@ -189,23 +166,9 @@ const CreateNotebookScheduler = ({
   //   console.log("updated isformVisible",isFormVisible)
   //  }
 
-  const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
+  //const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
 
-  const listClustersAPI = async () => {
-    await SchedulerService.listClustersAPIService(
-      setClusterList,
-      setIsLoadingKernelDetail
-    );
-  };
-
-  const listSessionTemplatesAPI = async () => {
-    await SchedulerService.listSessionTemplatesAPIService(
-      setServerlessDataList,
-      setServerlessList,
-      setIsLoadingKernelDetail
-    );
-  };
-
+ console.log(isLoadingKernelDetail,serverlessList,serverlessDataSelected)//remove
   const listComposersAPI = async () => {
     await SchedulerService.listComposersAPIService(setComposerList);
   };
@@ -238,62 +201,28 @@ const CreateNotebookScheduler = ({
     }
   };
 
-  const handleSelectedModeChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setSelectedMode((event.target as HTMLInputElement).value);
-  };
+  // const handleSelectedModeChange = (
+  //   event: React.ChangeEvent<HTMLInputElement>
+  // ) => {
+  //   setSelectedMode((event.target as HTMLInputElement).value);
+  // };
 
-  const handleSchedulerModeChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const newValue = (event.target as HTMLInputElement).value;
-    setScheduleMode(newValue as scheduleMode);
-    if (newValue === 'runSchedule' && scheduleValue === '') {
-      setScheduleValue(scheduleValueExpression);
-    }
-  };
+  // const handleSchedulerModeChange = (
+  //   event: React.ChangeEvent<HTMLInputElement>
+  // ) => {
+  //   const newValue = (event.target as HTMLInputElement).value;
+  //   setScheduleMode(newValue as scheduleMode);
+  //   if (newValue === 'runSchedule' && scheduleValue === '') {
+  //     setScheduleValue(scheduleValueExpression);
+  //   }
+  // };
 
-  const handleClusterSelected = (data: string | null) => {
-    if (data) {
-      const selectedCluster = data.toString();
-      setClusterSelected(selectedCluster);
-    }
-  };
-
-  const handleTimeZoneSelected = (data: string | null) => {
-    if (data) {
-      const selectedTimeZone = data.toString();
-      setTimeZoneSelected(selectedTimeZone);
-    }
-  };
-
-  const handleServerlessSelected = (data: string | null) => {
-    if (data) {
-      const selectedServerless = data.toString();
-      const selectedData: any = serverlessDataList.filter((serverless: any) => {
-        return serverless.serverlessName === selectedServerless;
-      });
-      setServerlessDataSelected(selectedData[0].serverlessData);
-      setServerlessSelected(selectedServerless);
-    }
-  };
-
-  const handleStopCluster = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setStopCluster(event.target.checked);
-  };
-
-  const handleRetryCount = (data: number) => {
-    if (data >= 0) {
-      setRetryCount(data);
-    }
-  };
-
-  const handleRetryDelay = (data: number) => {
-    if (data >= 0) {
-      setRetryDelay(data);
-    }
-  };
+  // const handleTimeZoneSelected = (data: string | null) => {
+  //   if (data) {
+  //     const selectedTimeZone = data.toString();
+  //     setTimeZoneSelected(selectedTimeZone);
+  //   }
+  // };
 
   const handleFailureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmailOnFailure(event.target.checked);
@@ -315,26 +244,26 @@ const CreateNotebookScheduler = ({
     let outputFormats = [];
     outputFormats.push('ipynb');
 
-    let randomDagId = uuidv4();
+    //let randomDagId = uuidv4();
     const payload = {
-      input_filename: inputFileSelected,
+      //input_filename: inputFileSelected,
       composer_environment_name: composerSelected,
-      output_formats: outputFormats,
-      parameters: parameterDetailUpdated,
-      mode_selected: selectedMode,
-      retry_count: retryCount,
-      retry_delay: retryDelay,
+     // output_formats: outputFormats,
+     // parameters: parameterDetailUpdated,
+      //mode_selected: selectedMode,<-------check
+      //retry_count: retryCount,
+      //retry_delay: retryDelay,
       email_failure: emailOnFailure,
       email_delay: emailOnRetry,
       email_success: emailOnSuccess,
       email: emailList,
       name: jobNameSelected,
       schedule_value: scheduleMode === 'runNow' ? '' : scheduleValue,
-      stop_cluster: stopCluster,
-      dag_id: randomDagId,
+     // stop_cluster: stopCluster,
+     // dag_id: randomDagId,
       time_zone: scheduleMode !== 'runNow' ? timeZoneSelected : '',
-      [selectedMode === 'cluster' ? 'cluster_name' : 'serverless_name']:
-        selectedMode === 'cluster' ? clusterSelected : serverlessDataSelected,
+      // [selectedMode === 'cluster' ? 'cluster_name' : 'serverless_name']:
+      //   selectedMode === 'cluster' ? clusterSelected : serverlessDataSelected,
       nodes: nodes,
       edges: edges
     };
@@ -436,19 +365,19 @@ const CreateNotebookScheduler = ({
   useEffect(() => {
     listComposersAPI();
 
-    if (context !== '') {
-      setInputFileSelected(context.path);
-      if (context.path.toLowerCase().startsWith('bigframes')) {
-        setIsBigQueryNotebook(true);
-        setSelectedMode('serverless');
-      }
-    }
-    setJobNameSelected('');
-    if (!editMode) {
-      setParameterDetail([]);
-      console.log(parameterDetail);
-      setParameterDetailUpdated([]);
-    }
+    // if (context !== '') {
+    //   setInputFileSelected(context.path);
+    //   if (context.path.toLowerCase().startsWith('bigframes')) {
+    //     setIsBigQueryNotebook(true);
+    //     setSelectedMode('serverless');
+    //   }
+    // }
+    // setJobNameSelected('');
+    // if (!editMode) {
+    //   setParameterDetail([]);
+    //   console.log(parameterDetail);
+    //   setParameterDetailUpdated([]);
+    // }
   }, []);
 
   useEffect(() => {
@@ -466,29 +395,6 @@ const CreateNotebookScheduler = ({
     }
   }, [serverlessDataList, clusterList]);
 
-  useEffect(() => {
-    if (selectedMode === 'cluster') {
-      listClustersAPI();
-    } else {
-      listSessionTemplatesAPI();
-    }
-  }, [selectedMode]);
-
-  useEffect(() => {
-    // console.log("nodes",nodes)
-    // let allNodesHaveInputFiles = true;
-    // nodes.forEach((e: INodeData) => {
-    //   const inputFile = e.data.inputFile;
-    //   if (!inputFile || inputFile.trim() === '') {
-    //     allNodesHaveInputFiles = false;
-    //   } else {
-    //     allInputFiles.push(inputFile);
-    //   }
-    // });
-    // console.log("flag", allNodesHaveInputFiles)
-    // setInputFilesValidation(allNodesHaveInputFiles);
-  }, [nodes]);
-
   return (
     <>
       {createCompleted ? (
@@ -502,8 +408,8 @@ const CreateNotebookScheduler = ({
           setScheduleMode={setScheduleMode}
           setScheduleValue={setScheduleValue}
           setInputFileSelected={setInputFileSelected}
-          setParameterDetail={setParameterDetail}
-          setParameterDetailUpdated={setParameterDetailUpdated}
+          // setParameterDetail={setParameterDetail}
+          //setParameterDetailUpdated={setParameterDetailUpdated}
           setSelectedMode={setSelectedMode}
           setClusterSelected={setClusterSelected}
           setServerlessSelected={setServerlessSelected}
@@ -511,13 +417,13 @@ const CreateNotebookScheduler = ({
           serverlessDataList={serverlessDataList}
           setServerlessDataList={setServerlessDataList}
           setServerlessList={setServerlessList}
-          setRetryCount={setRetryCount}
-          setRetryDelay={setRetryDelay}
+         // setRetryCount={setRetryCount}
+          //setRetryDelay={setRetryDelay}
           setEmailOnFailure={setEmailOnFailure}
           setEmailonRetry={setEmailonRetry}
           setEmailOnSuccess={setEmailOnSuccess}
           setEmailList={setEmailList}
-          setStopCluster={setStopCluster}
+          //setStopCluster={setStopCluster}
           setTimeZoneSelected={setTimeZoneSelected}
           setEditMode={setEditMode}
           setIsLoadingKernelDetail={setIsLoadingKernelDetail}
@@ -544,28 +450,6 @@ const CreateNotebookScheduler = ({
                 Create A Scheduled Job
               </div>
             )}
-            {/* <div >//className="save-overlay" */}
-            {/* <div className="create-text"> */}
-            {/* <Button
-                onClick={() => {
-                  if (!isSaveDisabled()) {
-                    handleCreateJobScheduler();
-                  }
-                }}
-                variant="contained"
-                disabled={isSaveDisabled()}
-                aria-label={'SAVE'}//{editMode ? ' Update Schedule' : 'Create Schedule'}
-              >
-                <div>
-                  {editMode
-                    ? creatingScheduler
-                      ? 'UPDATING'
-                      : 'UPDATE'
-                    : creatingScheduler
-                    ? 'CREATING'
-                    : 'CREATE'}
-                </div>
-              </Button> */}
             <div className="button-container">
               <Button
                 variant="outlined"
@@ -585,7 +469,7 @@ const CreateNotebookScheduler = ({
               </Button>
             </div>
           </div>
-          {/* { isJobFormVisible ? ( */}
+          { isJobFormVisible ? (
           <Grid container spacing={0} style={{ height: '100vh' }}>
             <Grid item xs={9}>
               <GraphicalScheduler
@@ -594,23 +478,13 @@ const CreateNotebookScheduler = ({
                 EdgesChange={handleEdgesChange}
                 app={app}
                 factory={factory}
+                isJobFormVisible={isJobFormVisible}
               />
             </Grid>
-            {isJobFormVisible && (
+            {/* {isJobFormVisible && ( */}
               <Grid item xs={3}>
                 <div>
                   <div className="submit-job-container">
-                    {isHiddenField && (
-                      <Autocomplete
-                        className="create-scheduler-style"
-                        options={jobType}
-                        value={jobTypeSelected}
-                        onChange={handleJobTypeChange}
-                        renderInput={params => (
-                          <TextField {...params} label="Job Type" />
-                        )}
-                      />
-                    )}
                     <div className="create-scheduler-form-element">
                       <Input
                         className="create-scheduler-style"
@@ -678,168 +552,6 @@ const CreateNotebookScheduler = ({
                         disabled={editMode}
                       />
                     </div>
-                    {isHiddenField && (
-                      <>
-                        <div className="create-scheduler-label">
-                          Output formats
-                        </div>
-                        <div className="create-scheduler-form-element">
-                          <FormGroup row={true}>
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  size="small"
-                                  readOnly
-                                  checked={true}
-                                  defaultChecked={true}
-                                />
-                              }
-                              className="create-scheduler-label-style"
-                              label={
-                                <Typography sx={{ fontSize: 13 }}>
-                                  Notebook
-                                </Typography>
-                              }
-                            />
-                          </FormGroup>
-                        </div>
-                        <div className="create-scheduler-label">Parameters</div>
-                        <>
-                          <LabelProperties
-                            labelDetail={parameterDetail}
-                            setLabelDetail={setParameterDetail}
-                            labelDetailUpdated={parameterDetailUpdated}
-                            setLabelDetailUpdated={setParameterDetailUpdated}
-                            buttonText="ADD PARAMETER"
-                            keyValidation={keyValidation}
-                            setKeyValidation={setKeyValidation}
-                            valueValidation={valueValidation}
-                            setValueValidation={setValueValidation}
-                            duplicateKeyError={duplicateKeyError}
-                            setDuplicateKeyError={setDuplicateKeyError}
-                            fromPage="scheduler"
-                          />
-                        </>
-                        {!isBigQueryNotebook && (
-                          <div className="create-scheduler-form-element">
-                            <FormControl>
-                              <RadioGroup
-                                aria-labelledby="demo-controlled-radio-buttons-group"
-                                name="controlled-radio-buttons-group"
-                                value={selectedMode}
-                                onChange={handleSelectedModeChange}
-                                row={true}
-                              >
-                                <FormControlLabel
-                                  value="cluster"
-                                  control={<Radio size="small" />}
-                                  label={
-                                    <Typography sx={{ fontSize: 13 }}>
-                                      Cluster
-                                    </Typography>
-                                  }
-                                />
-                                <FormControlLabel
-                                  value="serverless"
-                                  className="create-scheduler-label-style"
-                                  control={<Radio size="small" />}
-                                  label={
-                                    <Typography sx={{ fontSize: 13 }}>
-                                      Serverless
-                                    </Typography>
-                                  }
-                                />
-                              </RadioGroup>
-                            </FormControl>
-                          </div>
-                        )}
-                        <div className="create-scheduler-form-element">
-                          {isLoadingKernelDetail && (
-                            <CircularProgress
-                              size={18}
-                              aria-label="Loading Spinner"
-                              data-testid="loader"
-                            />
-                          )}
-                          {!isBigQueryNotebook &&
-                            selectedMode === 'cluster' &&
-                            !isLoadingKernelDetail && (
-                              <Autocomplete
-                                className="create-scheduler-style"
-                                options={clusterList}
-                                value={clusterSelected}
-                                onChange={(_event, val) =>
-                                  handleClusterSelected(val)
-                                }
-                                renderInput={params => (
-                                  <TextField {...params} label="Cluster*" />
-                                )}
-                              />
-                            )}
-                          {selectedMode === 'serverless' &&
-                            !isLoadingKernelDetail && (
-                              <Autocomplete
-                                className="create-scheduler-style"
-                                options={serverlessList}
-                                value={serverlessSelected}
-                                onChange={(_event, val) =>
-                                  handleServerlessSelected(val)
-                                }
-                                renderInput={params => (
-                                  <TextField {...params} label="Serverless*" />
-                                )}
-                              />
-                            )}
-                        </div>
-                        {!isBigQueryNotebook && selectedMode === 'cluster' && (
-                          <div className="create-scheduler-form-element">
-                            <FormGroup row={true}>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    size="small"
-                                    checked={stopCluster}
-                                    onChange={handleStopCluster}
-                                  />
-                                }
-                                className="create-scheduler-label-style"
-                                label={
-                                  <Typography
-                                    sx={{ fontSize: 13 }}
-                                    title="Stopping cluster abruptly will impact if any other job is running on the cluster at the moment"
-                                  >
-                                    Stop the cluster after notebook execution
-                                  </Typography>
-                                }
-                              />
-                            </FormGroup>
-                          </div>
-                        )}
-                        <div className="create-scheduler-form-element">
-                          <Input
-                            className="create-scheduler-style"
-                            onChange={e =>
-                              handleRetryCount(Number(e.target.value))
-                            }
-                            value={retryCount}
-                            Label="Retry count"
-                            type="number"
-                          />
-                        </div>
-                        <div className="create-scheduler-form-element">
-                          <Input
-                            className="create-scheduler-style"
-                            onChange={e =>
-                              handleRetryDelay(Number(e.target.value))
-                            }
-                            value={retryDelay}
-                            Label="Retry delay (minutes)"
-                            type="number"
-                          />
-                        </div>
-                      </>
-                    )}
-
                     <div className="create-scheduler-form-element">
                       <FormGroup row={true}>
                         <FormControlLabel
@@ -913,65 +625,6 @@ const CreateNotebookScheduler = ({
                           </div>
                         </div>
                       )}
-                    {isHiddenField && (
-                      <>
-                        <div className="create-scheduler-label">Schedule</div>
-                        <div className="create-scheduler-form-element">
-                          <FormControl>
-                            <RadioGroup
-                              aria-labelledby="demo-controlled-radio-buttons-group"
-                              name="controlled-radio-buttons-group"
-                              value={scheduleMode}
-                              onChange={handleSchedulerModeChange}
-                            >
-                              <FormControlLabel
-                                value="runNow"
-                                className="create-scheduler-label-style"
-                                control={<Radio size="small" />}
-                                label={
-                                  <Typography sx={{ fontSize: 13 }}>
-                                    Run now
-                                  </Typography>
-                                }
-                              />
-                              <FormControlLabel
-                                value="runSchedule"
-                                className="create-scheduler-label-style"
-                                control={<Radio size="small" />}
-                                label={
-                                  <Typography sx={{ fontSize: 13 }}>
-                                    Run on a schedule
-                                  </Typography>
-                                }
-                              />
-                            </RadioGroup>
-                          </FormControl>
-                        </div>
-                        {scheduleMode === 'runSchedule' && (
-                          <>
-                            <div className="create-scheduler-form-element">
-                              <Cron
-                                value={scheduleValue}
-                                setValue={setScheduleValue}
-                              />
-                            </div>
-                            <div className="create-scheduler-form-element">
-                              <Autocomplete
-                                className="create-scheduler-style"
-                                options={timezones}
-                                value={timeZoneSelected}
-                                onChange={(_event, val) =>
-                                  handleTimeZoneSelected(val)
-                                }
-                                renderInput={params => (
-                                  <TextField {...params} label="Time Zone" />
-                                )}
-                              />
-                            </div>
-                          </>
-                        )}
-                      </>
-                    )}
                     <div className="save-overlay">
                       <Button
                         onClick={() => {
@@ -1007,20 +660,21 @@ const CreateNotebookScheduler = ({
                   </div>
                 </div>
               </Grid>
-            )}
+            {/* )} */}
           </Grid>
-          {/* // ) */}
-          {/* :(
-            <Grid container spacing={0} style={{ height: '100vh' }}>
+          )
+          :(
+            // <Grid container spacing={0} style={{ height: '100vh' }}>
               <GraphicalScheduler
                 inputFileSelected={context.path}
                 NodesChange={handleNodesChange}
                 EdgesChange={handleEdgesChange}
                 app={app}
                 factory={factory}
+                isJobFormVisible={isJobFormVisible}
               />
-            </Grid>
-          )} */}
+            // </Grid>
+          )}
         </>
       )}
     </>

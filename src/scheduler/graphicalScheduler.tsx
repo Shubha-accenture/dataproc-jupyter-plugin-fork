@@ -32,6 +32,7 @@ interface IGraphicalSchedulerProps {
   EdgesChange: (updatedEdges: any) => void;
   app: JupyterLab;
   factory: IFileBrowserFactory;
+  isJobFormVisible: boolean;
 }
 const nodeTypes = { notebookNode: NotebookNode };
 
@@ -40,7 +41,8 @@ const GraphicalScheduler = ({
   NodesChange,
   EdgesChange,
   app,
-  factory
+  factory,
+  isJobFormVisible
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
@@ -114,7 +116,7 @@ const GraphicalScheduler = ({
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
-
+  console.log(isTaskFormVisible);
   const { screenToFlowPosition } = useReactFlow();
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections
@@ -263,8 +265,7 @@ const GraphicalScheduler = ({
   console.log(nodes, edges);
   return (
     <>
-      <Grid container spacing={0} style={{ height: '100vh' }}>
-        {/* <Grid item xs={9}>  */}
+      {isJobFormVisible ? (
         <div className="wrapper" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
@@ -284,8 +285,32 @@ const GraphicalScheduler = ({
             <Background color="#aaa" gap={6} />
           </ReactFlow>
         </div>
-        {/* </Grid> */}
-        {isTaskFormVisible && clickedNodeData !== null && (
+      ) : (
+        <Grid container spacing={0} style={{ height: '100vh' }}>
+          <Grid item xs={9}>
+            <div className="wrapper" ref={reactFlowWrapper}>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onConnectStart={onConnectStart}
+                onConnectEnd={onConnectEnd}
+                //deleteKeyCode={null : 'Delete'}
+                fitView
+                fitViewOptions={{ padding: 2 }}
+                nodeOrigin={[0.5, 0]}
+                nodeTypes={nodeTypes}
+              >
+                <Controls />
+                <Background color="#aaa" gap={6} />
+              </ReactFlow>
+            </div>
+          </Grid>
+          {/* {
+        // isTaskFormVisible
+        //  clickedNodeData !== null && ( */}
           <Grid item xs={3}>
             <ConfigureForm
               id={clickedNodeId}
@@ -293,8 +318,9 @@ const GraphicalScheduler = ({
               nodes={nodes}
             />
           </Grid>
-        )}
-      </Grid>
+          {/* )} */}
+        </Grid>
+      )}
     </>
   );
 };
@@ -307,6 +333,7 @@ export default (props: IGraphicalSchedulerProps) => (
       EdgesChange={props.EdgesChange}
       app={props.app}
       factory={props.factory}
+      isJobFormVisible={props.isJobFormVisible}
     />
   </ReactFlowProvider>
 );

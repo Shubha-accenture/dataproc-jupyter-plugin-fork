@@ -102,11 +102,15 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     data.stop_cluster = event.target.checked;
   };
   useEffect(() => {
-    // setInputFileSelectedLocal(data.inputFile);
+
+    if(data){
+          // setInputFileSelectedLocal(data.inputFile);
     // setRetryCount(data.retryCount);
     // setRetryDelay(data.retryDelay);
-    data.parameter = parameterDetail;
-  }, [data]);
+    data.parameter = parameterDetailUpdated;
+    }
+    console.log(data, parameterDetailUpdated)
+  }, [parameterDetailUpdated]);
 
   useEffect(() => {
     if (selectedMode === 'cluster') {
@@ -152,6 +156,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
               setValueValidation={setValueValidation}
               duplicateKeyError={duplicateKeyError}
               setDuplicateKeyError={setDuplicateKeyError}
+              data={data}
               fromPage="react-flow"
             />
             <div className="create-scheduler-form-element">

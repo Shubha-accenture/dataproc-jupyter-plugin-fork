@@ -23,21 +23,21 @@ import { JupyterLab } from '@jupyterlab/application';
 import { scheduleMode } from '../utils/const';
 
 interface IPayload {
-  input_filename: string;
+  //input_filename: string;
   composer_environment_name: string;
-  output_formats: string[];
-  parameters: string[];
-  cluster_name?: string;
-  serverless_name?: {} | undefined;
-  mode_selected: string;
+  //output_formats: string[];
+  //parameters: string[];
+ // cluster_name?: string;
+  //serverless_name?: {} | undefined;
+  //mode_selected: string;
   email_failure: boolean;
   email_delay: boolean;
   email: string[];
   name: string;
   schedule_value: string;
-  stop_cluster: boolean;
+ // stop_cluster: boolean;
   time_zone?: string;
-  dag_id: string;
+  //dag_id: string;
 }
 
 interface IUpdateSchedulerAPIResponse {
