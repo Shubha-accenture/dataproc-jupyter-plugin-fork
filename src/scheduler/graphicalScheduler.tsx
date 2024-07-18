@@ -34,7 +34,7 @@ interface IGraphicalSchedulerProps {
   factory: IFileBrowserFactory;
   isJobFormVisible: boolean;
 }
-const nodeTypes = { notebookNode: NotebookNode };
+const nodeTypes = { composerNode: NotebookNode };
 
 const GraphicalScheduler = ({
   inputFileSelected,
@@ -53,66 +53,66 @@ const GraphicalScheduler = ({
   const initialNode = [
     {
       id: '0',
-      type: 'notebookNode',
+      type: 'composerNode',
       position: { x: 0, y: 0 },
       data: {
         nodetype: '',
-        inputFile: inputFileSelected,
-        retryCount: 0,
-        retryDelay: 0,
-        parameter: [],
-        stop_cluster: '',
-        cluster_name: '',
-        serverless: ''
+        // inputFile: inputFileSelected,
+        // retryCount: 0,
+        // retryDelay: 0,
+        // parameter: [],
+        // stop_cluster: '',
+        // cluster_name: '',
+        // serverless: ''
       }
     }
   ];
 
-  const triggerNode = [
-    {
-      id: '0',
-      type: 'notebookNode',
-      position: { x: 0, y: -100 }, //{ x: 0, y: 0 },
-      data: {
-        nodetype: '',
-        inputFile: inputFileSelected,
-        retryCount: 0,
-        retryDelay: 0,
-        parameter: [],
-        stop_cluster: '',
-        cluster_name: '',
-        serverless: ''
-      }
-    },
-    {
-      id: '1',
-      type: 'notebookNode',
-      position: { x: 0, y: 100 }, // { x: , y: },
-      data: {
-        nodetype: '',
-        inputFile: inputFileSelected,
-        retryCount: 0,
-        retryDelay: 0,
-        parameter: [],
-        stop_cluster: '',
-        cluster_name: '',
-        serverless: ''
-      }
-    }
-  ];
+  // const triggerNode = [
+  //   {
+  //     id: '0',
+  //     type: 'composerNode',
+  //     position: { x: 0, y: -100 }, //{ x: 0, y: 0 },
+  //     data: {
+  //       nodetype: '',
+  //       // inputFile: inputFileSelected,
+  //       // retryCount: 0,
+  //       // retryDelay: 0,
+  //       // parameter: [],
+  //       // stop_cluster: '',
+  //       // cluster_name: '',
+  //       // serverless: ''
+  //     }
+  //   },
+  //   {
+  //     id: '1',
+  //     type: 'composerNode',
+  //     position: { x: 0, y: 100 }, // { x: , y: },
+  //     data: {
+  //       nodetype: '',
+  //       // inputFile: inputFileSelected,
+  //       // retryCount: 0,
+  //       // retryDelay: 0,
+  //       // parameter: [],
+  //       // stop_cluster: '',
+  //       // cluster_name: '',
+  //       // serverless: ''
+  //     }
+  //   }
+  // ];
 
-  const triggerEdge = [
-    {
-      id: '1',
-      source: '0',
-      target: '1'
-    }
-  ];
+  // const triggerEdge = [
+  //   {
+  //     id: '1',
+  //     source: '0',
+  //     target: '1'
+  //   }
+  // ];
 
-  const defaultNode = inputFileSelected ? triggerNode : initialNode;
-  const defaultEdge = inputFileSelected ? triggerEdge : [];
-  const [nodes, setNodes, onNodesChange] = useNodesState(defaultNode);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdge);
+  // const defaultNode = inputFileSelected ? triggerNode : initialNode;
+  // const defaultEdge = inputFileSelected ? triggerEdge : [];
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
@@ -148,20 +148,20 @@ const GraphicalScheduler = ({
           const newNode = {
             id: nodeId,
             label: `Notebook ${id}`,
-            type: 'notebookNode',
+            type: 'composerNode',
             position: screenToFlowPosition({
               x: e.clientX,
               y: e.clientY
             }),
             data: {
               nodetype: '',
-              inputFile: inputFileSelected,
-              retryCount: 0,
-              retryDelay: 0,
-              parameter: [],
-              stop_cluster: '',
-              cluster_name: '',
-              serverless: ''
+              // inputFile: inputFileSelected,
+              // retryCount: 0,
+              // retryDelay: 0,
+              // parameter: [],
+              // stop_cluster: '',
+              // cluster_name: '',
+              // serverless: ''
             },
             origin: [0.5, 0.0]
           };

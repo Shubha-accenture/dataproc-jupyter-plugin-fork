@@ -43,14 +43,14 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
         />
         <div className="node-content">
           <div>
-            {(nodeType === 'Run a notebook on dataproc serverless' ||
-              nodeType === 'Run a notebook on dataproc cluster') && (
+            {(nodeType === 'serverless' ||
+              nodeType === 'cluster') && (
               <iconCalendarRange.react
                 tag="div"
                 className="logo-alignment-react-flow"
               />
             )}
-            {nodeType === 'Execute a SQL on BigQuery' && (
+            {nodeType === 'sql' && (
               <iconSaveToBigQuery.react
                 tag="div"
                 className="logo-alignment-react-flow"
@@ -58,7 +58,7 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
             )}
           </div>
           <div className="custom-node__header">
-            {id}.{id === '0' && data.inputFile ? 'Trigger node' : 'Notebook'}
+            {id}.{'Notebook'}
           </div>
         </div>
         <Handle

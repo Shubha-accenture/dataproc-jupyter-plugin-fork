@@ -7,7 +7,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Cron } from 'react-js-cron';
 import tzdata from 'tzdata';
 import { scheduleValueExpression } from '../utils/const';
@@ -28,15 +28,25 @@ function TriggerJobForm({ id, data }: any) {
     if (newValue === 'runSchedule' && scheduleValue === '') {
       setScheduleValue(scheduleValueExpression);
     }
+    data.schedule_value = scheduleValue;
+    data.time_zone =timeZoneSelected;
   };
 
-  const handleTimeZoneSelected = (data: string | null) => {
-    if (data) {
-      const selectedTimeZone = data.toString();
+  const handleTimeZoneSelected = (value: string | null) => {
+    if (value) {
+      const selectedTimeZone = value.toString();
       setTimeZoneSelected(selectedTimeZone);
+      data.time_zone = selectedTimeZone;
     }
   };
 
+  useEffect(() => {
+    if (scheduleMode === 'runNow') {
+      data.schedule_value = '';
+      data.time_zone = '';
+    }
+  }, [scheduleMode]);
+  console.log(data);
   return (
     <>
       {/* { isFormVisible && */}

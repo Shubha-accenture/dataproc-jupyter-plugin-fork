@@ -6,22 +6,66 @@ import TriggerJobForm from './triggerJobForm';
 import { LabIcon } from '@jupyterlab/ui-components';
 import searchClearIcon from '../../style/icons/search_clear_icon.svg';
 
+interface ClusterData {
+  inputFile: ''; //inputFileSelected;
+  retryCount: 0;
+  retryDelay: 0;
+  parameter: [];
+  stop_cluster: '';
+  cluster_name: '';
+}
+interface ServerlessData {
+  inputFile: ''; //inputFileSelected;
+  retryCount: 0;
+  retryDelay: 0;
+  parameter: [];
+  serverless: '';
+}
+interface TriggerData {
+  schedule_value: '';
+  time_zone: '';
+}
+
 const iconSearchClear = new LabIcon({
   name: 'launcher:search-clear-icon',
   svgstr: searchClearIcon
 });
 
 function ConfigureForm({ id, data, nodes }: any) {
- // const [isFormVisible, setIsFormVisible] = useState(true);
   const nodeTypes = [
-    'Run a notebook on dataproc serverless',
-    'Run a notebook on dataproc cluster',
-    'Execute a SQL on BigQuery',
-    'Move, copy, delete, etc. files & folders on GCS',
-    'Ingest data into a BQ table from GCS',
-    'Export data from BQ table to GCS',
-    'Trigger Node'
+    { key: 'serverless', label: 'Run a notebook on dataproc serverless' },
+    { key: 'cluster', label: 'Run a notebook on dataproc cluster' },
+    { key: 'sql', label: 'Execute a SQL on BigQuery' },
+    {
+      key: 'gcs_operations',
+      label: 'Move, copy, delete, etc. files & folders on GCS'
+    },
+    { key: 'ingest_data', label: 'Ingest data into a BQ table from GCS' },
+    { key: 'export_data', label: 'Export data from BQ table to GCS' },
+    { key: 'trigger', label: 'Trigger Node' }
   ];
+
+  const initialClusterData: ClusterData = {
+    inputFile: '',
+    retryCount: 0,
+    retryDelay: 0,
+    parameter: [],
+    stop_cluster: '',
+    cluster_name: ''
+  };
+
+  const initialServerlessData: ServerlessData = {
+    inputFile: '',
+    retryCount: 0,
+    retryDelay: 0,
+    parameter: [],
+    serverless: ''
+  };
+
+  const initialTriggerData: TriggerData = {
+    schedule_value: '',
+    time_zone: ''
+  };
 
   //const filteredNodeTypes = id === 0 ? nodeTypes : nodeTypes.filter(type => type !== 'Trigger Node');
   const defaultNodeType = id === '0' ? 'Trigger Node' : '';
@@ -30,17 +74,30 @@ function ConfigureForm({ id, data, nodes }: any) {
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
   const [previousNodeType, setPreviousNodeType] = useState(defaultNodeType);
 
-  const handleNodeTypeChange = (value: any) => {
-    setnodeTypeSelected(value);
-    eventEmitter.emit(`nodeType`, value, id);
-    data.nodetype = value;
-    setPreviousNodeType(nodeTypeSelected);
-  };
+  // const handleNodeTypeChange = (value: any) => {
+  //   setnodeTypeSelected(value);
+  //   eventEmitter.emit(`nodeType`, value, id);
+  //   data.nodetype = value;
+  //   setPreviousNodeType(nodeTypeSelected);
 
+  // };
+
+  const handleNodeTypeChange = (value: string | null) => {
+    if (value) {
+      setnodeTypeSelected(value);
+      eventEmitter.emit(`nodeType`, value, id);
+      if (value === 'trigger') {
+        setClickedNodeData(initialTriggerData);
+      } else if (value === 'serverless') {
+        setClickedNodeData(initialServerlessData);
+      } else if (value === 'cluster') {
+        setClickedNodeData(initialClusterData);
+      }
+      data.nodetype = value;
+      setPreviousNodeType(nodeTypeSelected);
+    }
+  };
   const handleCancel = () => {
-    // setIsFormVisible(false);
-    // //eventEmitter.emit(`closeForm`, isFormVisible);
-    // console.log('form cancel', isFormVisible);
     eventEmitter.emit(`closeForm`, false);
   };
 
@@ -70,7 +127,7 @@ function ConfigureForm({ id, data, nodes }: any) {
                 />
               </IconButton>
             </div>
-            <Autocomplete
+            {/* <Autocomplete
               className="create-scheduler-style"
               options={nodeTypes} //{filteredNodeTypes}
               value={nodeTypeSelected}
@@ -79,18 +136,30 @@ function ConfigureForm({ id, data, nodes }: any) {
               renderInput={params => (
                 <TextField {...params} label="Node Type*" />
               )}
+            /> */}
+            <Autocomplete
+              className="create-scheduler-style"
+              options={nodeTypes}
+              getOptionLabel={option => option.label}
+              value={nodeTypes.find(option => option.key === nodeTypeSelected)}
+              onChange={(_event, value) =>
+                handleNodeTypeChange(value?.key || null)
+              }
+              renderInput={params => (
+                <TextField {...params} label="Node Type*" />
+              )}
             />
-            {nodeTypeSelected === 'Trigger Node' && (
+            {nodeTypeSelected === 'trigger' && (
               <TriggerJobForm id={id} data={clickedNodeData} />
             )}
-            {nodeTypeSelected === 'Run a notebook on dataproc serverless' && (
+            {nodeTypeSelected === 'serverless' && (
               <ClusterServerlessForm
                 id={id}
                 data={clickedNodeData}
                 mode={'serverless'}
               />
             )}
-            {nodeTypeSelected === 'Run a notebook on dataproc cluster' && (
+            {nodeTypeSelected === 'cluster' && (
               <ClusterServerlessForm
                 id={id}
                 data={clickedNodeData}
