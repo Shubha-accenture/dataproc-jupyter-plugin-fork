@@ -13,7 +13,7 @@ import tzdata from 'tzdata';
 import { scheduleValueExpression } from '../utils/const';
 import { scheduleMode } from '../utils/const';
 
-function TriggerJobForm({ id, data }: any) {
+function TriggerJobForm({ id, data, nodes }: any) {
   const [scheduleMode, setScheduleMode] = useState<scheduleMode>('runNow');
   const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
   const [timeZoneSelected, setTimeZoneSelected] = useState(
@@ -30,6 +30,9 @@ function TriggerJobForm({ id, data }: any) {
     }
     data.schedule_value = scheduleValue;
     data.time_zone =timeZoneSelected;
+    let clickedNode = nodes.find((node: any) => node.id === id);
+    clickedNode.data=data;
+    console.log("trigger",data,nodes)
   };
 
   const handleTimeZoneSelected = (value: string | null) => {
@@ -37,16 +40,18 @@ function TriggerJobForm({ id, data }: any) {
       const selectedTimeZone = value.toString();
       setTimeZoneSelected(selectedTimeZone);
       data.time_zone = selectedTimeZone;
+      let clickedNode = nodes.find((node: any) => node.id === id);
+      clickedNode.data=data;
     }
   };
 
   useEffect(() => {
-    if (scheduleMode === 'runNow') {
+    if (scheduleMode === 'runNow' && data.schedule_value==="") {
       data.schedule_value = '';
       data.time_zone = '';
     }
   }, [scheduleMode]);
-  console.log(data);
+  //console.log(data);
   return (
     <>
       {/* { isFormVisible && */}

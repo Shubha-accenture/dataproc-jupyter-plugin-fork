@@ -32,6 +32,7 @@ const iconSearchClear = new LabIcon({
 });
 
 function ConfigureForm({ id, data, nodes }: any) {
+
   const nodeTypes = [
     { key: 'serverless', label: 'Run a notebook on dataproc serverless' },
     { key: 'cluster', label: 'Run a notebook on dataproc cluster' },
@@ -68,11 +69,11 @@ function ConfigureForm({ id, data, nodes }: any) {
   };
 
   //const filteredNodeTypes = id === 0 ? nodeTypes : nodeTypes.filter(type => type !== 'Trigger Node');
-  const defaultNodeType = id === '0' ? 'Trigger Node' : '';
+  // const defaultNodeType = id === '0' ? 'Trigger Node' : '';
   //const defaultNodeType = data.inputFile ? 'Trigger Node' : '';
-  const [nodeTypeSelected, setnodeTypeSelected] = useState(defaultNodeType);
+  const [nodeTypeSelected, setnodeTypeSelected] = useState('');
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
-  const [previousNodeType, setPreviousNodeType] = useState(defaultNodeType);
+  const [previousNodeType, setPreviousNodeType] = useState('');
 
   // const handleNodeTypeChange = (value: any) => {
   //   setnodeTypeSelected(value);
@@ -83,15 +84,21 @@ function ConfigureForm({ id, data, nodes }: any) {
   // };
 
   const handleNodeTypeChange = (value: string | null) => {
+    console.log("handleNodetypechange")
     if (value) {
       setnodeTypeSelected(value);
       eventEmitter.emit(`nodeType`, value, id);
       if (value === 'trigger') {
+        let clickedNode = nodes.find((node: any) => node.id === id);
         setClickedNodeData(initialTriggerData);
+        data=initialTriggerData;
+        clickedNode.data=data;
       } else if (value === 'serverless') {
         setClickedNodeData(initialServerlessData);
+        data=initialServerlessData
       } else if (value === 'cluster') {
         setClickedNodeData(initialClusterData);
+        data=initialClusterData;
       }
       data.nodetype = value;
       setPreviousNodeType(nodeTypeSelected);
@@ -102,10 +109,12 @@ function ConfigureForm({ id, data, nodes }: any) {
   };
 
   useEffect(() => {
+    console.log("useeffect",nodes, id, data)
     const clickedNode = nodes.find((node: any) => node.id === id);
+    console.log("clicked node",clickedNode, nodes)
     setClickedNodeData(clickedNode ? clickedNode.data : '');
     setnodeTypeSelected(clickedNode ? clickedNode.data.nodetype : null);
-  }, [nodes, id]);
+  }, [nodes]);
 
   useEffect(() => {
     if (previousNodeType && previousNodeType !== nodeTypeSelected) {
@@ -127,16 +136,6 @@ function ConfigureForm({ id, data, nodes }: any) {
                 />
               </IconButton>
             </div>
-            {/* <Autocomplete
-              className="create-scheduler-style"
-              options={nodeTypes} //{filteredNodeTypes}
-              value={nodeTypeSelected}
-              onChange={(_event, value) => handleNodeTypeChange(value)}
-              // disabled={id==="0"}
-              renderInput={params => (
-                <TextField {...params} label="Node Type*" />
-              )}
-            /> */}
             <Autocomplete
               className="create-scheduler-style"
               options={nodeTypes}
@@ -150,7 +149,7 @@ function ConfigureForm({ id, data, nodes }: any) {
               )}
             />
             {nodeTypeSelected === 'trigger' && (
-              <TriggerJobForm id={id} data={clickedNodeData} />
+              <TriggerJobForm id={id} data={clickedNodeData} nodes={nodes} />
             )}
             {nodeTypeSelected === 'serverless' && (
               <ClusterServerlessForm
