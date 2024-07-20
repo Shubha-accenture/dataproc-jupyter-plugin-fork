@@ -39,8 +39,8 @@ import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
 import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
 import { Button } from '@mui/material';
-import { scheduleMode } from '../utils/const';
-import { scheduleValueExpression } from '../utils/const';
+//import { scheduleMode } from '../utils/const';
+//import { scheduleValueExpression } from '../utils/const';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
@@ -83,17 +83,17 @@ const CreateNotebookScheduler = ({
   factory: IFileBrowserFactory;
 }): JSX.Element => {
   const [jobNameSelected, setJobNameSelected] = useState('');
-  const [inputFileSelected, setInputFileSelected] = useState('');
+  const [inputFileSelected] = useState('');
   const [composerList, setComposerList] = useState<string[]>([]);
   const [composerSelected, setComposerSelected] = useState('');
 
   // const [parameterDetail, setParameterDetail] = useState(['']);
   // const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
 
-  const [selectedMode, setSelectedMode] = useState('cluster');
+  //const [selectedMode, setSelectedMode] = useState('cluster');
   const [clusterList] = useState<string[]>([]);
-  const [serverlessList, setServerlessList] = useState<string[]>([]);
-  const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
+  const [serverlessList] = useState<string[]>([]);
+  const [serverlessDataList] = useState<string[]>([]);
   const [clusterSelected, setClusterSelected] = useState('');
   const [serverlessSelected, setServerlessSelected] = useState('');
   const [serverlessDataSelected, setServerlessDataSelected] = useState({});
@@ -107,11 +107,11 @@ const CreateNotebookScheduler = ({
   const [emailOnSuccess, setEmailOnSuccess] = useState(false);
   const [emailList, setEmailList] = useState<string[]>([]);
 
-  const [scheduleMode, setScheduleMode] = useState<scheduleMode>('runNow');
-  const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
-  const [timeZoneSelected, setTimeZoneSelected] = useState(
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  );
+  //const [scheduleMode, setScheduleMode] = useState<scheduleMode>('runNow');
+  //const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
+  // const [timeZoneSelected, setTimeZoneSelected] = useState(
+  //   Intl.DateTimeFormat().resolvedOptions().timeZone
+  // );
 
   //const timezones = Object.keys(tzdata.zones).sort();
 
@@ -168,7 +168,7 @@ const CreateNotebookScheduler = ({
 
   //const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
 
- console.log(isLoadingKernelDetail,serverlessList,serverlessDataSelected)//remove
+ console.log(isLoadingKernelDetail,serverlessList,serverlessDataSelected,clusterSelected,serverlessSelected,inputFilesValidation)//remove
   const listComposersAPI = async () => {
     await SchedulerService.listComposersAPIService(setComposerList);
   };
@@ -258,10 +258,10 @@ const CreateNotebookScheduler = ({
       email_success: emailOnSuccess,
       email: emailList,
       name: jobNameSelected,
-      schedule_value: scheduleMode === 'runNow' ? '' : scheduleValue,
+      // schedule_value: scheduleMode === 'runNow' ? '' : scheduleValue,
      // stop_cluster: stopCluster,
      // dag_id: randomDagId,
-      time_zone: scheduleMode !== 'runNow' ? timeZoneSelected : '',
+      // time_zone: scheduleMode !== 'runNow' ? timeZoneSelected : '',
       // [selectedMode === 'cluster' ? 'cluster_name' : 'serverless_name']:
       //   selectedMode === 'cluster' ? clusterSelected : serverlessDataSelected,
       nodes: nodes,
@@ -294,17 +294,17 @@ const CreateNotebookScheduler = ({
 
   const isSaveDisabled = () => {
     return (
-      !inputFilesValidation ||
+     // !inputFilesValidation ||
       dagListCall ||
-      creatingScheduler ||
+      //creatingScheduler ||
       jobNameSelected === '' ||
       (!jobNameValidation && !editMode) ||
       (jobNameSpecialValidation && !editMode) ||
       (!jobNameUniqueValidation && !editMode) ||
-      inputFileSelected === '' ||
+     // inputFileSelected === '' ||
       composerSelected === '' ||
-      (selectedMode === 'cluster' && clusterSelected === '') ||
-      (selectedMode === 'serverless' && serverlessSelected === '') ||
+      //(selectedMode === 'cluster' && clusterSelected === '') ||
+      //(selectedMode === 'serverless' && serverlessSelected === '') ||
       ((emailOnFailure || emailOnRetry || emailOnSuccess) &&
         emailList.length === 0)
     );
@@ -405,18 +405,18 @@ const CreateNotebookScheduler = ({
           setCreateCompleted={setCreateCompleted}
           setJobNameSelected={setJobNameSelected}
           setComposerSelected={setComposerSelected}
-          setScheduleMode={setScheduleMode}
-          setScheduleValue={setScheduleValue}
-          setInputFileSelected={setInputFileSelected}
+          //setScheduleMode={setScheduleMode}
+          //setScheduleValue={setScheduleValue}
+          //setInputFileSelected={setInputFileSelected}
           // setParameterDetail={setParameterDetail}
           //setParameterDetailUpdated={setParameterDetailUpdated}
-          setSelectedMode={setSelectedMode}
-          setClusterSelected={setClusterSelected}
-          setServerlessSelected={setServerlessSelected}
-          setServerlessDataSelected={setServerlessDataSelected}
-          serverlessDataList={serverlessDataList}
-          setServerlessDataList={setServerlessDataList}
-          setServerlessList={setServerlessList}
+         // setSelectedMode={setSelectedMode}
+          //setClusterSelected={setClusterSelected}
+          //setServerlessSelected={setServerlessSelected}
+          //setServerlessDataSelected={setServerlessDataSelected}
+          //serverlessDataList={serverlessDataList}
+          //setServerlessDataList={setServerlessDataList}
+          //setServerlessList={setServerlessList}
          // setRetryCount={setRetryCount}
           //setRetryDelay={setRetryDelay}
           setEmailOnFailure={setEmailOnFailure}
@@ -424,7 +424,7 @@ const CreateNotebookScheduler = ({
           setEmailOnSuccess={setEmailOnSuccess}
           setEmailList={setEmailList}
           //setStopCluster={setStopCluster}
-          setTimeZoneSelected={setTimeZoneSelected}
+          //setTimeZoneSelected={setTimeZoneSelected}
           setEditMode={setEditMode}
           setIsLoadingKernelDetail={setIsLoadingKernelDetail}
         />
@@ -455,7 +455,7 @@ const CreateNotebookScheduler = ({
                 variant="outlined"
                 // disabled={isSaveDisabled()}
                 aria-label="Save scheduler"
-                // onClick={!creatingScheduler ? handleCancel : undefined}
+                 onClick={!creatingScheduler ? handleCancel : undefined}
               >
                 <div>SAVE</div>
               </Button>

@@ -33,7 +33,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [serverlessSelected, setServerlessSelected] = useState('');
   const [stopCluster, setStopCluster] = useState(false);
 
- // console.log('###data', data);
+  // console.log('###data', data);
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -44,13 +44,17 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   };
 
   const handleRetryCountChange = (e: number) => {
-    data.retryCount = e;
-    setRetryCount(e);
+    if (e) {
+      data.retryCount = e;
+      setRetryCount(e);
+    }
   };
 
   const handleRetryDelayChange = (e: number) => {
-    data.retryDelay = e;
-    setRetryDelay(e);
+    if (e) {
+      data.retryDelay = e;
+      setRetryDelay(e);
+    }
   };
 
   const listClustersAPI = async () => {
@@ -102,15 +106,26 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     data.stop_cluster = event.target.checked;
   };
   useEffect(() => {
-
-    if(data){
-          // setInputFileSelectedLocal(data.inputFile);
-    // setRetryCount(data.retryCount);
-    // setRetryDelay(data.retryDelay);
-    data.parameter = parameterDetailUpdated;
+    if (data) {
+      // setInputFileSelectedLocal(data.inputFile);
+      // setRetryCount(data.retryCount);
+      // setRetryDelay(data.retryDelay);
+      data.parameter = parameterDetailUpdated;
     }
-    //console.log(data, parameterDetailUpdated)
+   // console.log(data, parameterDetailUpdated);
   }, [parameterDetailUpdated]);
+
+  useEffect(() => {
+    if (data) {
+      setInputFileSelectedLocal(data.inputFile);
+      setRetryCount(data.retryCount);
+      setRetryDelay(data.retryDelay);
+      //data.parameter = parameterDetailUpdated;
+      setClusterSelected(data.cluster_name)
+      setServerlessSelected(data.serverless)
+      setStopCluster(data.stop_cluster)
+    }
+  }, [data]);
 
   useEffect(() => {
     if (selectedMode === 'cluster') {
@@ -156,7 +171,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
               setValueValidation={setValueValidation}
               duplicateKeyError={duplicateKeyError}
               setDuplicateKeyError={setDuplicateKeyError}
-              data={data}
+              // data={data}
               fromPage="react-flow"
             />
             <div className="create-scheduler-form-element">

@@ -57,13 +57,15 @@ const GraphicalScheduler = ({
       position: { x: 0, y: 0 },
       data: {
         nodetype: '',
-        // inputFile: inputFileSelected,
-        // retryCount: 0,
-        // retryDelay: 0,
-        // parameter: [],
-        // stop_cluster: '',
-        // cluster_name: '',
-        // serverless: ''
+        inputFile: inputFileSelected,
+        retryCount: 0,
+        retryDelay: 0,
+        parameter: [],
+        stop_cluster: '',
+        cluster_name: '',
+        serverless: '',
+        schedule_value: '',
+        time_zone: ''
       }
     }
   ];
@@ -155,13 +157,15 @@ const GraphicalScheduler = ({
             }),
             data: {
               nodetype: '',
-              // inputFile: inputFileSelected,
-              // retryCount: 0,
-              // retryDelay: 0,
-              // parameter: [],
-              // stop_cluster: '',
-              // cluster_name: '',
-              // serverless: ''
+              inputFile: inputFileSelected,
+              retryCount: 0,
+              retryDelay: 0,
+              parameter: [],
+              stop_cluster: '',
+              cluster_name: '',
+              serverless: '',
+              schedule_value: '',
+              time_zone: ''
             },
             origin: [0.5, 0.0]
           };
@@ -247,7 +251,7 @@ const GraphicalScheduler = ({
   });
 
   useEffect(() => {
-    NodesChange(nodes);
+    NodesChange(transformedNodes);
   }, [nodes]);
 
   useEffect(() => {
@@ -262,7 +266,52 @@ const GraphicalScheduler = ({
   }, [clickedNodeId, nodes]);
 
   EdgesChange(edges);
-  console.log(nodes, edges);
+ console.log('########in graph',nodes,);
+ const transformNodeData = (nodes:any) => {
+  return nodes.map((node :any) => {
+      if (node.data.nodetype === 'trigger') {
+          return {
+              ...node,
+              data: {
+                  schedule_value: node.data.schedule_value,
+                  time_zone: node.data.time_zone
+              }
+          };
+      }
+      else if (node.data.nodetype === 'cluster') {
+        return {
+            ...node,
+            data: {
+              inputFile: node.data.inputFile,
+                retryCount: node.data.retryCount,
+                retryDelay: node.data.retryDelay,
+                parameter: node.data.parameter,
+                stop_cluster: node.data.stop_cluster,
+                cluster_name: node.data.cluster_name
+            }
+        };
+      }
+        else if (node.data.nodetype === 'serverless') {
+          return {
+              ...node,
+              data: {
+                inputFile: node.data.inputFile,
+                  retryCount: node.data.retryCount,
+                  retryDelay: node.data.retryDelay,
+                  parameter: node.data.parameter,
+                  serverless:node.data.serverless
+              }
+          };
+    }
+      return node;
+  });
+};
+
+const transformedNodes = transformNodeData(nodes);
+
+console.log(transformedNodes);
+
+
   return (
     <>
       {isJobFormVisible ? (

@@ -6,25 +6,25 @@ import TriggerJobForm from './triggerJobForm';
 import { LabIcon } from '@jupyterlab/ui-components';
 import searchClearIcon from '../../style/icons/search_clear_icon.svg';
 
-interface ClusterData {
-  inputFile: ''; //inputFileSelected;
-  retryCount: 0;
-  retryDelay: 0;
-  parameter: [];
-  stop_cluster: '';
-  cluster_name: '';
-}
-interface ServerlessData {
-  inputFile: ''; //inputFileSelected;
-  retryCount: 0;
-  retryDelay: 0;
-  parameter: [];
-  serverless: '';
-}
-interface TriggerData {
-  schedule_value: '';
-  time_zone: '';
-}
+// interface ClusterData {
+//   inputFile: ''; //inputFileSelected;
+//   retryCount: 0;
+//   retryDelay: 0;
+//   parameter: [];
+//   stop_cluster: '';
+//   cluster_name: '';
+// }
+// interface ServerlessData {
+//   inputFile: ''; //inputFileSelected;
+//   retryCount: 0;
+//   retryDelay: 0;
+//   parameter: [];
+//   serverless: '';
+// }
+// interface TriggerData {
+//   schedule_value: '';
+//   time_zone: '';
+// }
 
 const iconSearchClear = new LabIcon({
   name: 'launcher:search-clear-icon',
@@ -32,7 +32,6 @@ const iconSearchClear = new LabIcon({
 });
 
 function ConfigureForm({ id, data, nodes }: any) {
-
   const nodeTypes = [
     { key: 'serverless', label: 'Run a notebook on dataproc serverless' },
     { key: 'cluster', label: 'Run a notebook on dataproc cluster' },
@@ -46,27 +45,27 @@ function ConfigureForm({ id, data, nodes }: any) {
     { key: 'trigger', label: 'Trigger Node' }
   ];
 
-  const initialClusterData: ClusterData = {
-    inputFile: '',
-    retryCount: 0,
-    retryDelay: 0,
-    parameter: [],
-    stop_cluster: '',
-    cluster_name: ''
-  };
+  // const initialClusterData: ClusterData = {
+  //   inputFile: '',
+  //   retryCount: 0,
+  //   retryDelay: 0,
+  //   parameter: [],
+  //   stop_cluster: '',
+  //   cluster_name: ''
+  // };
 
-  const initialServerlessData: ServerlessData = {
-    inputFile: '',
-    retryCount: 0,
-    retryDelay: 0,
-    parameter: [],
-    serverless: ''
-  };
+  // const initialServerlessData: ServerlessData = {
+  //   inputFile: '',
+  //   retryCount: 0,
+  //   retryDelay: 0,
+  //   parameter: [],
+  //   serverless: ''
+  // };
 
-  const initialTriggerData: TriggerData = {
-    schedule_value: '',
-    time_zone: ''
-  };
+  // const initialTriggerData: TriggerData = {
+  // schedule_value: '',
+  // time_zone: ''
+  // };
 
   //const filteredNodeTypes = id === 0 ? nodeTypes : nodeTypes.filter(type => type !== 'Trigger Node');
   // const defaultNodeType = id === '0' ? 'Trigger Node' : '';
@@ -84,22 +83,9 @@ function ConfigureForm({ id, data, nodes }: any) {
   // };
 
   const handleNodeTypeChange = (value: string | null) => {
-    console.log("handleNodetypechange")
     if (value) {
       setnodeTypeSelected(value);
       eventEmitter.emit(`nodeType`, value, id);
-      if (value === 'trigger') {
-        let clickedNode = nodes.find((node: any) => node.id === id);
-        setClickedNodeData(initialTriggerData);
-        data=initialTriggerData;
-        clickedNode.data=data;
-      } else if (value === 'serverless') {
-        setClickedNodeData(initialServerlessData);
-        data=initialServerlessData
-      } else if (value === 'cluster') {
-        setClickedNodeData(initialClusterData);
-        data=initialClusterData;
-      }
       data.nodetype = value;
       setPreviousNodeType(nodeTypeSelected);
     }
@@ -109,12 +95,10 @@ function ConfigureForm({ id, data, nodes }: any) {
   };
 
   useEffect(() => {
-    console.log("useeffect",nodes, id, data)
     const clickedNode = nodes.find((node: any) => node.id === id);
-    console.log("clicked node",clickedNode, nodes)
     setClickedNodeData(clickedNode ? clickedNode.data : '');
     setnodeTypeSelected(clickedNode ? clickedNode.data.nodetype : null);
-  }, [nodes]);
+  }, [nodes, id]);
 
   useEffect(() => {
     if (previousNodeType && previousNodeType !== nodeTypeSelected) {
