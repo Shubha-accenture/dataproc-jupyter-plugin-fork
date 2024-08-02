@@ -33,7 +33,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [serverlessSelected, setServerlessSelected] = useState('');
   const [stopCluster, setStopCluster] = useState(false);
 
-  // console.log('###data', data);
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -105,6 +104,16 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     setStopCluster(event.target.checked);
     data.stop_cluster = event.target.checked;
   };
+
+  const checkCompletionStatus = () => {
+    const isComplete = data.inputFile;
+    eventEmitter.emit('color coding', isComplete ? 'complete' : 'incomplete', id);
+  };
+
+  useEffect(() => {
+    checkCompletionStatus();
+  }, [inputFileSelectedLocal]);
+
   useEffect(() => {
     if (data) {
       // setInputFileSelectedLocal(data.inputFile);

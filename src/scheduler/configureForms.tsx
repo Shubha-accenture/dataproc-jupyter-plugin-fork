@@ -35,45 +35,28 @@ function ConfigureForm({ id, data, nodes }: any) {
   const nodeTypes = [
     { key: 'serverless', label: 'Run a notebook on dataproc serverless' },
     { key: 'cluster', label: 'Run a notebook on dataproc cluster' },
-    { key: 'sql', label: 'Execute a SQL on BigQuery' },
-    {
-      key: 'gcs_operations',
-      label: 'Move, copy, delete, etc. files & folders on GCS'
-    },
-    { key: 'ingest_data', label: 'Ingest data into a BQ table from GCS' },
-    { key: 'export_data', label: 'Export data from BQ table to GCS' },
+    // { key: 'sql', label: 'Execute a SQL on BigQuery' },
+    // {
+    //   key: 'gcs_operations',
+    //   label: 'Move, copy, delete, etc. files & folders on GCS'
+    // },
+    // { key: 'ingest_data', label: 'Ingest data into a BQ table from GCS' },
+    // { key: 'export_data', label: 'Export data from BQ table to GCS' },
     { key: 'trigger', label: 'Trigger Node' }
   ];
 
-  // const initialClusterData: ClusterData = {
-  //   inputFile: '',
-  //   retryCount: 0,
-  //   retryDelay: 0,
-  //   parameter: [],
-  //   stop_cluster: '',
-  //   cluster_name: ''
-  // };
-
-  // const initialServerlessData: ServerlessData = {
-  //   inputFile: '',
-  //   retryCount: 0,
-  //   retryDelay: 0,
-  //   parameter: [],
-  //   serverless: ''
-  // };
-
-  // const initialTriggerData: TriggerData = {
-  // schedule_value: '',
-  // time_zone: ''
-  // };
 
   //const filteredNodeTypes = id === 0 ? nodeTypes : nodeTypes.filter(type => type !== 'Trigger Node');
-  // const defaultNodeType = id === '0' ? 'Trigger Node' : '';
+  const defaultNodeType = id === '0' ? 'Trigger Node' : '';
   //const defaultNodeType = data.inputFile ? 'Trigger Node' : '';
-  const [nodeTypeSelected, setnodeTypeSelected] = useState('');
+  const [nodeTypeSelected, setnodeTypeSelected] = useState(defaultNodeType);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
   const [previousNodeType, setPreviousNodeType] = useState('');
 
+  console.log(data)
+  if(data && data.nodetype!=='')
+  {console.log("to check",id,data,)
+}
   // const handleNodeTypeChange = (value: any) => {
   //   setnodeTypeSelected(value);
   //   eventEmitter.emit(`nodeType`, value, id);
@@ -123,6 +106,7 @@ function ConfigureForm({ id, data, nodes }: any) {
             <Autocomplete
               className="create-scheduler-style"
               options={nodeTypes}
+              defaultValue={nodeTypes.find(option => option.key === defaultNodeType)}
               getOptionLabel={option => option.label}
               value={nodeTypes.find(option => option.key === nodeTypeSelected)}
               onChange={(_event, value) =>

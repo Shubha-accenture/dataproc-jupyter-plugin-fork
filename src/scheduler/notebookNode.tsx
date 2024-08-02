@@ -19,11 +19,21 @@ const iconSaveToBigQuery = new LabIcon({
 function NotebookNode({ id, data, isConnectable }: NodeProps) {
   const [isNodeClicked, setIsNodeClicked] = useState('');
   const [nodeType, setNodeType] = useState('');
+  // const [status, setStatus] = useState('');
 
+  // console.log(data)
   const handleNodeClick = () => {
     setIsNodeClicked(id);
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
   };
+
+  // eventEmitter.on('color coding', (value: string) => {
+  //   console.log(status,id);
+  //   setStatus(value);
+  // });
+  // return () => {
+  //   eventEmitter.off('color coding', handleColorCoding);
+  // };
 
   eventEmitter.on('nodeType', (value: string, nid: string) => {
     if (id === nid) {
@@ -34,7 +44,16 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
   return (
     <>
       <div className="notebook-node" onClick={handleNodeClick}>
-        <div className="box black" />
+        <div
+          className= "box black" 
+          // {`box ${
+          //   status === 'complete'
+          //     ? 'green'
+          //     : status === 'incomplete'
+          //     ? 'orange'
+          //     : 'black'
+          // }`}
+        />
         <Handle
           type="target"
           id="a"
@@ -43,8 +62,7 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
         />
         <div className="node-content">
           <div>
-            {(nodeType === 'serverless' ||
-              nodeType === 'cluster') && (
+            {(nodeType === 'serverless' || nodeType === 'cluster') && (
               <iconCalendarRange.react
                 tag="div"
                 className="logo-alignment-react-flow"
@@ -58,7 +76,7 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
             )}
           </div>
           <div className="custom-node__header">
-            {id}.{'Notebook'}
+            {id === '0' ? 'Trigger Node ' : `${id}.Notebook `}
           </div>
         </div>
         <Handle

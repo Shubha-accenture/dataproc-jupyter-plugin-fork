@@ -24,16 +24,16 @@ import { scheduleMode } from '../utils/const';
 
 interface IPayload {
   //input_filename: string;
-  composer_environment_name: string;
-  //output_formats: string[];
-  //parameters: string[];
- // cluster_name?: string;
-  //serverless_name?: {} | undefined;
-  //mode_selected: string;
-  email_failure: boolean;
-  email_delay: boolean;
-  email: string[];
-  name: string;
+//   composer_environment_name: string;
+//   //output_formats: string[];
+//   //parameters: string[];
+//  // cluster_name?: string;
+//   //serverless_name?: {} | undefined;
+//   //mode_selected: string;
+//   email_failure: boolean;
+//   email_delay: boolean;
+//   email: string[];
+//   name: string;
   // schedule_value: string;
  // stop_cluster: boolean;
   // time_zone?: string;

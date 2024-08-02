@@ -70,6 +70,16 @@
   position: relative;
 }
 
+.button-container-save{
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-right: 5px;
+  float: right;
+  margin-left: 1210px;
+  position: relative;
+}
+
 .button-container button {
   width: 70px;
   height: 40px;

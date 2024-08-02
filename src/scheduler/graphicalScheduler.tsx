@@ -25,6 +25,7 @@ import { JupyterLab } from '@jupyterlab/application';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import Grid from '@mui/material/Grid';
 import ConfigureForm from './configureForms';
+import JobForm from './jobForm';
 
 interface IGraphicalSchedulerProps {
   inputFileSelected: string;
@@ -32,9 +33,20 @@ interface IGraphicalSchedulerProps {
   EdgesChange: (updatedEdges: any) => void;
   app: JupyterLab;
   factory: IFileBrowserFactory;
-  isJobFormVisible: boolean;
+  //isJobFormVisible: boolean;
+ jobPayloadChange:any//IJobPayload
+  //setJobPayload:any
 }
 const nodeTypes = { composerNode: NotebookNode };
+
+// interface IJobPayload{
+//   jobName:string,
+//   jobcomposer_environment_name: string,
+//   email_failure:string,
+//   email_retry: string,
+//   email_success: string,
+//   email: string
+// }
 
 const GraphicalScheduler = ({
   inputFileSelected,
@@ -42,7 +54,9 @@ const GraphicalScheduler = ({
   EdgesChange,
   app,
   factory,
-  isJobFormVisible
+  jobPayloadChange
+  //isJobFormVisible
+  //jobPayload,setPayload
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
@@ -70,7 +84,6 @@ const GraphicalScheduler = ({
     }
   ];
 
-  // const triggerNode = [
   //   {
   //     id: '0',
   //     type: 'composerNode',
@@ -118,7 +131,27 @@ const GraphicalScheduler = ({
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
-  console.log(isTaskFormVisible);
+
+  const [jobPayload, setJobPayload] = useState({
+    jobName: '',
+    jobcomposer_environment_name: '',
+    email_failure: false,
+    email_retry: false,
+    email_success: false,
+    email: [],
+  });
+
+ 
+  // useEffect(() => {
+  //   console.log('Received jobPayload in GraphicalScheduler:', jobPayload);
+  // }, [jobPayload]);
+
+  const handleJobPayloadChange = (updatedPayload: any) => {
+    setJobPayload(updatedPayload);
+   // console.log('Updated jobPayload:', updatedPayload);
+  };
+
+ // console.log(isTaskFormVisible);
   const { screenToFlowPosition } = useReactFlow();
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections
@@ -266,110 +299,104 @@ const GraphicalScheduler = ({
   }, [clickedNodeId, nodes]);
 
   EdgesChange(edges);
- console.log('########in graph',nodes,);
- const transformNodeData = (nodes:any) => {
-  return nodes.map((node :any) => {
+  jobPayloadChange(jobPayload)
+  const transformNodeData = (nodes: any) => {
+    return nodes.map((node: any) => {
       if (node.data.nodetype === 'trigger') {
-          return {
-              ...node,
-              data: {
-                  schedule_value: node.data.schedule_value,
-                  time_zone: node.data.time_zone
-              }
-          };
-      }
-      else if (node.data.nodetype === 'cluster') {
         return {
-            ...node,
-            data: {
-              inputFile: node.data.inputFile,
-                retryCount: node.data.retryCount,
-                retryDelay: node.data.retryDelay,
-                parameter: node.data.parameter,
-                stop_cluster: node.data.stop_cluster,
-                cluster_name: node.data.cluster_name
-            }
+          ...node,
+          data: {
+            nodetype: node.data.nodetype,
+            schedule_value: node.data.schedule_value,
+            time_zone: node.data.time_zone
+          }
+        };
+      } else if (node.data.nodetype === 'cluster') {
+        return {
+          ...node,
+          data: {
+            nodetype: node.data.nodetype,
+            inputFile: node.data.inputFile,
+            retryCount: node.data.retryCount,
+            retryDelay: node.data.retryDelay,
+            parameter: node.data.parameter,
+            stop_cluster: node.data.stop_cluster,
+            cluster_name: node.data.cluster_name
+          }
+        };
+      } else if (node.data.nodetype === 'serverless') {
+        return {
+          ...node,
+          data: {
+            nodetype: node.data.nodetype,
+            inputFile: node.data.inputFile,
+            retryCount: node.data.retryCount,
+            retryDelay: node.data.retryDelay,
+            parameter: node.data.parameter,
+            serverless: node.data.serverless
+          }
         };
       }
-        else if (node.data.nodetype === 'serverless') {
-          return {
-              ...node,
-              data: {
-                inputFile: node.data.inputFile,
-                  retryCount: node.data.retryCount,
-                  retryDelay: node.data.retryDelay,
-                  parameter: node.data.parameter,
-                  serverless:node.data.serverless
-              }
-          };
-    }
       return node;
-  });
-};
+    });
+  };
 
-const transformedNodes = transformNodeData(nodes);
+  const transformedNodes = transformNodeData(nodes);
 
-console.log(transformedNodes);
+  console.log(transformedNodes);
 
+  const handleGridClick = () => {
+    console.log('grid click ');
+    //setIsTaskFormVisible(false)
+  };
 
   return (
     <>
-      {isJobFormVisible ? (
-        <div className="wrapper" ref={reactFlowWrapper}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onConnectStart={onConnectStart}
-            onConnectEnd={onConnectEnd}
-            //deleteKeyCode={null : 'Delete'}
-            fitView
-            fitViewOptions={{ padding: 2 }}
-            nodeOrigin={[0.5, 0]}
-            nodeTypes={nodeTypes}
+      <Grid container spacing={0} style={{ height: '100vh' }}>
+        <Grid item xs={8}>
+          <div
+            className="wrapper"
+            ref={reactFlowWrapper}
+            onClick={handleGridClick}
           >
-            <Controls />
-            <Background color="#aaa" gap={6} />
-          </ReactFlow>
-        </div>
-      ) : (
-        <Grid container spacing={0} style={{ height: '100vh' }}>
-          <Grid item xs={9}>
-            <div className="wrapper" ref={reactFlowWrapper}>
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                onConnectStart={onConnectStart}
-                onConnectEnd={onConnectEnd}
-                //deleteKeyCode={null : 'Delete'}
-                fitView
-                fitViewOptions={{ padding: 2 }}
-                nodeOrigin={[0.5, 0]}
-                nodeTypes={nodeTypes}
-              >
-                <Controls />
-                <Background color="#aaa" gap={6} />
-              </ReactFlow>
-            </div>
-          </Grid>
-          {/* {
-        // isTaskFormVisible
-        //  clickedNodeData !== null && ( */}
-          <Grid item xs={3}>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onConnectStart={onConnectStart}
+              onConnectEnd={onConnectEnd}
+              //deleteKeyCode={null : 'Delete'}
+              fitView
+              fitViewOptions={{ padding: 2 }}
+              nodeOrigin={[0.5, 0]}
+              nodeTypes={nodeTypes}
+            >
+              <Controls />
+              <Background color="#aaa" gap={6} />
+            </ReactFlow>
+          </div>
+        </Grid>
+        {isTaskFormVisible && (
+        // && clickedNodeData !== null && (
+          <Grid item xs={4}>
             <ConfigureForm
               id={clickedNodeId}
               data={clickedNodeData}
               nodes={nodes}
             />
           </Grid>
-          {/* )} */}
-        </Grid>
-      )}
+        )}
+        {!isTaskFormVisible && (
+          <Grid item xs={4}>
+            <JobForm 
+             jobPayload={jobPayload} 
+             onJobPayloadChange={handleJobPayloadChange}
+            />
+          </Grid>
+        )}
+      </Grid>
     </>
   );
 };
@@ -382,7 +409,8 @@ export default (props: IGraphicalSchedulerProps) => (
       EdgesChange={props.EdgesChange}
       app={props.app}
       factory={props.factory}
-      isJobFormVisible={props.isJobFormVisible}
+     // isJobFormVisible={props.isJobFormVisible}
+     jobPayloadChange={props.jobPayloadChange}
     />
   </ReactFlowProvider>
 );

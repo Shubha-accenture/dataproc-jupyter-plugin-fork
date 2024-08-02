@@ -83,7 +83,7 @@ const CreateNotebookScheduler = ({
   factory: IFileBrowserFactory;
 }): JSX.Element => {
   const [jobNameSelected, setJobNameSelected] = useState('');
-  const [inputFileSelected] = useState('');
+  // const [inputFileSelected] = useState('');
   const [composerList, setComposerList] = useState<string[]>([]);
   const [composerSelected, setComposerSelected] = useState('');
 
@@ -131,14 +131,28 @@ const CreateNotebookScheduler = ({
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
 
-  const [isJobFormVisible, setIsJobFormVisible] = useState(true);
+  const [isJobFormVisible] = useState(false);//set removed
+
+  const [jobPayload, setJobPayload] = useState({
+    jobName: '',
+    jobcomposer_environment_name: '',
+    email_failure: false,
+    email_retry: false,
+    email_success: false,
+    email: [],
+  });
+
+  const handleJobPayload=(jobFormPayload:any)=>{
+    setJobPayload(jobFormPayload)
+    // console.log("in create scheduler",jobPayload)
+  }
 
   eventEmitter.on('closeJobForm', () => {
-    setIsJobFormVisible(false);
+   // setIsJobFormVisible(false);
   });
 
   eventEmitter.on('closeTaskForm', () => {
-    setIsJobFormVisible(true);
+    //setIsJobFormVisible(true);
   });
 
   const handleNodesChange = (updatedNodes: []) => {
@@ -156,6 +170,8 @@ const CreateNotebookScheduler = ({
     });
     setInputFilesValidation(allNodesHaveInputFiles);
   };
+
+
 
   const handleEdgesChange = (updatedEdges: []) => {
     setEdges(updatedEdges);
@@ -241,32 +257,21 @@ const CreateNotebookScheduler = ({
   };
 
   const handleCreateJobScheduler = async () => {
-    let outputFormats = [];
-    outputFormats.push('ipynb');
-
+    // let outputFormats = [];
+    // outputFormats.push('ipynb');
     //let randomDagId = uuidv4();
-    const payload = {
-      //input_filename: inputFileSelected,
-      composer_environment_name: composerSelected,
-     // output_formats: outputFormats,
-     // parameters: parameterDetailUpdated,
-      //mode_selected: selectedMode,<-------check
-      //retry_count: retryCount,
-      //retry_delay: retryDelay,
-      email_failure: emailOnFailure,
-      email_delay: emailOnRetry,
-      email_success: emailOnSuccess,
-      email: emailList,
-      name: jobNameSelected,
-      // schedule_value: scheduleMode === 'runNow' ? '' : scheduleValue,
-     // stop_cluster: stopCluster,
-     // dag_id: randomDagId,
-      // time_zone: scheduleMode !== 'runNow' ? timeZoneSelected : '',
-      // [selectedMode === 'cluster' ? 'cluster_name' : 'serverless_name']:
-      //   selectedMode === 'cluster' ? clusterSelected : serverlessDataSelected,
+    const payload = { 
+      // composer_environment_name: composerSelected,
+      // email_failure: emailOnFailure,
+      // email_delay: emailOnRetry,
+      // email_success: emailOnSuccess,
+      // email: emailList,
+      // name: jobNameSelected,
+      ...jobPayload,
       nodes: nodes,
       edges: edges
     };
+    console.log("final payload",payload)
     await SchedulerService.createJobSchedulerService(
       payload,
       app,
@@ -364,7 +369,6 @@ const CreateNotebookScheduler = ({
 
   useEffect(() => {
     listComposersAPI();
-
     // if (context !== '') {
     //   setInputFileSelected(context.path);
     //   if (context.path.toLowerCase().startsWith('bigframes')) {
@@ -450,12 +454,12 @@ const CreateNotebookScheduler = ({
                 Create A Scheduled Job
               </div>
             )}
-            <div className="button-container">
+            <div className="button-container-save">
               <Button
                 variant="outlined"
                 // disabled={isSaveDisabled()}
                 aria-label="Save scheduler"
-                 onClick={!creatingScheduler ? handleCancel : undefined}
+                 onClick= {handleCreateJobScheduler}    //{!creatingScheduler ? handleCancel : undefined}
               >
                 <div>SAVE</div>
               </Button>
@@ -469,19 +473,19 @@ const CreateNotebookScheduler = ({
               </Button>
             </div>
           </div>
-          { isJobFormVisible ? (
           <Grid container spacing={0} style={{ height: '100vh' }}>
-            <Grid item xs={9}>
               <GraphicalScheduler
                 inputFileSelected={context.path}
                 NodesChange={handleNodesChange}
                 EdgesChange={handleEdgesChange}
                 app={app}
                 factory={factory}
-                isJobFormVisible={isJobFormVisible}
+                //isJobFormVisible={isJobFormVisible}
+               jobPayloadChange={handleJobPayload}
+              //  setJobPayload={setJobPayload}
               />
-            </Grid>
-            {/* {isJobFormVisible && ( */}
+            {isJobFormVisible && (
+              //expected to remove this ------------------
               <Grid item xs={3}>
                 <div>
                   <div className="submit-job-container">
@@ -532,14 +536,14 @@ const CreateNotebookScheduler = ({
                         </div>
                       </div>
                     )}
-                    <div className="create-scheduler-form-element-input-file">
+                    {/* <div className="create-scheduler-form-element-input-file">
                       <Input
                         className="create-scheduler-style"
                         value={inputFileSelected}
                         Label="Input file*"
                         disabled={true}
                       />
-                    </div>
+                    </div> */}
                     <div className="create-scheduler-form-element">
                       <Autocomplete
                         className="create-scheduler-style"
@@ -660,21 +664,8 @@ const CreateNotebookScheduler = ({
                   </div>
                 </div>
               </Grid>
-            {/* )} */}
+           )}
           </Grid>
-          )
-          :(
-            // <Grid container spacing={0} style={{ height: '100vh' }}>
-              <GraphicalScheduler
-                inputFileSelected={context.path}
-                NodesChange={handleNodesChange}
-                EdgesChange={handleEdgesChange}
-                app={app}
-                factory={factory}
-                isJobFormVisible={isJobFormVisible}
-              />
-            // </Grid>
-          )}
         </>
       )}
     </>
