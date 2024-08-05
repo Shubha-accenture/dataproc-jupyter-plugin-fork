@@ -75,7 +75,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     //its string--> string | null
     if (value) {
       const selectedCluster = value.toString();
-      data.cluster_name = selectedCluster;
+      data.clusterName = selectedCluster;
       setClusterSelected(selectedCluster);
     }
   };
@@ -106,7 +106,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
 
   const handleStopCluster = (event: React.ChangeEvent<HTMLInputElement>) => {
     setStopCluster(event.target.checked);
-    data.stop_cluster = event.target.checked;
+    data.stopCluster = event.target.checked;
   };
 
   const checkCompletionStatus = () => {
@@ -134,9 +134,9 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
       //data.parameter = parameterDetailUpdated;
-      setClusterSelected(data.cluster_name)
+      setClusterSelected(data.clusterName)
       setServerlessSelected(data.serverless)
-      setStopCluster(data.stop_cluster)
+      setStopCluster(data.stopCluster)
     }
   }, [data]);
 

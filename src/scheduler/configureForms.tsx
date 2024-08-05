@@ -6,26 +6,6 @@ import TriggerJobForm from './triggerJobForm';
 import { LabIcon } from '@jupyterlab/ui-components';
 import searchClearIcon from '../../style/icons/search_clear_icon.svg';
 
-// interface ClusterData {
-//   inputFile: ''; //inputFileSelected;
-//   retryCount: 0;
-//   retryDelay: 0;
-//   parameter: [];
-//   stop_cluster: '';
-//   cluster_name: '';
-// }
-// interface ServerlessData {
-//   inputFile: ''; //inputFileSelected;
-//   retryCount: 0;
-//   retryDelay: 0;
-//   parameter: [];
-//   serverless: '';
-// }
-// interface TriggerData {
-//   schedule_value: '';
-//   time_zone: '';
-// }
-
 const iconSearchClear = new LabIcon({
   name: 'launcher:search-clear-icon',
   svgstr: searchClearIcon
@@ -33,8 +13,8 @@ const iconSearchClear = new LabIcon({
 
 function ConfigureForm({ id, data, nodes }: any) {
   const nodeTypes = [
-    { key: 'serverless', label: 'Run a notebook on dataproc serverless' },
-    { key: 'cluster', label: 'Run a notebook on dataproc cluster' },
+    { key: 'Serverless', label: 'Run a notebook on dataproc serverless' },
+    { key: 'Cluster', label: 'Run a notebook on dataproc cluster' },
     // { key: 'sql', label: 'Execute a SQL on BigQuery' },
     // {
     //   key: 'gcs_operations',
@@ -42,7 +22,7 @@ function ConfigureForm({ id, data, nodes }: any) {
     // },
     // { key: 'ingest_data', label: 'Ingest data into a BQ table from GCS' },
     // { key: 'export_data', label: 'Export data from BQ table to GCS' },
-    { key: 'trigger', label: 'Trigger Node' }
+    { key: 'Trigger', label: 'Trigger Node' }
   ];
 
 
@@ -54,7 +34,7 @@ function ConfigureForm({ id, data, nodes }: any) {
   const [previousNodeType, setPreviousNodeType] = useState('');
 
   console.log(data)
-  if(data && data.nodetype!=='')
+  if(data && data.nodeType!=='')
   {console.log("to check",id,data,)
 }
   // const handleNodeTypeChange = (value: any) => {
@@ -69,7 +49,7 @@ function ConfigureForm({ id, data, nodes }: any) {
     if (value) {
       setnodeTypeSelected(value);
       eventEmitter.emit(`nodeType`, value, id);
-      data.nodetype = value;
+      data.nodeType = value;
       setPreviousNodeType(nodeTypeSelected);
     }
   };
@@ -80,7 +60,7 @@ function ConfigureForm({ id, data, nodes }: any) {
   useEffect(() => {
     const clickedNode = nodes.find((node: any) => node.id === id);
     setClickedNodeData(clickedNode ? clickedNode.data : '');
-    setnodeTypeSelected(clickedNode ? clickedNode.data.nodetype : null);
+    setnodeTypeSelected(clickedNode ? clickedNode.data.nodeType : null);
   }, [nodes, id]);
 
   useEffect(() => {
@@ -116,17 +96,17 @@ function ConfigureForm({ id, data, nodes }: any) {
                 <TextField {...params} label="Node Type*" />
               )}
             />
-            {nodeTypeSelected === 'trigger' && (
+            {nodeTypeSelected === 'Trigger' && (
               <TriggerJobForm id={id} data={clickedNodeData} nodes={nodes} />
             )}
-            {nodeTypeSelected === 'serverless' && (
+            {nodeTypeSelected === 'Serverless' && (
               <ClusterServerlessForm
                 id={id}
                 data={clickedNodeData}
                 mode={'serverless'}
               />
             )}
-            {nodeTypeSelected === 'cluster' && (
+            {nodeTypeSelected === 'Cluster' && (
               <ClusterServerlessForm
                 id={id}
                 data={clickedNodeData}

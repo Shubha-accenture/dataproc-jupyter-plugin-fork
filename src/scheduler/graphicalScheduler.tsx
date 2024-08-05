@@ -59,59 +59,19 @@ const GraphicalScheduler = ({
       type: 'composerNode',
       position: { x: 0, y: 0 },
       data: {
-        nodetype: '',
+        nodeType: '',
         inputFile: inputFileSelected,
         retryCount: 0,
         retryDelay: 0,
         parameter: [],
-        stop_cluster: '',
-        cluster_name: '',
+        stopCluster: '',
+        clusterName: '',
         serverless: '',
-        schedule_value: '',
-        time_zone: ''
+        schedule_value: '',//
+        time_zone: ''//
       }
     }
   ];
-
-  //   {
-  //     id: '0',
-  //     type: 'composerNode',
-  //     position: { x: 0, y: -100 }, //{ x: 0, y: 0 },
-  //     data: {
-  //       nodetype: '',
-  //       // inputFile: inputFileSelected,
-  //       // retryCount: 0,
-  //       // retryDelay: 0,
-  //       // parameter: [],
-  //       // stop_cluster: '',
-  //       // cluster_name: '',
-  //       // serverless: ''
-  //     }
-  //   },
-  //   {
-  //     id: '1',
-  //     type: 'composerNode',
-  //     position: { x: 0, y: 100 }, // { x: , y: },
-  //     data: {
-  //       nodetype: '',
-  //       // inputFile: inputFileSelected,
-  //       // retryCount: 0,
-  //       // retryDelay: 0,
-  //       // parameter: [],
-  //       // stop_cluster: '',
-  //       // cluster_name: '',
-  //       // serverless: ''
-  //     }
-  //   }
-  // ];
-
-  // const triggerEdge = [
-  //   {
-  //     id: '1',
-  //     source: '0',
-  //     target: '1'
-  //   }
-  // ];
 
   // const defaultNode = inputFileSelected ? triggerNode : initialNode;
   // const defaultEdge = inputFileSelected ? triggerEdge : [];
@@ -157,13 +117,13 @@ const GraphicalScheduler = ({
               y: e.clientY
             }),
             data: {
-              nodetype: '',
+              nodeType: '',
               inputFile: inputFileSelected,
               retryCount: 0,
               retryDelay: 0,
               parameter: [],
-              stop_cluster: '',
-              cluster_name: '',
+              stopCluster: '',
+              clusterName: '',
               serverless: '',
               schedule_value: '',
               time_zone: ''
@@ -268,33 +228,33 @@ const GraphicalScheduler = ({
   EdgesChange(edges);
   const transformNodeData = (nodes: any) => {
     return nodes.map((node: any) => {
-      if (node.data.nodetype === 'trigger') {
+      if (node.data.nodeType === 'Trigger') {
         return {
           ...node,
           data: {
-            nodetype: node.data.nodetype,
+            nodeType: node.data.nodeType,
             schedule_value: node.data.schedule_value,
             time_zone: node.data.time_zone
           }
         };
-      } else if (node.data.nodetype === 'cluster') {
+      } else if (node.data.nodeType === 'Cluster') {
         return {
           ...node,
           data: {
-            nodetype: node.data.nodetype,
+            nodeType: node.data.nodeType,
             inputFile: node.data.inputFile,
             retryCount: node.data.retryCount,
             retryDelay: node.data.retryDelay,
             parameter: node.data.parameter,
-            stop_cluster: node.data.stop_cluster,
-            cluster_name: node.data.cluster_name
+            stopCluster: node.data.stopCluster,
+            clusterName: node.data.clusterName
           }
         };
-      } else if (node.data.nodetype === 'serverless') {
+      } else if (node.data.nodeType === 'Serverless') {
         return {
           ...node,
           data: {
-            nodetype: node.data.nodetype,
+            nodeType: node.data.nodeType,
             inputFile: node.data.inputFile,
             retryCount: node.data.retryCount,
             retryDelay: node.data.retryDelay,
