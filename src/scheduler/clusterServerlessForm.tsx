@@ -80,25 +80,29 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     }
   };
 
-  const handleServerlessSelected = (value: any) => {
-    //its string--> string | null
-    if (value) {
-      const selectedServerless = value.toString();
-      data.serverless = selectedServerless;
-      setServerlessSelected(selectedServerless);
-    }
-  };
   // const handleServerlessSelected = (value: any) => {
+  //   //its string--> string | null
   //   if (value) {
-  //     const selectedServerless = data.toString();
-  //     const selectedData: any = serverlessDataList.filter((serverless: any) => {
-  //       return serverless.serverlessName === selectedServerless;
-  //     });
-  //     setServerlessDataSelected(selectedData[0].serverlessData);
-  //     data.serverless=data;
+  //     const selectedServerless = value.toString();
+  //     data.serverless = selectedServerless;
+  //     console.log("selectedServerless",selectedServerless)
   //     setServerlessSelected(selectedServerless);
+  //     console.log("serverlessDataList",serverlessDataList)
+
   //   }
   // };
+  const handleServerlessSelected = (value: any) => {
+    if (value) {
+      const selectedServerless = value.toString();
+      const selectedData: any = serverlessDataList.filter((serverless: any) => {
+        return serverless.serverlessName === selectedServerless;
+      });
+      setServerlessSelected(selectedData[0].serverlessData.name);
+      data.serverless=selectedData[0].serverlessData.name;
+      //console.log("serverless", data.serverless)
+      //setServerlessSelected(selectedServerless);
+    }
+  };
 
   const handleStopCluster = (event: React.ChangeEvent<HTMLInputElement>) => {
     setStopCluster(event.target.checked);
