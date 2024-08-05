@@ -184,8 +184,8 @@ class Client:
 
         for node in job.nodes:
             if node.get('data', {}).get('nodeType') == 'Cluster':
-                cluster_name = node.get('data', {}).get('cluster_name')
-                stop_cluster = node.get('data', {}).get('stop_cluster')
+                cluster_name = node.get('data', {}).get('clusterName')
+                stop_cluster = node.get('data', {}).get('stopCluster')
                 cluster_stop_dict[cluster_name] = stop_cluster
 
         #generate dag file with common values
@@ -207,7 +207,7 @@ class Client:
             if node_type != 'Trigger':
                 input_file = node.get('data', {}).get('inputFile', '')
                 if not input_file.startswith(GCS):
-                    self.upload_input_file_to_gcs(
+                    self.upload_input_file_to_gcs( 
                     input_file, gcs_dag_bucket, job_name
                 )
                 parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
@@ -290,8 +290,8 @@ class Client:
                     outputNotebook=f"gs://{gcs_dag_bucket}/dataproc-output/{job.job_name}/output-notebooks/{job.job_name}_",
                     parameters=parameters,
                     retries = node.get('data', {}).get('retryCount', {}),
-                    clusterName =node.get('data',{}).get('cluster_name',{}),
-                    stopStatus =node.get('data',{}).get('stop_cluster',{})
+                    clusterName =node.get('data',{}).get('clusterName',{}),
+                    stopStatus =node.get('data',{}).get('stopCluster',{})
                     )
                     cluster_file = f"dag_{input_file}.py"
                     with open(cluster_file, mode="w", encoding="utf-8") as message:
@@ -333,7 +333,7 @@ class Client:
                 elif node_type == 'Cluster':
                     order_of_execution.append(f"submit_pyspark_job_{node} >> {dep_str}")
         if len(cluster_stop_dict) > 0:
-            order_of_execution.append(f"stop_cluster")
+            order_of_execution.append(f"stopCluster")
         final_order = '\n'.join(order_of_execution)
         with open(file_path, mode="a", encoding="utf-8") as message:
             message.write(final_order)
@@ -377,31 +377,6 @@ class Client:
             return topological_order, levels
         else:
             raise ValueError("The graph has at least one cycle, topological sorting is not possible.")
- 
-# Example usage
-
- 
-
-# print("Topological Order of Execution:", order)
-# print("Levels of Execution (for parallel tasks):", dict(levels))
-            # edges_input = input_data["edges"]
-            # execution_order = []
-            # if len(edges_input) != 0:
-            #     edges = []
-            #     for edge in edges_input:
-            #         if "source" in edge and "target" in edge:
-            #             source = int(edge["source"])
-            #             target = int(edge["target"])
-            #             edges.append((source, target))
-            #     graph = nx.DiGraph()
-            #     graph.add_edges_from(edges)
-            #     nx.is_directed(graph) # => True
-            #     nx.is_directed_acyclic_graph(graph) # => True
-            #     execution_order = list(nx.topological_sort(graph))
-            # else:
-            #     nodes = job.nodes
-            #     for item in nodes:
-            #         execution_order.append(int(item['id']))
 
     def upload_dag_to_gcs(self, gcs_dag_bucket, file_path):
         # LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.job_name}"
@@ -570,6 +545,7 @@ class Client:
 #       },
 #     ]
 #   }
+
             job = DescribeJob(**input)
             global job_id
             global job_name
