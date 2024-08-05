@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections import defaultdict, deque
 import os
 import shutil
 import subprocess
@@ -22,6 +23,7 @@ import aiohttp
 import pendulum
 from google.cloud.jupyter_config.config import gcp_account
 from jinja2 import Environment, PackageLoader, select_autoescape
+import networkx as nx
 
 from dataproc_jupyter_plugin import urls
 from dataproc_jupyter_plugin.commons.constants import (
@@ -37,6 +39,10 @@ unique_id = str(uuid.uuid4().hex)
 job_id = ""
 job_name = ""
 TEMPLATES_FOLDER_PATH = "dagTemplates"
+TEMPLATES_FOLDER_PATH_SERVERLESS = "dagTemplates/serverless"
+TEMPLATES_FOLDER_PATH_CLUSTER = "dagTemplates/cluster"
+
+
 ROOT_FOLDER = PACKAGE_NAME
 
 
@@ -129,23 +135,36 @@ class Client:
             self.log.exception(f"Error uploading input file to gcs: {error.decode()}")
             raise IOError(error.decode)
 
-    def prepare_dag(self, job, gcs_dag_bucket, dag_file):
+    def prepare_dag(self, job, gcs_dag_bucket, dag_file, execution_order, edges):
         self.log.info("Generating dag file")
         DAG_TEMPLATE_CLUSTER_V1 = "pysparkJobTemplate-v1.txt"
         DAG_TEMPLATE_SERVERLESS_V1 = "pysparkBatchTemplate-v1.txt"
+        DAG_TEMPLATE_CLUSTER_V2 = "pysparkJobTemplate-v2.txt"
+        DAG_TEMPLATE_SERVERLESS_V2 = "pysparkBatchTemplate-v2.txt"
+        DAG_TEMPLATE_JOB_V1 = "commonTemplate-step-1-v1.txt"
+        DAG_TEMPLATE_SERVERLESS_V3 = "pysparkBatchTemplate-step-2-v3.txt"
+        DAG_TEMPLATE_CLUSTER_V3 = "pysparkJobTemplate-step-2-v3.txt"
+
         environment = Environment(
             loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH)
         )
-
+        environment_serverless = Environment(
+            loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_SERVERLESS)
+        )
+        environment_cluster = Environment(
+            loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_CLUSTER)
+        )
+        #getting the common values needed for dag generation
         gcp_project_id = self.project_id
         gcp_region_id = self.region_id
         user = gcp_account()
-        owner = user.split("@")[0]  # getting username from email
-        if job.schedule_value == "":
+        owner = user.split("@")[0]  
+        if job.nodes[0]['data']['schedule_value'] == "":
             schedule_interval = "@once"
         else:
-            schedule_interval = job.schedule_value
-        if job.time_zone == "":
+            schedule_interval = job.nodes[0]['data']['schedule_value']
+        print('dataaaaaa', job.nodes[0]['data']['time_zone'])
+        if job.nodes[0]['data']['time_zone'] == "":
             yesterday = datetime.combine(
                 datetime.today() - timedelta(1), datetime.min.time()
             )
@@ -157,101 +176,239 @@ class Client:
             dag_timezone = pendulum.timezone(desired_timezone)
             start_date = yesterday.replace(tzinfo=dag_timezone)
             time_zone = job.time_zone
-        if len(job.parameters) != 0:
-            parameters = "\n".join(item.replace(":", ": ") for item in job.parameters)
-        else:
-            parameters = ""
-        if job.mode_selected == "cluster":
-            template = environment.get_template(DAG_TEMPLATE_CLUSTER_V2)
-            if not job.input_filename.startswith(GCS):
-                input_notebook = f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job.name}/input_notebooks/{job.input_filename}"
-            else:
-                input_notebook = job.input_filename
-            content = template.render(
-                job,
-                inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
-                input_files = input_files,
-                execution_order = execution_order,
-                gcpProjectId=gcp_project_id,
-                gcpRegion=gcp_region_id,
-                input_notebook=input_notebook,
-                output_notebook=f"gs://{gcs_dag_bucket}/dataproc-output/{job.name}/output-notebooks/{job.name}_",
-                owner=owner,
-                schedule_interval=schedule_interval,
-                start_date=start_date,
-                parameters=parameters,
-                time_zone=time_zone,
-                )
-        else:
-            template = environment.get_template(DAG_TEMPLATE_SERVERLESS_V2)
-            job_dict = job.dict()
-            phs_path = (
-                job_dict.get("serverless_name", {})
-                .get("environmentConfig", {})
-                .get("peripheralsConfig", {})
-                .get("sparkHistoryServerConfig", {})
-                .get("dataprocCluster", "")
-            )
-            serverless_name = (
-                job_dict.get("serverless_name", {})
-                .get("jupyterSession", {})
-                .get("displayName", "")
-            )
-            custom_container = (
-                job_dict.get("serverless_name", {})
-                .get("runtimeConfig", {})
-                .get("containerImage", "")
-            )
-            metastore_service = (
-                job_dict.get("serverless_name", {})
-                .get("environmentConfig", {})
-                .get("peripheralsConfig", {})
-                .get("metastoreService", {})
-            )
-            version = (
-                job_dict.get("serverless_name", {})
-                .get("runtimeConfig", {})
-                .get("version", "")
-            )
-            if not job.input_filename.startswith(GCS):
-                input_notebook = f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job.name}/input_notebooks/{job.input_filename}"
-            else:
-                input_notebook = job.input_filename
-            content = template.render(
-                job,
-                inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
-                input_files = input_files,
-                execution_order = execution_order,
-                gcpProjectId=gcp_project_id,
-                gcpRegion=gcp_region_id,
-                input_notebook=input_notebook,
-                output_notebook=f"gs://{gcs_dag_bucket}/dataproc-output/{job.name}/output-notebooks/{job.name}_",
-                owner=owner,
-                schedule_interval=schedule_interval,
-                start_date=start_date,
-                parameters=parameters,
-                phs_path=phs_path,
-                serverless_name=serverless_name,
-                time_zone=time_zone,
-                custom_container=custom_container,
-                metastore_service=metastore_service,
-                version=version,
-            )
-        LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.name}"
+        current_year = datetime.now().year
+
+
+        #checking if the taks has cluster and adds stop cluster state to stop the cluster at the end
+        cluster_stop_dict = {}
+
+        for node in job.nodes:
+            if node.get('data', {}).get('nodeType') == 'Cluster':
+                cluster_name = node.get('data', {}).get('cluster_name')
+                stop_cluster = node.get('data', {}).get('stop_cluster')
+                cluster_stop_dict[cluster_name] = stop_cluster
+
+        #generate dag file with common values
+        LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.job_name}"
         file_path = os.path.join(LOCAL_DAG_FILE_LOCATION, dag_file)
         os.makedirs(LOCAL_DAG_FILE_LOCATION, exist_ok=True)
+        common_template = environment.get_template(DAG_TEMPLATE_JOB_V1)
+        contents = common_template.render(job,
+        owner=owner,scheduleInterval=schedule_interval,timeZone=time_zone, startDate=start_date,year= current_year,gcpProjectId=gcp_project_id,
+                    gcpRegion=gcp_region_id,clusterStop =  cluster_stop_dict)
         with open(file_path, mode="w", encoding="utf-8") as message:
-            message.write(content)
+            message.write(contents)
+
+        #iterate and generate dag tasks for each node based on node type
+        serverless_template = environment_serverless.get_template(DAG_TEMPLATE_SERVERLESS_V3)
+        for node in job.nodes:
+            node_type = node.get('data', {}).get('nodeType')
+            id = node.get('id',{})
+            if node_type != 'Trigger':
+                input_file = node.get('data', {}).get('inputFile', '')
+                if not input_file.startswith(GCS):
+                    self.upload_input_file_to_gcs(
+                    input_file, gcs_dag_bucket, job_name
+                )
+                parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
+                
+                if node_type == 'Serverless':
+                    serverless_config = node.get('data', {}).get('serverless', {})
+                    print(node.get('data', {}).get('retryCount', {}))
+                    phs_path = (
+                        serverless_config.get("environmentConfig", {})
+                        .get("peripheralsConfig", {})
+                        .get("sparkHistoryServerConfig", {})
+                        .get("dataprocCluster", "")
+                    )
+                    serverless_name = (
+                        serverless_config.get("jupyterSession", {})
+                        .get("displayName", "")
+                    )
+                    custom_container = (
+                        serverless_config.get("runtimeConfig", {})
+                        .get("containerImage", "")
+                    )
+                    metastore_service = (
+                        serverless_config.get("environmentConfig", {})
+                        .get("peripheralsConfig", {})
+                        .get("metastoreService", "")
+                    )
+                    version = (
+                        serverless_config.get("runtimeConfig", {})
+                        .get("version", "")
+                    )
+                    input_notebook = (
+                        f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
+                        if not input_file.startswith("gs://") else input_file
+                    )
+                    content = serverless_template.render(
+                        job,
+                        id = id,
+                        inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
+                        inputFile=input_file,
+                        gcpProjectId=gcp_project_id,
+                        gcpRegion=gcp_region_id,
+                        inputNotebook=input_notebook,
+                        outputNotebook=f"gs://{gcs_dag_bucket}/dataproc-output/{job.job_name}/output-notebooks/{job.job_name}_",
+                        owner=owner,
+                        scheduleInterval=schedule_interval,
+                        startDate=start_date,
+                        parameters=parameters,
+                        phsPath=phs_path,
+                        serverlessName=serverless_name,
+                        timeZone=job.time_zone,
+                        customContainer=custom_container,
+                        metastoreService=metastore_service,
+                        version=version,
+                        retries = node.get('data', {}).get('retryCount', {})
+                    )
+
+
+                    serverless_file = f"dag_{input_file}.py"
+                    with open(serverless_file, mode="w", encoding="utf-8") as message:
+                        message.write(content)
+                    with open(serverless_file, 'r', encoding='utf-8') as file:
+                        lines = file.readlines()
+                        if len(lines) > 16:
+                            serverless_contents = ''.join(lines[16:])
+                        else:
+                            serverless_contents = ''.join(lines)
+                    with open(file_path, mode="a", encoding="utf-8") as message:
+                        message.write(serverless_contents)
+                elif node_type == 'Cluster':
+                    input_notebook = (
+                        f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
+                        if not input_file.startswith("gs://") else input_file
+                    )
+                    cluster_template = environment_cluster.get_template(DAG_TEMPLATE_CLUSTER_V3)
+                    content = cluster_template.render(
+                    job,
+                    id = id,
+                    inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
+                    inputFile = input_file,
+                    gcpProjectId=gcp_project_id,
+                    gcpRegion=gcp_region_id,
+                    inputNotebook=input_notebook,
+                    outputNotebook=f"gs://{gcs_dag_bucket}/dataproc-output/{job.job_name}/output-notebooks/{job.job_name}_",
+                    parameters=parameters,
+                    retries = node.get('data', {}).get('retryCount', {}),
+                    clusterName =node.get('data',{}).get('cluster_name',{}),
+                    stopStatus =node.get('data',{}).get('stop_cluster',{})
+                    )
+                    cluster_file = f"dag_{input_file}.py"
+                    with open(cluster_file, mode="w", encoding="utf-8") as message:
+                        message.write(content)
+                    with open(cluster_file, 'r', encoding='utf-8') as file:
+                        lines = file.readlines()
+                        if len(lines) > 16:
+                            cluster_contents = ''.join(lines[15:])
+                        else:
+                            cluster_contents = ''.join(lines)
+                    with open(file_path, mode="a", encoding="utf-8") as message:
+                        message.write(cluster_contents)
+
+        dependencies = defaultdict(list)
+        for u, v in edges:
+            dependencies[u].append(v)
+        
+        order_of_execution = []
+        for node, deps in dependencies.items():
+            dep_str_list = []
+            node_type = next((n for n in job.nodes if n.get('id',{}) == node), {}).get('data', {}).get('nodeType')
+            for dep in deps:
+                node_data = next((n for n in job.nodes if n.get('id',{}) == dep), None)
+                if node_data and node_data.get('data', {}).get('nodeType') == 'Serverless':
+                    dep_str_list.append(f"write_output_task_{dep} >> create_batch_{dep}")
+                elif node_data and node_data.get('data', {}).get('nodeType') == 'Cluster':
+                    dep_str_list.append(f"start_cluster_{dep} >> submit_pyspark_job_{dep}")
+            
+            if len(dep_str_list) > 1:
+                dep_str = ', '.join(dep_str_list)
+                if node_type == 'Serverless':
+                    order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> [{dep_str}]")
+                elif node_type == 'Cluster':
+                    order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> [{dep_str}]")
+            else:
+                dep_str = dep_str_list[0]
+                if node_type == 'Serverless':
+                    order_of_execution.append(f"create_batch_{node} >> {dep_str}")
+                elif node_type == 'Cluster':
+                    order_of_execution.append(f"submit_pyspark_job_{node} >> {dep_str}")
+        if len(cluster_stop_dict) > 0:
+            order_of_execution.append(f"stop_cluster")
+        final_order = '\n'.join(order_of_execution)
+        with open(file_path, mode="a", encoding="utf-8") as message:
+            message.write(final_order)
         env = Environment(
             loader=PackageLoader(PACKAGE_NAME, "dagTemplates"),
             autoescape=select_autoescape(["py"]),
         )
         wrapper_papermill_path = env.get_template("wrapper_papermill.py").filename
         shutil.copy2(wrapper_papermill_path, LOCAL_DAG_FILE_LOCATION)
+        return file_path
 
-    def upload_dag_to_gcs(self, job, dag_file, gcs_dag_bucket):
-        LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.name}"
-        file_path = os.path.join(LOCAL_DAG_FILE_LOCATION, dag_file)
+    def get_execution_order(self,nodes,edges):
+        # def topological_sort_with_levels(nodes, edges):
+    # Create a graph as an adjacency list and a dictionary for in-degrees
+        graph = defaultdict(list)
+        in_degree = {node: 0 for node in nodes}
+        # Build the graph and in-degree dictionary
+        for u, v in edges:
+            graph[u].append(v)
+            in_degree[v] += 1
+        # Queue for nodes with no incoming edges
+        zero_in_degree_queue = deque([node for node in nodes if in_degree[node] == 0])
+        topological_order = []
+        levels = defaultdict(list)
+        level = 0
+        while zero_in_degree_queue:
+            level_size = len(zero_in_degree_queue)
+            current_level = []
+            for _ in range(level_size):
+                current_node = zero_in_degree_queue.popleft()
+                current_level.append(current_node)
+                topological_order.append(current_node)
+                for neighbor in graph[current_node]:
+                    in_degree[neighbor] -= 1
+                    if in_degree[neighbor] == 0:
+                        zero_in_degree_queue.append(neighbor)
+            levels[level] = current_level
+            level += 1
+        # Check for cycles (if the graph has a cycle, it cannot be topologically sorted)
+        if len(topological_order) == len(nodes):
+            return topological_order, levels
+        else:
+            raise ValueError("The graph has at least one cycle, topological sorting is not possible.")
+ 
+# Example usage
+
+ 
+
+# print("Topological Order of Execution:", order)
+# print("Levels of Execution (for parallel tasks):", dict(levels))
+            # edges_input = input_data["edges"]
+            # execution_order = []
+            # if len(edges_input) != 0:
+            #     edges = []
+            #     for edge in edges_input:
+            #         if "source" in edge and "target" in edge:
+            #             source = int(edge["source"])
+            #             target = int(edge["target"])
+            #             edges.append((source, target))
+            #     graph = nx.DiGraph()
+            #     graph.add_edges_from(edges)
+            #     nx.is_directed(graph) # => True
+            #     nx.is_directed_acyclic_graph(graph) # => True
+            #     execution_order = list(nx.topological_sort(graph))
+            # else:
+            #     nodes = job.nodes
+            #     for item in nodes:
+            #         execution_order.append(int(item['id']))
+
+    def upload_dag_to_gcs(self, gcs_dag_bucket, file_path):
+        # LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.job_name}"
+        # file_path = os.path.join(LOCAL_DAG_FILE_LOCATION, dag_file)
         cmd = f"gsutil cp '{file_path}' gs://{gcs_dag_bucket}/dags/"
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
@@ -266,14 +423,177 @@ class Client:
 
     async def execute(self, input_data):
         try:
-            job = DescribeJob(**input_data)
+            input = {
+    "composer_environment_name": "multinode-scheduler",
+    "job_name": "serverless-multi-node-demo",
+    "email_failure": False,
+    "email_delay": False,
+    "email_success": False,
+    "email_ids": [],
+    "nodes": [
+      {
+        "id": "0",
+        "type": "composerNodes",
+        "position": {
+          "x": 36.956521739130494,
+          "y": -132.6086956521739
+        },
+        "data": {
+          "nodeType": "Trigger",
+          "schedule_value": "",
+          "time_zone": ""
+        },
+        "width": 150,
+        "height": 259,
+        "selected": '',
+        "positionAbsolute": {
+          "x": 36.956521739130494,
+          "y": -132.6086956521739
+        },
+        "dragging": ''
+      },
+      {
+        "id": "1",
+        "type": "composerNodes",
+        "position": {
+          "x": 36.956521739130494,
+          "y": -132.6086956521739
+        },
+        "data": {
+          "nodeType": "Cluster",
+         "stop_cluster": False,
+          "cluster_name": "cluster-9a5a",
+        #   "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
+          "inputFile": "test1.ipynb",
+          "retryCount": 0,
+          "retryDelay": 0,
+          "parameter": []
+        },
+        "width": 150,
+        "height": 259,
+        "selected": '',
+        "positionAbsolute": {
+          "x": 36.956521739130494,
+          "y": -132.6086956521739
+        },
+        "dragging": ''
+      },
+      {
+        "id": "2",
+        "type": "composerNodes",
+        "position": {
+          "x": 47.826086956521735,
+          "y": 208.56521739130434
+        },
+        "data": {
+          "nodeType": "Serverless",
+          "inputFile": "test2.ipynb",
+        #   "stop_cluster": False,
+        #   "cluster_name": "cluster-9a5a",
+         "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
+          "retryCount": 0,
+          "retryDelay": 0,
+          "parameter": []
+        },
+        "origin": [
+          0.5,
+          0
+        ],
+        "width": 150,
+        "height": 259
+      },  {
+        "id": "3",
+        "type": "composerNodes",
+        "position": {
+          "x": 47.826086956521735,
+          "y": 208.56521739130434
+        },
+        "data": {
+          "nodeType": "Serverless",
+          "inputFile": "test2.ipynb",
+        #   "stop_cluster": False,
+        #   "cluster_name": "cluster-9a5a",
+          "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
+          "retryCount": 0,
+          "retryDelay": 0,
+          "parameter": []
+        },
+        "origin": [
+          0.5,
+          0
+        ],
+        "width": 150,
+        "height": 259
+      },  {
+        "id": "4",
+        "type": "composerNodes",
+        "position": {
+          "x": 47.826086956521735,
+          "y": 208.56521739130434
+        },
+        "data": {
+          "nodeType": "Serverless",
+          "inputFile": "test2.ipynb",
+        #   "stop_cluster": True,
+        #   "cluster_name": "cluster-9a5a",
+          "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
+          "retryCount": 0,
+          "retryDelay": 0,
+          "parameter": []
+        },
+        "origin": [
+          0.5,
+          0
+        ],
+        "width": 150,
+        "height": 259
+      },
+      
+    ],
+    "edges": [
+      {
+        "id": "1",
+        "source": "0",
+        "target": "1"
+      },
+      {
+        "id": "2",
+        "source": "1",
+        "target": "2"
+      },
+      {
+        "id": "3",
+        "source": "1",
+        "target": "3"
+      },
+      {
+        "id": "2",
+        "source": "2",
+        "target": "4"
+      },
+    ]
+  }
+            job = DescribeJob(**input)
             global job_id
             global job_name
             job_id = job.dag_id
-            job_name = job.name
+            job_name = job.job_name
             dag_file = f"dag_{job_name}.py"
             gcs_dag_bucket = await self.get_bucket(job.composer_environment_name)
             wrapper_pappermill_file_path = WRAPPER_PAPPERMILL_FILE
+
+
+            # execution_order = get_execution_order(job)
+            nodes = [node['id'] for node in input['nodes']]
+
+            # Extract edges
+            edges = [(edge["source"], edge["target"]) for edge in input['edges'] if edge["source"] != "0"]
+
+            # edges = [(edge['source'], edge['target']) for edge in input['edges']]
+            order, execution_order = self.get_execution_order(nodes, edges)
+            # execution_order = ['2','1']
+            print(execution_order)
+            file_path = self.prepare_dag(job, gcs_dag_bucket, dag_file, execution_order, edges)
 
             if self.check_file_exists(gcs_dag_bucket, wrapper_pappermill_file_path):
                 print(
@@ -284,15 +604,12 @@ class Client:
                 print(
                     f"The file gs://{gcs_dag_bucket}/{wrapper_pappermill_file_path} does not exist."
                 )
-            if not job.input_filename.startswith(GCS):
-                self.upload_input_file_to_gcs(
-                    job.input_filename, gcs_dag_bucket, job_name
-                )
-            self.prepare_dag(job, gcs_dag_bucket, dag_file)
-            self.upload_dag_to_gcs(job, dag_file, gcs_dag_bucket)
+            self.upload_dag_to_gcs(gcs_dag_bucket, file_path)         
+            # self.upload_dag_to_gcs(dag_file, gcs_dag_bucket)
             return {"status": 0}
         except Exception as e:
             return {"error": str(e)}
+     
 
     def download_dag_output(self, bucket_name, dag_id, dag_run_id):
         try:

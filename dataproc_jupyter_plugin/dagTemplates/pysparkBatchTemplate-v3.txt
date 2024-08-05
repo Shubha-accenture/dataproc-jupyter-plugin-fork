@@ -1,0 +1,74 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from datetime import datetime, timedelta, timezone
+from airflow import DAG
+from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator
+from airflow.operators.python_operator import PythonOperator
+from google.cloud import dataproc_v1
+from google.api_core.client_options import ClientOptions
+
+
+serverless_name_{{ id }} = '{{serverless_name}}'
+
+def write_output_to_file_{{id}}(run_id,task_id, **kwargs):
+    output_file_path = f"{{output_notebook}}{run_id}-{task_id}.ipynb"
+    print(output_file_path)
+    kwargs['ti'].xcom_push(key='output_file_path', value=output_file_path)
+    return output_file_path
+
+write_output_task_{{ id }} = PythonOperator(
+    task_id='generate_output_file_{{ id }}',
+    python_callable=write_output_to_file_{{id}},
+    provide_context=True,  
+    op_kwargs={'run_id': {% raw %}'{{run_id}}'{% endraw %}, 'task_id':'generate_output_file_{{ id }}'},   
+    dag=dag
+    )
+
+create_batch_{{id}} = DataprocCreateBatchOperator(
+        task_id="batch_create_{{id}}",
+        project_id = '{{gcpProjectId}}',
+        region = '{{gcpRegion}}',
+        batch={
+            "pyspark_batch": {
+                "main_python_file_uri": '{{inputFilePath}}',
+                'args' : get_notebook_args('{{input_notebook}}','{{parameters}}','generate_output_file_{{ id }}')         
+            },
+            "environment_config": {
+                "peripherals_config": {
+                    {% if metastore_service %}
+                    "metastore_service": '{{metastore_service}}',
+                    {% endif %}
+                    "spark_history_server_config": {
+                        "dataproc_cluster": '{{phs_path}}',
+                    },
+                },
+            },
+            
+            "runtime_config": {
+                {% if custom_container %}
+                "container_image": '{{custom_container}}',
+                {% endif %}
+                {% if version %}
+                "version":'{{version}}'
+                {% endif %}
+            },
+            
+        },
+        retries = {{retries}},
+        batch_id=str(uuid.uuid4()),
+        dag = dag,
+    )
+
+write_output_task_{{id}} >> create_batch_{{id}} >>

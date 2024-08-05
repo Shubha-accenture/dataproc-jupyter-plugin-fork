@@ -1,0 +1,52 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+
+start_cluster_{{id}} = PythonOperator(
+    task_id='start_cluster_{{id}}',
+    python_callable=get_cluster_state_start_if_not_running,
+    retries= 2,
+    op_args=['{{clusterName}}'],
+    provide_context=True,
+    dag=dag)
+
+
+write_output_task_{{ id }} = PythonOperator(
+    task_id='generate_output_file_{{ id }}',
+    python_callable=create_unique_output_file_path,
+    provide_context=True,  
+    op_kwargs={'run_id': {% raw %}'{{run_id}}'{% endraw %}, 'task_id':'generate_output_file_{{ id }}','output_notebook':'{{outputNotebook}}'},   
+    dag=dag
+    )
+    
+submit_pyspark_job_{{id}} = DataprocSubmitJobOperator(
+    task_id='submit_pyspark_job_{{id}}',
+    project_id='{{gcpProjectId}}',  # This parameter can be overridden by the connection
+    region='{{gcpRegion}}',  # This parameter can be overridden by the connection 
+    job={
+        'reference': {'project_id': '{{gcpProjectId}}'},
+        'placement': {'cluster_name': '{{clusterName}}'},
+        'labels': {'client': 'dataproc-jupyter-plugin'},
+        'pyspark_job': {
+            'main_python_file_uri': '{{inputFilePath}}',
+             'args' : get_notebook_args('{{inputNotebook}}', '{{parameters}}', 'generate_output_file_{{ id }}')
+        },
+    },
+    gcp_conn_id='google_cloud_default',  # Reference to the GCP connection
+    retries = {{retries}},
+    dag=dag,
+)
+
+

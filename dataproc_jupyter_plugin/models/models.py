@@ -49,7 +49,7 @@ class DescribeJob(BaseModel):
     email_failure: bool = False
     email_delay: bool = False
     email: Optional[List[str]] = None
-    name: str = None
+    job_name: str = None
     dag_id: str = None
     stop_cluster: bool = False
     time_zone: str = None
