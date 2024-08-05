@@ -25,29 +25,29 @@ import os
 
 
 default_args = {
-    'owner': '{{owner}}',
-    'start_date': '{{startDate}}', 
-    'email': {{email}}, 
-    'email_on_failure': '{{email_failure}}',     
-    'email_on_retry': '{{email_delay}}',      
-    'email_on_success':'{{email_success}}'
+    'owner': 'saranyal',
+    'start_date': '2024-08-04 00:00:00', 
+    'email': None, 
+    'email_on_failure': 'False',     
+    'email_on_retry': 'False',      
+    'email_on_success':'False'
 }
 
-time_zone = '{{timeZone}}'
+time_zone = ''
 
 dag = DAG(
-    '{{job_name}}', 
+    'test-serverless-execution', 
     default_args=default_args,
-    description='{{job_name}}',
+    description='test-serverless-execution',
     tags =['dataproc_jupyter_plugin'],
-    schedule_interval='{{scheduleInterval}}',
+    schedule_interval='@once',
     catchup= False
 )
 
 #function to pass input notebook, output notebook path and parameters as arguments to task
 def get_notebook_args(input_notebook,parameter,task_id):
     input_notebook = input_notebook
-    output_notebook = {% raw %}"{{ ti.xcom_pull(task_ids='" + task_id + "',key='output_file_path') }}"{% endraw %}
+    output_notebook = "{{ ti.xcom_pull(task_ids='" + task_id + "',key='output_file_path') }}"
     notebook_args = [input_notebook, output_notebook]
     parameters_str = '''
     {}
@@ -64,7 +64,7 @@ def get_client_cert():
 
 def get_cluster_state_start_if_not_running(cluster):
 
-    options = ClientOptions(api_endpoint="{{gcpRegion}}-dataproc.googleapis.com:443",
+    options = ClientOptions(api_endpoint="us-central1-dataproc.googleapis.com:443",
     client_cert_source=get_client_cert)
 
     # Create a client
@@ -72,8 +72,8 @@ def get_cluster_state_start_if_not_running(cluster):
 
     # Initialize request argument(s)
     request = dataproc_v1.GetClusterRequest(
-        project_id='{{gcpProjectId}}',
-        region='{{gcpRegion}}',
+        project_id='dataproc-jupyter-extension-dev',
+        region='us-central1',
         cluster_name=cluster,
     )
 
@@ -85,8 +85,8 @@ def get_cluster_state_start_if_not_running(cluster):
     if response.status.state in (6, 7):
         print("Cluster is in stopped/stopping state. Starting the cluster")
         request1 = dataproc_v1.StartClusterRequest(
-            project_id='{{gcpProjectId}}',
-            region='{{gcpRegion}}',
+            project_id='dataproc-jupyter-extension-dev',
+            region='us-central1',
             cluster_name=cluster,
         )
         operation = client.start_cluster(request=request1)
@@ -103,7 +103,7 @@ def get_cluster_state_start_if_not_running(cluster):
  
 def stop_the_cluster(cluster,stopStatus):
     if stopStatus == 'True':
-        options = ClientOptions(api_endpoint="{{gcpRegion}}-dataproc.googleapis.com:443",
+        options = ClientOptions(api_endpoint="us-central1-dataproc.googleapis.com:443",
             client_cert_source=get_client_cert)
     
         # Create a client
@@ -111,8 +111,8 @@ def stop_the_cluster(cluster,stopStatus):
     
         # Initialize request argument(s)
         request = dataproc_v1.StopClusterRequest(
-            project_id='{{gcpProjectId}}',
-            region='{{gcpRegion}}',
+            project_id='dataproc-jupyter-extension-dev',
+            region='us-central1',
             cluster_name=cluster,
         )
     
@@ -136,14 +136,84 @@ def stop_multiple_clusters(cluster_stop):
     for cluster, stop in cluster_stop.items():
         stop_the_cluster(cluster, str(stop))
 
-{% if clusterStop %}
 
-stop_cluster = PythonOperator(
-    task_id='stop_clusters',
-    python_callable=stop_multiple_clusters,
-    op_args=[{{clusterStop}}],
-    provide_context=True,
+
+write_output_task_1 = PythonOperator(
+    task_id='generate_output_file_1',
+    python_callable=create_unique_output_file_path,
+    provide_context=True,  
+    op_kwargs={'run_id': '{{run_id}}', 'task_id':'generate_output_file_1','output_notebook':'gs://us-central1-multinode-sched-5c1e56e9-bucket/dataproc-output/test-serverless-execution/output-notebooks/test-serverless-execution_'},   
     dag=dag
-)
+    )
 
-{% endif %}
+create_batch_1 = DataprocCreateBatchOperator(
+        task_id="batch_create_1",
+        project_id = 'dataproc-jupyter-extension-dev',
+        region = 'us-central1',
+        batch={
+            "pyspark_batch": {
+                "main_python_file_uri": 'gs://us-central1-multinode-sched-5c1e56e9-bucket/dataproc-notebooks/wrapper_papermill.py',
+                'args' : get_notebook_args('gs://us-central1-multinode-sched-5c1e56e9-bucket/dataproc-notebooks/test-serverless-execution/input_notebooks/test1.ipynb','','generate_output_file_1')         
+            },
+            "environment_config": {
+                "peripherals_config": {
+                    
+                    "spark_history_server_config": {
+                        "dataproc_cluster": '',
+                    },
+                },
+            },
+            
+            "runtime_config": {
+                
+                
+                "version":'2.2'
+                
+            },
+            
+        },
+        retries = 1,
+        batch_id=str(uuid.uuid4()),
+        dag = dag,
+    )
+
+
+write_output_task_2 = PythonOperator(
+    task_id='generate_output_file_2',
+    python_callable=create_unique_output_file_path,
+    provide_context=True,  
+    op_kwargs={'run_id': '{{run_id}}', 'task_id':'generate_output_file_2','output_notebook':'gs://us-central1-multinode-sched-5c1e56e9-bucket/dataproc-output/test-serverless-execution/output-notebooks/test-serverless-execution_'},   
+    dag=dag
+    )
+
+create_batch_2 = DataprocCreateBatchOperator(
+        task_id="batch_create_2",
+        project_id = 'dataproc-jupyter-extension-dev',
+        region = 'us-central1',
+        batch={
+            "pyspark_batch": {
+                "main_python_file_uri": 'gs://us-central1-multinode-sched-5c1e56e9-bucket/dataproc-notebooks/wrapper_papermill.py',
+                'args' : get_notebook_args('gs://us-central1-multinode-sched-5c1e56e9-bucket/dataproc-notebooks/test-serverless-execution/input_notebooks/test2.ipynb','','generate_output_file_2')         
+            },
+            "environment_config": {
+                "peripherals_config": {
+                    
+                    "spark_history_server_config": {
+                        "dataproc_cluster": '',
+                    },
+                },
+            },
+            
+            "runtime_config": {
+                
+                
+                "version":'2.2'
+                
+            },
+            
+        },
+        retries = 1,
+        batch_id=str(uuid.uuid4()),
+        dag = dag,
+    )
+create_batch_1 >> write_output_task_2 >> create_batch_2
