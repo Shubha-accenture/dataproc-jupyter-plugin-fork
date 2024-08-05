@@ -137,7 +137,7 @@ def stop_multiple_clusters(cluster_stop):
         stop_the_cluster(cluster, str(stop))
 
 
-stop_clusters = PythonOperator(
+stop_cluster = PythonOperator(
     task_id='stop_clusters',
     python_callable=stop_multiple_clusters,
     op_args=[{{clusterStop}}],

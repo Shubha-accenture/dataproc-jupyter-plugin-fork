@@ -251,13 +251,10 @@ class Client:
                         gcpRegion=gcp_region_id,
                         inputNotebook=input_notebook,
                         outputNotebook=f"gs://{gcs_dag_bucket}/dataproc-output/{job.job_name}/output-notebooks/{job.job_name}_",
-                        owner=owner,
                         scheduleInterval=schedule_interval,
-                        startDate=start_date,
                         parameters=parameters,
                         phsPath=phs_path,
                         serverlessName=serverless_name,
-                        timeZone=job.time_zone,
                         customContainer=custom_container,
                         metastoreService=metastore_service,
                         version=version,
@@ -421,158 +418,158 @@ class Client:
             self.log.exception(f"Error uploading dag file to gcs: {error.decode()}")
             raise IOError(error.decode)
 
-    async def execute(self, input_data):
+    async def execute(self, input):
         try:
-            input = {
-    "composer_environment_name": "multinode-scheduler",
-    "job_name": "serverless-multi-node-demo",
-    "email_failure": False,
-    "email_delay": False,
-    "email_success": False,
-    "email_ids": [],
-    "nodes": [
-      {
-        "id": "0",
-        "type": "composerNodes",
-        "position": {
-          "x": 36.956521739130494,
-          "y": -132.6086956521739
-        },
-        "data": {
-          "nodeType": "Trigger",
-          "schedule_value": "",
-          "time_zone": ""
-        },
-        "width": 150,
-        "height": 259,
-        "selected": '',
-        "positionAbsolute": {
-          "x": 36.956521739130494,
-          "y": -132.6086956521739
-        },
-        "dragging": ''
-      },
-      {
-        "id": "1",
-        "type": "composerNodes",
-        "position": {
-          "x": 36.956521739130494,
-          "y": -132.6086956521739
-        },
-        "data": {
-          "nodeType": "Cluster",
-         "stop_cluster": False,
-          "cluster_name": "cluster-9a5a",
-        #   "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
-          "inputFile": "test1.ipynb",
-          "retryCount": 0,
-          "retryDelay": 0,
-          "parameter": []
-        },
-        "width": 150,
-        "height": 259,
-        "selected": '',
-        "positionAbsolute": {
-          "x": 36.956521739130494,
-          "y": -132.6086956521739
-        },
-        "dragging": ''
-      },
-      {
-        "id": "2",
-        "type": "composerNodes",
-        "position": {
-          "x": 47.826086956521735,
-          "y": 208.56521739130434
-        },
-        "data": {
-          "nodeType": "Serverless",
-          "inputFile": "test2.ipynb",
-        #   "stop_cluster": False,
-        #   "cluster_name": "cluster-9a5a",
-         "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
-          "retryCount": 0,
-          "retryDelay": 0,
-          "parameter": []
-        },
-        "origin": [
-          0.5,
-          0
-        ],
-        "width": 150,
-        "height": 259
-      },  {
-        "id": "3",
-        "type": "composerNodes",
-        "position": {
-          "x": 47.826086956521735,
-          "y": 208.56521739130434
-        },
-        "data": {
-          "nodeType": "Serverless",
-          "inputFile": "test2.ipynb",
-        #   "stop_cluster": False,
-        #   "cluster_name": "cluster-9a5a",
-          "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
-          "retryCount": 0,
-          "retryDelay": 0,
-          "parameter": []
-        },
-        "origin": [
-          0.5,
-          0
-        ],
-        "width": 150,
-        "height": 259
-      },  {
-        "id": "4",
-        "type": "composerNodes",
-        "position": {
-          "x": 47.826086956521735,
-          "y": 208.56521739130434
-        },
-        "data": {
-          "nodeType": "Serverless",
-          "inputFile": "test2.ipynb",
-        #   "stop_cluster": True,
-        #   "cluster_name": "cluster-9a5a",
-          "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
-          "retryCount": 0,
-          "retryDelay": 0,
-          "parameter": []
-        },
-        "origin": [
-          0.5,
-          0
-        ],
-        "width": 150,
-        "height": 259
-      },
+#             input = {
+#     "composer_environment_name": "multinode-scheduler",
+#     "job_name": "multi-node1",
+#     "email_failure": False,
+#     "email_delay": False,
+#     "email_success": False,
+#     "email_ids": [],
+#     "nodes": [
+#       {
+#         "id": "0",
+#         "type": "composerNodes",
+#         "position": {
+#           "x": 36.956521739130494,
+#           "y": -132.6086956521739
+#         },
+#         "data": {
+#           "nodeType": "Trigger",
+#           "schedule_value": "",
+#           "time_zone": ""
+#         },
+#         "width": 150,
+#         "height": 259,
+#         "selected": '',
+#         "positionAbsolute": {
+#           "x": 36.956521739130494,
+#           "y": -132.6086956521739
+#         },
+#         "dragging": ''
+#       },
+#       {
+#         "id": "1",
+#         "type": "composerNodes",
+#         "position": {
+#           "x": 36.956521739130494,
+#           "y": -132.6086956521739
+#         },
+#         "data": {
+#           "nodeType": "Cluster",
+#          "stop_cluster": False,
+#           "cluster_name": "cluster-9a5a",
+#         #   "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
+#           "inputFile": "test1.ipynb",
+#           "retryCount": 0,
+#           "retryDelay": 0,
+#           "parameter": []
+#         },
+#         "width": 150,
+#         "height": 259,
+#         "selected": '',
+#         "positionAbsolute": {
+#           "x": 36.956521739130494,
+#           "y": -132.6086956521739
+#         },
+#         "dragging": ''
+#       },
+#       {
+#         "id": "2",
+#         "type": "composerNodes",
+#         "position": {
+#           "x": 47.826086956521735,
+#           "y": 208.56521739130434
+#         },
+#         "data": {
+#           "nodeType": "Serverless",
+#           "inputFile": "test2.ipynb",
+#         #   "stop_cluster": False,
+#         #   "cluster_name": "cluster-9a5a",
+#          "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
+#           "retryCount": 0,
+#           "retryDelay": 0,
+#           "parameter": []
+#         },
+#         "origin": [
+#           0.5,
+#           0
+#         ],
+#         "width": 150,
+#         "height": 259
+#       },  {
+#         "id": "3",
+#         "type": "composerNodes",
+#         "position": {
+#           "x": 47.826086956521735,
+#           "y": 208.56521739130434
+#         },
+#         "data": {
+#           "nodeType": "Serverless",
+#           "inputFile": "test2.ipynb",
+#         #   "stop_cluster": False,
+#         #   "cluster_name": "cluster-9a5a",
+#           "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
+#           "retryCount": 0,
+#           "retryDelay": 0,
+#           "parameter": []
+#         },
+#         "origin": [
+#           0.5,
+#           0
+#         ],
+#         "width": 150,
+#         "height": 259
+#       },  {
+#         "id": "4",
+#         "type": "composerNodes",
+#         "position": {
+#           "x": 47.826086956521735,
+#           "y": 208.56521739130434
+#         },
+#         "data": {
+#           "nodeType": "Serverless",
+#           "inputFile": "test2.ipynb",
+#         #   "stop_cluster": True,
+#         #   "cluster_name": "cluster-9a5a",
+#           "serverless": {"name":"projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00005d4b9f0e","createTime":"2024-07-08T14:45:30.299126Z","jupyterSession":{"kernel":"PYTHON","displayName":"auto-test-2024-07-08 14:40:00"},"creator":"amatheen@google.com","labels":{"client":"dataproc-jupyter-plugin"},"runtimeConfig":{"version":"2.2","properties":{"spark.driver.cores":"4","spark.driver.memory":"12200m","spark.driver.memoryOverhead":"1220m","spark.dataproc.driver.disk.size":"400g","spark.dataproc.driver.disk.tier":"standard","spark.executor.cores":"4","spark.executor.memory":"12200m","spark.executor.memoryOverhead":"1220m","spark.dataproc.executor.disk.size":"400g","spark.dataproc.executor.disk.tier":"standard","spark.executor.instances":"2","spark.dynamicAllocation.enabled":"true","spark.dynamicAllocation.initialExecutors":"2","spark.dynamicAllocation.minExecutors":"2","spark.dynamicAllocation.maxExecutors":"1000","spark.dynamicAllocation.executorAllocationRatio":"0.3","spark.reducer.fetchMigratedShuffle.enabled":"false"}},"environmentConfig":{"executionConfig":{"subnetworkUri":"default"},"peripheralsConfig":{"metastoreService":"projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"}},"description":"Testing","updateTime":"2024-07-08T14:45:30.299126Z","uuid":"44c80b57-63b4-4a6a-a303-46158b6bb684"},
+#           "retryCount": 0,
+#           "retryDelay": 0,
+#           "parameter": []
+#         },
+#         "origin": [
+#           0.5,
+#           0
+#         ],
+#         "width": 150,
+#         "height": 259
+#       },
       
-    ],
-    "edges": [
-      {
-        "id": "1",
-        "source": "0",
-        "target": "1"
-      },
-      {
-        "id": "2",
-        "source": "1",
-        "target": "2"
-      },
-      {
-        "id": "3",
-        "source": "1",
-        "target": "3"
-      },
-      {
-        "id": "2",
-        "source": "2",
-        "target": "4"
-      },
-    ]
-  }
+#     ],
+#     "edges": [
+#       {
+#         "id": "1",
+#         "source": "0",
+#         "target": "1"
+#       },
+#       {
+#         "id": "2",
+#         "source": "1",
+#         "target": "2"
+#       },
+#       {
+#         "id": "3",
+#         "source": "1",
+#         "target": "3"
+#       },
+#       {
+#         "id": "2",
+#         "source": "2",
+#         "target": "4"
+#       },
+#     ]
+#   }
             job = DescribeJob(**input)
             global job_id
             global job_name
