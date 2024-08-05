@@ -67,8 +67,8 @@ const GraphicalScheduler = ({
         stopCluster: '',
         clusterName: '',
         serverless: '',
-        schedule_value: '',//
-        time_zone: ''//
+        scheduleValue: '',
+        timeZone: ''
       }
     }
   ];
@@ -125,8 +125,8 @@ const GraphicalScheduler = ({
               stopCluster: '',
               clusterName: '',
               serverless: '',
-              schedule_value: '',
-              time_zone: ''
+              scheduleValue: '',
+              timeZone: ''
             },
             origin: [0.5, 0.0]
           };
@@ -233,8 +233,8 @@ const GraphicalScheduler = ({
           ...node,
           data: {
             nodeType: node.data.nodeType,
-            schedule_value: node.data.schedule_value,
-            time_zone: node.data.time_zone
+            scheduleValue: node.data.scheduleValue,
+            timeZone: node.data.timeZone
           }
         };
       } else if (node.data.nodeType === 'Cluster') {

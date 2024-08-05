@@ -28,35 +28,32 @@ function TriggerJobForm({ id, data, nodes }: any) {
     if (newValue === 'runSchedule' && scheduleValue === '') {
       setScheduleValue(scheduleValueExpression);
     }
-    data.schedule_value = scheduleValue;
-    data.time_zone = timeZoneSelected;
-    // let clickedNode = nodes.find((node: any) => node.id === id);
-    // clickedNode.data=data;
-    // console.log('trigger', data, nodes);
+    data.scheduleValue = scheduleValue;
+    data.timeZone = timeZoneSelected;
   };
 
   const handleTimeZoneSelected = (value: string | null) => {
     if (value) {
       const selectedTimeZone = value.toString();
       setTimeZoneSelected(selectedTimeZone);
-      data.time_zone = selectedTimeZone;
+      data.timeZone = selectedTimeZone;
       // let clickedNode = nodes.find((node: any) => node.id === id);
       // clickedNode.data=data;
     }
   };
 
   useEffect(() => {
-    if (scheduleMode === 'runNow' && data.schedule_value === '') {
-      data.schedule_value = '';
-      data.time_zone = '';
+    if (scheduleMode === 'runNow' && data.scheduleValue === '') {
+      data.scheduleValue = '';
+      data.timeZone = '';
     }
   }, [scheduleMode]);
 
   useEffect(() => {
-    if (data.time_zone) {
+    if (data.timeZone) {
       setScheduleMode('runSchedule')
-      setScheduleValue(data.schedule_value);
-      setTimeZoneSelected(data.time_zone)
+      setScheduleValue(data.scheduleValue);
+      setTimeZoneSelected(data.timeZone)
     }
   },[data]);
 
