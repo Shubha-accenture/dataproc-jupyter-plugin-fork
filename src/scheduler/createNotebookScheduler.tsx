@@ -51,19 +51,14 @@ const CreateNotebookScheduler = ({
   context: any;
   factory: IFileBrowserFactory;
 }): JSX.Element => {
-
   const [composerSelected] = useState('');
-  // const [emailOnFailure, setEmailOnFailure] = useState(false);
-  // const [emailOnRetry, setEmailonRetry] = useState(false);
-  // const [emailOnSuccess, setEmailOnSuccess] = useState(false);
-  // const [emailList, setEmailList] = useState<string[]>([]);
   const [createCompleted, setCreateCompleted] =
     context !== '' ? useState(false) : useState(true);
   const [creatingScheduler, setCreatingScheduler] = useState(false);
   const [editMode, setEditMode] = useState(false);
   // const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
   const [inputFilesValidation, setInputFilesValidation] = useState(false);
-  console.log(inputFilesValidation)
+  console.log(inputFilesValidation);
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
@@ -74,16 +69,11 @@ const CreateNotebookScheduler = ({
     email_failure: false,
     email_delay: false,
     email_success: false,
-    email_ids: [],
+    email_ids: []
   });
 
-  const handleJobPayload=(jobFormPayload:any)=>{
-    setJobPayload(jobFormPayload)
-    // console.log("in create scheduler",jobPayload)
-  }
-
   eventEmitter.on('closeJobForm', () => {
-   // setIsJobFormVisible(false);
+    // setIsJobFormVisible(false);
   });
 
   eventEmitter.on('closeTaskForm', () => {
@@ -103,26 +93,23 @@ const CreateNotebookScheduler = ({
       //   allInputFiles.push(inputFile);
       // }
     });
-    setInputFilesValidation(allNodesHaveInputFiles);//need this line
+    setInputFilesValidation(allNodesHaveInputFiles); //need this line
   };
-
-
 
   const handleEdgesChange = (updatedEdges: []) => {
     setEdges(updatedEdges);
   };
 
-
   const handleCreateJobScheduler = async () => {
     // let outputFormats = [];
     // outputFormats.push('ipynb');
     //let randomDagId = uuidv4();
-    const payload = { 
+    const payload = {
       ...jobPayload,
       nodes: nodes,
       edges: edges
     };
-    console.log("final payload",payload)
+    console.log('final payload', payload);
     await SchedulerService.createJobSchedulerService(
       payload,
       app,
@@ -132,7 +119,6 @@ const CreateNotebookScheduler = ({
     );
     setEditMode(false);
   };
-
 
   // const isSaveDisabled = () => {
   //   return (
@@ -204,7 +190,6 @@ const CreateNotebookScheduler = ({
   //   }
   // };
 
-
   // useEffect(() => {
   //   if (composerSelected !== '' && dagList.length > 0) {
   //     const isUnique = !dagList.some(
@@ -228,30 +213,30 @@ const CreateNotebookScheduler = ({
           themeManager={themeManager}
           composerSelectedFromCreate={composerSelected}
           setCreateCompleted={setCreateCompleted}
-         // setJobNameSelected={setJobNameSelected}
-         // setComposerSelected={setComposerSelected}
+          // setJobNameSelected={setJobNameSelected}
+          // setComposerSelected={setComposerSelected}
           //setScheduleMode={setScheduleMode}
           //setScheduleValue={setScheduleValue}
           //setInputFileSelected={setInputFileSelected}
           // setParameterDetail={setParameterDetail}
           //setParameterDetailUpdated={setParameterDetailUpdated}
-         // setSelectedMode={setSelectedMode}
+          // setSelectedMode={setSelectedMode}
           //setClusterSelected={setClusterSelected}
           //setServerlessSelected={setServerlessSelected}
           //setServerlessDataSelected={setServerlessDataSelected}
           //serverlessDataList={serverlessDataList}
           //setServerlessDataList={setServerlessDataList}
           //setServerlessList={setServerlessList}
-         // setRetryCount={setRetryCount}
+          // setRetryCount={setRetryCount}
           //setRetryDelay={setRetryDelay}
-         // setEmailOnFailure={setEmailOnFailure}
+          // setEmailOnFailure={setEmailOnFailure}
           //setEmailonRetry={setEmailonRetry}
-         // setEmailOnSuccess={setEmailOnSuccess}
+          // setEmailOnSuccess={setEmailOnSuccess}
           //setEmailList={setEmailList}
           //setStopCluster={setStopCluster}
           //setTimeZoneSelected={setTimeZoneSelected}
           setEditMode={setEditMode}
-         // setIsLoadingKernelDetail={setIsLoadingKernelDetail}
+          // setIsLoadingKernelDetail={setIsLoadingKernelDetail}
         />
       ) : (
         <>
@@ -280,7 +265,7 @@ const CreateNotebookScheduler = ({
                 variant="outlined"
                 // disabled={isSaveDisabled()}
                 aria-label="Save scheduler"
-                 onClick= {handleCreateJobScheduler}    //{!creatingScheduler ? handleCancel : undefined}
+                onClick={handleCreateJobScheduler} //{!creatingScheduler ? handleCancel : undefined}
               >
                 <div>SAVE</div>
               </Button>
@@ -295,16 +280,16 @@ const CreateNotebookScheduler = ({
             </div>
           </div>
           <Grid container spacing={0} style={{ height: '100vh' }}>
-              <GraphicalScheduler
-                inputFileSelected={context.path}
-                NodesChange={handleNodesChange}
-                EdgesChange={handleEdgesChange}
-                app={app}
-                factory={factory}
-                //isJobFormVisible={isJobFormVisible}
-               jobPayloadChange={handleJobPayload}
-              //  setJobPayload={setJobPayload}
-              />
+            <GraphicalScheduler
+              inputFileSelected={context.path}
+              NodesChange={handleNodesChange}
+              EdgesChange={handleEdgesChange}
+              app={app}
+              factory={factory}
+              //isJobFormVisible={isJobFormVisible}
+              jobPayload={jobPayload}
+              setJobPayload={setJobPayload}
+            />
           </Grid>
         </>
       )}
