@@ -45,24 +45,23 @@ const iconError = new LabIcon({
   svgstr: errorIcon
 });
 
-interface IJobPayload{
-    job_name:string,
-    composer_environment_name: string,
-    email_failure:boolean,
-    email_delay: boolean,
-    email_success: boolean,
-    email_ids: string[]
+interface IJobPayload {
+  job_name: string;
+  composer_environment_name: string;
+  email_failure: boolean;
+  email_delay: boolean;
+  email_success: boolean;
+  email_ids: string[];
 }
 
-const JobForm = ({ jobPayload: initialJobPayload, onJobPayloadChange }: { jobPayload: IJobPayload, onJobPayloadChange: (payload: IJobPayload) => void }) => {
-  const [jobNameSelected, setJobNameSelected] = useState('');
+const JobForm = ({
+  jobPayload: initialJobPayload,
+  setJobPayload
+}: {
+  jobPayload: IJobPayload;
+  setJobPayload: any;
+}) => {
   const [composerList, setComposerList] = useState<string[]>([]);
-  const [composerSelected, setComposerSelected] = useState('');
-  const [emailOnFailure, setEmailOnFailure] = useState(false);
-  const [emailOnRetry, setEmailonRetry] = useState(false);
-  const [emailOnSuccess, setEmailOnSuccess] = useState(false);
-  const [emailList, setEmailList] = useState<string[]>([]);
-  //const [creatingScheduler] = useState(false);
   const [jobNameValidation, setJobNameValidation] = useState(true);
   const [jobNameSpecialValidation, setJobNameSpecialValidation] =
     useState(false);
@@ -72,28 +71,7 @@ const JobForm = ({ jobPayload: initialJobPayload, onJobPayloadChange }: { jobPay
   const [dagListCall, setDagListCall] = useState(false);
   const [isJobFormVisible, setIsJobFormVisible] = useState(true);
 
-  const [jobPayload, setJobPayload] = useState<IJobPayload>(initialJobPayload);
-
-  useEffect(() => {
-    setJobPayload((prev:any) => ({
-      ...prev,
-      job_name: jobNameSelected,
-      composer_environment_name: composerSelected,
-      email_failure: emailOnFailure,
-      email_delay: emailOnRetry,
-      email_success: emailOnSuccess,
-      email_ids: emailList,
-    }));
-  }, [jobNameSelected, composerSelected, emailOnFailure, emailOnRetry, emailOnSuccess, emailList]);
-
-  useEffect(() => {
-    if (typeof onJobPayloadChange === 'function') {
-      onJobPayloadChange(jobPayload);
-    }
-  }, [jobPayload, onJobPayloadChange]);
-
-
-console.log(dagListCall)
+  console.log(dagListCall);
   eventEmitter.on('closeJobForm', () => {
     setIsJobFormVisible(false);
   });
@@ -109,8 +87,10 @@ console.log(dagListCall)
   const handleComposerSelected = (data: string | null) => {
     if (data) {
       const selectedComposer = data.toString();
-      setComposerSelected(selectedComposer);
-     // jobPayload. jobcomposer_environment_name=selectedComposer
+      setJobPayload((prev: any) => ({
+        ...prev,
+        composer_environment_name: selectedComposer
+      }));
       if (selectedComposer) {
         const unique = getDaglist(selectedComposer);
         if (!unique) {
@@ -135,39 +115,33 @@ console.log(dagListCall)
     }
   };
 
-
   const handleFailureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmailOnFailure(event.target.checked);
-   // jobPayload.email_failure=event.target.checked;
+    setJobPayload((prev: any) => ({
+      ...prev,
+      email_failure: event.target.checked
+    }));
   };
 
   const handleRetryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmailonRetry(event.target.checked);
-   // jobPayload.email_retry=event.target.checked
+    setJobPayload((prev: any) => ({
+      ...prev,
+      email_delay: event.target.checked
+    }));
   };
 
   const handleSuccessChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmailOnSuccess(event.target.checked);
-   // jobPayload.email_success=event.target.checked
+    setJobPayload((prev: any) => ({
+      ...prev,
+      email_success: event.target.checked
+    }));
   };
 
   const handleEmailList = (data: string[]) => {
-    setEmailList(data);
-   // jobPayload.email=data
+    setJobPayload((prev: any) => ({
+      ...prev,
+      email_ids: data
+    }));
   };
-
-//   const handleCreateJobScheduler = async () => {
-//     let outputFormats = [];
-// //     outputFormats.push('ipynb');
-//  jobPayload = {
-//       jobcomposer_environment_name: composerSelected,
-//       email_failure: emailOnFailure,
-//       email_retry: emailOnRetry,
-//       email_success: emailOnSuccess,
-//       email: emailList
-//     };
-//     console.log('jobpayload', jobPayload);
-// //  };
 
   const handleJobNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.target.value.length > 0
@@ -179,90 +153,35 @@ console.log(dagListCall)
     event.target.value.search(regexp)
       ? setJobNameSpecialValidation(true)
       : setJobNameSpecialValidation(false);
-    setJobNameSelected(event.target.value);
 
-    setJobNameSelected(event.target.value);
-   // jobPayload.jobName=event.target.value
+    console.log(event.target.value);
+
+    setJobPayload((prev: any) => ({
+      ...prev,
+      job_name: event.target.value
+    }));
   };
-
-//   const isSaveDisabled = () => {
-//     return (
-//       dagListCall ||
-//       jobNameSelected === '' ||
-//       (!jobNameValidation && !editMode) ||
-//       (jobNameSpecialValidation && !editMode) ||
-//       (!jobNameUniqueValidation && !editMode) ||
-//       composerSelected === '' ||
-//       ((emailOnFailure || emailOnRetry || emailOnSuccess) &&
-//         emailList.length === 0)
-//     );
-//   };
-
-//   const handleCancel = async () => {
-//     // if (!editMode) {
-//     //   setCreateCompleted(false);
-//     //   app.shell.activeWidget?.close();
-//     // } else {
-//     //   setCreateCompleted(true);
-//     // }
-//     // setIsFormVisible(false);
-//     console.log('cancel');
-//   };
-
-  //     const kernelSpecs: any = await KernelSpecAPI.getSpecs();
-  //     const kernels = kernelSpecs.kernelspecs;
-
-  //     if (kernels && context.sessionContext.kernelPreference.name) {
-  //       if (
-  //         kernels[context.sessionContext.kernelPreference.name].resources
-  //           .endpointParentResource
-  //       ) {
-  //         if (
-  //           kernels[
-  //             context.sessionContext.kernelPreference.name
-  //           ].resources.endpointParentResource.includes('/sessions')
-  //         ) {
-  //           const selectedData: any = serverlessDataList.filter(
-  //             (serverless: any) => {
-  //               return context.sessionContext.kernelDisplayName.includes(
-  //                 serverless.serverlessName
-  //               );
-  //             }
-  //           );
-  //           if (selectedData.length > 0) {
-  //             setServerlessDataSelected(selectedData[0].serverlessData);
-  //             setServerlessSelected(selectedData[0].serverlessName);
-  //           } else {
-  //             setServerlessDataSelected({});
-  //             setServerlessSelected('');
-  //           }
-  //         } else {
-  //           const selectedData: any = clusterList.filter((cluster: string) => {
-  //             return context.sessionContext.kernelDisplayName.includes(cluster);
-  //           });
-  //           if (selectedData.length > 0) {
-  //             setClusterSelected(selectedData[0]);
-  //           } else {
-  //             setClusterSelected('');
-  //           }
-  //         }
-  //       }
-  //     }
-  //   };
 
   useEffect(() => {
     listComposersAPI();
   }, []);
 
   useEffect(() => {
-    if (composerSelected !== '' && dagList.length > 0) {
+    if (
+      initialJobPayload.composer_environment_name !== '' &&
+      dagList.length > 0
+    ) {
       const isUnique = !dagList.some(
-        dag => dag.notebookname === jobNameSelected
+        dag => dag.notebookname === initialJobPayload.job_name
       );
       setJobNameUniqueValidation(isUnique);
     }
-  }, [dagList, jobNameSelected, composerSelected]);
-
+  }, [
+    dagList,
+    initialJobPayload.job_name,
+    initialJobPayload.composer_environment_name
+  ]);
+  console.log(initialJobPayload);
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
@@ -273,7 +192,7 @@ console.log(dagListCall)
                 <div className="create-scheduler-form-element">
                   <Input
                     className="create-scheduler-style"
-                    value={jobNameSelected}
+                    value={initialJobPayload.job_name}
                     onChange={e => handleJobNameChange(e)}
                     type="text"
                     placeholder=""
@@ -317,7 +236,7 @@ console.log(dagListCall)
                   <Autocomplete
                     className="create-scheduler-style"
                     options={composerList}
-                    value={composerSelected}
+                    value={initialJobPayload.composer_environment_name}
                     onChange={(_event, val) => handleComposerSelected(val)}
                     renderInput={params => (
                       <TextField {...params} label="Environment*" />
@@ -331,7 +250,7 @@ console.log(dagListCall)
                       control={
                         <Checkbox
                           size="small"
-                          checked={emailOnFailure}
+                          checked={initialJobPayload.email_failure}
                           onChange={handleFailureChange}
                         />
                       }
@@ -346,7 +265,7 @@ console.log(dagListCall)
                       control={
                         <Checkbox
                           size="small"
-                          checked={emailOnRetry}
+                          checked={initialJobPayload.email_delay}
                           onChange={handleRetryChange}
                         />
                       }
@@ -361,7 +280,7 @@ console.log(dagListCall)
                       control={
                         <Checkbox
                           size="small"
-                          checked={emailOnSuccess}
+                          checked={initialJobPayload.email_success}
                           onChange={handleSuccessChange}
                         />
                       }
@@ -375,19 +294,23 @@ console.log(dagListCall)
                   </FormGroup>
                 </div>
                 <div className="create-scheduler-form-element">
-                  {(emailOnFailure || emailOnRetry || emailOnSuccess) && (
+                  {(initialJobPayload.email_failure ||
+                    initialJobPayload.email_delay ||
+                    initialJobPayload.email_success) && (
                     <MuiChipsInput
                       className="select-job-style"
                       onChange={e => handleEmailList(e)}
                       addOnBlur={true}
-                      value={emailList}
+                      value={initialJobPayload.email_ids}
                       inputProps={{ placeholder: '' }}
                       label="Email recipients"
                     />
                   )}
                 </div>
-                {(emailOnFailure || emailOnRetry || emailOnSuccess) &&
-                  !emailList.length && (
+                {(initialJobPayload.email_failure ||
+                  initialJobPayload.email_delay ||
+                  initialJobPayload.email_success) &&
+                  !initialJobPayload.email_ids.length && (
                     <div className="error-key-parent">
                       <iconError.react
                         tag="div"
@@ -398,38 +321,6 @@ console.log(dagListCall)
                       </div>
                     </div>
                   )}
-                {/* <div className="save-overlay">
-                  <Button
-                    onClick={() => {
-                      if (!isSaveDisabled()) {
-                        handleCreateJobScheduler();
-                      }
-                    }}
-                    variant="contained"
-                    disabled={isSaveDisabled()}
-                    aria-label={
-                      editMode ? ' Update Schedule' : 'Create Schedule'
-                    }
-                  >
-                    <div>
-                      {editMode
-                        ? creatingScheduler
-                          ? 'UPDATING'
-                          : 'UPDATE'
-                        : creatingScheduler
-                        ? 'CREATING'
-                        : 'CREATE'}
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    disabled={creatingScheduler}
-                    aria-label="cancel Batch"
-                    onClick={!creatingScheduler ? handleCancel : undefined}
-                  >
-                    <div>CANCEL</div>
-                  </Button>
-                </div> */}
               </div>
             </div>
           </Grid>

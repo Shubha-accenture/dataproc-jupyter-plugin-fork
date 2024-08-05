@@ -33,20 +33,10 @@ interface IGraphicalSchedulerProps {
   EdgesChange: (updatedEdges: any) => void;
   app: JupyterLab;
   factory: IFileBrowserFactory;
-  //isJobFormVisible: boolean;
- jobPayloadChange:any//IJobPayload
-  //setJobPayload:any
+  jobPayload:any;//IJobPayload
+  setJobPayload:any
 }
 const nodeTypes = { composerNode: NotebookNode };
-
-// interface IJobPayload{
-//   job_name:string,
-//   composer_environment_name: string,
-//   email_failure:string,
-//   email_delay: string,
-//   email_success: string,
-//   email: string
-// }
 
 const GraphicalScheduler = ({
   inputFileSelected,
@@ -54,9 +44,8 @@ const GraphicalScheduler = ({
   EdgesChange,
   app,
   factory,
-  jobPayloadChange
-  //isJobFormVisible
-  //jobPayload,setPayload
+  jobPayload,
+  setJobPayload
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
@@ -131,27 +120,6 @@ const GraphicalScheduler = ({
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
-
-  const [jobPayload, setJobPayload] = useState({
-    job_name: '',
-    composer_environment_name: '',
-    email_failure: false,
-    email_delay: false,
-    email_success: false,
-    email_ids: [],
-  });
-
- 
-  // useEffect(() => {
-  //   console.log('Received jobPayload in GraphicalScheduler:', jobPayload);
-  // }, [jobPayload]);
-
-  const handleJobPayloadChange = (updatedPayload: any) => {
-    setJobPayload(updatedPayload);
-   // console.log('Updated jobPayload:', updatedPayload);
-  };
-
- // console.log(isTaskFormVisible);
   const { screenToFlowPosition } = useReactFlow();
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections
@@ -288,7 +256,6 @@ const GraphicalScheduler = ({
   }, [nodes]);
 
   useEffect(() => {
-    // If a node is clicked, find its data and show the form
     if (clickedNodeId) {
       const clickedNode = nodes.find(node => node.id === clickedNodeId);
       setClickedNodeData(clickedNode?.data);
@@ -299,7 +266,6 @@ const GraphicalScheduler = ({
   }, [clickedNodeId, nodes]);
 
   EdgesChange(edges);
-  jobPayloadChange(jobPayload)
   const transformNodeData = (nodes: any) => {
     return nodes.map((node: any) => {
       if (node.data.nodetype === 'trigger') {
@@ -367,7 +333,6 @@ const GraphicalScheduler = ({
               onConnect={onConnect}
               onConnectStart={onConnectStart}
               onConnectEnd={onConnectEnd}
-              //deleteKeyCode={null : 'Delete'}
               fitView
               fitViewOptions={{ padding: 2 }}
               nodeOrigin={[0.5, 0]}
@@ -379,7 +344,6 @@ const GraphicalScheduler = ({
           </div>
         </Grid>
         {isTaskFormVisible && (
-        // && clickedNodeData !== null && (
           <Grid item xs={4}>
             <ConfigureForm
               id={clickedNodeId}
@@ -392,7 +356,7 @@ const GraphicalScheduler = ({
           <Grid item xs={4}>
             <JobForm 
              jobPayload={jobPayload} 
-             onJobPayloadChange={handleJobPayloadChange}
+             setJobPayload={setJobPayload}
             />
           </Grid>
         )}
@@ -409,8 +373,8 @@ export default (props: IGraphicalSchedulerProps) => (
       EdgesChange={props.EdgesChange}
       app={props.app}
       factory={props.factory}
-     // isJobFormVisible={props.isJobFormVisible}
-     jobPayloadChange={props.jobPayloadChange}
+     jobPayload={props.jobPayload}
+     setJobPayload={props.setJobPayload}
     />
   </ReactFlowProvider>
 );
