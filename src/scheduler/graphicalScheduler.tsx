@@ -40,10 +40,10 @@ interface IGraphicalSchedulerProps {
 const nodeTypes = { composerNode: NotebookNode };
 
 // interface IJobPayload{
-//   jobName:string,
-//   jobcomposer_environment_name: string,
+//   job_name:string,
+//   composer_environment_name: string,
 //   email_failure:string,
-//   email_retry: string,
+//   email_delay: string,
 //   email_success: string,
 //   email: string
 // }
@@ -133,12 +133,12 @@ const GraphicalScheduler = ({
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
 
   const [jobPayload, setJobPayload] = useState({
-    jobName: '',
-    jobcomposer_environment_name: '',
+    job_name: '',
+    composer_environment_name: '',
     email_failure: false,
-    email_retry: false,
+    email_delay: false,
     email_success: false,
-    email: [],
+    email_ids: [],
   });
 
  

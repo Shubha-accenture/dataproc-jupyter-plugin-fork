@@ -14,45 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { useEffect, useState } from 'react';
-import { Input } from '../controls/MuiWrappedInput';
-import {
-  Autocomplete,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
-  TextField,
-  Typography
-} from '@mui/material';
-import { MuiChipsInput } from 'mui-chips-input';
+import React, { useState } from 'react';
 import { IThemeManager } from '@jupyterlab/apputils';
 import { JupyterLab } from '@jupyterlab/application';
-//import LabelProperties from '../jobs/labelProperties';
-//import { v4 as uuidv4 } from 'uuid';
-//import { Cron } from 'react-js-cron';
 import 'react-js-cron/dist/styles.css';
-import { KernelSpecAPI } from '@jupyterlab/services';
-//import tzdata from 'tzdata';
 import { SchedulerService } from './schedulerServices';
 import NotebookJobComponent from './notebookJobs';
 import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
 import { LabIcon } from '@jupyterlab/ui-components';
-import errorIcon from '../../style/icons/error_icon.svg';
 import { Button } from '@mui/material';
-//import { scheduleMode } from '../utils/const';
-//import { scheduleValueExpression } from '../utils/const';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
-//import LabelProperties from '../jobs/labelProperties';
 import { eventEmitter } from '../utils/signalEmitter';
-
-interface IDagList {
-  jobid: string;
-  notebookname: string;
-  schedule: string;
-  scheduleInterval: string;
-}
 
 interface INodeData {
   data: {
@@ -66,11 +40,6 @@ const iconLeftArrow = new LabIcon({
   svgstr: LeftArrowIcon
 });
 
-const iconError = new LabIcon({
-  name: 'launcher:error-icon',
-  svgstr: errorIcon
-});
-
 const CreateNotebookScheduler = ({
   themeManager,
   app,
@@ -82,64 +51,30 @@ const CreateNotebookScheduler = ({
   context: any;
   factory: IFileBrowserFactory;
 }): JSX.Element => {
-  const [jobNameSelected, setJobNameSelected] = useState('');
-  // const [inputFileSelected] = useState('');
-  const [composerList, setComposerList] = useState<string[]>([]);
-  const [composerSelected, setComposerSelected] = useState('');
 
-  // const [parameterDetail, setParameterDetail] = useState(['']);
-  // const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
-
-  //const [selectedMode, setSelectedMode] = useState('cluster');
-  const [clusterList] = useState<string[]>([]);
-  const [serverlessList] = useState<string[]>([]);
-  const [serverlessDataList] = useState<string[]>([]);
-  const [clusterSelected, setClusterSelected] = useState('');
-  const [serverlessSelected, setServerlessSelected] = useState('');
-  const [serverlessDataSelected, setServerlessDataSelected] = useState({});
- // const [stopCluster, setStopCluster] = useState(false);
-
-  // const [retryCount, setRetryCount] = useState<number | undefined>(2);
-  // const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
-
-  const [emailOnFailure, setEmailOnFailure] = useState(false);
-  const [emailOnRetry, setEmailonRetry] = useState(false);
-  const [emailOnSuccess, setEmailOnSuccess] = useState(false);
-  const [emailList, setEmailList] = useState<string[]>([]);
-
-  //const [scheduleMode, setScheduleMode] = useState<scheduleMode>('runNow');
-  //const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
-  // const [timeZoneSelected, setTimeZoneSelected] = useState(
-  //   Intl.DateTimeFormat().resolvedOptions().timeZone
-  // );
-
-  //const timezones = Object.keys(tzdata.zones).sort();
-
+  const [composerSelected] = useState('');
+  // const [emailOnFailure, setEmailOnFailure] = useState(false);
+  // const [emailOnRetry, setEmailonRetry] = useState(false);
+  // const [emailOnSuccess, setEmailOnSuccess] = useState(false);
+  // const [emailList, setEmailList] = useState<string[]>([]);
   const [createCompleted, setCreateCompleted] =
     context !== '' ? useState(false) : useState(true);
   const [creatingScheduler, setCreatingScheduler] = useState(false);
-  const [jobNameValidation, setJobNameValidation] = useState(true);
-  const [jobNameSpecialValidation, setJobNameSpecialValidation] =
-    useState(false);
-  const [jobNameUniqueValidation, setJobNameUniqueValidation] = useState(true);
-  const [dagList, setDagList] = useState<IDagList[]>([]);
   const [editMode, setEditMode] = useState(false);
-  const [dagListCall, setDagListCall] = useState(false);
-  const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
+  // const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
   const [inputFilesValidation, setInputFilesValidation] = useState(false);
+  console.log(inputFilesValidation)
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
 
-  const [isJobFormVisible] = useState(false);//set removed
-
   const [jobPayload, setJobPayload] = useState({
-    jobName: '',
-    jobcomposer_environment_name: '',
+    job_name: '',
+    composer_environment_name: '',
     email_failure: false,
-    email_retry: false,
+    email_delay: false,
     email_success: false,
-    email: [],
+    email_ids: [],
   });
 
   const handleJobPayload=(jobFormPayload:any)=>{
@@ -168,7 +103,7 @@ const CreateNotebookScheduler = ({
       //   allInputFiles.push(inputFile);
       // }
     });
-    setInputFilesValidation(allNodesHaveInputFiles);
+    setInputFilesValidation(allNodesHaveInputFiles);//need this line
   };
 
 
@@ -176,97 +111,13 @@ const CreateNotebookScheduler = ({
   const handleEdgesChange = (updatedEdges: []) => {
     setEdges(updatedEdges);
   };
-  //  const handleFormVisible = (val: boolean)=>{
-  //   setIsFormVisible(val)
-  //   console.log("val",val)
-  //   console.log("updated isformVisible",isFormVisible)
-  //  }
 
-  //const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
-
- console.log(isLoadingKernelDetail,serverlessList,serverlessDataSelected,clusterSelected,serverlessSelected,inputFilesValidation)//remove
-  const listComposersAPI = async () => {
-    await SchedulerService.listComposersAPIService(setComposerList);
-  };
-
-  const handleComposerSelected = (data: string | null) => {
-    if (data) {
-      const selectedComposer = data.toString();
-      setComposerSelected(selectedComposer);
-      if (selectedComposer) {
-        const unique = getDaglist(selectedComposer);
-        if (!unique) {
-          setJobNameUniqueValidation(true);
-        }
-      }
-    }
-  };
-  const getDaglist = async (composer: string) => {
-    setDagListCall(true);
-    try {
-      await SchedulerService.listDagInfoAPIServiceForCreateNotebook(
-        setDagList,
-        composer
-      );
-      setDagListCall(false);
-      return true;
-    } catch (error) {
-      setDagListCall(false);
-      console.error('Error checking job name uniqueness:', error);
-      return false;
-    }
-  };
-
-  // const handleSelectedModeChange = (
-  //   event: React.ChangeEvent<HTMLInputElement>
-  // ) => {
-  //   setSelectedMode((event.target as HTMLInputElement).value);
-  // };
-
-  // const handleSchedulerModeChange = (
-  //   event: React.ChangeEvent<HTMLInputElement>
-  // ) => {
-  //   const newValue = (event.target as HTMLInputElement).value;
-  //   setScheduleMode(newValue as scheduleMode);
-  //   if (newValue === 'runSchedule' && scheduleValue === '') {
-  //     setScheduleValue(scheduleValueExpression);
-  //   }
-  // };
-
-  // const handleTimeZoneSelected = (data: string | null) => {
-  //   if (data) {
-  //     const selectedTimeZone = data.toString();
-  //     setTimeZoneSelected(selectedTimeZone);
-  //   }
-  // };
-
-  const handleFailureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmailOnFailure(event.target.checked);
-  };
-
-  const handleRetryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmailonRetry(event.target.checked);
-  };
-
-  const handleSuccessChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmailOnSuccess(event.target.checked);
-  };
-
-  const handleEmailList = (data: string[]) => {
-    setEmailList(data);
-  };
 
   const handleCreateJobScheduler = async () => {
     // let outputFormats = [];
     // outputFormats.push('ipynb');
     //let randomDagId = uuidv4();
     const payload = { 
-      // composer_environment_name: composerSelected,
-      // email_failure: emailOnFailure,
-      // email_delay: emailOnRetry,
-      // email_success: emailOnSuccess,
-      // email: emailList,
-      // name: jobNameSelected,
       ...jobPayload,
       nodes: nodes,
       edges: edges
@@ -282,38 +133,24 @@ const CreateNotebookScheduler = ({
     setEditMode(false);
   };
 
-  const handleJobNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.target.value.length > 0
-      ? setJobNameValidation(true)
-      : setJobNameValidation(false);
 
-    //Regex to check job name must contain only letters, numbers, hyphens, and underscores
-    const regexp = /^[a-zA-Z0-9-_]+$/;
-    event.target.value.search(regexp)
-      ? setJobNameSpecialValidation(true)
-      : setJobNameSpecialValidation(false);
-    setJobNameSelected(event.target.value);
-
-    setJobNameSelected(event.target.value);
-  };
-
-  const isSaveDisabled = () => {
-    return (
-     // !inputFilesValidation ||
-      dagListCall ||
-      //creatingScheduler ||
-      jobNameSelected === '' ||
-      (!jobNameValidation && !editMode) ||
-      (jobNameSpecialValidation && !editMode) ||
-      (!jobNameUniqueValidation && !editMode) ||
-     // inputFileSelected === '' ||
-      composerSelected === '' ||
-      //(selectedMode === 'cluster' && clusterSelected === '') ||
-      //(selectedMode === 'serverless' && serverlessSelected === '') ||
-      ((emailOnFailure || emailOnRetry || emailOnSuccess) &&
-        emailList.length === 0)
-    );
-  };
+  // const isSaveDisabled = () => {
+  //   return (
+  //    // !inputFilesValidation ||
+  //     dagListCall ||
+  //     //creatingScheduler ||
+  //     jobNameSelected === '' ||
+  //     (!jobNameValidation && !editMode) ||
+  //     (jobNameSpecialValidation && !editMode) ||
+  //     (!jobNameUniqueValidation && !editMode) ||
+  //    // inputFileSelected === '' ||
+  //     composerSelected === '' ||
+  //     //(selectedMode === 'cluster' && clusterSelected === '') ||
+  //     //(selectedMode === 'serverless' && serverlessSelected === '') ||
+  //     ((emailOnFailure || emailOnRetry || emailOnSuccess) &&
+  //       emailList.length === 0)
+  //   );
+  // };
 
   const handleCancel = async () => {
     if (!editMode) {
@@ -325,79 +162,63 @@ const CreateNotebookScheduler = ({
     // setIsFormVisible(false);
   };
 
-  const getKernelDetail = async () => {
-    const kernelSpecs: any = await KernelSpecAPI.getSpecs();
-    const kernels = kernelSpecs.kernelspecs;
+  // const getKernelDetail = async () => {
+  //   const kernelSpecs: any = await KernelSpecAPI.getSpecs();
+  //   const kernels = kernelSpecs.kernelspecs;
 
-    if (kernels && context.sessionContext.kernelPreference.name) {
-      if (
-        kernels[context.sessionContext.kernelPreference.name].resources
-          .endpointParentResource
-      ) {
-        if (
-          kernels[
-            context.sessionContext.kernelPreference.name
-          ].resources.endpointParentResource.includes('/sessions')
-        ) {
-          const selectedData: any = serverlessDataList.filter(
-            (serverless: any) => {
-              return context.sessionContext.kernelDisplayName.includes(
-                serverless.serverlessName
-              );
-            }
-          );
-          if (selectedData.length > 0) {
-            setServerlessDataSelected(selectedData[0].serverlessData);
-            setServerlessSelected(selectedData[0].serverlessName);
-          } else {
-            setServerlessDataSelected({});
-            setServerlessSelected('');
-          }
-        } else {
-          const selectedData: any = clusterList.filter((cluster: string) => {
-            return context.sessionContext.kernelDisplayName.includes(cluster);
-          });
-          if (selectedData.length > 0) {
-            setClusterSelected(selectedData[0]);
-          } else {
-            setClusterSelected('');
-          }
-        }
-      }
-    }
-  };
+  //   if (kernels && context.sessionContext.kernelPreference.name) {
+  //     if (
+  //       kernels[context.sessionContext.kernelPreference.name].resources
+  //         .endpointParentResource
+  //     ) {
+  //       if (
+  //         kernels[
+  //           context.sessionContext.kernelPreference.name
+  //         ].resources.endpointParentResource.includes('/sessions')
+  //       ) {
+  //         const selectedData: any = serverlessDataList.filter(
+  //           (serverless: any) => {
+  //             return context.sessionContext.kernelDisplayName.includes(
+  //               serverless.serverlessName
+  //             );
+  //           }
+  //         );
+  //         if (selectedData.length > 0) {
+  //           setServerlessDataSelected(selectedData[0].serverlessData);
+  //           setServerlessSelected(selectedData[0].serverlessName);
+  //         } else {
+  //           setServerlessDataSelected({});
+  //           setServerlessSelected('');
+  //         }
+  //       } else {
+  //         const selectedData: any = clusterList.filter((cluster: string) => {
+  //           return context.sessionContext.kernelDisplayName.includes(cluster);
+  //         });
+  //         if (selectedData.length > 0) {
+  //           setClusterSelected(selectedData[0]);
+  //         } else {
+  //           setClusterSelected('');
+  //         }
+  //       }
+  //     }
+  //   }
+  // };
 
-  useEffect(() => {
-    listComposersAPI();
-    // if (context !== '') {
-    //   setInputFileSelected(context.path);
-    //   if (context.path.toLowerCase().startsWith('bigframes')) {
-    //     setIsBigQueryNotebook(true);
-    //     setSelectedMode('serverless');
-    //   }
-    // }
-    // setJobNameSelected('');
-    // if (!editMode) {
-    //   setParameterDetail([]);
-    //   console.log(parameterDetail);
-    //   setParameterDetailUpdated([]);
-    // }
-  }, []);
 
-  useEffect(() => {
-    if (composerSelected !== '' && dagList.length > 0) {
-      const isUnique = !dagList.some(
-        dag => dag.notebookname === jobNameSelected
-      );
-      setJobNameUniqueValidation(isUnique);
-    }
-  }, [dagList, jobNameSelected, composerSelected]);
+  // useEffect(() => {
+  //   if (composerSelected !== '' && dagList.length > 0) {
+  //     const isUnique = !dagList.some(
+  //       dag => dag.notebookname === jobNameSelected
+  //     );
+  //     setJobNameUniqueValidation(isUnique);
+  //   }
+  // }, [dagList, jobNameSelected, composerSelected]);
 
-  useEffect(() => {
-    if (context !== '') {
-      getKernelDetail();
-    }
-  }, [serverlessDataList, clusterList]);
+  // useEffect(() => {
+  //   if (context !== '') {
+  //     getKernelDetail();
+  //   }
+  // }, [serverlessDataList, clusterList]);
 
   return (
     <>
@@ -407,8 +228,8 @@ const CreateNotebookScheduler = ({
           themeManager={themeManager}
           composerSelectedFromCreate={composerSelected}
           setCreateCompleted={setCreateCompleted}
-          setJobNameSelected={setJobNameSelected}
-          setComposerSelected={setComposerSelected}
+         // setJobNameSelected={setJobNameSelected}
+         // setComposerSelected={setComposerSelected}
           //setScheduleMode={setScheduleMode}
           //setScheduleValue={setScheduleValue}
           //setInputFileSelected={setInputFileSelected}
@@ -423,14 +244,14 @@ const CreateNotebookScheduler = ({
           //setServerlessList={setServerlessList}
          // setRetryCount={setRetryCount}
           //setRetryDelay={setRetryDelay}
-          setEmailOnFailure={setEmailOnFailure}
-          setEmailonRetry={setEmailonRetry}
-          setEmailOnSuccess={setEmailOnSuccess}
-          setEmailList={setEmailList}
+         // setEmailOnFailure={setEmailOnFailure}
+          //setEmailonRetry={setEmailonRetry}
+         // setEmailOnSuccess={setEmailOnSuccess}
+          //setEmailList={setEmailList}
           //setStopCluster={setStopCluster}
           //setTimeZoneSelected={setTimeZoneSelected}
           setEditMode={setEditMode}
-          setIsLoadingKernelDetail={setIsLoadingKernelDetail}
+         // setIsLoadingKernelDetail={setIsLoadingKernelDetail}
         />
       ) : (
         <>
@@ -484,187 +305,6 @@ const CreateNotebookScheduler = ({
                jobPayloadChange={handleJobPayload}
               //  setJobPayload={setJobPayload}
               />
-            {isJobFormVisible && (
-              //expected to remove this ------------------
-              <Grid item xs={3}>
-                <div>
-                  <div className="submit-job-container">
-                    <div className="create-scheduler-form-element">
-                      <Input
-                        className="create-scheduler-style"
-                        value={jobNameSelected}
-                        onChange={e => handleJobNameChange(e)}
-                        type="text"
-                        placeholder=""
-                        Label="Job name*"
-                        disabled={editMode}
-                      />
-                    </div>
-                    {!jobNameValidation && !editMode && (
-                      <div className="error-key-parent">
-                        <iconError.react
-                          tag="div"
-                          className="logo-alignment-style"
-                        />
-                        <div className="error-key-missing">
-                          Name is required
-                        </div>
-                      </div>
-                    )}
-                    {jobNameSpecialValidation &&
-                      jobNameValidation &&
-                      !editMode && (
-                        <div className="error-key-parent">
-                          <iconError.react
-                            tag="div"
-                            className="logo-alignment-style"
-                          />
-                          <div className="error-key-missing">
-                            Name must contain only letters, numbers, hyphens,
-                            and underscores
-                          </div>
-                        </div>
-                      )}
-                    {!jobNameUniqueValidation && !editMode && (
-                      <div className="error-key-parent">
-                        <iconError.react
-                          tag="div"
-                          className="logo-alignment-style"
-                        />
-                        <div className="error-key-missing">
-                          Job name must be unique for the selected environment
-                        </div>
-                      </div>
-                    )}
-                    {/* <div className="create-scheduler-form-element-input-file">
-                      <Input
-                        className="create-scheduler-style"
-                        value={inputFileSelected}
-                        Label="Input file*"
-                        disabled={true}
-                      />
-                    </div> */}
-                    <div className="create-scheduler-form-element">
-                      <Autocomplete
-                        className="create-scheduler-style"
-                        options={composerList}
-                        value={composerSelected}
-                        onChange={(_event, val) => handleComposerSelected(val)}
-                        renderInput={params => (
-                          <TextField {...params} label="Environment*" />
-                        )}
-                        disabled={editMode}
-                      />
-                    </div>
-                    <div className="create-scheduler-form-element">
-                      <FormGroup row={true}>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              size="small"
-                              checked={emailOnFailure}
-                              onChange={handleFailureChange}
-                            />
-                          }
-                          className="create-scheduler-label-style"
-                          label={
-                            <Typography sx={{ fontSize: 13 }}>
-                              Email on failure
-                            </Typography>
-                          }
-                        />
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              size="small"
-                              checked={emailOnRetry}
-                              onChange={handleRetryChange}
-                            />
-                          }
-                          className="create-scheduler-label-style"
-                          label={
-                            <Typography sx={{ fontSize: 13 }}>
-                              Email on retry
-                            </Typography>
-                          }
-                        />
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              size="small"
-                              checked={emailOnSuccess}
-                              onChange={handleSuccessChange}
-                            />
-                          }
-                          className="create-scheduler-label-style"
-                          label={
-                            <Typography sx={{ fontSize: 13 }}>
-                              Email on success
-                            </Typography>
-                          }
-                        />
-                      </FormGroup>
-                    </div>
-                    <div className="create-scheduler-form-element">
-                      {(emailOnFailure || emailOnRetry || emailOnSuccess) && (
-                        <MuiChipsInput
-                          className="select-job-style"
-                          onChange={e => handleEmailList(e)}
-                          addOnBlur={true}
-                          value={emailList}
-                          inputProps={{ placeholder: '' }}
-                          label="Email recipients"
-                        />
-                      )}
-                    </div>
-                    {(emailOnFailure || emailOnRetry || emailOnSuccess) &&
-                      !emailList.length && (
-                        <div className="error-key-parent">
-                          <iconError.react
-                            tag="div"
-                            className="logo-alignment-style"
-                          />
-                          <div className="error-key-missing">
-                            Email recipients is required field
-                          </div>
-                        </div>
-                      )}
-                    <div className="save-overlay">
-                      <Button
-                        onClick={() => {
-                          if (!isSaveDisabled()) {
-                            handleCreateJobScheduler();
-                          }
-                        }}
-                        variant="contained"
-                        disabled={isSaveDisabled()}
-                        aria-label={
-                          editMode ? ' Update Schedule' : 'Create Schedule'
-                        }
-                      >
-                        <div>
-                          {editMode
-                            ? creatingScheduler
-                              ? 'UPDATING'
-                              : 'UPDATE'
-                            : creatingScheduler
-                            ? 'CREATING'
-                            : 'CREATE'}
-                        </div>
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        disabled={creatingScheduler}
-                        aria-label="cancel Batch"
-                        onClick={!creatingScheduler ? handleCancel : undefined}
-                      >
-                        <div>CANCEL</div>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </Grid>
-           )}
           </Grid>
         </>
       )}

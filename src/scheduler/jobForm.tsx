@@ -46,12 +46,12 @@ const iconError = new LabIcon({
 });
 
 interface IJobPayload{
-    jobName:string,
-    jobcomposer_environment_name: string,
+    job_name:string,
+    composer_environment_name: string,
     email_failure:boolean,
-    email_retry: boolean,
+    email_delay: boolean,
     email_success: boolean,
-    email: string[]
+    email_ids: string[]
 }
 
 const JobForm = ({ jobPayload: initialJobPayload, onJobPayloadChange }: { jobPayload: IJobPayload, onJobPayloadChange: (payload: IJobPayload) => void }) => {
@@ -77,12 +77,12 @@ const JobForm = ({ jobPayload: initialJobPayload, onJobPayloadChange }: { jobPay
   useEffect(() => {
     setJobPayload((prev:any) => ({
       ...prev,
-      jobName: jobNameSelected,
-      jobcomposer_environment_name: composerSelected,
+      job_name: jobNameSelected,
+      composer_environment_name: composerSelected,
       email_failure: emailOnFailure,
-      email_retry: emailOnRetry,
+      email_delay: emailOnRetry,
       email_success: emailOnSuccess,
-      email: emailList,
+      email_ids: emailList,
     }));
   }, [jobNameSelected, composerSelected, emailOnFailure, emailOnRetry, emailOnSuccess, emailList]);
 
