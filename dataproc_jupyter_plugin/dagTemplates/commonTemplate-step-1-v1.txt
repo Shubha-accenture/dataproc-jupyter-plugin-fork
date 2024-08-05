@@ -136,7 +136,7 @@ def stop_multiple_clusters(cluster_stop):
     for cluster, stop in cluster_stop.items():
         stop_the_cluster(cluster, str(stop))
 
-
+{% if clusterStop %}
 stop_cluster = PythonOperator(
     task_id='stop_clusters',
     python_callable=stop_multiple_clusters,
@@ -144,4 +144,5 @@ stop_cluster = PythonOperator(
     provide_context=True,
     dag=dag
 )
-    
+
+{% endif %} 
