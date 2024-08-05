@@ -31,8 +31,9 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [clusterSelected, setClusterSelected] = useState('');
   const [serverlessSelected, setServerlessSelected] = useState('');
+  const [serverlessDataSelected, setServerlessDataSelected] = useState({});
   const [stopCluster, setStopCluster] = useState(false);
-
+  console.log('11', serverlessDataSelected);
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -64,7 +65,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   };
 
   const listSessionTemplatesAPI = async () => {
-    console.log(serverlessDataList);
+    //console.log(serverlessDataList);
     await SchedulerService.listSessionTemplatesAPIService(
       setServerlessDataList,
       setServerlessList,
@@ -97,10 +98,10 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       const selectedData: any = serverlessDataList.filter((serverless: any) => {
         return serverless.serverlessName === selectedServerless;
       });
-      setServerlessSelected(selectedData[0].serverlessData.name);
-      data.serverless=selectedData[0].serverlessData.name;
-      //console.log("serverless", data.serverless)
-      //setServerlessSelected(selectedServerless);
+      setServerlessDataSelected(selectedData[0].serverlessData);
+      data.serverless = selectedData[0].serverlessData;
+      setServerlessSelected(selectedServerless);
+      //console.log(selectedServerless, selectedData, serverlessDataList);
     }
   };
 
@@ -111,7 +112,11 @@ function ClusterServerlessForm({ id, data, mode }: any) {
 
   const checkCompletionStatus = () => {
     const isComplete = data.inputFile;
-    eventEmitter.emit('color coding', isComplete ? 'complete' : 'incomplete', id);
+    eventEmitter.emit(
+      'color coding',
+      isComplete ? 'complete' : 'incomplete',
+      id
+    );
   };
 
   useEffect(() => {
@@ -125,18 +130,24 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       // setRetryDelay(data.retryDelay);
       data.parameter = parameterDetailUpdated;
     }
-   // console.log(data, parameterDetailUpdated);
+    // console.log(data, parameterDetailUpdated);
   }, [parameterDetailUpdated]);
 
   useEffect(() => {
     if (data) {
+      console.log(data)
       setInputFileSelectedLocal(data.inputFile);
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
       //data.parameter = parameterDetailUpdated;
-      setClusterSelected(data.clusterName)
-      setServerlessSelected(data.serverless)
-      setStopCluster(data.stopCluster)
+      setClusterSelected(data.clusterName);
+      setServerlessDataSelected(data.serverless); //here
+      if (data.serverless && data.serverless.jupyterSession.displayName) {
+        setServerlessSelected(
+          data.serverless.jupyterSession.displayName
+        );
+      }
+      setStopCluster(data.stopCluster);
     }
   }, [data]);
 
