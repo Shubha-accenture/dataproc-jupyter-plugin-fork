@@ -25,15 +25,24 @@ function ConfigureForm({ id, data, nodes }: any) {
     { key: 'Trigger', label: 'Trigger Node' }
   ];
 
-  const [nodeTypeSelected, setNodeTypeSelected] = useState('');
-  const [clickedNodeData, setClickedNodeData] = useState<any>(null);
+  const defaultNodeType = data && data.nodeType ? data.nodeType : id === 0 ? 'Trigger' : '';
 
+  const [nodeTypeSelected, setNodeTypeSelected] = useState(defaultNodeType);
+  const [clickedNodeData, setClickedNodeData] = useState<any>(null);
+  
   useEffect(() => {
     if (data && data.nodeType !== '') {
-      console.log('in useeefect of configure form ', data.nodeType);
       setNodeTypeSelected(data.nodeType);
-    }
+    } 
   }, [data]);
+
+  useEffect(() => {
+    if (id === '0') {
+      console.log("default trigger")
+      setNodeTypeSelected('Trigger');
+      data.nodeType="Trigger"
+    }
+  }, []);
 
   const handleNodeTypeChange = (value: string | null) => {
     if (value) {
@@ -51,6 +60,12 @@ function ConfigureForm({ id, data, nodes }: any) {
     const clickedNode = nodes.find((node: any) => node.id === id);
     setClickedNodeData(clickedNode ? clickedNode.data : '');
     setNodeTypeSelected(clickedNode ? clickedNode.data.nodeType : null);
+    // if (clickedNode && clickedNode.data.nodeType) {
+    //   setNodeTypeSelected(clickedNode.data.nodeType);
+    // } else if (id === 0) {
+    //   setNodeTypeSelected('Trigger');
+    // }
+
   }, [nodes, id]);
 
   return (

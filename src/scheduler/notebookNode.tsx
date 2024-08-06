@@ -18,7 +18,10 @@ const iconSaveToBigQuery = new LabIcon({
 
 function NotebookNode({ id, data, isConnectable }: NodeProps) {
   const [isNodeClicked, setIsNodeClicked] = useState('');
+
   // const [status, setStatus] = useState('');
+
+  //console.log(data)
 
   const handleNodeClick = () => {
     setIsNodeClicked(id);
@@ -74,7 +77,7 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
             )}
           </div>
           <div className="custom-node__header">
-            {id === '0' ? 'Trigger Node ' : `${id}.Notebook `}
+            {id === '0' ? 'Trigger Node ' : `${id}.${data.nodeType} Node `}
           </div>
         </div>
         <Handle
