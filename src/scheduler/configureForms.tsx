@@ -25,32 +25,22 @@ function ConfigureForm({ id, data, nodes }: any) {
     { key: 'Trigger', label: 'Trigger Node' }
   ];
 
-
-  //const filteredNodeTypes = id === 0 ? nodeTypes : nodeTypes.filter(type => type !== 'Trigger Node');
-  const defaultNodeType = id === '0' ? 'Trigger Node' : '';
-  //const defaultNodeType = data.inputFile ? 'Trigger Node' : '';
-  const [nodeTypeSelected, setnodeTypeSelected] = useState(defaultNodeType);
+  const [nodeTypeSelected, setNodeTypeSelected] = useState('');
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
-  const [previousNodeType, setPreviousNodeType] = useState('');
 
-  console.log(data)
-  if(data && data.nodeType!=='')
-  {console.log("to check",id,data,)
-}
-  // const handleNodeTypeChange = (value: any) => {
-  //   setnodeTypeSelected(value);
-  //   eventEmitter.emit(`nodeType`, value, id);
-  //   data.nodetype = value;
-  //   setPreviousNodeType(nodeTypeSelected);
-
-  // };
+  useEffect(() => {
+    if (data && data.nodeType !== '') {
+      console.log('in useeefect of configure form ', data.nodeType);
+      setNodeTypeSelected(data.nodeType);
+    }
+  }, [data]);
 
   const handleNodeTypeChange = (value: string | null) => {
     if (value) {
-      setnodeTypeSelected(value);
-      eventEmitter.emit(`nodeType`, value, id);
+      setNodeTypeSelected(value);
+      // eventEmitter.emit(`nodeType`, value, id);
       data.nodeType = value;
-      setPreviousNodeType(nodeTypeSelected);
+      //setPreviousNodeType(nodeTypeSelected);
     }
   };
   const handleCancel = () => {
@@ -60,14 +50,8 @@ function ConfigureForm({ id, data, nodes }: any) {
   useEffect(() => {
     const clickedNode = nodes.find((node: any) => node.id === id);
     setClickedNodeData(clickedNode ? clickedNode.data : '');
-    setnodeTypeSelected(clickedNode ? clickedNode.data.nodeType : null);
+    setNodeTypeSelected(clickedNode ? clickedNode.data.nodeType : null);
   }, [nodes, id]);
-
-  useEffect(() => {
-    if (previousNodeType && previousNodeType !== nodeTypeSelected) {
-      setClickedNodeData('');
-    }
-  }, [nodeTypeSelected, previousNodeType]);
 
   return (
     <>
@@ -83,12 +67,26 @@ function ConfigureForm({ id, data, nodes }: any) {
                 />
               </IconButton>
             </div>
+            {/* <Autocomplete
+              className="create-scheduler-style"
+              options={nodeTypes}
+              getOptionLabel={option => option.label}
+              value={nodeTypes.find(option => option.key === nodeTypeSelected)}
+              onChange={(_event, value) =>
+                handleNodeTypeChange(value?.key || null)
+              }
+              renderInput={params => (
+                <TextField {...params} label="Node Type*" />
+              )}
+            /> */}
             <Autocomplete
               className="create-scheduler-style"
               options={nodeTypes}
-              defaultValue={nodeTypes.find(option => option.key === defaultNodeType)}
               getOptionLabel={option => option.label}
-              value={nodeTypes.find(option => option.key === nodeTypeSelected)}
+              value={
+                nodeTypes.find(option => option.key === nodeTypeSelected) ||
+                null
+              }
               onChange={(_event, value) =>
                 handleNodeTypeChange(value?.key || null)
               }

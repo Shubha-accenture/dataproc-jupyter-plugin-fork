@@ -73,8 +73,6 @@ const GraphicalScheduler = ({
     }
   ];
 
-  // const defaultNode = inputFileSelected ? triggerNode : initialNode;
-  // const defaultEdge = inputFileSelected ? triggerEdge : [];
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
@@ -269,10 +267,8 @@ const GraphicalScheduler = ({
 
   const transformedNodes = transformNodeData(nodes);
 
-  console.log(transformedNodes);
-
   const handleGridClick = () => {
-    console.log('grid click ');
+   // console.log('grid click ');
     //setIsTaskFormVisible(false)
   };
 

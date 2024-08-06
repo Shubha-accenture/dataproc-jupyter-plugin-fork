@@ -18,10 +18,8 @@ const iconSaveToBigQuery = new LabIcon({
 
 function NotebookNode({ id, data, isConnectable }: NodeProps) {
   const [isNodeClicked, setIsNodeClicked] = useState('');
-  const [nodeType, setNodeType] = useState('');
   // const [status, setStatus] = useState('');
 
-  // console.log(data)
   const handleNodeClick = () => {
     setIsNodeClicked(id);
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
@@ -35,11 +33,11 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
   //   eventEmitter.off('color coding', handleColorCoding);
   // };
 
-  eventEmitter.on('nodeType', (value: string, nid: string) => {
-    if (id === nid) {
-      setNodeType(value);
-    }
-  });
+  // eventEmitter.on('nodeType', (value: string, nid: string) => {
+  //   if (id === nid) {
+  //     setNodeType(value);
+  //   }
+  // }); 
 
   return (
     <>
@@ -62,13 +60,13 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
         />
         <div className="node-content">
           <div>
-            {(nodeType === 'serverless' || nodeType === 'cluster') && (
+            {(data.nodeType === 'Serverless' || data.nodeType === 'Cluster') && (
               <iconCalendarRange.react
                 tag="div"
                 className="logo-alignment-react-flow"
               />
             )}
-            {nodeType === 'sql' && (
+            {data.nodeType === 'sql' && (
               <iconSaveToBigQuery.react
                 tag="div"
                 className="logo-alignment-react-flow"

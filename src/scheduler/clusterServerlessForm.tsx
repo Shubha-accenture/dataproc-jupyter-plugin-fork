@@ -135,7 +135,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
 
   useEffect(() => {
     if (data) {
-      console.log(data)
       setInputFileSelectedLocal(data.inputFile);
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
