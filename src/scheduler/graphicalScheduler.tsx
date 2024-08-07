@@ -200,7 +200,10 @@ const GraphicalScheduler = ({
 
   eventEmitter.on('nodeClick', (id: string, isNodeClicked: boolean) => {
     setClickedNodeId(id);
-    setIsTaskFormVisible(isNodeClicked);
+    console.log("isNodeclicked",isNodeClicked)
+if(isNodeClicked){
+    setIsTaskFormVisible(true);
+}
     eventEmitter.emit(`closeJobForm`, setIsTaskFormVisible); //check if we can pass only isTaskFormVisible
   });
 
@@ -268,7 +271,7 @@ const GraphicalScheduler = ({
   const transformedNodes = transformNodeData(nodes);
 
   const handleGridClick = () => {
-   // console.log('grid click ');
+   //console.log('grid click ');
     //setIsTaskFormVisible(false)
   };
 

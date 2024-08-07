@@ -71,7 +71,7 @@ const JobForm = ({
   const [dagListCall, setDagListCall] = useState(false);
   const [isJobFormVisible, setIsJobFormVisible] = useState(true);
 
-  console.log(dagListCall);
+  console.log("daglist",dagListCall);
   eventEmitter.on('closeJobForm', () => {
     setIsJobFormVisible(false);
   });
@@ -181,7 +181,7 @@ const JobForm = ({
     initialJobPayload.job_name,
     initialJobPayload.composer_environment_name
   ]);
-  console.log(initialJobPayload);
+  //console.log(initialJobPayload);
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>

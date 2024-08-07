@@ -38,7 +38,6 @@ function ConfigureForm({ id, data, nodes }: any) {
 
   useEffect(() => {
     if (id === '0') {
-      console.log("default trigger")
       setNodeTypeSelected('Trigger');
       data.nodeType="Trigger"
     }
@@ -57,8 +56,11 @@ function ConfigureForm({ id, data, nodes }: any) {
   };
 
   useEffect(() => {
+    console.log(id,data,nodes)
     const clickedNode = nodes.find((node: any) => node.id === id);
-    setClickedNodeData(clickedNode ? clickedNode.data : '');
+    console.log(id,data)
+    console.log(clickedNode)
+    setClickedNodeData(clickedNode ? clickedNode.data : null);
     setNodeTypeSelected(clickedNode ? clickedNode.data.nodeType : null);
     // if (clickedNode && clickedNode.data.nodeType) {
     //   setNodeTypeSelected(clickedNode.data.nodeType);
@@ -109,17 +111,17 @@ function ConfigureForm({ id, data, nodes }: any) {
                 <TextField {...params} label="Node Type*" />
               )}
             />
-            {nodeTypeSelected === 'Trigger' && (
+            {nodeTypeSelected === 'Trigger' && clickedNodeData!== null && (
               <TriggerJobForm id={id} data={clickedNodeData} nodes={nodes} />
             )}
-            {nodeTypeSelected === 'Serverless' && (
+            {nodeTypeSelected === 'Serverless' && clickedNodeData!== null && (
               <ClusterServerlessForm
                 id={id}
                 data={clickedNodeData}
                 mode={'serverless'}
               />
             )}
-            {nodeTypeSelected === 'Cluster' && (
+            {nodeTypeSelected === 'Cluster' && clickedNodeData!== null && (
               <ClusterServerlessForm
                 id={id}
                 data={clickedNodeData}

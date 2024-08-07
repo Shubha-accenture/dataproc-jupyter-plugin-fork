@@ -58,7 +58,7 @@ const CreateNotebookScheduler = ({
   const [editMode, setEditMode] = useState(false);
   // const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
   const [inputFilesValidation, setInputFilesValidation] = useState(false);
-  console.log(inputFilesValidation);
+  console.log("inputfile validation",inputFilesValidation);
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);

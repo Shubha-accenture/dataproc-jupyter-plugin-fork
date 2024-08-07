@@ -110,18 +110,19 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     data.stopCluster = event.target.checked;
   };
 
-  const checkCompletionStatus = () => {
-    const isComplete = data.inputFile;
-    eventEmitter.emit(
-      'color coding',
-      isComplete ? 'complete' : 'incomplete',
-      id
-    );
-  };
+  // const checkCompletionStatus = () => {
+  //   const isComplete = data.inputFile;
+  //   eventEmitter.emit(
+  //     'color coding',
+  //     isComplete ? 'complete' : 'incomplete',
+  //     id
+  //   );
+  // };
 
-  useEffect(() => {
-    checkCompletionStatus();
-  }, [inputFileSelectedLocal]);
+  // useEffect(() => {
+    
+  //   checkCompletionStatus();
+  // }, [inputFileSelectedLocal]);
 
   useEffect(() => {
     if (data) {
@@ -165,7 +166,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
         setSelectedMode('serverless');
       }
     }
-  });
+  },[]);
 
   return (
     <>
