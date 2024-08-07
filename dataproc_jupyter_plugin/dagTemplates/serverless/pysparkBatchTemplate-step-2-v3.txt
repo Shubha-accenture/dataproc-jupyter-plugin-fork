@@ -31,7 +31,7 @@ create_batch_{{id}} = DataprocCreateBatchOperator(
         batch={
             "pyspark_batch": {
                 "main_python_file_uri": '{{inputFilePath}}',
-                'args' : get_notebook_args('{{inputNotebook}}','{{parameters}}','generate_output_file_{{ id }}')         
+                'args' : get_notebook_args('{{inputNotebook}}',['{{parameters}}'],'generate_output_file_{{ id }}')         
             },
             "environment_config": {
                 "peripherals_config": {

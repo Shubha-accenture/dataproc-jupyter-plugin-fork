@@ -41,7 +41,7 @@ submit_pyspark_job_{{id}} = DataprocSubmitJobOperator(
         'labels': {'client': 'dataproc-jupyter-plugin'},
         'pyspark_job': {
             'main_python_file_uri': '{{inputFilePath}}',
-             'args' : get_notebook_args('{{inputNotebook}}', '{{parameters}}', 'generate_output_file_{{ id }}')
+             'args' : get_notebook_args('{{inputNotebook}}', ['{{parameters}}'], 'generate_output_file_{{ id }}')
         },
     },
     gcp_conn_id='google_cloud_default',  # Reference to the GCP connection

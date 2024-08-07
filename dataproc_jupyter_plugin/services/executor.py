@@ -305,11 +305,27 @@ class Client:
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(cluster_contents)
 
+        #creating execution order based on the tasks  
         dependencies = defaultdict(list)
+        node_without_dependencies = []
+        order_of_execution = []
         for u, v in edges:
             dependencies[u].append(v)
-        
-        order_of_execution = []
+            if u == '0':
+                 node_without_dependencies.append(v)
+                 
+        node_exec_list = []
+        for nodes in node_without_dependencies:
+            if dependencies[nodes]:
+                  continue
+            else:
+                node_data = next((n for n in job.nodes if n.get('id',{}) == nodes), None)
+                if node_type == 'Serverless':
+                    node_exec_list.append(f"write_output_task_{nodes} >> create_batch_{nodes}")
+                elif node_type == 'Cluster':
+                    node_exec_list.append(f"start_cluster_{nodes} >> write_output_task_{nodes} >> submit_pyspark_job_{nodes}")
+        if node_exec_list:
+            order_of_execution.append(f"[{', '.join(node_exec_list)}]")
         for node, deps in dependencies.items():
             dep_str_list = []
             node_type = next((n for n in job.nodes if n.get('id',{}) == node), {}).get('data', {}).get('nodeType')
@@ -318,8 +334,7 @@ class Client:
                 if node_data and node_data.get('data', {}).get('nodeType') == 'Serverless':
                     dep_str_list.append(f"write_output_task_{dep} >> create_batch_{dep}")
                 elif node_data and node_data.get('data', {}).get('nodeType') == 'Cluster':
-                    dep_str_list.append(f"start_cluster_{dep} >> submit_pyspark_job_{dep}")
-            
+                    dep_str_list.append(f"start_cluster_{dep} >> write_output_task_{dep} >> submit_pyspark_job_{dep}")
             if len(dep_str_list) > 1:
                 dep_str = ', '.join(dep_str_list)
                 if node_type == 'Serverless':
@@ -327,11 +342,13 @@ class Client:
                 elif node_type == 'Cluster':
                     order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> [{dep_str}]")
             else:
-                dep_str = dep_str_list[0]
-                if node_type == 'Serverless':
-                    order_of_execution.append(f"create_batch_{node} >> {dep_str}")
-                elif node_type == 'Cluster':
-                    order_of_execution.append(f"submit_pyspark_job_{node} >> {dep_str}")
+                if dep_str_list:
+                    dep_str = dep_str_list[0]
+                    if node_type == 'Serverless':
+                        order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> {dep_str}")
+                    elif node_type == 'Cluster':
+                        order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> {dep_str}")
+                
    
         final_order = '\n'.join(order_of_execution)
         if len(cluster_stop_dict) > 0:
@@ -347,7 +364,6 @@ class Client:
         return file_path
 
     def get_execution_order(self,nodes,edges):
-        # def topological_sort_with_levels(nodes, edges):
     # Create a graph as an adjacency list and a dictionary for in-degrees
         graph = defaultdict(list)
         in_degree = {node: 0 for node in nodes}
@@ -380,8 +396,6 @@ class Client:
             raise ValueError("The graph has at least one cycle, topological sorting is not possible.")
 
     def upload_dag_to_gcs(self, gcs_dag_bucket, file_path):
-        # LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.job_name}"
-        # file_path = os.path.join(LOCAL_DAG_FILE_LOCATION, dag_file)
         cmd = f"gsutil cp '{file_path}' gs://{gcs_dag_bucket}/dags/"
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
@@ -404,18 +418,11 @@ class Client:
             dag_file = f"dag_{job_name}.py"
             gcs_dag_bucket = await self.get_bucket(job.composer_environment_name)
             wrapper_pappermill_file_path = WRAPPER_PAPPERMILL_FILE
-
-
-            # execution_order = get_execution_order(job)
             nodes = [node['id'] for node in input['nodes']]
 
             # Extract edges
-            edges = [(edge["source"], edge["target"]) for edge in input['edges'] if edge["source"] != "0"]
-
-            # edges = [(edge['source'], edge['target']) for edge in input['edges']]
+            edges = [(edge["source"], edge["target"]) for edge in input['edges']]
             order, execution_order = self.get_execution_order(nodes, edges)
-            # execution_order = ['2','1']
-            print(execution_order)
             file_path = self.prepare_dag(job, gcs_dag_bucket, dag_file, execution_order, edges)
 
             if self.check_file_exists(gcs_dag_bucket, wrapper_pappermill_file_path):
@@ -428,7 +435,6 @@ class Client:
                     f"The file gs://{gcs_dag_bucket}/{wrapper_pappermill_file_path} does not exist."
                 )
             self.upload_dag_to_gcs(gcs_dag_bucket, file_path)         
-            # self.upload_dag_to_gcs(dag_file, gcs_dag_bucket)
             return {"status": 0}
         except Exception as e:
             return {"error": str(e)}
