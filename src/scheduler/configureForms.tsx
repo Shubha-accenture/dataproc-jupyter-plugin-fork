@@ -75,7 +75,7 @@ function ConfigureForm({ id, data, nodes }: any) {
     <>
       <>
         <form>
-          <div className="submit-job-container">
+          <div className="configure-node-container">
             <div className="task-form-header">
               <div className="create-job-scheduler-title">
               Configure Node
@@ -100,7 +100,7 @@ function ConfigureForm({ id, data, nodes }: any) {
               )}
             /> */}
             <Autocomplete
-              className="create-scheduler-style"
+              className="nodetype-seletion-style"
               options={filteredNodeTypes}
               getOptionLabel={option => option.label}
               value={

@@ -7,6 +7,12 @@
   flex-direction: column;
 }
 
+.configure-node-container{
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+}
+
 .submit-job-label-header {
   margin-top: 15px;
   font-style: normal;

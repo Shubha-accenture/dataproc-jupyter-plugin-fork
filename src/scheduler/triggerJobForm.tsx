@@ -63,8 +63,8 @@ function TriggerJobForm({ id, data, nodes }: any) {
       {/* { isFormVisible && */}
       <div>
         <form>
-          <div className="create-scheduler-form-element">
-            <FormControl>
+          <div className="create-scheduler-form-element-trigger">
+            <FormControl className= "trigger-form">
               <RadioGroup
                 aria-labelledby="demo-controlled-radio-buttons-group"
                 name="controlled-radio-buttons-group"
@@ -92,12 +92,12 @@ function TriggerJobForm({ id, data, nodes }: any) {
           </div>
           {scheduleMode === 'runSchedule' && (
             <>
-              <div className="create-scheduler-form-element">
+              <div className="create-scheduler-form-element-trigger">
                 <Cron value={scheduleValue} setValue={setScheduleValue} />
               </div>
-              <div className="create-scheduler-form-element">
+              <div className="create-scheduler-form-element-trigger">
                 <Autocomplete
-                  className="create-scheduler-style"
+                  className="create-scheduler-style-trigger"
                   options={timezones}
                   value={timeZoneSelected}
                   onChange={(_event, val) => handleTimeZoneSelected(val)}

@@ -58,6 +58,7 @@ const CreateNotebookScheduler = ({
   const [editMode, setEditMode] = useState(false);
   // const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
   const [inputFilesValidation, setInputFilesValidation] = useState(false);
+  //const [jobPayloadValidation, setJobPayloadValidation]= useState(false)
   console.log('inputfile validation', inputFilesValidation);
 
   const [nodes, setNodes] = useState([]);
@@ -269,7 +270,7 @@ const CreateNotebookScheduler = ({
                 variant="outlined"
                 // disabled={isSaveDisabled()}
                 aria-label="Save scheduler"
-                onClick={handleCreateJobScheduler} //{!creatingScheduler ? handleCancel : undefined}
+                onClick={handleCreateJobScheduler}
               >
                 <div>SAVE</div>
               </Button>
@@ -291,7 +292,6 @@ const CreateNotebookScheduler = ({
               EdgesChange={handleEdgesChange}
               app={app}
               factory={factory}
-              //isJobFormVisible={isJobFormVisible}
               jobPayload={jobPayload}
               setJobPayload={setJobPayload}
             />

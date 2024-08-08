@@ -174,15 +174,18 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       <div>
         <form>
           <div className="custom-node__body">
-            <label htmlFor="file-input">Input file*</label>
+            <label htmlFor="file-input" className='create-scheduler-style'>Input file*</label>
+            <div className="input-file-container">
             <input
-              className="nodrag"
+            className='create-scheduler-style'
+             // className="nodrag"
               type="file"
               value={''}
               // {inputFileSelectedLocal}
               onChange={e => onInputFileNameChange(e)}
             />
-            {<div>{inputFileSelectedLocal}</div>}
+            {<div className='create-scheduler-style'>{inputFileSelectedLocal}</div>}
+            </div>
             <LabelProperties
               labelDetail={parameterDetail}
               setLabelDetail={setParameterDetail}
@@ -198,7 +201,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
               // data={data}
               fromPage="react-flow"
             />
-            <div className="create-scheduler-form-element">
+            <div className="scheduler-dropdown-form-element">
               {isLoadingKernelDetail && (
                 <CircularProgress
                   size={18}
@@ -210,7 +213,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                 selectedMode === 'cluster' &&
                 !isLoadingKernelDetail && (
                   <Autocomplete
-                    className="create-scheduler-style"
+                    className="create-scheduler-style-trigger"
                     options={clusterList}
                     value={clusterSelected}
                     onChange={(_event, val) => handleClusterSelected(val)}
@@ -221,7 +224,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                 )}
               {selectedMode === 'serverless' && !isLoadingKernelDetail && (
                 <Autocomplete
-                  className="create-scheduler-style"
+                  className="create-scheduler-style-trigger"
                   options={serverlessList}
                   value={serverlessSelected}
                   onChange={(_event, val) => handleServerlessSelected(val)}
@@ -255,18 +258,20 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                 </FormGroup>
               </div>
             )}
+            <div className='scheduler-retry-parent'>
             <Input
-              className="nodrag"
+              className="retry-count"
               value={retryCount}
               Label="Retry Count"
               onChange={e => handleRetryCountChange(Number(e.target.value))}
             />
             <Input
-              className="nodrag"
+              className="retry-delay"
               value={retryDelay}
               Label="Retry Delay"
               onChange={e => handleRetryDelayChange(Number(e.target.value))}
             />
+            </div>
           </div>
         </form>
       </div>

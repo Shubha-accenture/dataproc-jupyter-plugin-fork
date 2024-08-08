@@ -34,6 +34,10 @@
   margin-top: 15px;
   width: 512px;
 }
+.multi-scheduler-form-element {
+  margin-top: 15px;
+  width: 512px;
+}
 
 .create-scheduler-form-element-input-file {
   margin-top: 15px;
@@ -59,7 +63,6 @@
   color: var(--jp-ui-font-color0);
 }
 
-
 .button-container {
   display: flex;
   justify-content: flex-end;
@@ -70,7 +73,7 @@
   position: relative;
 }
 
-.button-container-save{
+.button-container-save {
   display: flex;
   justify-content: flex-end;
   gap: 5px;
@@ -88,7 +91,6 @@
   margin-right: 10px;
 }
 
-
 .create-scheduler-label {
   margin-top: 15px;
   font-style: normal;
@@ -101,11 +103,20 @@
 }
 
 .create-scheduler-style {
+  /* min-width: 100%; */
   width: 512px;
   height: 36px;
   background: var(--jp-layout-color0);
   margin-top: 10px;
   outline: none;
+}
+.nodetype-seletion-style {
+  min-width: 95%;
+  height: 36px;
+  background: var(--jp-layout-color0);
+  margin-top: 10px;
+  outline: none;
+  padding: 10px;
 }
 
 .execution-history-left-wrapper {
@@ -238,7 +249,7 @@
   cursor: pointer;
 }
 .dag-runs-table-data-state-queued {
-  background-color: #AEAEAE;
+  background-color: #aeaeae;
   color: var(--jp-border-color3);
   border-radius: 22px;
   margin: 5px 15px;
@@ -250,7 +261,7 @@
   cursor: pointer;
 }
 .dag-runs-table-data-state-running {
-  background-color: #00BFA5;
+  background-color: #00bfa5;
   color: var(--jp-border-color3);
   border-radius: 22px;
   margin: 5px 15px;
@@ -271,7 +282,7 @@
   height: 48px;
   display: flex;
 }
-.accordion-section{
+.accordion-section {
   background: #f2dede;
   margin: 10px 0px;
 }
@@ -286,7 +297,8 @@
 
 .accordion-button {
   background-color: #f2dede;
-  color: #e43921;cursor: pointer;
+  color: #e43921;
+  cursor: pointer;
   padding: 10px;
   display: flex;
   justify-content: space-between;
@@ -308,4 +320,40 @@
 .timestamp {
   margin-left: 10px;
   margin-right: 10px;
+}
+
+.scheduler-retry-parent {
+  min-width: 100%;
+  padding: 10px 0px;
+}
+.retry-count {
+  width: 100%;
+}
+.retry-delay {
+  width: 100%;
+}
+.input-file-container {
+  display: flex;
+}
+.trigger-form {
+  padding: 0px 10px;
+}
+.create-scheduler-form-element-trigger {
+  margin-top: 15px;
+  min-width: 100%;
+  padding: 0px 10px;
+}
+
+.create-scheduler-style-trigger {
+  width: 95%;
+  height: 36px;
+  background: var(--jp-layout-color0);
+  margin-top: 10px;
+  outline: none;
+  /* padding: 0px 10px; */
+}
+.scheduler-dropdown-form-element {
+  margin-top: 15px;
+  width: 512px;
+  width: 105%;
 }

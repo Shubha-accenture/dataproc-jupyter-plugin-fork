@@ -145,10 +145,11 @@
 
 .scheduler-button-parent{
   display: flex;
-  margin-right: 20px;
   gap: 15px;
   padding-top: 5px;
   padding-bottom: 5px;
+  margin: 5px 0px;
+  margin-right: 20px;
 }
 
 .scheduler-button{
