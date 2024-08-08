@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IThemeManager } from '@jupyterlab/apputils';
 import { JupyterLab } from '@jupyterlab/application';
 import 'react-js-cron/dist/styles.css';
@@ -26,15 +26,13 @@ import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
-import { eventEmitter } from '../utils/signalEmitter';
-
-interface INodeData {
-  data: {
-    inputFile: string;
-    retryCount: number;
-    retryDelay: number;
-  };
-}
+// interface INodeData {
+//   data: {
+//     inputFile: string;
+//     retryCount: number;
+//     retryDelay: number;
+//   };
+// }
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
   svgstr: LeftArrowIcon
@@ -57,9 +55,8 @@ const CreateNotebookScheduler = ({
   const [creatingScheduler, setCreatingScheduler] = useState(false);
   const [editMode, setEditMode] = useState(false);
   // const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
-  const [inputFilesValidation, setInputFilesValidation] = useState(false);
-  //const [jobPayloadValidation, setJobPayloadValidation]= useState(false)
-  console.log('inputfile validation', inputFilesValidation);
+  const [nodeDataValidation, setNodeDataValidation] = useState(false);
+  const [jobPayloadValidation, setJobPayloadValidation] = useState(false);
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
@@ -73,28 +70,66 @@ const CreateNotebookScheduler = ({
     email_ids: []
   });
 
-  eventEmitter.on('closeJobForm', () => {
-    // setIsJobFormVisible(false);
-  });
+  const validateJobPayload = () => {
+    return (
+      jobPayload.job_name === '' ||
+      jobPayload.composer_environment_name === '' ||
+      ((jobPayload.email_failure ||
+        jobPayload.email_delay ||
+        jobPayload.email_success) &&
+        jobPayload.email_ids.length === 0)
+    );
+  };
 
-  eventEmitter.on('closeTaskForm', () => {
-    //setIsJobFormVisible(true);
-  });
+  const validateTaskPayload=()=>{
+    let allNodesHaveData = true;
+    nodes.forEach((e: any) => {
+      if(nodes.length<=1)
+        {
+          allNodesHaveData = false;
+        }
+      if (e.data.nodeType === '') {
+        allNodesHaveData = false;
+      }
+      if (e.data.nodeType === 'Cluster') {
+        let inputFile = e.data.inputFile;
+        if (!inputFile || inputFile.trim() === '') {
+          allNodesHaveData = false;
+        }
+        let name = e.data.clusterName;
+        if (!name || name.trim() === '') {
+          allNodesHaveData = false;
+        }
+      } else if (e.data.nodeType === 'Serverless') {
+        let inputFile = e.data.inputFile;
+        if (!inputFile || inputFile.trim() === '') {
+          allNodesHaveData = false;
+        }
+        let serverless = e.data.serverless;
+        if (!serverless) {
+          allNodesHaveData = false;
+        }
+      }
+       console.log(allNodesHaveData);
+       setNodeDataValidation(allNodesHaveData);
+       return allNodesHaveData;
+    });
+  }
+
+  // Use effect to handle the validation on jobPayload changes
+  useEffect(() => {
+    setJobPayloadValidation(!validateJobPayload());
+    console.log('job payload ', jobPayloadValidation);
+  }, [jobPayload]);
+
+  useEffect(() => {
+    validateTaskPayload()
+    console.log('task payload ', nodeDataValidation);
+  }, [nodes]);
+
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
-    //const allInputFiles: string[] = [];
-    let allNodesHaveInputFiles = true;
-    updatedNodes.forEach((e: INodeData) => {
-      const inputFile = e.data.inputFile;
-      if (!inputFile || inputFile.trim() === '') {
-        allNodesHaveInputFiles = false;
-      }
-      // } else {
-      //   allInputFiles.push(inputFile);
-      // }
-    });
-    setInputFilesValidation(allNodesHaveInputFiles); //need this line
   };
 
   const handleEdgesChange = (updatedEdges: []) => {
@@ -268,7 +303,7 @@ const CreateNotebookScheduler = ({
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"
-                // disabled={isSaveDisabled()}
+                disabled={!nodeDataValidation || !jobPayloadValidation}
                 aria-label="Save scheduler"
                 onClick={handleCreateJobScheduler}
               >
