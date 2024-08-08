@@ -20,8 +20,8 @@
   min-height: 5px;
   width: 6px;
   height: 6px;
-  background: #fff;
-  border: 1px solid white;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 100%;
 }
 
