@@ -141,6 +141,7 @@ class Client:
                   continue
             else:
                 node_data = next((n for n in job.nodes if n.get('id',{}) == nodes), None)
+                node_type = nodes.get('data', {}).get('nodeType')
                 if node_type == 'Serverless':
                     node_exec_list.append(f"write_output_task_{nodes} >> create_batch_{nodes}")
                 elif node_type == 'Cluster':
