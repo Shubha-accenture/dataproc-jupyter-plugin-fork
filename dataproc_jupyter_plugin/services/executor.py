@@ -403,7 +403,7 @@ class Client:
             self.log.exception(f"Error uploading dag file to gcs: {error.decode()}")
             raise IOError(error.decode)
 
-    async def execute(self, input1):
+    async def execute(self, input):
         try:
             job = DescribeJob(**input)
             global job_id
