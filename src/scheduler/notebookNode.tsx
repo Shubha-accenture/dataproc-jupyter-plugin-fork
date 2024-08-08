@@ -16,15 +16,18 @@ const iconSaveToBigQuery = new LabIcon({
   svgstr: saveToBigQueryIcon
 });
 
-function NotebookNode({ id, data, isConnectable }: NodeProps) {
-  const [isNodeClicked, setIsNodeClicked] = useState('');
+function NotebookNode({ id, data, selected,isConnectable }: NodeProps) {
+  const [clickedNodeId, setClickedNodeId]=useState('');
+  const [isNodeClicked, setIsNodeClicked] = useState(false);
   const nodeLabel = data.inputFile ? `${id}.${data.inputFile}` : `${id}.${data.nodeType} Node`;
 
   // const [status, setStatus] = useState('');
 
   //console.log(data)
   const handleNodeClick = () => {
-    setIsNodeClicked(id);
+    setClickedNodeId(id)
+    setIsNodeClicked(true);
+    console.log("clicked node in notebook",clickedNodeId)
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
   };
 
@@ -40,7 +43,8 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
 
   return (
     <>
-      <div className="notebook-node" onClick={handleNodeClick}>
+    <div  onClick={handleNodeClick}>
+      <div className={selected ? "selected-node":"notebook-node"}>
         <div
           className= "box black" 
           // {`box ${
@@ -82,6 +86,7 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
           id="b"
           isConnectable={isConnectable}
         />
+      </div>
       </div>
     </>
   );
