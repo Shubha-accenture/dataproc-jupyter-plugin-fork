@@ -43,7 +43,6 @@ function TriggerJobForm({ id, data, nodes }: any) {
   };
 
   useEffect(() => {
-    console.log("data",data)
     if (scheduleMode === 'runNow' && data.scheduleValue === '') {
       data.scheduleValue = '';
       data.timeZone = '';

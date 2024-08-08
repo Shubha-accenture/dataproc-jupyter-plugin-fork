@@ -33,7 +33,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [serverlessSelected, setServerlessSelected] = useState('');
   const [serverlessDataSelected, setServerlessDataSelected] = useState({});
   const [stopCluster, setStopCluster] = useState(false);
-  console.log('11', serverlessDataSelected);
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -99,6 +98,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
         return serverless.serverlessName === selectedServerless;
       });
       setServerlessDataSelected(selectedData[0].serverlessData);
+      console.log(serverlessDataSelected);
       data.serverless = selectedData[0].serverlessData;
       setServerlessSelected(selectedServerless);
       //console.log(selectedServerless, selectedData, serverlessDataList);

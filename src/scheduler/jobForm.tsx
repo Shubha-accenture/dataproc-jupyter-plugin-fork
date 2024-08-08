@@ -70,8 +70,6 @@ const JobForm = ({
   const [editMode] = useState(false);
   const [dagListCall, setDagListCall] = useState(false);
   const [isJobFormVisible, setIsJobFormVisible] = useState(true);
-
-  console.log("daglist",dagListCall);
   eventEmitter.on('closeJobForm', () => {
     setIsJobFormVisible(false);
   });
@@ -100,6 +98,7 @@ const JobForm = ({
     }
   };
   const getDaglist = async (composer: string) => {
+    console.log(dagListCall)
     setDagListCall(true);
     try {
       await SchedulerService.listDagInfoAPIServiceForCreateNotebook(
@@ -153,9 +152,6 @@ const JobForm = ({
     event.target.value.search(regexp)
       ? setJobNameSpecialValidation(true)
       : setJobNameSpecialValidation(false);
-
-    console.log(event.target.value);
-
     setJobPayload((prev: any) => ({
       ...prev,
       job_name: event.target.value

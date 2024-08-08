@@ -33,8 +33,8 @@ interface IGraphicalSchedulerProps {
   EdgesChange: (updatedEdges: any) => void;
   app: JupyterLab;
   factory: IFileBrowserFactory;
-  jobPayload:any;//IJobPayload
-  setJobPayload:any
+  jobPayload: any; //IJobPayload
+  setJobPayload: any;
 }
 const nodeTypes = { composerNode: NotebookNode };
 
@@ -200,10 +200,9 @@ const GraphicalScheduler = ({
 
   eventEmitter.on('nodeClick', (id: string, isNodeClicked: boolean) => {
     setClickedNodeId(id);
-    console.log("isNodeclicked",isNodeClicked)
-if(isNodeClicked){
-    setIsTaskFormVisible(true);
-}
+    if (isNodeClicked) {
+      setIsTaskFormVisible(true);
+    }
     eventEmitter.emit(`closeJobForm`, setIsTaskFormVisible); //check if we can pass only isTaskFormVisible
   });
 
@@ -271,7 +270,7 @@ if(isNodeClicked){
   const transformedNodes = transformNodeData(nodes);
 
   const handleGridClick = () => {
-   //console.log('grid click ');
+    //console.log('grid click ');
     //setIsTaskFormVisible(false)
   };
 
@@ -313,10 +312,7 @@ if(isNodeClicked){
         )}
         {!isTaskFormVisible && (
           <Grid item xs={4}>
-            <JobForm 
-             jobPayload={jobPayload} 
-             setJobPayload={setJobPayload}
-            />
+            <JobForm jobPayload={jobPayload} setJobPayload={setJobPayload} />
           </Grid>
         )}
       </Grid>
@@ -332,8 +328,8 @@ export default (props: IGraphicalSchedulerProps) => (
       EdgesChange={props.EdgesChange}
       app={props.app}
       factory={props.factory}
-     jobPayload={props.jobPayload}
-     setJobPayload={props.setJobPayload}
+      jobPayload={props.jobPayload}
+      setJobPayload={props.setJobPayload}
     />
   </ReactFlowProvider>
 );
