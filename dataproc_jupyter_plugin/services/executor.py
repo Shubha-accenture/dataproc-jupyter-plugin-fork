@@ -347,7 +347,7 @@ class Client:
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(cluster_contents)
 
-        final_order = self.get_execution_order(self,job,edges, cluster_stop_dict)
+        final_order = self.get_execution_order(job,edges, cluster_stop_dict)
         #creating a folder 'scheduled-jobs' and place the papermill file and dag file
         with open(file_path, mode="a", encoding="utf-8") as message:
             message.write(final_order)
