@@ -34,9 +34,7 @@ class ExecutorController(APIHandler):
                 input_data["composer_environment_name"],
             ):
                 raise ValueError(f"Invalid environment name: {input_data}")
-            if not re.fullmatch(constants.DAG_ID_REGEXP, input_data["dag_id"]):
-                raise ValueError(f"Invalid DAG ID: {input_data}")
-            if not re.fullmatch(constants.AIRFLOW_JOB_REGEXP, input_data["name"]):
+            if not re.fullmatch(constants.AIRFLOW_JOB_REGEXP, input_data["job_name"]):
                 raise ValueError(f"Invalid job name: {input_data}")
             async with aiohttp.ClientSession() as client_session:
                 client = executor.Client(

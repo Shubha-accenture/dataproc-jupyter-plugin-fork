@@ -408,7 +408,6 @@ class Client:
             job = DescribeJob(**input)
             global job_id
             global job_name
-            job_id = job.dag_id
             job_name = job.job_name
             dag_file = f"dag_{job_name}.py"
             gcs_dag_bucket = await self.get_bucket(job.composer_environment_name)
