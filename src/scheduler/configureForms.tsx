@@ -60,7 +60,6 @@ function ConfigureForm({ id, data, nodes }: any) {
   };
 
   useEffect(() => {
-    console.log(id,data,nodes)
     const clickedNode = nodes.find((node: any) => node.id === id);
     setClickedNodeData(clickedNode ? clickedNode.data : null);
     setNodeTypeSelected(clickedNode ? clickedNode.data.nodeType : null);
@@ -77,8 +76,10 @@ function ConfigureForm({ id, data, nodes }: any) {
       <>
         <form>
           <div className="submit-job-container">
-            <div className="submit-job-label-header">
+            <div className="task-form-header">
+              <div className="create-job-scheduler-title">
               Configure Node
+              </div>
               <IconButton aria-label="cancel" onClick={handleCancel}>
                 <iconSearchClear.react
                   tag="div"

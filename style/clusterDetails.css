@@ -123,6 +123,13 @@
 .cluster-details-action-parent {
   display: flex;
 }
+
+.task-form-header {
+  height: 48px;
+  display: flex;
+  justify-content: space-between;
+}
+
 .scheduler-header {
   height: 48px;
   display: flex;
