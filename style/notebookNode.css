@@ -1,32 +1,21 @@
 .notebook-node {
-  /* height: 100px; */
   border: 1px solid #eee;
   padding: 5px;
-  border-radius: 5px;
   background: white;
-  height: 86px;
-  width: 220px;
   top: -7px;
-  border: 1px solid #eee;
-  /* padding: 5px; */
-  /* border-radius: 5px; */
-  background: white;
-}
-
-.notebook-node {
-  /* height: 100px; */
-  border: 1px solid #eee;
-  padding: 5px;
-  /* border-radius: 5px; */
-  background: white;
-  /* height: 100px; */
   min-height: 86px;
   min-width: 220px;
+  border-radius: 8px;
+  box-shadow: 0px 1px 16px 0px rgba(0, 0, 0, 0.06);
+}
+
+.selected-node{
+  border: 1px solid #3367D6;
+  padding: 5px;
+  background:#E9EFFB;
   top: -7px;
-  border: 1px solid #eee;
-  /* padding: 5px; */
-  /* border-radius: 5px; */
-  background: white;
+  min-height: 86px;
+  min-width: 220px;
   border-radius: 8px;
   box-shadow: 0px 1px 16px 0px rgba(0, 0, 0, 0.06);
 }
@@ -73,7 +62,7 @@
 }
 
 .green {
-  background-color: #4BB543;
+  background-color: #4bb543;
 }
 
 .node-content {

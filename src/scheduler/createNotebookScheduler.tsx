@@ -58,7 +58,7 @@ const CreateNotebookScheduler = ({
   const [editMode, setEditMode] = useState(false);
   // const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
   const [inputFilesValidation, setInputFilesValidation] = useState(false);
-  console.log("inputfile validation",inputFilesValidation);
+  console.log('inputfile validation', inputFilesValidation);
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
@@ -240,28 +240,32 @@ const CreateNotebookScheduler = ({
         />
       ) : (
         <>
-          <div className="cluster-details-header">
-            <div
-              role="button"
-              className="back-arrow-icon"
-              onClick={handleCancel}
-            >
-              <iconLeftArrow.react
-                tag="div"
-                className="icon-white logo-alignment-style"
-              />
+          <div className="scheduler-header">
+            <div className="scheduler-header-left">
+              <div
+                role="button"
+                className="back-arrow-icon"
+                onClick={handleCancel}
+              >
+                <iconLeftArrow.react
+                  tag="div"
+                  className="icon-white logo-alignment-style"
+                />
+              </div>
+
+              {editMode ? (
+                <div className="create-job-scheduler-title">
+                  Update A Scheduled Job
+                </div>
+              ) : (
+                <div className="create-job-scheduler-title">
+                  Create A Scheduled Job
+                </div>
+              )}
             </div>
-            {editMode ? (
-              <div className="create-job-scheduler-title">
-                Update A Scheduled Job
-              </div>
-            ) : (
-              <div className="create-job-scheduler-title">
-                Create A Scheduled Job
-              </div>
-            )}
-            <div className="button-container-save">
+            <div className="scheduler-button-parent">
               <Button
+                sx={{ width: '100px' }}
                 variant="outlined"
                 // disabled={isSaveDisabled()}
                 aria-label="Save scheduler"
@@ -270,6 +274,7 @@ const CreateNotebookScheduler = ({
                 <div>SAVE</div>
               </Button>
               <Button
+                sx={{ width: '100px' }}
                 variant="outlined"
                 disabled={creatingScheduler}
                 aria-label="cancel scheduler"

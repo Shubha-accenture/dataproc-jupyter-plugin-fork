@@ -62,8 +62,6 @@ function ConfigureForm({ id, data, nodes }: any) {
   useEffect(() => {
     console.log(id,data,nodes)
     const clickedNode = nodes.find((node: any) => node.id === id);
-    console.log(id,data)
-    console.log(clickedNode)
     setClickedNodeData(clickedNode ? clickedNode.data : null);
     setNodeTypeSelected(clickedNode ? clickedNode.data.nodeType : null);
     // if (clickedNode && clickedNode.data.nodeType) {
