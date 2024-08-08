@@ -18,24 +18,20 @@ const iconSaveToBigQuery = new LabIcon({
 
 function NotebookNode({ id, data, isConnectable }: NodeProps) {
   const [isNodeClicked, setIsNodeClicked] = useState('');
+  const nodeLabel = data.inputFile ? `${id}.${data.inputFile}` : `${id}.${data.nodeType} Node`;
 
   // const [status, setStatus] = useState('');
 
   //console.log(data)
-
   const handleNodeClick = () => {
     setIsNodeClicked(id);
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
   };
 
-  // eventEmitter.on('color coding', (value: string) => {
+  // eventEmitter.on('color coding', value: string, id:string) => {
   //   console.log(status,id);
   //   setStatus(value);
   // });
-  // return () => {
-  //   eventEmitter.off('color coding', handleColorCoding);
-  // };
-
   // eventEmitter.on('nodeType', (value: string, nid: string) => {
   //   if (id === nid) {
   //     setNodeType(value);
@@ -77,7 +73,7 @@ function NotebookNode({ id, data, isConnectable }: NodeProps) {
             )}
           </div>
           <div className="custom-node__header">
-            {id === '0' ? 'Trigger Node ' : `${id}.${data.nodeType} Node `}
+            {id === '0' ? 'Trigger Node ' : nodeLabel}
           </div>
         </div>
         <Handle

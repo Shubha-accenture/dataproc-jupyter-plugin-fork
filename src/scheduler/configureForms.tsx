@@ -25,6 +25,10 @@ function ConfigureForm({ id, data, nodes }: any) {
     { key: 'Trigger', label: 'Trigger Node' }
   ];
 
+  const filteredNodeTypes = id === '0'
+  ? nodeTypes
+  : nodeTypes.filter(node => node.key !== 'Trigger');
+
   const defaultNodeType = data && data.nodeType ? data.nodeType : id === 0 ? 'Trigger' : '';
 
   const [nodeTypeSelected, setNodeTypeSelected] = useState(defaultNodeType);
@@ -98,10 +102,10 @@ function ConfigureForm({ id, data, nodes }: any) {
             /> */}
             <Autocomplete
               className="create-scheduler-style"
-              options={nodeTypes}
+              options={filteredNodeTypes}
               getOptionLabel={option => option.label}
               value={
-                nodeTypes.find(option => option.key === nodeTypeSelected) ||
+                filteredNodeTypes.find(option => option.key === nodeTypeSelected) ||
                 null
               }
               onChange={(_event, value) =>
@@ -110,6 +114,7 @@ function ConfigureForm({ id, data, nodes }: any) {
               renderInput={params => (
                 <TextField {...params} label="Node Type*" />
               )}
+              disabled={id==='0'}
             />
             {nodeTypeSelected === 'Trigger' && clickedNodeData!== null && (
               <TriggerJobForm id={id} data={clickedNodeData} nodes={nodes} />
