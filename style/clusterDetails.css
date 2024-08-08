@@ -123,3 +123,35 @@
 .cluster-details-action-parent {
   display: flex;
 }
+.scheduler-header {
+  height: 48px;
+  display: flex;
+  border-bottom: 1px solid var(--jp-layout-color3);
+  justify-content: space-between;
+}
+
+.scheduler-header-left{
+  margin-top: 2px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.scheduler-button-parent{
+  display: flex;
+  margin-right: 20px;
+  gap: 15px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.scheduler-button{
+  cursor: pointer;
+  padding-left: 20px;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 32px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
