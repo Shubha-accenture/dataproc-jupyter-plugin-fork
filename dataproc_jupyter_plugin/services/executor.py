@@ -134,6 +134,58 @@ class Client:
         else:
             self.log.exception(f"Error uploading input file to gcs: {error.decode()}")
             raise IOError(error.decode)
+        
+    def get_execution_order(self,job,edges,cluster_stop_dict):
+         #creating execution order based on the tasks  
+        dependencies = defaultdict(list)
+        node_without_dependencies = []
+        order_of_execution = []
+        for u, v in edges:
+            dependencies[u].append(v)
+            if u == '0':
+                 node_without_dependencies.append(v)
+                 
+        node_exec_list = []
+        for nodes in node_without_dependencies:
+            if dependencies[nodes]:
+                  continue
+            else:
+                node_data = next((n for n in job.nodes if n.get('id',{}) == nodes), None)
+                if node_type == 'Serverless':
+                    node_exec_list.append(f"write_output_task_{nodes} >> create_batch_{nodes}")
+                elif node_type == 'Cluster':
+                    node_exec_list.append(f"start_cluster_{nodes} >> write_output_task_{nodes} >> submit_pyspark_job_{nodes}")
+        if node_exec_list:
+            order_of_execution.append(f"[{', '.join(node_exec_list)}]")
+        for node, deps in dependencies.items():
+            dep_str_list = []
+            node_type = next((n for n in job.nodes if n.get('id',{}) == node), {}).get('data', {}).get('nodeType')
+            for dep in deps:
+                node_data = next((n for n in job.nodes if n.get('id',{}) == dep), None)
+                if node_data and node_data.get('data', {}).get('nodeType') == 'Serverless':
+                    dep_str_list.append(f"write_output_task_{dep} >> create_batch_{dep}")
+                elif node_data and node_data.get('data', {}).get('nodeType') == 'Cluster':
+                    dep_str_list.append(f"start_cluster_{dep} >> write_output_task_{dep} >> submit_pyspark_job_{dep}")
+            if len(dep_str_list) > 1:
+                dep_str = ', '.join(dep_str_list)
+                if node_type == 'Serverless':
+                    order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> [{dep_str}]")
+                elif node_type == 'Cluster':
+                    order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> [{dep_str}]")
+            else:
+                if dep_str_list:
+                    dep_str = dep_str_list[0]
+                    if node_type == 'Serverless':
+                        order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> {dep_str}")
+                    elif node_type == 'Cluster':
+                        order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> {dep_str}")
+                
+   
+        final_order = '\n'.join(order_of_execution)
+        if len(cluster_stop_dict) > 0:
+            final_order += ' >> stop_cluster'
+        return final_order
+
 
     def prepare_dag(self, job, gcs_dag_bucket, dag_file, execution_order, edges):
         self.log.info("Generating dag file")
@@ -212,7 +264,7 @@ class Client:
                 )
                 parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
                 
-                if node_type == 'Serverless':
+                if node_type == 'Serverless' or node_type == 'Bigquery-notebooks':
                     serverless_config = node.get('data', {}).get('serverless', {})
                     print(node.get('data', {}).get('retryCount', {}))
                     phs_path = (
@@ -305,54 +357,8 @@ class Client:
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(cluster_contents)
 
-        #creating execution order based on the tasks  
-        dependencies = defaultdict(list)
-        node_without_dependencies = []
-        order_of_execution = []
-        for u, v in edges:
-            dependencies[u].append(v)
-            if u == '0':
-                 node_without_dependencies.append(v)
-                 
-        node_exec_list = []
-        for nodes in node_without_dependencies:
-            if dependencies[nodes]:
-                  continue
-            else:
-                node_data = next((n for n in job.nodes if n.get('id',{}) == nodes), None)
-                if node_type == 'Serverless':
-                    node_exec_list.append(f"write_output_task_{nodes} >> create_batch_{nodes}")
-                elif node_type == 'Cluster':
-                    node_exec_list.append(f"start_cluster_{nodes} >> write_output_task_{nodes} >> submit_pyspark_job_{nodes}")
-        if node_exec_list:
-            order_of_execution.append(f"[{', '.join(node_exec_list)}]")
-        for node, deps in dependencies.items():
-            dep_str_list = []
-            node_type = next((n for n in job.nodes if n.get('id',{}) == node), {}).get('data', {}).get('nodeType')
-            for dep in deps:
-                node_data = next((n for n in job.nodes if n.get('id',{}) == dep), None)
-                if node_data and node_data.get('data', {}).get('nodeType') == 'Serverless':
-                    dep_str_list.append(f"write_output_task_{dep} >> create_batch_{dep}")
-                elif node_data and node_data.get('data', {}).get('nodeType') == 'Cluster':
-                    dep_str_list.append(f"start_cluster_{dep} >> write_output_task_{dep} >> submit_pyspark_job_{dep}")
-            if len(dep_str_list) > 1:
-                dep_str = ', '.join(dep_str_list)
-                if node_type == 'Serverless':
-                    order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> [{dep_str}]")
-                elif node_type == 'Cluster':
-                    order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> [{dep_str}]")
-            else:
-                if dep_str_list:
-                    dep_str = dep_str_list[0]
-                    if node_type == 'Serverless':
-                        order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> {dep_str}")
-                    elif node_type == 'Cluster':
-                        order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> {dep_str}")
-                
-   
-        final_order = '\n'.join(order_of_execution)
-        if len(cluster_stop_dict) > 0:
-            final_order += ' >> stop_cluster'
+        final_order = self.get_execution_order(self,job,edges, cluster_stop_dict)
+        #creating a folder 'scheduled-jobs' and place the papermill file and dag file
         with open(file_path, mode="a", encoding="utf-8") as message:
             message.write(final_order)
         env = Environment(
@@ -363,7 +369,7 @@ class Client:
         shutil.copy2(wrapper_papermill_path, LOCAL_DAG_FILE_LOCATION)
         return file_path
 
-    def get_execution_order(self,nodes,edges):
+    def get_topological_order(self,nodes,edges):
     # Create a graph as an adjacency list and a dictionary for in-degrees
         graph = defaultdict(list)
         in_degree = {node: 0 for node in nodes}
@@ -408,7 +414,7 @@ class Client:
             self.log.exception(f"Error uploading dag file to gcs: {error.decode()}")
             raise IOError(error.decode)
 
-    async def execute(self, input):
+    async def execute(self, input1):
         try:
             job = DescribeJob(**input)
             global job_id
@@ -422,7 +428,7 @@ class Client:
 
             # Extract edges
             edges = [(edge["source"], edge["target"]) for edge in input['edges']]
-            order, execution_order = self.get_execution_order(nodes, edges)
+            order, execution_order = self.get_topological_order(nodes, edges)
             file_path = self.prepare_dag(job, gcs_dag_bucket, dag_file, execution_order, edges)
 
             if self.check_file_exists(gcs_dag_bucket, wrapper_pappermill_file_path):
