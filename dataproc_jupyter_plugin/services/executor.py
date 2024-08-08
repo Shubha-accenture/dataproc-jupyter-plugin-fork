@@ -26,6 +26,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import networkx as nx
 
 from dataproc_jupyter_plugin import urls
+from dataproc_jupyter_plugin.commons.commands import async_run_gsutil_subcommand
 from dataproc_jupyter_plugin.commons.constants import (
     COMPOSER_SERVICE_NAME,
     CONTENT_TYPE,
@@ -34,6 +35,7 @@ from dataproc_jupyter_plugin.commons.constants import (
     WRAPPER_PAPPERMILL_FILE,
 )
 from dataproc_jupyter_plugin.models.models import DescribeJob
+from dataproc_jupyter_plugin.services import airflow
 
 unique_id = str(uuid.uuid4().hex)
 job_id = ""
@@ -49,7 +51,7 @@ ROOT_FOLDER = PACKAGE_NAME
 class Client:
     client_session = aiohttp.ClientSession()
 
-    def __init__(self, credentials, log):
+    def __init__(self, credentials, log, client_session):
         self.log = log
         if not (
             ("access_token" in credentials)
@@ -61,6 +63,7 @@ class Client:
         self._access_token = credentials["access_token"]
         self.project_id = credentials["project_id"]
         self.region_id = credentials["region_id"]
+        self.airflow_client = airflow.Client(credentials, log, client_session)
 
     def create_headers(self):
         return {
@@ -88,50 +91,37 @@ class Client:
             self.log.exception(f"Error getting bucket name: {str(e)}")
             raise Exception(f"Error getting composer bucket: {str(e)}")
 
-    def check_file_exists(self, bucket, file_path):
-        cmd = f"gsutil ls gs://{bucket}/dataproc-notebooks/{file_path}"
-        process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-        )
-        output, error = process.communicate()
-        if process.returncode == 0:
+    async def check_file_exists(self, bucket, file_path):
+        try:
+            cmd = f"gsutil ls gs://{bucket}/dataproc-notebooks/{file_path}"
+            await async_run_gsutil_subcommand(cmd)
             return True
-        else:
-            if "matched no objects" in error.decode():
-                return False
-            else:
-                self.log.exception(f"Error cheking file existence: {error.decode()}")
-                raise FileNotFoundError(error.decode)
+        except subprocess.CalledProcessError as error:
+            self.log.exception(f"Error checking papermill file: {error.decode()}")
+            raise IOError(error.decode)
 
-    def upload_papermill_to_gcs(self, gcs_dag_bucket):
+    async def upload_papermill_to_gcs(self, gcs_dag_bucket):
         env = Environment(
             loader=PackageLoader(PACKAGE_NAME, "dagTemplates"),
             autoescape=select_autoescape(["py"]),
         )
         wrapper_papermill_path = env.get_template("wrapper_papermill.py").filename
-        cmd = f"gsutil cp '{wrapper_papermill_path}' gs://{gcs_dag_bucket}/dataproc-notebooks/"
-        process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-        )
-        output, error = process.communicate()
-        if process.returncode == 0:
+        try:
+            cmd = f"gsutil cp '{wrapper_papermill_path}' gs://{gcs_dag_bucket}/dataproc-notebooks/"
+            await async_run_gsutil_subcommand(cmd)
             self.log.info("Papermill file uploaded to gcs successfully")
-            print(process.returncode, error, output)
-        else:
+        except subprocess.CalledProcessError as error:
             self.log.exception(
                 f"Error uploading papermill file to gcs: {error.decode()}"
             )
             raise IOError(error.decode)
 
-    def upload_input_file_to_gcs(self, input, gcs_dag_bucket, job_name):
-        cmd = f"gsutil cp './{input}' gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/"
-        process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-        )
-        output, error = process.communicate()
-        if process.returncode == 0:
+    async def upload_input_file_to_gcs(self, input, gcs_dag_bucket, job_name):
+        try:
+            cmd = f"gsutil cp './{input}' gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/"
+            await async_run_gsutil_subcommand(cmd)
             self.log.info("Input file uploaded to gcs successfully")
-        else:
+        except subprocess.CalledProcessError as error:
             self.log.exception(f"Error uploading input file to gcs: {error.decode()}")
             raise IOError(error.decode)
         
@@ -401,16 +391,15 @@ class Client:
         else:
             raise ValueError("The graph has at least one cycle, topological sorting is not possible.")
 
-    def upload_dag_to_gcs(self, gcs_dag_bucket, file_path):
-        cmd = f"gsutil cp '{file_path}' gs://{gcs_dag_bucket}/dags/"
-        process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-        )
-        output, error = process.communicate()
-        if process.returncode == 0:
-            self.log.info("Dag file uploaded to gcs successfully")
 
-        if process.returncode != 0:
+    async def upload_dag_to_gcs(self, job, dag_file, gcs_dag_bucket):
+        LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.name}"
+        file_path = os.path.join(LOCAL_DAG_FILE_LOCATION, dag_file)
+        try:
+            cmd = f"gsutil cp '{file_path}' gs://{gcs_dag_bucket}/dags/"
+            await async_run_gsutil_subcommand(cmd)
+            self.log.info("Dag file uploaded to gcs successfully")
+        except subprocess.CalledProcessError as error:
             self.log.exception(f"Error uploading dag file to gcs: {error.decode()}")
             raise IOError(error.decode)
 
@@ -431,33 +420,37 @@ class Client:
             order, execution_order = self.get_topological_order(nodes, edges)
             file_path = self.prepare_dag(job, gcs_dag_bucket, dag_file, execution_order, edges)
 
-            if self.check_file_exists(gcs_dag_bucket, wrapper_pappermill_file_path):
+            if await self.check_file_exists(
+                gcs_dag_bucket, wrapper_pappermill_file_path
+            ):
                 print(
                     f"The file gs://{gcs_dag_bucket}/{wrapper_pappermill_file_path} exists."
                 )
             else:
-                self.upload_papermill_to_gcs(gcs_dag_bucket)
+                await self.upload_papermill_to_gcs(gcs_dag_bucket)
                 print(
                     f"The file gs://{gcs_dag_bucket}/{wrapper_pappermill_file_path} does not exist."
                 )
-            self.upload_dag_to_gcs(gcs_dag_bucket, file_path)         
+            await self.upload_dag_to_gcs(gcs_dag_bucket, file_path)         
             return {"status": 0}
         except Exception as e:
             return {"error": str(e)}
      
 
-    def download_dag_output(self, bucket_name, dag_id, dag_run_id):
+    async def download_dag_output(
+        self, composer_environment_name, bucket_name, dag_id, dag_run_id
+    ):
+        try:
+            await self.airflow_client.list_dag_run_task(
+                composer_environment_name, dag_id, dag_run_id
+            )
+        except Exception as ex:
+            return {"error": f"Invalid DAG run ID {dag_run_id}"}
         try:
             cmd = f"gsutil cp 'gs://{bucket_name}/dataproc-output/{dag_id}/output-notebooks/{dag_id}_{dag_run_id}.ipynb' ./"
-            process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-            )
-            output, _ = process.communicate()
-            if process.returncode == 0:
-                return 0
-            else:
-                self.log.exception("Error downloading output notebook file")
-                return 1
-        except Exception as e:
-            self.log.exception(f"Error downloading output notebook file: {str(e)}")
-            return {"error": str(e)}
+            await async_run_gsutil_subcommand(cmd)
+            self.log.info("Output notebook file downloaded successfully")
+            return 0
+        except subprocess.CalledProcessError as error:
+            self.log.exception(f"Error downloading output notebook file: {str(error)}")
+            return {"error": str(error)}
