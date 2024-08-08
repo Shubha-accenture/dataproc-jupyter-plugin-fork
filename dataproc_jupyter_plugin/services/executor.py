@@ -141,10 +141,9 @@ class Client:
                   continue
             else:
                 node_data = next((n for n in job.nodes if n.get('id',{}) == nodes), None)
-                node_type = nodes.get('data', {}).get('nodeType')
-                if node_type == 'Serverless':
+                if node_data and node_data.get('data', {}).get('nodeType') == 'Serverless':
                     node_exec_list.append(f"write_output_task_{nodes} >> create_batch_{nodes}")
-                elif node_type == 'Cluster':
+                elif node_data and node_data.get('data', {}).get('nodeType') == 'Cluster':
                     node_exec_list.append(f"start_cluster_{nodes} >> write_output_task_{nodes} >> submit_pyspark_job_{nodes}")
         if node_exec_list:
             order_of_execution.append(f"[{', '.join(node_exec_list)}]")
@@ -393,9 +392,7 @@ class Client:
             raise ValueError("The graph has at least one cycle, topological sorting is not possible.")
 
 
-    async def upload_dag_to_gcs(self, job, dag_file, gcs_dag_bucket):
-        LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.name}"
-        file_path = os.path.join(LOCAL_DAG_FILE_LOCATION, dag_file)
+    async def upload_dag_to_gcs(self, gcs_dag_bucket, file_path):
         try:
             cmd = f"gsutil cp '{file_path}' gs://{gcs_dag_bucket}/dags/"
             await async_run_gsutil_subcommand(cmd)
