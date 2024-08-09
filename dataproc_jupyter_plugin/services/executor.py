@@ -43,6 +43,7 @@ job_name = ""
 TEMPLATES_FOLDER_PATH = "dagTemplates"
 TEMPLATES_FOLDER_PATH_SERVERLESS = "dagTemplates/serverless"
 TEMPLATES_FOLDER_PATH_CLUSTER = "dagTemplates/cluster"
+TEMPLATES_FOLDER_PATH_BIGQUERY = "dagTemplates/bigquery"
 
 
 ROOT_FOLDER = PACKAGE_NAME
@@ -125,7 +126,7 @@ class Client:
             self.log.exception(f"Error uploading input file to gcs: {error.decode()}")
             raise IOError(error.decode)
         
-    def get_execution_order(self,job,edges,cluster_stop_dict):
+    async def get_execution_order(self,job,edges,cluster_stop_dict):
          #creating execution order based on the tasks  
         dependencies = defaultdict(list)
         node_without_dependencies = []
@@ -177,7 +178,7 @@ class Client:
         return final_order
 
 
-    def prepare_dag(self, job, gcs_dag_bucket, dag_file, execution_order, edges):
+    async def prepare_dag(self, job, gcs_dag_bucket, dag_file, execution_order, edges):
         self.log.info("Generating dag file")
         DAG_TEMPLATE_CLUSTER_V1 = "pysparkJobTemplate-v1.txt"
         DAG_TEMPLATE_SERVERLESS_V1 = "pysparkBatchTemplate-v1.txt"
@@ -186,6 +187,7 @@ class Client:
         DAG_TEMPLATE_JOB_V1 = "commonTemplate-step-1-v1.txt"
         DAG_TEMPLATE_SERVERLESS_V3 = "pysparkBatchTemplate-step-2-v3.txt"
         DAG_TEMPLATE_CLUSTER_V3 = "pysparkJobTemplate-step-2-v3.txt"
+        DAG_TEMPLATE_BIGQUERY_V3 = "bigquerySqlTemplate-step-2-v3.txt"
 
         environment = Environment(
             loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH)
@@ -195,6 +197,9 @@ class Client:
         )
         environment_cluster = Environment(
             loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_CLUSTER)
+        )
+        environment_bq = Environment(
+            loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_BIGQUERY)
         )
         #getting the common values needed for dag generation
         gcp_project_id = self.project_id
@@ -249,7 +254,7 @@ class Client:
             if node_type != 'Trigger':
                 input_file = node.get('data', {}).get('inputFile', '')
                 if not input_file.startswith(GCS):
-                    self.upload_input_file_to_gcs( 
+                    await self.upload_input_file_to_gcs( 
                     input_file, gcs_dag_bucket, job_name
                 )
                 parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
@@ -347,7 +352,7 @@ class Client:
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(cluster_contents)
 
-        final_order = self.get_execution_order(job,edges, cluster_stop_dict)
+        final_order = await self.get_execution_order(job,edges, cluster_stop_dict)
         #creating a folder 'scheduled-jobs' and place the papermill file and dag file
         with open(file_path, mode="a", encoding="utf-8") as message:
             message.write(final_order)
@@ -359,7 +364,7 @@ class Client:
         shutil.copy2(wrapper_papermill_path, LOCAL_DAG_FILE_LOCATION)
         return file_path
 
-    def get_topological_order(self,nodes,edges):
+    async def get_topological_order(self,nodes,edges):
     # Create a graph as an adjacency list and a dictionary for in-degrees
         graph = defaultdict(list)
         in_degree = {node: 0 for node in nodes}
@@ -414,8 +419,8 @@ class Client:
 
             # Extract edges
             edges = [(edge["source"], edge["target"]) for edge in input['edges']]
-            order, execution_order = self.get_topological_order(nodes, edges)
-            file_path = self.prepare_dag(job, gcs_dag_bucket, dag_file, execution_order, edges)
+            order, execution_order = await self.get_topological_order(nodes, edges)
+            file_path = await self.prepare_dag(job, gcs_dag_bucket, dag_file, execution_order, edges)
 
             if await self.check_file_exists(
                 gcs_dag_bucket, wrapper_pappermill_file_path
