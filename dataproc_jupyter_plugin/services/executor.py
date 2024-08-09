@@ -446,7 +446,7 @@ class Client:
         except Exception as ex:
             return {"error": f"Invalid DAG run ID {dag_run_id}"}
         try:
-            cmd = f"gsutil cp 'gs://{bucket_name}/dataproc-output/{dag_id}/output-notebooks/{dag_id}_{dag_run_id}.ipynb' ./"
+            cmd = f"gsutil cp 'gs://{bucket_name}/dataproc-output/{dag_id}/output-notebooks/{dag_id}_{dag_run_id}*' ./"
             await async_run_gsutil_subcommand(cmd)
             self.log.info("Output notebook file downloaded successfully")
             return 0
