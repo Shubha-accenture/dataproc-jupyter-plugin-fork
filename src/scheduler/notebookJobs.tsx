@@ -128,7 +128,7 @@ const NotebookJobComponent = ({
           <div className="clusters-list-overlay" role="tab">
             <div className="cluster-details-title">Scheduled Jobs</div>
             <div className="create-icon"><iconSubmitJob.react tag="div" className="logo-alignment-style" /></div>
-            <div className="create-text"onClick={handleCreateJobClick}>CREATE JOB</div>
+            <div className="create-job-button"onClick={handleCreateJobClick}>CREATE JOB</div>
           </div>
           <div>
             <ListNotebookScheduler

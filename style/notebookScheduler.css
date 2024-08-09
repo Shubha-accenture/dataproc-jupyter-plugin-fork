@@ -359,3 +359,18 @@
   width: 512px;
   width: 105%;
 }
+
+.create-job-button {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 32px;
+
+  display: flex;
+  align-items: center;
+  text-align: center;
+  text-transform: uppercase;
+
+  color: #3367d6;
+  cursor: pointer;
+}

@@ -175,13 +175,14 @@ const CreateNotebookScheduler = ({
   // };
 
   const handleCancel = async () => {
-    if (!editMode) {
-      setCreateCompleted(false);
-      app.shell.activeWidget?.close();
-    } else {
-      setCreateCompleted(true);
-    }
-    // setIsFormVisible(false);
+    setCreateCompleted(true)
+    // if (!editMode) {
+    //   setCreateCompleted(false);
+    //   //app.shell.activeWidget?.close();
+      
+    // } else {
+    //   setCreateCompleted(true);
+    // }
   };
 
   // const getKernelDetail = async () => {
