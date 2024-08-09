@@ -43,7 +43,7 @@ job_name = ""
 TEMPLATES_FOLDER_PATH = "dagTemplates"
 TEMPLATES_FOLDER_PATH_SERVERLESS = "dagTemplates/serverless"
 TEMPLATES_FOLDER_PATH_CLUSTER = "dagTemplates/cluster"
-TEMPLATES_FOLDER_PATH_BIGQUERY = "dagTemplates/bigquery"
+
 
 
 ROOT_FOLDER = PACKAGE_NAME
@@ -197,9 +197,6 @@ class Client:
         )
         environment_cluster = Environment(
             loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_CLUSTER)
-        )
-        environment_bq = Environment(
-            loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_BIGQUERY)
         )
         #getting the common values needed for dag generation
         gcp_project_id = self.project_id
