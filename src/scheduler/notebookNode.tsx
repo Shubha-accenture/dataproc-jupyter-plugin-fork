@@ -20,6 +20,11 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const [clickedNodeId, setClickedNodeId] = useState('');
   const [isNodeClicked, setIsNodeClicked] = useState(false);
   const nodeLabel = data.inputFile ? `${id}.${data.inputFile}` : `${id}.New NodeType`;
+  const nodeSubLabel = (id === '0')
+  ? (data.scheduleValue === "" ? "Run Now" : "Run on Schedule")
+  : (data.nodeType || "");
+
+
 
   const [status, setStatus] = useState('');
 
@@ -85,7 +90,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
               </div>
             </div>
             <div className="node-subheader">
-                Run Now
+              {nodeSubLabel}
               </div>
           </div>
           <Handle
