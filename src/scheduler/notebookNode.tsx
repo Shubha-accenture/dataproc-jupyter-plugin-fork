@@ -19,24 +19,31 @@ const iconSaveToBigQuery = new LabIcon({
 function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const [clickedNodeId, setClickedNodeId] = useState('');
   const [isNodeClicked, setIsNodeClicked] = useState(false);
+
+  const [isSelected, setIsSelected] = useState(selected);
+
+  useEffect(() => {
+    // Update the local state if the selected prop changes
+    setIsSelected(selected);
+  }, [selected]);
+
   const nodeLabel = data.inputFile
     ? `${id}.${data.inputFile}`
     : `${id}.New Node`;
   const [nodeSubLabel, setNodeSubLabel] = useState('');
-  // const nodeSubLabel =
-  //   id === '1'
-  //     ? data.scheduleValue === ''
-  //       ? 'Run Now'
-  //       : 'Run on Schedule' //here
-  //     : data.nodeType || '';
 
   const [status, setStatus] = useState('');
   const handleNodeClick = () => {
     setClickedNodeId(id);
     setIsNodeClicked(true);
+    setIsSelected(true)//select logic
     console.log('clicked node in notebook', clickedNodeId);
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
   };
+
+  eventEmitter.on('unselectNode', (isCancel: boolean) => {
+    setIsSelected(isCancel)
+  });//need to recheck this
 
   useEffect(() => {
     if (id === '1') {
@@ -49,7 +56,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   }, [id, data.scheduleValue, data.nodeType]);
 
   useEffect(() => {
-    if (!data.nodeType || data.nodeType === 'Trigger') {
+    if (!data.nodeType) {
       setStatus('');
       return;
     }
@@ -68,7 +75,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   return (
     <>
       <div onClick={handleNodeClick}>
-        <div className={selected ? 'selected-node' : 'notebook-node'}>
+        <div className={isSelected ? 'selected-node' : 'notebook-node'}>
           <div
             className={`box ${
               status === 'complete'

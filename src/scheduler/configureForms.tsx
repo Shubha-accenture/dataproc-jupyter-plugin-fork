@@ -29,7 +29,7 @@ function ConfigureForm({ id, data, nodes }: any) {
     id === '1' ? nodeTypes : nodeTypes.filter(node => node.key !== 'Trigger');
 
   const defaultNodeType =
-    data && data.nodeType ? data.nodeType : id === 0 ? 'Trigger' : '';
+    data && data.nodeType ? data.nodeType : id === '1' ? 'Trigger' : '';//check same as use effect
 
   const [nodeTypeSelected, setNodeTypeSelected] = useState(defaultNodeType);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
@@ -55,6 +55,8 @@ function ConfigureForm({ id, data, nodes }: any) {
   };
   const handleCancel = () => {
     eventEmitter.emit(`closeForm`, false);
+    console.log("event emitter called")
+    eventEmitter.emit(`unselectNode` ,false)
   };
 
   useEffect(() => {

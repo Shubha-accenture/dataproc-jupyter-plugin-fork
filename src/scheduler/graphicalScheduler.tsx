@@ -59,7 +59,7 @@ const GraphicalScheduler = ({
       type: 'composerNode',
       position: { x: 0, y: 0 },
       data: {
-        nodeType: '',
+        nodeType: 'Trigger',
         inputFile: inputFileSelected,
         retryCount: 0,
         retryDelay: 0,

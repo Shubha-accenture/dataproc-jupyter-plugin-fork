@@ -137,6 +137,7 @@ const CreateNotebookScheduler = ({
       editMode
     );
     setEditMode(false);
+    setJobPayload(initialPayload)//after save
   };
   //   return (
   //    // !inputFilesValidation ||
