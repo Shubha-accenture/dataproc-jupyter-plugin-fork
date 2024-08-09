@@ -26,13 +26,6 @@ import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
-// interface INodeData {
-//   data: {
-//     inputFile: string;
-//     retryCount: number;
-//     retryDelay: number;
-//   };
-// }
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
   svgstr: LeftArrowIcon
@@ -54,7 +47,6 @@ const CreateNotebookScheduler = ({
     context !== '' ? useState(false) : useState(true);
   const [creatingScheduler, setCreatingScheduler] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  // const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
   const [nodeDataValidation, setNodeDataValidation] = useState(false);
   const [jobPayloadValidation, setJobPayloadValidation] = useState(false);
 
@@ -81,13 +73,12 @@ const CreateNotebookScheduler = ({
     );
   };
 
-  const validateTaskPayload=()=>{
+  const validateTaskPayload = () => {
     let allNodesHaveData = true;
     nodes.forEach((e: any) => {
-      if(nodes.length<=1)
-        {
-          allNodesHaveData = false;
-        }
+      if (nodes.length <= 1) {
+        allNodesHaveData = false;
+      }
       if (e.data.nodeType === '') {
         allNodesHaveData = false;
       }
@@ -110,23 +101,17 @@ const CreateNotebookScheduler = ({
           allNodesHaveData = false;
         }
       }
-       console.log(allNodesHaveData);
-       setNodeDataValidation(allNodesHaveData);
-       return allNodesHaveData;
+      setNodeDataValidation(allNodesHaveData);
+      return allNodesHaveData;
     });
-  }
-
-  // Use effect to handle the validation on jobPayload changes
+  };
   useEffect(() => {
     setJobPayloadValidation(!validateJobPayload());
-    console.log('job payload ', jobPayloadValidation);
   }, [jobPayload]);
 
   useEffect(() => {
-    validateTaskPayload()
-    console.log('task payload ', nodeDataValidation);
+    validateTaskPayload();
   }, [nodes]);
-
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
@@ -137,15 +122,11 @@ const CreateNotebookScheduler = ({
   };
 
   const handleCreateJobScheduler = async () => {
-    // let outputFormats = [];
-    // outputFormats.push('ipynb');
-    //let randomDagId = uuidv4();
     const payload = {
       ...jobPayload,
       nodes: nodes,
       edges: edges
     };
-    console.log('final payload', payload);
     await SchedulerService.createJobSchedulerService(
       payload,
       app,
@@ -155,8 +136,6 @@ const CreateNotebookScheduler = ({
     );
     setEditMode(false);
   };
-
-  // const isSaveDisabled = () => {
   //   return (
   //    // !inputFilesValidation ||
   //     dagListCall ||
@@ -175,21 +154,9 @@ const CreateNotebookScheduler = ({
   // };
 
   const handleCancel = async () => {
-    setCreateCompleted(true)
-    // if (!editMode) {
-    //   setCreateCompleted(false);
-    //   //app.shell.activeWidget?.close();
-      
-    // } else {
-    //   setCreateCompleted(true);
-    // }
+    setCreateCompleted(true);
   };
 
-  // const getKernelDetail = async () => {
-  //   const kernelSpecs: any = await KernelSpecAPI.getSpecs();
-  //   const kernels = kernelSpecs.kernelspecs;
-
-  //   if (kernels && context.sessionContext.kernelPreference.name) {
   //     if (
   //       kernels[context.sessionContext.kernelPreference.name].resources
   //         .endpointParentResource
@@ -241,7 +208,6 @@ const CreateNotebookScheduler = ({
   //     getKernelDetail();
   //   }
   // }, [serverlessDataList, clusterList]);
-
   return (
     <>
       {createCompleted ? (
@@ -250,30 +216,7 @@ const CreateNotebookScheduler = ({
           themeManager={themeManager}
           composerSelectedFromCreate={composerSelected}
           setCreateCompleted={setCreateCompleted}
-          // setJobNameSelected={setJobNameSelected}
-          // setComposerSelected={setComposerSelected}
-          //setScheduleMode={setScheduleMode}
-          //setScheduleValue={setScheduleValue}
-          //setInputFileSelected={setInputFileSelected}
-          // setParameterDetail={setParameterDetail}
-          //setParameterDetailUpdated={setParameterDetailUpdated}
-          // setSelectedMode={setSelectedMode}
-          //setClusterSelected={setClusterSelected}
-          //setServerlessSelected={setServerlessSelected}
-          //setServerlessDataSelected={setServerlessDataSelected}
-          //serverlessDataList={serverlessDataList}
-          //setServerlessDataList={setServerlessDataList}
-          //setServerlessList={setServerlessList}
-          // setRetryCount={setRetryCount}
-          //setRetryDelay={setRetryDelay}
-          // setEmailOnFailure={setEmailOnFailure}
-          //setEmailonRetry={setEmailonRetry}
-          // setEmailOnSuccess={setEmailOnSuccess}
-          //setEmailList={setEmailList}
-          //setStopCluster={setStopCluster}
-          //setTimeZoneSelected={setTimeZoneSelected}
           setEditMode={setEditMode}
-          // setIsLoadingKernelDetail={setIsLoadingKernelDetail}
         />
       ) : (
         <>

@@ -33,7 +33,7 @@ interface IGraphicalSchedulerProps {
   EdgesChange: (updatedEdges: any) => void;
   app: JupyterLab;
   factory: IFileBrowserFactory;
-  jobPayload: any; //IJobPayload
+  jobPayload: any;
   setJobPayload: any;
 }
 const nodeTypes = { composerNode: NotebookNode };
@@ -104,7 +104,6 @@ const GraphicalScheduler = ({
         if (targetIsPane) {
           // we need to remove the wrapper bounds, in order to get the correct position
           const nodeId = getId();
-          //console.log(nodeId)
           const e = event as MouseEvent;
           const newNode = {
             id: nodeId,
@@ -203,12 +202,12 @@ const GraphicalScheduler = ({
     if (isNodeClicked) {
       setIsTaskFormVisible(true);
     }
-    eventEmitter.emit(`closeJobForm`, setIsTaskFormVisible); //check if we can pass only isTaskFormVisible
+    eventEmitter.emit(`closeJobForm`, setIsTaskFormVisible);
   });
 
   eventEmitter.on('closeForm', (isFormVisible: boolean) => {
     setIsTaskFormVisible(isFormVisible);
-    eventEmitter.emit(`closeTaskForm`, setIsTaskFormVisible); //check if we can pass only isTaskFormVisible
+    eventEmitter.emit(`closeTaskForm`, setIsTaskFormVisible);
   });
 
   useEffect(() => {

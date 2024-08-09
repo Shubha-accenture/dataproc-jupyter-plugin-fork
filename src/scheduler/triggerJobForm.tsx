@@ -37,8 +37,6 @@ function TriggerJobForm({ id, data, nodes }: any) {
       const selectedTimeZone = value.toString();
       setTimeZoneSelected(selectedTimeZone);
       data.timeZone = selectedTimeZone;
-      // let clickedNode = nodes.find((node: any) => node.id === id);
-      // clickedNode.data=data;
     }
   };
 
@@ -51,19 +49,18 @@ function TriggerJobForm({ id, data, nodes }: any) {
 
   useEffect(() => {
     if (data.timeZone) {
-      setScheduleMode('runSchedule')
+      setScheduleMode('runSchedule');
       setScheduleValue(data.scheduleValue);
-      setTimeZoneSelected(data.timeZone)
+      setTimeZoneSelected(data.timeZone);
     }
-  },[data]);
+  }, [data]);
 
   return (
     <>
-      {/* { isFormVisible && */}
       <div>
         <form>
           <div className="create-scheduler-form-element-trigger">
-            <FormControl className= "trigger-form">
+            <FormControl className="trigger-form">
               <RadioGroup
                 aria-labelledby="demo-controlled-radio-buttons-group"
                 name="controlled-radio-buttons-group"

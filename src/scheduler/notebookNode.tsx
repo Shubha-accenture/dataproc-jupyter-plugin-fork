@@ -19,26 +19,25 @@ const iconSaveToBigQuery = new LabIcon({
 function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const [clickedNodeId, setClickedNodeId] = useState('');
   const [isNodeClicked, setIsNodeClicked] = useState(false);
-  const nodeLabel = data.inputFile ? `${id}.${data.inputFile}` : `${id}.New NodeType`;
-  const nodeSubLabel = (id === '0')
-  ? (data.scheduleValue === "" ? "Run Now" : "Run on Schedule")
-  : (data.nodeType || "");
-
-
+  const nodeLabel = data.inputFile
+    ? `${id}.${data.inputFile}`
+    : `${id}.New Node`;
+  const nodeSubLabel =
+    id === '0'
+      ? data.scheduleValue === ''
+        ? 'Run Now'
+        : 'Run on Schedule' //here
+      : data.nodeType || '';
 
   const [status, setStatus] = useState('');
-
-  //console.log(data)
   const handleNodeClick = () => {
     setClickedNodeId(id);
     setIsNodeClicked(true);
     console.log('clicked node in notebook', clickedNodeId);
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
-    console.log(data.nodeType, data.inputFile);
   };
 
   useEffect(() => {
-    console.log('inside useEffect');
     if (
       data &&
       data.nodeType === 'Cluster' &&
@@ -46,9 +45,9 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
       data.clusterName !== ''
     ) {
       setStatus('complete');
-      console.log(status);
     }
   }, []);
+
   return (
     <>
       <div onClick={handleNodeClick}>
@@ -71,27 +70,25 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
           <div className="node-content">
             <div className="node-parent">
               <div className="node-logo">
-              {(data.nodeType === 'Serverless' ||
-                data.nodeType === 'Cluster') && (
-                <iconCalendarRange.react
-                  tag="div"
-                  className="logo-alignment-react-flow"
-                />
-              )}
-              {data.nodeType === 'sql' && (
-                <iconSaveToBigQuery.react
-                  tag="div"
-                  className="logo-alignment-react-flow"
-                />
-              )}
+                {(data.nodeType === 'Serverless' ||
+                  data.nodeType === 'Cluster') && (
+                  <iconCalendarRange.react
+                    tag="div"
+                    className="logo-alignment-react-flow"
+                  />
+                )}
+                {data.nodeType === 'sql' && (
+                  <iconSaveToBigQuery.react
+                    tag="div"
+                    className="logo-alignment-react-flow"
+                  />
+                )}
               </div>
               <div className="node-header">
                 {id === '0' ? 'Trigger Node ' : nodeLabel}
               </div>
             </div>
-            <div className="node-subheader">
-              {nodeSubLabel}
-              </div>
+            <div className="node-subheader">{nodeSubLabel}</div>
           </div>
           <Handle
             type="source"

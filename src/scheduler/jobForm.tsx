@@ -29,7 +29,6 @@ import 'react-js-cron/dist/styles.css';
 import { SchedulerService } from './schedulerServices';
 import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
-//import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { eventEmitter } from '../utils/signalEmitter';
 
@@ -98,7 +97,7 @@ const JobForm = ({
     }
   };
   const getDaglist = async (composer: string) => {
-    console.log(dagListCall)
+    console.log(dagListCall);
     setDagListCall(true);
     try {
       await SchedulerService.listDagInfoAPIServiceForCreateNotebook(
@@ -177,7 +176,6 @@ const JobForm = ({
     initialJobPayload.job_name,
     initialJobPayload.composer_environment_name
   ]);
-  //console.log(initialJobPayload);
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
