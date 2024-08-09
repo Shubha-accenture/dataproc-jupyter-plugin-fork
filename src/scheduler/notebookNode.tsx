@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Handle, NodeProps, Position } from 'reactflow';
 
 import { eventEmitter } from '../utils/signalEmitter';
@@ -16,77 +16,110 @@ const iconSaveToBigQuery = new LabIcon({
   svgstr: saveToBigQueryIcon
 });
 
-function NotebookNode({ id, data, selected,isConnectable }: NodeProps) {
-  const [clickedNodeId, setClickedNodeId]=useState('');
+function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
+  const [clickedNodeId, setClickedNodeId] = useState('');
   const [isNodeClicked, setIsNodeClicked] = useState(false);
-  const nodeLabel = data.inputFile ? `${id}.${data.inputFile}` : `${id}.${data.nodeType} Node`;
+  const nodeLabel = data.inputFile
+    ? `${id}.${data.inputFile}`
+    : `${id}.New Node`;
+  const [nodeSubLabel, setNodeSubLabel] = useState('');
+  // const nodeSubLabel =
+  //   id === '1'
+  //     ? data.scheduleValue === ''
+  //       ? 'Run Now'
+  //       : 'Run on Schedule' //here
+  //     : data.nodeType || '';
 
-  // const [status, setStatus] = useState('');
-
-  //console.log(data)
+  const [status, setStatus] = useState('');
   const handleNodeClick = () => {
-    setClickedNodeId(id)
+    setClickedNodeId(id);
     setIsNodeClicked(true);
-    console.log("clicked node in notebook",clickedNodeId)
+    console.log('clicked node in notebook', clickedNodeId);
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
   };
 
-  // eventEmitter.on('color coding', value: string, id:string) => {
-  //   console.log(status,id);
-  //   setStatus(value);
-  // });
-  // eventEmitter.on('nodeType', (value: string, nid: string) => {
-  //   if (id === nid) {
-  //     setNodeType(value);
-  //   }
-  // }); 
+  useEffect(() => {
+    if (id === '1') {
+      setNodeSubLabel(
+        data.scheduleValue === '' ? 'Run Now' : 'Run on Schedule'
+      );
+    } else {
+      setNodeSubLabel(data.nodeType || '');
+    }
+  }, [id, data.scheduleValue, data.nodeType]);
+
+  useEffect(() => {
+    if (!data.nodeType || data.nodeType === 'Trigger') {
+      setStatus('');
+      return;
+    }
+    if (data.nodeType === 'Cluster' && (!data.inputFile || !data.clusterName)) {
+      setStatus('incomplete');
+    } else if (
+      data.nodeType === 'Serverless' &&
+      (!data.inputFile || !data.serverless)
+    ) {
+      setStatus('incomplete');
+    } else {
+      setStatus('complete');
+    }
+  }, [data.nodeType, data.inputFile, data.clusterName, data.serverless]);
 
   return (
     <>
-    <div  onClick={handleNodeClick}>
-      <div className={selected ? "selected-node":"notebook-node"}>
-        <div
-          className= "box black" 
-          // {`box ${
-          //   status === 'complete'
-          //     ? 'green'
-          //     : status === 'incomplete'
-          //     ? 'orange'
-          //     : 'black'
-          // }`}
-        />
-        <Handle
-          type="target"
-          id="a"
-          position={Position.Top}
-          isConnectable={false}
-        />
-        <div className="node-content">
-          <div>
-            {(data.nodeType === 'Serverless' || data.nodeType === 'Cluster') && (
-              <iconCalendarRange.react
-                tag="div"
-                className="logo-alignment-react-flow"
-              />
-            )}
-            {data.nodeType === 'sql' && (
-              <iconSaveToBigQuery.react
-                tag="div"
-                className="logo-alignment-react-flow"
-              />
-            )}
+      <div onClick={handleNodeClick}>
+        <div className={selected ? 'selected-node' : 'notebook-node'}>
+          <div
+            className={`box ${
+              status === 'complete'
+                ? 'green'
+                : status === 'incomplete'
+                ? 'orange'
+                : 'black'
+            }`}
+          />
+          <Handle
+            type="target"
+            id="a"
+            position={Position.Top}
+            isConnectable={false}
+          />
+          <div className="node-content">
+            <div className="node-parent">
+              <div className="node-column logo-column">
+                <div className="node-logo">
+                  {(data.nodeType === 'Serverless' ||
+                    data.nodeType === 'Cluster') && (
+                    <iconCalendarRange.react
+                      tag="div"
+                      className="logo-alignment-react-flow"
+                    />
+                  )}
+                  {data.nodeType === 'sql' && (
+                    <iconSaveToBigQuery.react
+                      tag="div"
+                      className="logo-alignment-react-flow"
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="node-column header-column">
+                <div className="node-header">
+                  {id === '1' ? `${id}.Trigger Node` : nodeLabel}
+                </div>
+                <div className="node-subheader">{nodeSubLabel}</div>
+              </div>
+              <div className="node-column empty-column"></div>
+            </div>
           </div>
-          <div className="custom-node__header">
-            {id === '0' ? 'Trigger Node ' : nodeLabel}
-          </div>
+
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="b"
+            isConnectable={isConnectable}
+          />
         </div>
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="b"
-          isConnectable={isConnectable}
-        />
-      </div>
       </div>
     </>
   );

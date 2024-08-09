@@ -64,7 +64,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   };
 
   const listSessionTemplatesAPI = async () => {
-    //console.log(serverlessDataList);
     await SchedulerService.listSessionTemplatesAPIService(
       setServerlessDataList,
       setServerlessList,
@@ -72,7 +71,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     );
   };
   const handleClusterSelected = (value: any) => {
-    //its string--> string | null
     if (value) {
       const selectedCluster = value.toString();
       data.clusterName = selectedCluster;
@@ -80,17 +78,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     }
   };
 
-  // const handleServerlessSelected = (value: any) => {
-  //   //its string--> string | null
-  //   if (value) {
-  //     const selectedServerless = value.toString();
-  //     data.serverless = selectedServerless;
-  //     console.log("selectedServerless",selectedServerless)
-  //     setServerlessSelected(selectedServerless);
-  //     console.log("serverlessDataList",serverlessDataList)
-
-  //   }
-  // };
   const handleServerlessSelected = (value: any) => {
     if (value) {
       const selectedServerless = value.toString();
@@ -101,7 +88,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       console.log(serverlessDataSelected);
       data.serverless = selectedData[0].serverlessData;
       setServerlessSelected(selectedServerless);
-      //console.log(selectedServerless, selectedData, serverlessDataList);
     }
   };
 
@@ -110,28 +96,10 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     data.stopCluster = event.target.checked;
   };
 
-  // const checkCompletionStatus = () => {
-  //   const isComplete = data.inputFile;
-  //   eventEmitter.emit(
-  //     'color coding',
-  //     isComplete ? 'complete' : 'incomplete',
-  //     id
-  //   );
-  // };
-
-  // useEffect(() => {
-    
-  //   checkCompletionStatus();
-  // }, [inputFileSelectedLocal]);
-
   useEffect(() => {
     if (data) {
-      // setInputFileSelectedLocal(data.inputFile);
-      // setRetryCount(data.retryCount);
-      // setRetryDelay(data.retryDelay);
       data.parameter = parameterDetailUpdated;
     }
-    // console.log(data, parameterDetailUpdated);
   }, [parameterDetailUpdated]);
 
   useEffect(() => {
@@ -139,13 +107,10 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       setInputFileSelectedLocal(data.inputFile);
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
-      //data.parameter = parameterDetailUpdated;
       setClusterSelected(data.clusterName);
-      setServerlessDataSelected(data.serverless); //here
+      setServerlessDataSelected(data.serverless);
       if (data.serverless && data.serverless.jupyterSession.displayName) {
-        setServerlessSelected(
-          data.serverless.jupyterSession.displayName
-        );
+        setServerlessSelected(data.serverless.jupyterSession.displayName);
       }
       setStopCluster(data.stopCluster);
     }
@@ -166,7 +131,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
         setSelectedMode('serverless');
       }
     }
-  },[]);
+  }, []);
 
   return (
     <>
@@ -174,17 +139,23 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       <div>
         <form>
           <div className="custom-node__body">
-            <label htmlFor="file-input" className='create-scheduler-style'>Input file*</label>
+            <label htmlFor="file-input" className="create-scheduler-style">
+              Input file*
+            </label>
             <div className="input-file-container">
-            <input
-            className='create-scheduler-style'
-             // className="nodrag"
-              type="file"
-              value={''}
-              // {inputFileSelectedLocal}
-              onChange={e => onInputFileNameChange(e)}
-            />
-            {<div className='create-scheduler-style'>{inputFileSelectedLocal}</div>}
+              <input
+                className="create-scheduler-style"
+                // className="nodrag"
+                type="file"
+                value={''}
+                // {inputFileSelectedLocal}
+                onChange={e => onInputFileNameChange(e)}
+              />
+              {
+                <div className="create-scheduler-style">
+                  {inputFileSelectedLocal}
+                </div>
+              }
             </div>
             <LabelProperties
               labelDetail={parameterDetail}
@@ -258,24 +229,23 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                 </FormGroup>
               </div>
             )}
-            <div className='scheduler-retry-parent'>
-            <Input
-              className="retry-count"
-              value={retryCount}
-              Label="Retry Count"
-              onChange={e => handleRetryCountChange(Number(e.target.value))}
-            />
-            <Input
-              className="retry-delay"
-              value={retryDelay}
-              Label="Retry Delay"
-              onChange={e => handleRetryDelayChange(Number(e.target.value))}
-            />
+            <div className="scheduler-retry-parent">
+              <Input
+                className="retry-count"
+                value={retryCount}
+                Label="Retry Count"
+                onChange={e => handleRetryCountChange(Number(e.target.value))}
+              />
+              <Input
+                className="retry-delay"
+                value={retryDelay}
+                Label="Retry Delay"
+                onChange={e => handleRetryDelayChange(Number(e.target.value))}
+              />
             </div>
           </div>
         </form>
       </div>
-      {/* } */}
     </>
   );
 }

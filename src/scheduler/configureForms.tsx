@@ -25,34 +25,32 @@ function ConfigureForm({ id, data, nodes }: any) {
     { key: 'Trigger', label: 'Trigger Node' }
   ];
 
-  const filteredNodeTypes = id === '0'
-  ? nodeTypes
-  : nodeTypes.filter(node => node.key !== 'Trigger');
+  const filteredNodeTypes =
+    id === '1' ? nodeTypes : nodeTypes.filter(node => node.key !== 'Trigger');
 
-  const defaultNodeType = data && data.nodeType ? data.nodeType : id === 0 ? 'Trigger' : '';
+  const defaultNodeType =
+    data && data.nodeType ? data.nodeType : id === 0 ? 'Trigger' : '';
 
   const [nodeTypeSelected, setNodeTypeSelected] = useState(defaultNodeType);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
-  
+
   useEffect(() => {
     if (data && data.nodeType !== '') {
       setNodeTypeSelected(data.nodeType);
-    } 
+    }
   }, [data]);
 
   useEffect(() => {
-    if (id === '0') {
+    if (id === '1') {
       setNodeTypeSelected('Trigger');
-      data.nodeType="Trigger"
+      data.nodeType = 'Trigger';
     }
   }, []);
 
   const handleNodeTypeChange = (value: string | null) => {
     if (value) {
       setNodeTypeSelected(value);
-      // eventEmitter.emit(`nodeType`, value, id);
       data.nodeType = value;
-      //setPreviousNodeType(nodeTypeSelected);
     }
   };
   const handleCancel = () => {
@@ -63,12 +61,6 @@ function ConfigureForm({ id, data, nodes }: any) {
     const clickedNode = nodes.find((node: any) => node.id === id);
     setClickedNodeData(clickedNode ? clickedNode.data : null);
     setNodeTypeSelected(clickedNode ? clickedNode.data.nodeType : null);
-    // if (clickedNode && clickedNode.data.nodeType) {
-    //   setNodeTypeSelected(clickedNode.data.nodeType);
-    // } else if (id === 0) {
-    //   setNodeTypeSelected('Trigger');
-    // }
-
   }, [nodes, id]);
 
   return (
@@ -77,9 +69,7 @@ function ConfigureForm({ id, data, nodes }: any) {
         <form>
           <div className="configure-node-container">
             <div className="task-form-header">
-              <div className="create-job-scheduler-title">
-              Configure Node
-              </div>
+              <div className="create-job-scheduler-title">Configure Node</div>
               <IconButton aria-label="cancel" onClick={handleCancel}>
                 <iconSearchClear.react
                   tag="div"
@@ -87,25 +77,14 @@ function ConfigureForm({ id, data, nodes }: any) {
                 />
               </IconButton>
             </div>
-            {/* <Autocomplete
-              className="create-scheduler-style"
-              options={nodeTypes}
-              getOptionLabel={option => option.label}
-              value={nodeTypes.find(option => option.key === nodeTypeSelected)}
-              onChange={(_event, value) =>
-                handleNodeTypeChange(value?.key || null)
-              }
-              renderInput={params => (
-                <TextField {...params} label="Node Type*" />
-              )}
-            /> */}
             <Autocomplete
               className="nodetype-seletion-style"
               options={filteredNodeTypes}
               getOptionLabel={option => option.label}
               value={
-                filteredNodeTypes.find(option => option.key === nodeTypeSelected) ||
-                null
+                filteredNodeTypes.find(
+                  option => option.key === nodeTypeSelected
+                ) || null
               }
               onChange={(_event, value) =>
                 handleNodeTypeChange(value?.key || null)
@@ -113,19 +92,19 @@ function ConfigureForm({ id, data, nodes }: any) {
               renderInput={params => (
                 <TextField {...params} label="Node Type*" />
               )}
-              disabled={id==='0'}
+              disabled={id === '1'}
             />
-            {nodeTypeSelected === 'Trigger' && clickedNodeData!== null && (
+            {nodeTypeSelected === 'Trigger' && clickedNodeData !== null && (
               <TriggerJobForm id={id} data={clickedNodeData} nodes={nodes} />
             )}
-            {nodeTypeSelected === 'Serverless' && clickedNodeData!== null && (
+            {nodeTypeSelected === 'Serverless' && clickedNodeData !== null && (
               <ClusterServerlessForm
                 id={id}
                 data={clickedNodeData}
                 mode={'serverless'}
               />
             )}
-            {nodeTypeSelected === 'Cluster' && clickedNodeData!== null && (
+            {nodeTypeSelected === 'Cluster' && clickedNodeData !== null && (
               <ClusterServerlessForm
                 id={id}
                 data={clickedNodeData}

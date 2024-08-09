@@ -324,13 +324,15 @@
 
 .scheduler-retry-parent {
   min-width: 100%;
-  padding: 10px 0px;
+  /* padding: 10px 0px; */
 }
 .retry-count {
   width: 100%;
+  margin-top: 15px !important;
 }
 .retry-delay {
   width: 100%;
+  margin-top: 15px !important;
 }
 .input-file-container {
   display: flex;
@@ -356,4 +358,19 @@
   margin-top: 15px;
   width: 512px;
   width: 105%;
+}
+
+.create-job-button {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 32px;
+
+  display: flex;
+  align-items: center;
+  text-align: center;
+  text-transform: uppercase;
+
+  color: #3367d6;
+  cursor: pointer;
 }
