@@ -53,14 +53,16 @@ const CreateNotebookScheduler = ({
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
 
-  const [jobPayload, setJobPayload] = useState({
+  const initialPayload = {
     job_name: '',
     composer_environment_name: '',
     email_failure: false,
     email_delay: false,
     email_success: false,
     email_ids: []
-  });
+  };
+  
+  const [jobPayload, setJobPayload] = useState(initialPayload);
 
   const validateJobPayload = () => {
     return (
@@ -155,6 +157,7 @@ const CreateNotebookScheduler = ({
 
   const handleCancel = async () => {
     setCreateCompleted(true);
+    setJobPayload(initialPayload);
   };
 
   //     if (
