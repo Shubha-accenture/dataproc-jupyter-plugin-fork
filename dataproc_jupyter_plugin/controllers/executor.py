@@ -68,7 +68,7 @@ class DownloadOutputController(APIHandler):
                     await credentials.get_cached(), self.log, client_session
                 )
                 download_status = await client.download_dag_output(
-                    composer_name, bucket_name, dag_id, dag_run_id
+                    bucket_name, dag_id, dag_run_id
                 )
                 self.finish(json.dumps({"status": download_status}))
         except Exception as e:
