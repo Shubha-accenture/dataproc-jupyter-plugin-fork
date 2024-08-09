@@ -324,13 +324,15 @@
 
 .scheduler-retry-parent {
   min-width: 100%;
-  padding: 10px 0px;
+  /* padding: 10px 0px; */
 }
 .retry-count {
   width: 100%;
+  margin-top: 15px !important;
 }
 .retry-delay {
   width: 100%;
+  margin-top: 15px !important;
 }
 .input-file-container {
   display: flex;

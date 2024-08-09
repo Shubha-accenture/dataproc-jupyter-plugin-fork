@@ -9,10 +9,10 @@
   box-shadow: 0px 1px 16px 0px rgba(0, 0, 0, 0.06);
 }
 
-.selected-node{
-  border: 1px solid #3367D6;
+.selected-node {
+  border: 1px solid #3367d6;
   padding: 5px;
-  background:#E9EFFB;
+  background: #e9effb;
   top: -7px;
   min-height: 86px;
   min-width: 220px;
@@ -26,9 +26,53 @@
   font-size: 12px;
 }
 
-.custom-node__header {
-  padding: 8px 10px;
-  /* border-bottom: 1px solid #e2e8f0; */
+.node-parent {
+  display: flex;
+  margin-top: 25px;
+  margin-left: 10px;
+}
+
+.node-logo {
+  min-width: 24px;
+  min-height: 24px;
+  top: 13px;
+  left: 24px;
+  padding-right: 5px;
+  padding-left: 5px;
+}
+.node-header {
+  height: 13px;
+  top: 18px;
+  left: 58px;
+  gap: 0px;
+  opacity: 0px;
+  color: #000;
+  font-family: Roboto;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: -0.143px;
+  padding-left: 15px;
+  padding-top: 5px;
+  text-align: center;
+}
+
+.node-subheader {
+  width: 136px;
+  height: 13px;
+  top: 36px;
+  left: 78px;
+  gap: 0px;
+  opacity: 0px;
+  font-family: Roboto;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 14.06px;
+  letter-spacing: -0.011em;
+  text-align: center;
+  margin-left: 0px;
+  color: #575757;
 }
 
 .custom-node__body {
@@ -66,5 +110,5 @@
 }
 
 .node-content {
-  padding-left: 19px;
+  padding-left: 15px;
 }
