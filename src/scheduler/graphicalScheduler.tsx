@@ -50,12 +50,12 @@ const GraphicalScheduler = ({
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
 
-  let id = 1;
+  let id = 2;
   const getId = () => `${id++}`;
 
   const initialNode = [
     {
-      id: '0',
+      id: '1',
       type: 'composerNode',
       position: { x: 0, y: 0 },
       data: {

@@ -22,12 +22,13 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const nodeLabel = data.inputFile
     ? `${id}.${data.inputFile}`
     : `${id}.New Node`;
-  const nodeSubLabel =
-    id === '0'
-      ? data.scheduleValue === ''
-        ? 'Run Now'
-        : 'Run on Schedule' //here
-      : data.nodeType || '';
+    const [nodeSubLabel, setNodeSubLabel] = useState('');
+  // const nodeSubLabel =
+  //   id === '1'
+  //     ? data.scheduleValue === ''
+  //       ? 'Run Now'
+  //       : 'Run on Schedule' //here
+  //     : data.nodeType || '';
 
   const [status, setStatus] = useState('');
   const handleNodeClick = () => {
@@ -38,15 +39,31 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   };
 
   useEffect(() => {
-    if (
-      data &&
-      data.nodeType === 'Cluster' &&
-      data.inputFile !== '' &&
-      data.clusterName !== ''
-    ) {
-      setStatus('complete');
+    if (id === '1') {
+      setNodeSubLabel(data.scheduleValue === '' ? 'Run Now' : 'Run on Schedule');
+    } else {
+      setNodeSubLabel(data.nodeType || '');
     }
-  }, []);
+  }, [id, data.scheduleValue, data.nodeType]);
+
+
+  useEffect(() => {
+    if (!data.nodeType || data.nodeType==="Trigger") {
+      setStatus("");
+      return;
+    }
+    if (data.nodeType === "Cluster" && (!data.inputFile || !data.clusterName)) {
+      setStatus("incomplete");
+    } else if (
+      data.nodeType === "Serverless" &&
+      (!data.inputFile || !data.serverless)
+    ) {
+      setStatus("incomplete");
+    } else {
+      setStatus("complete");
+    }
+  }, [data.nodeType, data.inputFile, data.clusterName, data.serverless]);
+  
 
   return (
     <>
@@ -85,7 +102,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
                 )}
               </div>
               <div className="node-header">
-                {id === '0' ? 'Trigger Node ' : nodeLabel}
+                {id === '1' ? `${id}.Trigger Node` : nodeLabel}
               </div>
             </div>
             <div className="node-subheader">{nodeSubLabel}</div>

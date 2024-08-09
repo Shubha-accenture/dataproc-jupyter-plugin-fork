@@ -20,6 +20,7 @@ function TriggerJobForm({ id, data, nodes }: any) {
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
   const timezones = Object.keys(tzdata.zones).sort();
+
   const handleSchedulerModeChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -41,9 +42,9 @@ function TriggerJobForm({ id, data, nodes }: any) {
   };
 
   useEffect(() => {
-    if (scheduleMode === 'runNow' && data.scheduleValue === '') {
-      data.scheduleValue = '';
-      data.timeZone = '';
+    if (scheduleMode === 'runNow') {
+      data.scheduleValue = "";
+      data.timeZone = "";
     }
   }, [scheduleMode]);
 

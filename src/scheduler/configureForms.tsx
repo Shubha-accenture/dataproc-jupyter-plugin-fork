@@ -26,7 +26,7 @@ function ConfigureForm({ id, data, nodes }: any) {
   ];
 
   const filteredNodeTypes =
-    id === '0' ? nodeTypes : nodeTypes.filter(node => node.key !== 'Trigger');
+    id === '1' ? nodeTypes : nodeTypes.filter(node => node.key !== 'Trigger');
 
   const defaultNodeType =
     data && data.nodeType ? data.nodeType : id === 0 ? 'Trigger' : '';
@@ -41,7 +41,7 @@ function ConfigureForm({ id, data, nodes }: any) {
   }, [data]);
 
   useEffect(() => {
-    if (id === '0') {
+    if (id === '1') {
       setNodeTypeSelected('Trigger');
       data.nodeType = 'Trigger';
     }
@@ -92,7 +92,7 @@ function ConfigureForm({ id, data, nodes }: any) {
               renderInput={params => (
                 <TextField {...params} label="Node Type*" />
               )}
-              disabled={id === '0'}
+              disabled={id === '1'}
             />
             {nodeTypeSelected === 'Trigger' && clickedNodeData !== null && (
               <TriggerJobForm id={id} data={clickedNodeData} nodes={nodes} />
