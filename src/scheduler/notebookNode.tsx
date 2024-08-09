@@ -22,7 +22,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const nodeLabel = data.inputFile
     ? `${id}.${data.inputFile}`
     : `${id}.New Node`;
-    const [nodeSubLabel, setNodeSubLabel] = useState('');
+  const [nodeSubLabel, setNodeSubLabel] = useState('');
   // const nodeSubLabel =
   //   id === '1'
   //     ? data.scheduleValue === ''
@@ -40,30 +40,30 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
 
   useEffect(() => {
     if (id === '1') {
-      setNodeSubLabel(data.scheduleValue === '' ? 'Run Now' : 'Run on Schedule');
+      setNodeSubLabel(
+        data.scheduleValue === '' ? 'Run Now' : 'Run on Schedule'
+      );
     } else {
       setNodeSubLabel(data.nodeType || '');
     }
   }, [id, data.scheduleValue, data.nodeType]);
 
-
   useEffect(() => {
-    if (!data.nodeType || data.nodeType==="Trigger") {
-      setStatus("");
+    if (!data.nodeType || data.nodeType === 'Trigger') {
+      setStatus('');
       return;
     }
-    if (data.nodeType === "Cluster" && (!data.inputFile || !data.clusterName)) {
-      setStatus("incomplete");
+    if (data.nodeType === 'Cluster' && (!data.inputFile || !data.clusterName)) {
+      setStatus('incomplete');
     } else if (
-      data.nodeType === "Serverless" &&
+      data.nodeType === 'Serverless' &&
       (!data.inputFile || !data.serverless)
     ) {
-      setStatus("incomplete");
+      setStatus('incomplete');
     } else {
-      setStatus("complete");
+      setStatus('complete');
     }
   }, [data.nodeType, data.inputFile, data.clusterName, data.serverless]);
-  
 
   return (
     <>
@@ -86,27 +86,33 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
           />
           <div className="node-content">
             <div className="node-parent">
-              <div className="node-logo">
-                {(data.nodeType === 'Serverless' ||
-                  data.nodeType === 'Cluster') && (
-                  <iconCalendarRange.react
-                    tag="div"
-                    className="logo-alignment-react-flow"
-                  />
-                )}
-                {data.nodeType === 'sql' && (
-                  <iconSaveToBigQuery.react
-                    tag="div"
-                    className="logo-alignment-react-flow"
-                  />
-                )}
+              <div className="node-column logo-column">
+                <div className="node-logo">
+                  {(data.nodeType === 'Serverless' ||
+                    data.nodeType === 'Cluster') && (
+                    <iconCalendarRange.react
+                      tag="div"
+                      className="logo-alignment-react-flow"
+                    />
+                  )}
+                  {data.nodeType === 'sql' && (
+                    <iconSaveToBigQuery.react
+                      tag="div"
+                      className="logo-alignment-react-flow"
+                    />
+                  )}
+                </div>
               </div>
-              <div className="node-header">
-                {id === '1' ? `${id}.Trigger Node` : nodeLabel}
+              <div className="node-column header-column">
+                <div className="node-header">
+                  {id === '1' ? `${id}.Trigger Node` : nodeLabel}
+                </div>
+                <div className="node-subheader">{nodeSubLabel}</div>
               </div>
+              <div className="node-column empty-column"></div>
             </div>
-            <div className="node-subheader">{nodeSubLabel}</div>
           </div>
+
           <Handle
             type="source"
             position={Position.Bottom}

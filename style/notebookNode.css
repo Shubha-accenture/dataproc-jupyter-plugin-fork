@@ -35,17 +35,11 @@
 .node-logo {
   min-width: 24px;
   min-height: 24px;
-  top: 13px;
-  left: 24px;
   padding-right: 5px;
   padding-left: 5px;
 }
 .node-header {
   height: 13px;
-  top: 18px;
-  left: 58px;
-  gap: 0px;
-  opacity: 0px;
   color: #000;
   font-family: Roboto;
   font-size: 13px;
@@ -59,12 +53,7 @@
 }
 
 .node-subheader {
-  /* width: 136px; */
   height: 13px;
-  top: 36px;
-  left: 78px;
-  gap: 0px;
-  opacity: 0px;
   font-family: Roboto;
   font-size: 10px;
   font-weight: 400;
@@ -111,4 +100,28 @@
 
 .node-content {
   padding-left: 10px;
+}
+
+.node-parent {
+  display: flex;
+  align-items: center;
+}
+
+.node-column {
+  padding: 2px;
+}
+
+.logo-column {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.header-column {
+  text-align: center;
+}
+
+.node-subheader {
+  margin-top: 0.5rem;
+  text-align: center;
 }
