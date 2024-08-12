@@ -42,11 +42,11 @@ const CreateNotebookScheduler = ({
   context: any;
   factory: IFileBrowserFactory;
 }): JSX.Element => {
-  const [composerSelected] = useState('');//check n remove*
+  const [composerSelected] = useState('');//check n remove* //needed for notebookjob component
   const [createCompleted, setCreateCompleted] =
     context !== '' ? useState(false) : useState(true);
-  const [creatingScheduler, setCreatingScheduler] = useState(false);//check
-  const [editMode, setEditMode] = useState(false);//remove**
+  const [creatingScheduler, setCreatingScheduler] = useState(false);//check //keeping for disabling button
+  const [editMode, setEditMode] = useState(false);//remove** //keeping for edit flow
   const [nodeDataValidation, setNodeDataValidation] = useState(false);
   const [jobPayloadValidation, setJobPayloadValidation] = useState(false);
 
@@ -104,11 +104,12 @@ const CreateNotebookScheduler = ({
         }
       }
       setNodeDataValidation(allNodesHaveData);
-      return allNodesHaveData;//remove return statement
+      //return allNodesHaveData;//remove return statement
     });
   };
   useEffect(() => {
-    setJobPayloadValidation(!validateJobPayload());//need to refactor store variable and get it in set
+    const tempValidateJobPayload =validateJobPayload()
+    setJobPayloadValidation(!tempValidateJobPayload);//need to refactor store variable and get it in set
   }, [jobPayload]);
 
   useEffect(() => {
@@ -139,22 +140,6 @@ const CreateNotebookScheduler = ({
     setEditMode(false);
     setJobPayload(initialPayload)//after save
   };
-  //   return (
-  //    // !inputFilesValidation ||
-  //     dagListCall ||
-  //     //creatingScheduler ||
-  //     jobNameSelected === '' ||
-  //     (!jobNameValidation && !editMode) ||
-  //     (jobNameSpecialValidation && !editMode) ||
-  //     (!jobNameUniqueValidation && !editMode) ||
-  //    // inputFileSelected === '' ||
-  //     composerSelected === '' ||
-  //     //(selectedMode === 'cluster' && clusterSelected === '') ||
-  //     //(selectedMode === 'serverless' && serverlessSelected === '') ||
-  //     ((emailOnFailure || emailOnRetry || emailOnSuccess) &&
-  //       emailList.length === 0)
-  //   );
-  // };
 
   const handleCancel = async () => {
     setCreateCompleted(true);
@@ -169,7 +154,7 @@ const CreateNotebookScheduler = ({
           themeManager={themeManager}
           composerSelectedFromCreate={composerSelected}//check n remove
           setCreateCompleted={setCreateCompleted}
-          setEditMode={setEditMode}//check
+          setEditMode={setEditMode}
         />
       ) : (
         <>
@@ -200,7 +185,7 @@ const CreateNotebookScheduler = ({
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"
-                disabled={!nodeDataValidation || !jobPayloadValidation}
+                disabled={(!nodeDataValidation || !jobPayloadValidation) } //|| creatingScheduler}
                 aria-label="Save scheduler"
                 onClick={handleCreateJobScheduler}
               >
@@ -209,7 +194,7 @@ const CreateNotebookScheduler = ({
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"
-                disabled={creatingScheduler}//check
+                disabled={creatingScheduler}
                 aria-label="cancel scheduler"
                 onClick={!creatingScheduler ? handleCancel : undefined}
               >
