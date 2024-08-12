@@ -18,8 +18,6 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import NotebookNode from './notebookNode';
-import '../../style/reactFlow.css';//add in index.js and index.css and remove
-import '../../style/notebookNode.css';//add in index.js and index.css and remove
 import { eventEmitter } from '../utils/signalEmitter';
 import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
@@ -51,9 +49,6 @@ const GraphicalScheduler = ({
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
 
-  let id = 2;//rename get logic for getting it from initial node
-  const getId = () => `${id++}`; //getnodeid
-
   const initialNode = [
     {
       id: '1',
@@ -74,6 +69,8 @@ const GraphicalScheduler = ({
     }
   ];
 
+  let nodeId = 2;
+  const getNodeId = () => `${nodeId++}`;
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
@@ -102,14 +99,14 @@ const GraphicalScheduler = ({
       if (!connectingNodeId.current) return;
       if (event.target instanceof HTMLElement) {
         const targetIsPane =
-          event.target.classList.contains('react-flow__pane');//check if we can rename
+          event.target.classList.contains('react-flow__pane');//check if we can rename//tried we cannot
         if (targetIsPane) {
           // we need to remove the wrapper bounds, in order to get the correct position
-          const nodeId = getId();
+          const nodeId = getNodeId();
           const e = event as MouseEvent;
           const newNode = {
             id: nodeId,
-            label: `Notebook ${id}`,
+            // label: `Notebook ${id}`,
             type: 'composerNode',
             position: screenToFlowPosition({
               x: e.clientX,
@@ -144,15 +141,14 @@ const GraphicalScheduler = ({
 
   eventEmitter.on(
     'uploadProgress',
-    (event: any, data: any, setInputFileSelected: any) => {
-      handleFileUpload(event, data, setInputFileSelected);
-    }//setinputfile remove
+    (event: any, data: any) => {
+      handleFileUpload(event, data);
+    }
   );
 
   const handleFileUpload = async (
     event: any,
     data: any,
-    setInputFileSelected: any//setinputfile remove
   ) => {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files || []);
@@ -181,7 +177,6 @@ const GraphicalScheduler = ({
           const newFilePath = filePath.startsWith('/')
             ? filePath.substring(1)
             : filePath;
-          setInputFileSelected(newFilePath);//setinputfile remove
           data.inputFile = newFilePath;
 
           // Save the file to the workspace
@@ -207,7 +202,7 @@ const GraphicalScheduler = ({
     eventEmitter.emit(`closeJobForm`, setIsTaskFormVisible);
   });
 
-  eventEmitter.on('closeForm', (isFormVisible: boolean) => {//semd to child
+  eventEmitter.on('closeForm', (isFormVisible: boolean) => {//send to child
     setIsTaskFormVisible(isFormVisible);
     eventEmitter.emit(`closeTaskForm`, setIsTaskFormVisible);
   });
@@ -309,7 +304,8 @@ const GraphicalScheduler = ({
               id={clickedNodeId}
               data={clickedNodeData}
               nodes={nodes}
-              //setistask need to pass 
+              setNodes={setNodes}
+              setTaskId={isTaskFormVisible}
             />
           </Grid>
         )}

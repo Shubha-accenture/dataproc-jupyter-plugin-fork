@@ -199,6 +199,7 @@ const CreateNotebookScheduler = ({
                 onClick={!creatingScheduler ? handleCancel : undefined}
               >
                 <div>CANCEL</div>
+                {/* <div>{creatingScheduler ? 'SAVING...' : 'SAVE'}</div> */}
               </Button>
             </div>
           </div>

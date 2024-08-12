@@ -34,3 +34,6 @@ import './gcsBucket.css';
 import './notebookScheduler.css';
 import './notebookTemplates.css';
 import './overview.css';
+import './reactFlow.css';//add in index.js and index.css and remove // tried we can't
+import './notebookNode.css';//add in index.js and index.css and remove// tried we can't
+

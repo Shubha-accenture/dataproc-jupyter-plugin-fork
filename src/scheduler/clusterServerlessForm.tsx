@@ -17,7 +17,7 @@ import { SchedulerService } from './schedulerServices';
 function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
   //remove redundant hooks which are available in data
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
-  const [inputFileSelected, setInputFileSelected] = useState('');
+  //const [inputFileSelected, setInputFileSelected] = useState('');
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
   const [parameterDetail, setParameterDetail] = useState(['']);
@@ -40,8 +40,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
     const file = evt.target.files && evt.target.files[0];
     if (file) {
       setInputFileSelectedLocal(evt.target.value);
-      eventEmitter.emit(`uploadProgress`, evt, data, setInputFileSelected);
-      console.log(inputFileSelected);//remove console and both state remove and check 
+      eventEmitter.emit(`uploadProgress`, evt, data);
     }
   };
 
