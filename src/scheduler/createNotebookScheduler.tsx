@@ -42,11 +42,11 @@ const CreateNotebookScheduler = ({
   context: any;
   factory: IFileBrowserFactory;
 }): JSX.Element => {
-  const [composerSelected] = useState('');
+  const [composerSelected] = useState('');//check n remove*
   const [createCompleted, setCreateCompleted] =
     context !== '' ? useState(false) : useState(true);
-  const [creatingScheduler, setCreatingScheduler] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [creatingScheduler, setCreatingScheduler] = useState(false);//check
+  const [editMode, setEditMode] = useState(false);//remove**
   const [nodeDataValidation, setNodeDataValidation] = useState(false);
   const [jobPayloadValidation, setJobPayloadValidation] = useState(false);
 
@@ -61,7 +61,7 @@ const CreateNotebookScheduler = ({
     email_success: false,
     email_ids: []
   };
-  
+
   const [jobPayload, setJobPayload] = useState(initialPayload);
 
   const validateJobPayload = () => {
@@ -78,7 +78,7 @@ const CreateNotebookScheduler = ({
   const validateTaskPayload = () => {
     let allNodesHaveData = true;
     nodes.forEach((e: any) => {
-      if (nodes.length <= 1) {
+      if (nodes.length === 1) {
         allNodesHaveData = false;
       }
       if (e.data.nodeType === '') {
@@ -104,11 +104,11 @@ const CreateNotebookScheduler = ({
         }
       }
       setNodeDataValidation(allNodesHaveData);
-      return allNodesHaveData;
+      return allNodesHaveData;//remove return statement
     });
   };
   useEffect(() => {
-    setJobPayloadValidation(!validateJobPayload());
+    setJobPayloadValidation(!validateJobPayload());//need to refactor store variable and get it in set
   }, [jobPayload]);
 
   useEffect(() => {
@@ -161,66 +161,15 @@ const CreateNotebookScheduler = ({
     setJobPayload(initialPayload);
   };
 
-  //     if (
-  //       kernels[context.sessionContext.kernelPreference.name].resources
-  //         .endpointParentResource
-  //     ) {
-  //       if (
-  //         kernels[
-  //           context.sessionContext.kernelPreference.name
-  //         ].resources.endpointParentResource.includes('/sessions')
-  //       ) {
-  //         const selectedData: any = serverlessDataList.filter(
-  //           (serverless: any) => {
-  //             return context.sessionContext.kernelDisplayName.includes(
-  //               serverless.serverlessName
-  //             );
-  //           }
-  //         );
-  //         if (selectedData.length > 0) {
-  //           setServerlessDataSelected(selectedData[0].serverlessData);
-  //           setServerlessSelected(selectedData[0].serverlessName);
-  //         } else {
-  //           setServerlessDataSelected({});
-  //           setServerlessSelected('');
-  //         }
-  //       } else {
-  //         const selectedData: any = clusterList.filter((cluster: string) => {
-  //           return context.sessionContext.kernelDisplayName.includes(cluster);
-  //         });
-  //         if (selectedData.length > 0) {
-  //           setClusterSelected(selectedData[0]);
-  //         } else {
-  //           setClusterSelected('');
-  //         }
-  //       }
-  //     }
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (composerSelected !== '' && dagList.length > 0) {
-  //     const isUnique = !dagList.some(
-  //       dag => dag.notebookname === jobNameSelected
-  //     );
-  //     setJobNameUniqueValidation(isUnique);
-  //   }
-  // }, [dagList, jobNameSelected, composerSelected]);
-
-  // useEffect(() => {
-  //   if (context !== '') {
-  //     getKernelDetail();
-  //   }
-  // }, [serverlessDataList, clusterList]);
   return (
     <>
       {createCompleted ? (
         <NotebookJobComponent
           app={app}
           themeManager={themeManager}
-          composerSelectedFromCreate={composerSelected}
+          composerSelectedFromCreate={composerSelected}//check n remove
           setCreateCompleted={setCreateCompleted}
-          setEditMode={setEditMode}
+          setEditMode={setEditMode}//check
         />
       ) : (
         <>
@@ -237,7 +186,7 @@ const CreateNotebookScheduler = ({
                 />
               </div>
 
-              {editMode ? (
+              {editMode ? (//check
                 <div className="create-job-scheduler-title">
                   Update A Scheduled Job
                 </div>
@@ -260,7 +209,7 @@ const CreateNotebookScheduler = ({
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"
-                disabled={creatingScheduler}
+                disabled={creatingScheduler}//check
                 aria-label="cancel scheduler"
                 onClick={!creatingScheduler ? handleCancel : undefined}
               >

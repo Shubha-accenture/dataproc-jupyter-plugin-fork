@@ -1,3 +1,4 @@
+//licsence
 import React, { useEffect, useState } from 'react';
 import { Handle, NodeProps, Position } from 'reactflow';
 
@@ -33,6 +34,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const [nodeSubLabel, setNodeSubLabel] = useState('');
 
   const [status, setStatus] = useState('');
+
   const handleNodeClick = () => {
     setClickedNodeId(id);
     setIsNodeClicked(true);
@@ -77,7 +79,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
       <div onClick={handleNodeClick}>
         <div className={isSelected ? 'selected-node' : 'notebook-node'}>
           <div
-            className={`box ${
+            className={`box ${ //meaningful name
               status === 'complete'
                 ? 'green'
                 : status === 'incomplete'
@@ -87,7 +89,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
           />
           <Handle
             type="target"
-            id="a"
+            id="a"//check n remove
             position={Position.Top}
             isConnectable={false}
           />

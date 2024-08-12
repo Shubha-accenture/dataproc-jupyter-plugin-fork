@@ -1,5 +1,6 @@
+//LISCENCE
 import React, { useEffect, useState } from 'react';
-import { eventEmitter } from '../utils/signalEmitter';
+import { eventEmitter } from '../utils/signalEmitter';//check n remove
 import { Autocomplete, IconButton, TextField } from '@mui/material';
 import ClusterServerlessForm from './clusterServerlessForm';
 import TriggerJobForm from './triggerJobForm';
@@ -38,7 +39,7 @@ function ConfigureForm({ id, data, nodes }: any) {
     if (data && data.nodeType !== '') {
       setNodeTypeSelected(data.nodeType);
     }
-  }, [data]);
+  }, [data]);//data.nodetype check 
 
   useEffect(() => {
     if (id === '1') {
@@ -66,7 +67,6 @@ function ConfigureForm({ id, data, nodes }: any) {
   }, [nodes, id]);
 
   return (
-    <>
       <>
         <form>
           <div className="configure-node-container">
@@ -116,7 +116,6 @@ function ConfigureForm({ id, data, nodes }: any) {
           </div>
         </form>
       </>
-    </>
   );
 }
 

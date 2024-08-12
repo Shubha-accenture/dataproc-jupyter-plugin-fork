@@ -1,3 +1,4 @@
+//licsence
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   MouseEvent as ReactMouseEvent,
@@ -17,14 +18,14 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import NotebookNode from './notebookNode';
-import '../../style/reactFlow.css';
-import '../../style/notebookNode.css';
+import '../../style/reactFlow.css';//add in index.js and index.css and remove
+import '../../style/notebookNode.css';//add in index.js and index.css and remove
 import { eventEmitter } from '../utils/signalEmitter';
 import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import Grid from '@mui/material/Grid';
-import ConfigureForm from './configureForms';
+import ConfigureForm from './configureForms';//taskConfigureform
 import JobForm from './jobForm';
 
 interface IGraphicalSchedulerProps {
@@ -50,8 +51,8 @@ const GraphicalScheduler = ({
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
 
-  let id = 2;
-  const getId = () => `${id++}`;
+  let id = 2;//rename get logic for getting it from initial node
+  const getId = () => `${id++}`; //getnodeid
 
   const initialNode = [
     {
@@ -77,8 +78,9 @@ const GraphicalScheduler = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
-  const [clickedNodeData, setClickedNodeData] = useState<any>(null);
+  const [clickedNodeData, setClickedNodeData] = useState<any>(null);//check if its same as configure form
   const { screenToFlowPosition } = useReactFlow();
+
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections
     connectingNodeId.current = null;
@@ -100,7 +102,7 @@ const GraphicalScheduler = ({
       if (!connectingNodeId.current) return;
       if (event.target instanceof HTMLElement) {
         const targetIsPane =
-          event.target.classList.contains('react-flow__pane');
+          event.target.classList.contains('react-flow__pane');//check if we can rename
         if (targetIsPane) {
           // we need to remove the wrapper bounds, in order to get the correct position
           const nodeId = getId();
@@ -144,13 +146,13 @@ const GraphicalScheduler = ({
     'uploadProgress',
     (event: any, data: any, setInputFileSelected: any) => {
       handleFileUpload(event, data, setInputFileSelected);
-    }
+    }//setinputfile remove
   );
 
   const handleFileUpload = async (
     event: any,
     data: any,
-    setInputFileSelected: any
+    setInputFileSelected: any//setinputfile remove
   ) => {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files || []);
@@ -179,7 +181,7 @@ const GraphicalScheduler = ({
           const newFilePath = filePath.startsWith('/')
             ? filePath.substring(1)
             : filePath;
-          setInputFileSelected(newFilePath);
+          setInputFileSelected(newFilePath);//setinputfile remove
           data.inputFile = newFilePath;
 
           // Save the file to the workspace
@@ -205,7 +207,7 @@ const GraphicalScheduler = ({
     eventEmitter.emit(`closeJobForm`, setIsTaskFormVisible);
   });
 
-  eventEmitter.on('closeForm', (isFormVisible: boolean) => {
+  eventEmitter.on('closeForm', (isFormVisible: boolean) => {//semd to child
     setIsTaskFormVisible(isFormVisible);
     eventEmitter.emit(`closeTaskForm`, setIsTaskFormVisible);
   });
@@ -225,6 +227,7 @@ const GraphicalScheduler = ({
   }, [clickedNodeId, nodes]);
 
   EdgesChange(edges);
+  
   const transformNodeData = (nodes: any) => {
     return nodes.map((node: any) => {
       if (node.data.nodeType === 'Trigger') {
@@ -306,6 +309,7 @@ const GraphicalScheduler = ({
               id={clickedNodeId}
               data={clickedNodeData}
               nodes={nodes}
+              //setistask need to pass 
             />
           </Grid>
         )}

@@ -1,3 +1,4 @@
+//lincense header
 import React, { useEffect, useState } from 'react';
 import { Input } from '../controls/MuiWrappedInput';
 import LabelProperties from '../jobs/labelProperties';
@@ -13,7 +14,8 @@ import {
 } from '@mui/material';
 import { SchedulerService } from './schedulerServices';
 
-function ClusterServerlessForm({ id, data, mode }: any) {
+function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
+  //remove redundant hooks which are available in data
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
   const [inputFileSelected, setInputFileSelected] = useState('');
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
@@ -30,29 +32,30 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [serverlessList, setServerlessList] = useState<string[]>([]);
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [clusterSelected, setClusterSelected] = useState('');
-  const [serverlessSelected, setServerlessSelected] = useState('');
-  const [serverlessDataSelected, setServerlessDataSelected] = useState({});
+  const [serverlessSelected, setServerlessSelected] = useState('');//needed 
+  const [serverlessDataSelected, setServerlessDataSelected] = useState({});// already in data
   const [stopCluster, setStopCluster] = useState(false);
+
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
       setInputFileSelectedLocal(evt.target.value);
       eventEmitter.emit(`uploadProgress`, evt, data, setInputFileSelected);
-      console.log(inputFileSelected);
+      console.log(inputFileSelected);//remove console and both state remove and check 
     }
   };
 
   const handleRetryCountChange = (e: number) => {
     if (e) {
       data.retryCount = e;
-      setRetryCount(e);
+      setRetryCount(e);  //remove redundant hooks which are available in data
     }
   };
 
   const handleRetryDelayChange = (e: number) => {
     if (e) {
       data.retryDelay = e;
-      setRetryDelay(e);
+      setRetryDelay(e);//remove redundant hooks which are available in data
     }
   };
 
@@ -74,7 +77,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
     if (value) {
       const selectedCluster = value.toString();
       data.clusterName = selectedCluster;
-      setClusterSelected(selectedCluster);
+      setClusterSelected(selectedCluster);  //remove redundant hooks which are available in data
     }
   };
 
@@ -84,15 +87,15 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       const selectedData: any = serverlessDataList.filter((serverless: any) => {
         return serverless.serverlessName === selectedServerless;
       });
-      setServerlessDataSelected(selectedData[0].serverlessData);
+      setServerlessDataSelected(selectedData[0].serverlessData);  //remove redundant hooks which are available in data
       console.log(serverlessDataSelected);
       data.serverless = selectedData[0].serverlessData;
-      setServerlessSelected(selectedServerless);
+      setServerlessSelected(selectedServerless);//needed
     }
   };
 
   const handleStopCluster = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setStopCluster(event.target.checked);
+    setStopCluster(event.target.checked);  //remove redundant hooks which are available in data
     data.stopCluster = event.target.checked;
   };
 
@@ -111,10 +114,10 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       setServerlessDataSelected(data.serverless);
       if (data.serverless && data.serverless.jupyterSession.displayName) {
         setServerlessSelected(data.serverless.jupyterSession.displayName);
-      }
+      }//needed
       setStopCluster(data.stopCluster);
     }
-  }, [data]);
+  }, [data]);//complete thing recheck
 
   useEffect(() => {
     if (selectedMode === 'cluster') {
@@ -131,11 +134,10 @@ function ClusterServerlessForm({ id, data, mode }: any) {
         setSelectedMode('serverless');
       }
     }
-  }, []);
+  }, []);//remove // no bigquery
 
   return (
     <>
-      {/* { isFormVisible && */}
       <div>
         <form>
           <div className="custom-node__body">
@@ -145,7 +147,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
             <div className="input-file-container">
               <input
                 className="create-scheduler-style"
-                // className="nodrag"
                 type="file"
                 value={''}
                 // {inputFileSelectedLocal}
@@ -180,13 +181,13 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                   data-testid="loader"
                 />
               )}
-              {!isBigQueryNotebook &&
+              {!isBigQueryNotebook && // no bigquery
                 selectedMode === 'cluster' &&
                 !isLoadingKernelDetail && (
                   <Autocomplete
                     className="create-scheduler-style-trigger"
                     options={clusterList}
-                    value={clusterSelected}
+                    value={clusterSelected}//data.clusterName
                     onChange={(_event, val) => handleClusterSelected(val)}
                     renderInput={params => (
                       <TextField {...params} label="Cluster*" />
@@ -197,7 +198,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                 <Autocomplete
                   className="create-scheduler-style-trigger"
                   options={serverlessList}
-                  value={serverlessSelected}
+                  value={serverlessSelected}//needed
                   onChange={(_event, val) => handleServerlessSelected(val)}
                   renderInput={params => (
                     <TextField {...params} label="Serverless*" />
@@ -205,7 +206,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                 />
               )}
             </div>
-            {!isBigQueryNotebook && selectedMode === 'cluster' && (
+            {!isBigQueryNotebook && selectedMode === 'cluster' && ( // no bigquery
               <div className="create-scheduler-form-element">
                 <FormGroup row={true}>
                   <FormControlLabel

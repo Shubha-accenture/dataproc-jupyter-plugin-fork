@@ -1,3 +1,4 @@
+//liscence
 import {
   Autocomplete,
   FormControl,
@@ -13,7 +14,8 @@ import tzdata from 'tzdata';
 import { scheduleValueExpression } from '../utils/const';
 import { scheduleMode } from '../utils/const';
 
-function TriggerJobForm({ id, data, nodes }: any) {
+function TriggerJobForm({ id, data, nodes }: any) {//id and nodes remove
+  //check hooks and remove redundant hooks
   const [scheduleMode, setScheduleMode] = useState<scheduleMode>('runNow');
   const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
   const [timeZoneSelected, setTimeZoneSelected] = useState(
@@ -43,8 +45,8 @@ function TriggerJobForm({ id, data, nodes }: any) {
 
   useEffect(() => {
     if (scheduleMode === 'runNow') {
-      data.scheduleValue = "";
-      data.timeZone = "";
+      data.scheduleValue = '';
+      data.timeZone = '';
     }
   }, [scheduleMode]);
 
@@ -54,7 +56,7 @@ function TriggerJobForm({ id, data, nodes }: any) {
       setScheduleValue(data.scheduleValue);
       setTimeZoneSelected(data.timeZone);
     }
-  }, [data]);
+  }, [data]);//remove n check
 
   return (
     <>
