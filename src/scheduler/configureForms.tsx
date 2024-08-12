@@ -1,6 +1,21 @@
-//LISCENCE
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import React, { useEffect, useState } from 'react';
-import { eventEmitter } from '../utils/signalEmitter';//check n remove
+import { eventEmitter } from '../utils/signalEmitter';
 import { Autocomplete, IconButton, TextField } from '@mui/material';
 import ClusterServerlessForm from './clusterServerlessForm';
 import TriggerJobForm from './triggerJobForm';
@@ -12,7 +27,7 @@ const iconSearchClear = new LabIcon({
   svgstr: searchClearIcon
 });
 
-function ConfigureForm({ id, data, nodes }: any) {
+function ConfigureForm({ id, data, nodes, setTaskFormVisible }: any) {
   const nodeTypes = [
     { key: 'Serverless', label: 'Run a notebook on dataproc serverless' },
     { key: 'Cluster', label: 'Run a notebook on dataproc cluster' },
@@ -30,7 +45,7 @@ function ConfigureForm({ id, data, nodes }: any) {
     id === '1' ? nodeTypes : nodeTypes.filter(node => node.key !== 'Trigger');
 
   const defaultNodeType =
-    data && data.nodeType ? data.nodeType : id === '1' ? 'Trigger' : '';//check same as use effect
+    data && data.nodeType ? data.nodeType : id === '1' ? 'Trigger' : '';
 
   const [nodeTypeSelected, setNodeTypeSelected] = useState(defaultNodeType);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
@@ -39,7 +54,7 @@ function ConfigureForm({ id, data, nodes }: any) {
     if (data && data.nodeType !== '') {
       setNodeTypeSelected(data.nodeType);
     }
-  }, [data]);//data.nodetype check 
+  }, [data]);
 
   useEffect(() => {
     if (id === '1') {
@@ -54,10 +69,10 @@ function ConfigureForm({ id, data, nodes }: any) {
       data.nodeType = value;
     }
   };
+
   const handleCancel = () => {
-    eventEmitter.emit(`closeForm`, false);
-    console.log("event emitter called")
-    eventEmitter.emit(`unselectNode` ,false)
+    setTaskFormVisible(false);
+    eventEmitter.emit(`unselectNode`, false);
   };
 
   useEffect(() => {
@@ -67,55 +82,53 @@ function ConfigureForm({ id, data, nodes }: any) {
   }, [nodes, id]);
 
   return (
-      <>
-        <form>
-          <div className="configure-node-container">
-            <div className="task-form-header">
-              <div className="create-job-scheduler-title">Configure Node</div>
-              <IconButton aria-label="cancel" onClick={handleCancel}>
-                <iconSearchClear.react
-                  tag="div"
-                  className="icon-white logo-alignment-style search-clear-icon"
-                />
-              </IconButton>
-            </div>
-            <Autocomplete
-              className="nodetype-seletion-style"
-              options={filteredNodeTypes}
-              getOptionLabel={option => option.label}
-              value={
-                filteredNodeTypes.find(
-                  option => option.key === nodeTypeSelected
-                ) || null
-              }
-              onChange={(_event, value) =>
-                handleNodeTypeChange(value?.key || null)
-              }
-              renderInput={params => (
-                <TextField {...params} label="Node Type*" />
-              )}
-              disabled={id === '1'}
-            />
-            {nodeTypeSelected === 'Trigger' && clickedNodeData !== null && (
-              <TriggerJobForm id={id} data={clickedNodeData} nodes={nodes} />
-            )}
-            {nodeTypeSelected === 'Serverless' && clickedNodeData !== null && (
-              <ClusterServerlessForm
-                id={id}
-                data={clickedNodeData}
-                mode={'serverless'}
+    <>
+      <form>
+        <div className="configure-node-container">
+          <div className="task-form-header">
+            <div className="create-job-scheduler-title">Configure Node</div>
+            <IconButton aria-label="cancel" onClick={handleCancel}>
+              <iconSearchClear.react
+                tag="div"
+                className="icon-white logo-alignment-style search-clear-icon"
               />
-            )}
-            {nodeTypeSelected === 'Cluster' && clickedNodeData !== null && (
-              <ClusterServerlessForm
-                id={id}
-                data={clickedNodeData}
-                mode={'cluster'}
-              />
-            )}
+            </IconButton>
           </div>
-        </form>
-      </>
+          <Autocomplete
+            className="nodetype-seletion-style"
+            options={filteredNodeTypes}
+            getOptionLabel={option => option.label}
+            value={
+              filteredNodeTypes.find(
+                option => option.key === nodeTypeSelected
+              ) || null
+            }
+            onChange={(_event, value) =>
+              handleNodeTypeChange(value?.key || null)
+            }
+            renderInput={params => <TextField {...params} label="Node Type*" />}
+            disabled={id === '1'}
+          />
+          {nodeTypeSelected === 'Trigger' && clickedNodeData !== null && (
+            <TriggerJobForm id={id} data={clickedNodeData} />
+          )}
+          {nodeTypeSelected === 'Serverless' && clickedNodeData !== null && (
+            <ClusterServerlessForm
+              id={id}
+              data={clickedNodeData}
+              mode={'serverless'}
+            />
+          )}
+          {nodeTypeSelected === 'Cluster' && clickedNodeData !== null && (
+            <ClusterServerlessForm
+              id={id}
+              data={clickedNodeData}
+              mode={'cluster'}
+            />
+          )}
+        </div>
+      </form>
+    </>
   );
 }
 

@@ -30,7 +30,6 @@ import { SchedulerService } from './schedulerServices';
 import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
 import Grid from '@mui/material/Grid';
-import { eventEmitter } from '../utils/signalEmitter';
 
 interface IDagList {
   jobid: string;
@@ -68,14 +67,6 @@ const JobForm = ({
   const [dagList, setDagList] = useState<IDagList[]>([]);
   const [editMode] = useState(false);
   const [dagListCall, setDagListCall] = useState(false);
-  const [isJobFormVisible, setIsJobFormVisible] = useState(true);
-  eventEmitter.on('closeJobForm', () => {
-    setIsJobFormVisible(false);
-  });
-
-  eventEmitter.on('closeTaskForm', () => {
-    setIsJobFormVisible(true);
-  });
 
   const listComposersAPI = async () => {
     await SchedulerService.listComposersAPIService(setComposerList);
@@ -179,7 +170,6 @@ const JobForm = ({
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
-        {isJobFormVisible && (
           <Grid item xs={3}>
             <div>
               <div className="submit-job-container">
@@ -318,7 +308,6 @@ const JobForm = ({
               </div>
             </div>
           </Grid>
-        )}
       </Grid>
     </>
   );

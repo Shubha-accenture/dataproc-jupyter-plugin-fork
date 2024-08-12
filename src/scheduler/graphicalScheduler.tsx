@@ -23,7 +23,7 @@ import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import Grid from '@mui/material/Grid';
-import ConfigureForm from './configureForms';//taskConfigureform
+import ConfigureForm from './configureForms'; //taskConfigureform
 import JobForm from './jobForm';
 
 interface IGraphicalSchedulerProps {
@@ -75,7 +75,7 @@ const GraphicalScheduler = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
-  const [clickedNodeData, setClickedNodeData] = useState<any>(null);//check if its same as configure form
+  const [clickedNodeData, setClickedNodeData] = useState<any>(null); //check if its same as configure form
   const { screenToFlowPosition } = useReactFlow();
 
   const onConnect = useCallback((params: Connection) => {
@@ -99,7 +99,7 @@ const GraphicalScheduler = ({
       if (!connectingNodeId.current) return;
       if (event.target instanceof HTMLElement) {
         const targetIsPane =
-          event.target.classList.contains('react-flow__pane');//check if we can rename//tried we cannot
+          event.target.classList.contains('react-flow__pane'); //check if we can rename//tried we cannot
         if (targetIsPane) {
           // we need to remove the wrapper bounds, in order to get the correct position
           const nodeId = getNodeId();
@@ -139,17 +139,11 @@ const GraphicalScheduler = ({
     [screenToFlowPosition]
   );
 
-  eventEmitter.on(
-    'uploadProgress',
-    (event: any, data: any) => {
-      handleFileUpload(event, data);
-    }
-  );
+  eventEmitter.on('uploadProgress', (event: any, data: any) => {
+    handleFileUpload(event, data);
+  });
 
-  const handleFileUpload = async (
-    event: any,
-    data: any,
-  ) => {
+  const handleFileUpload = async (event: any, data: any) => {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files || []);
     if (files && files.length > 0) {
@@ -199,12 +193,6 @@ const GraphicalScheduler = ({
     if (isNodeClicked) {
       setIsTaskFormVisible(true);
     }
-    eventEmitter.emit(`closeJobForm`, setIsTaskFormVisible);
-  });
-
-  eventEmitter.on('closeForm', (isFormVisible: boolean) => {//send to child
-    setIsTaskFormVisible(isFormVisible);
-    eventEmitter.emit(`closeTaskForm`, setIsTaskFormVisible);
   });
 
   useEffect(() => {
@@ -222,7 +210,6 @@ const GraphicalScheduler = ({
   }, [clickedNodeId, nodes]);
 
   EdgesChange(edges);
-  
   const transformNodeData = (nodes: any) => {
     return nodes.map((node: any) => {
       if (node.data.nodeType === 'Trigger') {
@@ -304,8 +291,7 @@ const GraphicalScheduler = ({
               id={clickedNodeId}
               data={clickedNodeData}
               nodes={nodes}
-              setNodes={setNodes}
-              setTaskId={isTaskFormVisible}
+              setTaskFormVisible={setIsTaskFormVisible}
             />
           </Grid>
         )}
