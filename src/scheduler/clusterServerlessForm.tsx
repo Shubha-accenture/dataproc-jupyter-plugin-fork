@@ -54,17 +54,35 @@ function ClusterServerlessForm({ data, mode }: any) {
     }
   };
 
-  const handleRetryCountChange = (e: number) => {
-    if (e) {
-      data.retryCount = e;
-      setRetryCount(e);
+  const handleRetryCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      // Handle empty input
+      setRetryCount(undefined);
+      data.retryCount = 0;
+    } else {
+      const numberValue = Number(value);
+      if (!isNaN(numberValue)) {
+        // Handle valid number
+        setRetryCount(numberValue);
+        data.retryCount = numberValue;
+      }
     }
   };
 
-  const handleRetryDelayChange = (e: number) => {
-    if (e) {
-      data.retryDelay = e;
-      setRetryDelay(e);
+  const handleRetryDelayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      // Handle empty input
+      setRetryDelay(undefined);
+      data.retryDelay = 0;
+    } else {
+      const numberValue = Number(value);
+      if (!isNaN(numberValue)) {
+        // Handle valid number
+        setRetryDelay(numberValue);
+        data.retryDelay = numberValue;
+      }
     }
   };
 
@@ -228,15 +246,15 @@ function ClusterServerlessForm({ data, mode }: any) {
             <div className="scheduler-retry-parent">
               <Input
                 className="retry-count"
-                value={retryCount || null} // check not allowing empty field
+                value={retryCount !== undefined ? retryCount : ''}
                 Label="Retry Count"
-                onChange={e => handleRetryCountChange(Number(e.target.value))}
+                onChange={handleRetryCountChange}
               />
               <Input
                 className="retry-delay"
-                value={retryDelay || null}
+                value={retryDelay !== undefined ? retryDelay : ''}
                 Label="Retry Delay"
-                onChange={e => handleRetryDelayChange(Number(e.target.value))}
+                onChange={handleRetryDelayChange}
               />
             </div>
           </div>
