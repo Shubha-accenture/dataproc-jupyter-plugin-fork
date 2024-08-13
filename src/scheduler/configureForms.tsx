@@ -113,18 +113,10 @@ function ConfigureForm({ id, data, nodes, setTaskFormVisible }: any) {
             <TriggerJobForm data={clickedNodeData} />
           )}
           {nodeTypeSelected === 'Serverless' && clickedNodeData !== null && (
-            <ClusterServerlessForm
-              id={id}
-              data={clickedNodeData}
-              mode={'serverless'}
-            />
+            <ClusterServerlessForm data={clickedNodeData} mode={'serverless'} />
           )}
           {nodeTypeSelected === 'Cluster' && clickedNodeData !== null && (
-            <ClusterServerlessForm
-              id={id}
-              data={clickedNodeData}
-              mode={'cluster'}
-            />
+            <ClusterServerlessForm data={clickedNodeData} mode={'cluster'} />
           )}
         </div>
       </form>

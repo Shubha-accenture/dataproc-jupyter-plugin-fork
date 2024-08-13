@@ -1,4 +1,19 @@
-//lincense header
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import React, { useEffect, useState } from 'react';
 import { Input } from '../controls/MuiWrappedInput';
 import LabelProperties from '../jobs/labelProperties';
@@ -14,10 +29,8 @@ import {
 } from '@mui/material';
 import { SchedulerService } from './schedulerServices';
 
-function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
-  //remove redundant hooks which are available in data
+function ClusterServerlessForm({ data, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
-  //const [inputFileSelected, setInputFileSelected] = useState('');
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
   const [parameterDetail, setParameterDetail] = useState(['']);
@@ -26,14 +39,11 @@ function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
   const [valueValidation, setValueValidation] = useState(-1);
   const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
   const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
-  const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
-  const [selectedMode, setSelectedMode] = useState(mode);
   const [clusterList, setClusterList] = useState<string[]>([]);
+  const [clusterSelected, setClusterSelected] = useState('');
   const [serverlessList, setServerlessList] = useState<string[]>([]);
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
-  const [clusterSelected, setClusterSelected] = useState('');
-  const [serverlessSelected, setServerlessSelected] = useState('');//needed 
-  const [serverlessDataSelected, setServerlessDataSelected] = useState({});// already in data
+  const [serverlessSelected, setServerlessSelected] = useState('');
   const [stopCluster, setStopCluster] = useState(false);
 
   const onInputFileNameChange = (evt: any) => {
@@ -47,14 +57,14 @@ function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
   const handleRetryCountChange = (e: number) => {
     if (e) {
       data.retryCount = e;
-      setRetryCount(e);  //remove redundant hooks which are available in data
+      setRetryCount(e);
     }
   };
 
   const handleRetryDelayChange = (e: number) => {
     if (e) {
       data.retryDelay = e;
-      setRetryDelay(e);//remove redundant hooks which are available in data
+      setRetryDelay(e);
     }
   };
 
@@ -76,7 +86,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
     if (value) {
       const selectedCluster = value.toString();
       data.clusterName = selectedCluster;
-      setClusterSelected(selectedCluster);  //remove redundant hooks which are available in data
+      setClusterSelected(selectedCluster);
     }
   };
 
@@ -86,15 +96,13 @@ function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
       const selectedData: any = serverlessDataList.filter((serverless: any) => {
         return serverless.serverlessName === selectedServerless;
       });
-      setServerlessDataSelected(selectedData[0].serverlessData);  //remove redundant hooks which are available in data
-      console.log(serverlessDataSelected);
       data.serverless = selectedData[0].serverlessData;
-      setServerlessSelected(selectedServerless);//needed
+      setServerlessSelected(selectedServerless);
     }
   };
 
   const handleStopCluster = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setStopCluster(event.target.checked);  //remove redundant hooks which are available in data
+    setStopCluster(event.target.checked);
     data.stopCluster = event.target.checked;
   };
 
@@ -110,30 +118,20 @@ function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
       setClusterSelected(data.clusterName);
-      setServerlessDataSelected(data.serverless);
       if (data.serverless && data.serverless.jupyterSession.displayName) {
         setServerlessSelected(data.serverless.jupyterSession.displayName);
-      }//needed
+      }
       setStopCluster(data.stopCluster);
     }
-  }, [data]);//complete thing recheck
+  }, [data]);
 
   useEffect(() => {
-    if (selectedMode === 'cluster') {
+    if (mode === 'cluster') {
       listClustersAPI();
     } else {
       listSessionTemplatesAPI();
     }
-  }, [selectedMode]);
-
-  useEffect(() => {
-    if (data.inputFile && data.inputFile !== '') {
-      if (data.inputFile.toLowerCase().startsWith('bigframes')) {
-        setIsBigQueryNotebook(true);
-        setSelectedMode('serverless');
-      }
-    }
-  }, []);//remove // no bigquery
+  }, [mode]);
 
   return (
     <>
@@ -180,24 +178,22 @@ function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
                   data-testid="loader"
                 />
               )}
-              {!isBigQueryNotebook && // no bigquery
-                selectedMode === 'cluster' &&
-                !isLoadingKernelDetail && (
-                  <Autocomplete
-                    className="create-scheduler-style-trigger"
-                    options={clusterList}
-                    value={clusterSelected}//data.clusterName
-                    onChange={(_event, val) => handleClusterSelected(val)}
-                    renderInput={params => (
-                      <TextField {...params} label="Cluster*" />
-                    )}
-                  />
-                )}
-              {selectedMode === 'serverless' && !isLoadingKernelDetail && (
+              {mode === 'cluster' && !isLoadingKernelDetail && (
+                <Autocomplete
+                  className="create-scheduler-style-trigger"
+                  options={clusterList}
+                  value={clusterSelected}
+                  onChange={(_event, val) => handleClusterSelected(val)}
+                  renderInput={params => (
+                    <TextField {...params} label="Cluster*" />
+                  )}
+                />
+              )}
+              {mode === 'serverless' && !isLoadingKernelDetail && (
                 <Autocomplete
                   className="create-scheduler-style-trigger"
                   options={serverlessList}
-                  value={serverlessSelected}//needed
+                  value={serverlessSelected}
                   onChange={(_event, val) => handleServerlessSelected(val)}
                   renderInput={params => (
                     <TextField {...params} label="Serverless*" />
@@ -205,7 +201,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
                 />
               )}
             </div>
-            {!isBigQueryNotebook && selectedMode === 'cluster' && ( // no bigquery
+            {mode === 'cluster' && (
               <div className="create-scheduler-form-element">
                 <FormGroup row={true}>
                   <FormControlLabel
@@ -232,13 +228,13 @@ function ClusterServerlessForm({ id, data, mode }: any) {//check id or remove
             <div className="scheduler-retry-parent">
               <Input
                 className="retry-count"
-                value={retryCount}
+                value={retryCount || null} // check not allowing empty field
                 Label="Retry Count"
                 onChange={e => handleRetryCountChange(Number(e.target.value))}
               />
               <Input
                 className="retry-delay"
-                value={retryDelay}
+                value={retryDelay || null}
                 Label="Retry Delay"
                 onChange={e => handleRetryDelayChange(Number(e.target.value))}
               />

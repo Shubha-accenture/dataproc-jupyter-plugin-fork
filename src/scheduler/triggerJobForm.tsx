@@ -30,10 +30,11 @@ import { scheduleValueExpression } from '../utils/const';
 import { scheduleMode } from '../utils/const';
 
 const TriggerJobForm = ({ data }: { data: any }) => {
-  const defaultScheduleMode =
-    data.scheduleValue && data.timeZone ? 'runSchedule' : 'runNow';
-  const [scheduleMode, setScheduleMode] =
-    useState<scheduleMode>(defaultScheduleMode);
+  const [scheduleMode, setScheduleMode] = useState<scheduleMode>('runNow');
+  const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
+  const [timeZoneSelected, setTimeZoneSelected] = useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
   const timezones = Object.keys(tzdata.zones).sort();
 
   const handleSchedulerModeChange = (
@@ -41,18 +42,18 @@ const TriggerJobForm = ({ data }: { data: any }) => {
   ) => {
     const newValue = (event.target as HTMLInputElement).value;
     setScheduleMode(newValue as scheduleMode);
-    if (newValue === 'runNow') {
-      data.scheduleValue = '';
-      data.timeZone = '';
-    } else if (newValue === 'runSchedule' && data.scheduleValue === '') {
-      data.scheduleValue = scheduleValueExpression;
-      data.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (newValue === 'runSchedule' && scheduleValue === '') {
+      setScheduleValue(scheduleValueExpression);
     }
+    data.scheduleValue = scheduleValue;
+    data.timeZone = timeZoneSelected;
   };
 
   const handleTimeZoneSelected = (value: string | null) => {
     if (value) {
-      data.timeZone = value;
+      const selectedTimeZone = value.toString();
+      setTimeZoneSelected(selectedTimeZone);
+      data.timeZone = selectedTimeZone;
     }
   };
 
@@ -63,9 +64,13 @@ const TriggerJobForm = ({ data }: { data: any }) => {
     }
   }, [scheduleMode]);
 
-  const handleCronChange = (value: string) => {
-    data.scheduleValue = value;
-  };
+  useEffect(() => {
+    if (data.timeZone) {
+      setScheduleMode('runSchedule');
+      setScheduleValue(data.scheduleValue);
+      setTimeZoneSelected(data.timeZone);
+    }
+  }, [data]);
 
   return (
     <>
@@ -101,13 +106,13 @@ const TriggerJobForm = ({ data }: { data: any }) => {
           {scheduleMode === 'runSchedule' && (
             <>
               <div className="create-scheduler-form-element-trigger">
-                <Cron value={data.scheduleValue} setValue={handleCronChange} />
+                <Cron value={scheduleValue} setValue={setScheduleValue} />
               </div>
               <div className="create-scheduler-form-element-trigger">
                 <Autocomplete
                   className="create-scheduler-style-trigger"
                   options={timezones}
-                  value={data.timeZone}
+                  value={timeZoneSelected}
                   onChange={(_event, val) => handleTimeZoneSelected(val)}
                   renderInput={params => (
                     <TextField {...params} label="Time Zone" />
