@@ -184,7 +184,6 @@ function ClusterServerlessForm({ data, mode }: any) {
               setValueValidation={setValueValidation}
               duplicateKeyError={duplicateKeyError}
               setDuplicateKeyError={setDuplicateKeyError}
-              // data={data}
               fromPage="react-flow"
             />
             <div className="scheduler-dropdown-form-element">

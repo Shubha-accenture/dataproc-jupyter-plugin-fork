@@ -66,7 +66,6 @@ const JobForm = ({
   const [jobNameUniqueValidation, setJobNameUniqueValidation] = useState(true);
   const [dagList, setDagList] = useState<IDagList[]>([]);
   const [editMode] = useState(false);
-  //const [dagListCall, setDagListCall] = useState(false);
 
   const listComposersAPI = async () => {
     await SchedulerService.listComposersAPIService(setComposerList);
@@ -88,17 +87,13 @@ const JobForm = ({
     }
   };
   const getDaglist = async (composer: string) => {
-    //console.log(dagListCall);
-    //setDagListCall(true);
     try {
       await SchedulerService.listDagInfoAPIServiceForCreateNotebook(
         setDagList,
         composer
       );
-      // setDagListCall(false);
       return true;
     } catch (error) {
-      //setDagListCall(false);
       console.error('Error checking job name uniqueness:', error);
       return false;
     }
