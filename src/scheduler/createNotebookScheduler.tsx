@@ -61,7 +61,7 @@ const CreateNotebookScheduler = ({
     email_success: false,
     email_ids: []
   };
-  
+
   const [jobPayload, setJobPayload] = useState(initialPayload);
 
   const validateJobPayload = () => {
@@ -78,7 +78,7 @@ const CreateNotebookScheduler = ({
   const validateTaskPayload = () => {
     let allNodesHaveData = true;
     nodes.forEach((e: any) => {
-      if (nodes.length <= 1) {
+      if (nodes.length === 1) {
         allNodesHaveData = false;
       }
       if (e.data.nodeType === '') {
@@ -104,11 +104,11 @@ const CreateNotebookScheduler = ({
         }
       }
       setNodeDataValidation(allNodesHaveData);
-      return allNodesHaveData;
     });
   };
   useEffect(() => {
-    setJobPayloadValidation(!validateJobPayload());
+    const tempValidateJobPayload = validateJobPayload();
+    setJobPayloadValidation(!tempValidateJobPayload);
   }, [jobPayload]);
 
   useEffect(() => {
@@ -137,81 +137,14 @@ const CreateNotebookScheduler = ({
       editMode
     );
     setEditMode(false);
-    setJobPayload(initialPayload)//after save
+    setJobPayload(initialPayload); //after save
   };
-  //   return (
-  //    // !inputFilesValidation ||
-  //     dagListCall ||
-  //     //creatingScheduler ||
-  //     jobNameSelected === '' ||
-  //     (!jobNameValidation && !editMode) ||
-  //     (jobNameSpecialValidation && !editMode) ||
-  //     (!jobNameUniqueValidation && !editMode) ||
-  //    // inputFileSelected === '' ||
-  //     composerSelected === '' ||
-  //     //(selectedMode === 'cluster' && clusterSelected === '') ||
-  //     //(selectedMode === 'serverless' && serverlessSelected === '') ||
-  //     ((emailOnFailure || emailOnRetry || emailOnSuccess) &&
-  //       emailList.length === 0)
-  //   );
-  // };
 
   const handleCancel = async () => {
     setCreateCompleted(true);
     setJobPayload(initialPayload);
   };
 
-  //     if (
-  //       kernels[context.sessionContext.kernelPreference.name].resources
-  //         .endpointParentResource
-  //     ) {
-  //       if (
-  //         kernels[
-  //           context.sessionContext.kernelPreference.name
-  //         ].resources.endpointParentResource.includes('/sessions')
-  //       ) {
-  //         const selectedData: any = serverlessDataList.filter(
-  //           (serverless: any) => {
-  //             return context.sessionContext.kernelDisplayName.includes(
-  //               serverless.serverlessName
-  //             );
-  //           }
-  //         );
-  //         if (selectedData.length > 0) {
-  //           setServerlessDataSelected(selectedData[0].serverlessData);
-  //           setServerlessSelected(selectedData[0].serverlessName);
-  //         } else {
-  //           setServerlessDataSelected({});
-  //           setServerlessSelected('');
-  //         }
-  //       } else {
-  //         const selectedData: any = clusterList.filter((cluster: string) => {
-  //           return context.sessionContext.kernelDisplayName.includes(cluster);
-  //         });
-  //         if (selectedData.length > 0) {
-  //           setClusterSelected(selectedData[0]);
-  //         } else {
-  //           setClusterSelected('');
-  //         }
-  //       }
-  //     }
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (composerSelected !== '' && dagList.length > 0) {
-  //     const isUnique = !dagList.some(
-  //       dag => dag.notebookname === jobNameSelected
-  //     );
-  //     setJobNameUniqueValidation(isUnique);
-  //   }
-  // }, [dagList, jobNameSelected, composerSelected]);
-
-  // useEffect(() => {
-  //   if (context !== '') {
-  //     getKernelDetail();
-  //   }
-  // }, [serverlessDataList, clusterList]);
   return (
     <>
       {createCompleted ? (

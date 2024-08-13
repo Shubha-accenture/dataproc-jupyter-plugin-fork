@@ -1,3 +1,19 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   MouseEvent as ReactMouseEvent,
@@ -17,8 +33,6 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import NotebookNode from './notebookNode';
-import '../../style/reactFlow.css';
-import '../../style/notebookNode.css';
 import { eventEmitter } from '../utils/signalEmitter';
 import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
@@ -50,9 +64,6 @@ const GraphicalScheduler = ({
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
 
-  let id = 2;
-  const getId = () => `${id++}`;
-
   const initialNode = [
     {
       id: '1',
@@ -73,12 +84,15 @@ const GraphicalScheduler = ({
     }
   ];
 
+  let nodeId = initialNode.length + 1;
+  const getNodeId = () => `${nodeId++}`;
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
   const { screenToFlowPosition } = useReactFlow();
+
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections
     connectingNodeId.current = null;
@@ -103,11 +117,10 @@ const GraphicalScheduler = ({
           event.target.classList.contains('react-flow__pane');
         if (targetIsPane) {
           // we need to remove the wrapper bounds, in order to get the correct position
-          const nodeId = getId();
+          const nodeId = getNodeId();
           const e = event as MouseEvent;
           const newNode = {
             id: nodeId,
-            label: `Notebook ${id}`,
             type: 'composerNode',
             position: screenToFlowPosition({
               x: e.clientX,
@@ -116,8 +129,8 @@ const GraphicalScheduler = ({
             data: {
               nodeType: '',
               inputFile: inputFileSelected,
-              retryCount: 0,
-              retryDelay: 0,
+              retryCount: 2,
+              retryDelay: 5,
               parameter: [],
               stopCluster: '',
               clusterName: '',
@@ -140,18 +153,11 @@ const GraphicalScheduler = ({
     [screenToFlowPosition]
   );
 
-  eventEmitter.on(
-    'uploadProgress',
-    (event: any, data: any, setInputFileSelected: any) => {
-      handleFileUpload(event, data, setInputFileSelected);
-    }
-  );
+  eventEmitter.on('uploadProgress', (event: any, data: any) => {
+    handleFileUpload(event, data);
+  });
 
-  const handleFileUpload = async (
-    event: any,
-    data: any,
-    setInputFileSelected: any
-  ) => {
+  const handleFileUpload = async (event: any, data: any) => {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files || []);
     if (files && files.length > 0) {
@@ -179,7 +185,6 @@ const GraphicalScheduler = ({
           const newFilePath = filePath.startsWith('/')
             ? filePath.substring(1)
             : filePath;
-          setInputFileSelected(newFilePath);
           data.inputFile = newFilePath;
 
           // Save the file to the workspace
@@ -202,12 +207,6 @@ const GraphicalScheduler = ({
     if (isNodeClicked) {
       setIsTaskFormVisible(true);
     }
-    eventEmitter.emit(`closeJobForm`, setIsTaskFormVisible);
-  });
-
-  eventEmitter.on('closeForm', (isFormVisible: boolean) => {
-    setIsTaskFormVisible(isFormVisible);
-    eventEmitter.emit(`closeTaskForm`, setIsTaskFormVisible);
   });
 
   useEffect(() => {
@@ -268,20 +267,11 @@ const GraphicalScheduler = ({
 
   const transformedNodes = transformNodeData(nodes);
 
-  const handleGridClick = () => {
-    //console.log('grid click ');
-    //setIsTaskFormVisible(false)
-  };
-
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
         <Grid item xs={8}>
-          <div
-            className="wrapper"
-            ref={reactFlowWrapper}
-            onClick={handleGridClick}
-          >
+          <div className="wrapper" ref={reactFlowWrapper}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -306,6 +296,7 @@ const GraphicalScheduler = ({
               id={clickedNodeId}
               data={clickedNodeData}
               nodes={nodes}
+              setTaskFormVisible={setIsTaskFormVisible}
             />
           </Grid>
         )}

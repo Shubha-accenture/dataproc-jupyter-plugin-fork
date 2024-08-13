@@ -1,3 +1,19 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import React, { useEffect, useState } from 'react';
 import { Input } from '../controls/MuiWrappedInput';
 import LabelProperties from '../jobs/labelProperties';
@@ -13,9 +29,8 @@ import {
 } from '@mui/material';
 import { SchedulerService } from './schedulerServices';
 
-function ClusterServerlessForm({ id, data, mode }: any) {
+function ClusterServerlessForm({ data, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
-  const [inputFileSelected, setInputFileSelected] = useState('');
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
   const [parameterDetail, setParameterDetail] = useState(['']);
@@ -24,35 +39,50 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   const [valueValidation, setValueValidation] = useState(-1);
   const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
   const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
-  const [isBigQueryNotebook, setIsBigQueryNotebook] = useState(false);
-  const [selectedMode, setSelectedMode] = useState(mode);
   const [clusterList, setClusterList] = useState<string[]>([]);
+  const [clusterSelected, setClusterSelected] = useState('');
   const [serverlessList, setServerlessList] = useState<string[]>([]);
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
-  const [clusterSelected, setClusterSelected] = useState('');
   const [serverlessSelected, setServerlessSelected] = useState('');
-  const [serverlessDataSelected, setServerlessDataSelected] = useState({});
   const [stopCluster, setStopCluster] = useState(false);
+
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
       setInputFileSelectedLocal(evt.target.value);
-      eventEmitter.emit(`uploadProgress`, evt, data, setInputFileSelected);
-      console.log(inputFileSelected);
+      eventEmitter.emit(`uploadProgress`, evt, data);
     }
   };
 
-  const handleRetryCountChange = (e: number) => {
-    if (e) {
-      data.retryCount = e;
-      setRetryCount(e);
+  const handleRetryCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      // Handle empty input
+      setRetryCount(undefined);
+      data.retryCount = 0;
+    } else {
+      const numberValue = Number(value);
+      if (!isNaN(numberValue)) {
+        // Handle valid number
+        setRetryCount(numberValue);
+        data.retryCount = numberValue;
+      }
     }
   };
 
-  const handleRetryDelayChange = (e: number) => {
-    if (e) {
-      data.retryDelay = e;
-      setRetryDelay(e);
+  const handleRetryDelayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      // Handle empty input
+      setRetryDelay(undefined);
+      data.retryDelay = 0;
+    } else {
+      const numberValue = Number(value);
+      if (!isNaN(numberValue)) {
+        // Handle valid number
+        setRetryDelay(numberValue);
+        data.retryDelay = numberValue;
+      }
     }
   };
 
@@ -84,8 +114,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       const selectedData: any = serverlessDataList.filter((serverless: any) => {
         return serverless.serverlessName === selectedServerless;
       });
-      setServerlessDataSelected(selectedData[0].serverlessData);
-      console.log(serverlessDataSelected);
       data.serverless = selectedData[0].serverlessData;
       setServerlessSelected(selectedServerless);
     }
@@ -108,7 +136,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
       setClusterSelected(data.clusterName);
-      setServerlessDataSelected(data.serverless);
       if (data.serverless && data.serverless.jupyterSession.displayName) {
         setServerlessSelected(data.serverless.jupyterSession.displayName);
       }
@@ -117,25 +144,15 @@ function ClusterServerlessForm({ id, data, mode }: any) {
   }, [data]);
 
   useEffect(() => {
-    if (selectedMode === 'cluster') {
+    if (mode === 'cluster') {
       listClustersAPI();
     } else {
       listSessionTemplatesAPI();
     }
-  }, [selectedMode]);
-
-  useEffect(() => {
-    if (data.inputFile && data.inputFile !== '') {
-      if (data.inputFile.toLowerCase().startsWith('bigframes')) {
-        setIsBigQueryNotebook(true);
-        setSelectedMode('serverless');
-      }
-    }
-  }, []);
+  }, [mode]);
 
   return (
     <>
-      {/* { isFormVisible && */}
       <div>
         <form>
           <div className="custom-node__body">
@@ -145,10 +162,8 @@ function ClusterServerlessForm({ id, data, mode }: any) {
             <div className="input-file-container">
               <input
                 className="create-scheduler-style"
-                // className="nodrag"
                 type="file"
                 value={''}
-                // {inputFileSelectedLocal}
                 onChange={e => onInputFileNameChange(e)}
               />
               {
@@ -169,7 +184,6 @@ function ClusterServerlessForm({ id, data, mode }: any) {
               setValueValidation={setValueValidation}
               duplicateKeyError={duplicateKeyError}
               setDuplicateKeyError={setDuplicateKeyError}
-              // data={data}
               fromPage="react-flow"
             />
             <div className="scheduler-dropdown-form-element">
@@ -180,20 +194,18 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                   data-testid="loader"
                 />
               )}
-              {!isBigQueryNotebook &&
-                selectedMode === 'cluster' &&
-                !isLoadingKernelDetail && (
-                  <Autocomplete
-                    className="create-scheduler-style-trigger"
-                    options={clusterList}
-                    value={clusterSelected}
-                    onChange={(_event, val) => handleClusterSelected(val)}
-                    renderInput={params => (
-                      <TextField {...params} label="Cluster*" />
-                    )}
-                  />
-                )}
-              {selectedMode === 'serverless' && !isLoadingKernelDetail && (
+              {mode === 'cluster' && !isLoadingKernelDetail && (
+                <Autocomplete
+                  className="create-scheduler-style-trigger"
+                  options={clusterList}
+                  value={clusterSelected}
+                  onChange={(_event, val) => handleClusterSelected(val)}
+                  renderInput={params => (
+                    <TextField {...params} label="Cluster*" />
+                  )}
+                />
+              )}
+              {mode === 'serverless' && !isLoadingKernelDetail && (
                 <Autocomplete
                   className="create-scheduler-style-trigger"
                   options={serverlessList}
@@ -205,7 +217,7 @@ function ClusterServerlessForm({ id, data, mode }: any) {
                 />
               )}
             </div>
-            {!isBigQueryNotebook && selectedMode === 'cluster' && (
+            {mode === 'cluster' && (
               <div className="create-scheduler-form-element">
                 <FormGroup row={true}>
                   <FormControlLabel
@@ -232,15 +244,15 @@ function ClusterServerlessForm({ id, data, mode }: any) {
             <div className="scheduler-retry-parent">
               <Input
                 className="retry-count"
-                value={retryCount}
+                value={retryCount !== undefined ? retryCount : ''}
                 Label="Retry Count"
-                onChange={e => handleRetryCountChange(Number(e.target.value))}
+                onChange={handleRetryCountChange}
               />
               <Input
                 className="retry-delay"
-                value={retryDelay}
+                value={retryDelay !== undefined ? retryDelay : ''}
                 Label="Retry Delay"
-                onChange={e => handleRetryDelayChange(Number(e.target.value))}
+                onChange={handleRetryDelayChange}
               />
             </div>
           </div>
