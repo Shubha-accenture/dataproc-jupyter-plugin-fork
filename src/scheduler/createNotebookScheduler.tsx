@@ -184,7 +184,7 @@ const CreateNotebookScheduler = ({
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"
-                disabled={!nodeDataValidation || !jobPayloadValidation} //|| creatingScheduler}
+                disabled={!nodeDataValidation || !jobPayloadValidation}
                 aria-label="Save scheduler"
                 onClick={handleCreateJobScheduler}
               >
@@ -198,7 +198,6 @@ const CreateNotebookScheduler = ({
                 onClick={!creatingScheduler ? handleCancel : undefined}
               >
                 <div>CANCEL</div>
-                {/* <div>{creatingScheduler ? 'SAVING...' : 'SAVE'}</div> */}
               </Button>
             </div>
           </div>

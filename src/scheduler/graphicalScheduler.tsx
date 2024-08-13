@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import * as path from 'path';
 import { JupyterLab } from '@jupyterlab/application';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import Grid from '@mui/material/Grid';
-import ConfigureForm from './configureForms'; //taskConfigureform
+import ConfigureForm from './configureForms';
 import JobForm from './jobForm';
 
 interface IGraphicalSchedulerProps {
@@ -84,7 +84,7 @@ const GraphicalScheduler = ({
     }
   ];
 
-  let nodeId = 2;
+  let nodeId = initialNode.length + 1;
   const getNodeId = () => `${nodeId++}`;
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -121,7 +121,6 @@ const GraphicalScheduler = ({
           const e = event as MouseEvent;
           const newNode = {
             id: nodeId,
-            // label: `Notebook ${id}`,
             type: 'composerNode',
             position: screenToFlowPosition({
               x: e.clientX,
@@ -268,20 +267,11 @@ const GraphicalScheduler = ({
 
   const transformedNodes = transformNodeData(nodes);
 
-  const handleGridClick = () => {
-    //console.log('grid click ');
-    //setIsTaskFormVisible(false)
-  };
-
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
         <Grid item xs={8}>
-          <div
-            className="wrapper"
-            ref={reactFlowWrapper}
-            onClick={handleGridClick}
-          >
+          <div className="wrapper" ref={reactFlowWrapper}>
             <ReactFlow
               nodes={nodes}
               edges={edges}

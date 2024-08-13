@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,11 @@ const iconSaveToBigQuery = new LabIcon({
 });
 
 function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
-  const [clickedNodeId, setClickedNodeId] = useState('');
   const [isNodeClicked, setIsNodeClicked] = useState(false);
 
   const [isSelected, setIsSelected] = useState(selected);
 
   useEffect(() => {
-    // Update the local state if the selected prop changes
     setIsSelected(selected);
   }, [selected]);
 
@@ -51,10 +49,8 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const [status, setStatus] = useState('');
 
   const handleNodeClick = () => {
-    setClickedNodeId(id);
     setIsNodeClicked(true);
     setIsSelected(true); //select node logic
-    console.log(clickedNodeId);
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
   };
 
