@@ -1,4 +1,19 @@
-//licsence
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import React, { useEffect, useState } from 'react';
 import { Handle, NodeProps, Position } from 'reactflow';
 
@@ -38,8 +53,8 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const handleNodeClick = () => {
     setClickedNodeId(id);
     setIsNodeClicked(true);
-    setIsSelected(true)//select logic
-    console.log('clicked node in notebook', clickedNodeId);
+    setIsSelected(true)//select node logic
+    console.log(clickedNodeId);
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
   };
 
@@ -79,7 +94,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
       <div onClick={handleNodeClick}>
         <div className={isSelected ? 'selected-node' : 'notebook-node'}>
           <div
-            className={`box ${ //meaningful name
+            className={`color-coding-node ${
               status === 'complete'
                 ? 'green'
                 : status === 'incomplete'
@@ -89,7 +104,6 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
           />
           <Handle
             type="target"
-            id="a"//check n remove
             position={Position.Top}
             isConnectable={false}
           />
@@ -125,7 +139,6 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
           <Handle
             type="source"
             position={Position.Bottom}
-            id="b"
             isConnectable={isConnectable}
           />
         </div>

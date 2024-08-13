@@ -73,7 +73,7 @@
   justify-content: center;
 }
 
-.box {
+.color-coding-node {
   height: 96px;
   width: 16px;
   flex-shrink: 0;
