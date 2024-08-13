@@ -110,7 +110,7 @@ function ConfigureForm({ id, data, nodes, setTaskFormVisible }: any) {
             disabled={id === '1'}
           />
           {nodeTypeSelected === 'Trigger' && clickedNodeData !== null && (
-            <TriggerJobForm id={id} data={clickedNodeData} />
+            <TriggerJobForm data={clickedNodeData} />
           )}
           {nodeTypeSelected === 'Serverless' && clickedNodeData !== null && (
             <ClusterServerlessForm

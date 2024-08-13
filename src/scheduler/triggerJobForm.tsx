@@ -1,4 +1,19 @@
-//liscence
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import {
   Autocomplete,
   FormControl,
@@ -14,13 +29,11 @@ import tzdata from 'tzdata';
 import { scheduleValueExpression } from '../utils/const';
 import { scheduleMode } from '../utils/const';
 
-function TriggerJobForm({ id, data, nodes }: any) {//id and nodes remove
-  //check hooks and remove redundant hooks
-  const [scheduleMode, setScheduleMode] = useState<scheduleMode>('runNow');
-  const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
-  const [timeZoneSelected, setTimeZoneSelected] = useState(
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  );
+const TriggerJobForm = ({ data }: { data: any }) => {
+  const defaultScheduleMode =
+    data.scheduleValue && data.timeZone ? 'runSchedule' : 'runNow';
+  const [scheduleMode, setScheduleMode] =
+    useState<scheduleMode>(defaultScheduleMode);
   const timezones = Object.keys(tzdata.zones).sort();
 
   const handleSchedulerModeChange = (
@@ -28,18 +41,18 @@ function TriggerJobForm({ id, data, nodes }: any) {//id and nodes remove
   ) => {
     const newValue = (event.target as HTMLInputElement).value;
     setScheduleMode(newValue as scheduleMode);
-    if (newValue === 'runSchedule' && scheduleValue === '') {
-      setScheduleValue(scheduleValueExpression);
+    if (newValue === 'runNow') {
+      data.scheduleValue = '';
+      data.timeZone = '';
+    } else if (newValue === 'runSchedule' && data.scheduleValue === '') {
+      data.scheduleValue = scheduleValueExpression;
+      data.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
-    data.scheduleValue = scheduleValue;
-    data.timeZone = timeZoneSelected;
   };
 
   const handleTimeZoneSelected = (value: string | null) => {
     if (value) {
-      const selectedTimeZone = value.toString();
-      setTimeZoneSelected(selectedTimeZone);
-      data.timeZone = selectedTimeZone;
+      data.timeZone = value;
     }
   };
 
@@ -50,13 +63,9 @@ function TriggerJobForm({ id, data, nodes }: any) {//id and nodes remove
     }
   }, [scheduleMode]);
 
-  useEffect(() => {
-    if (data.timeZone) {
-      setScheduleMode('runSchedule');
-      setScheduleValue(data.scheduleValue);
-      setTimeZoneSelected(data.timeZone);
-    }
-  }, [data]);//remove n check
+  const handleCronChange = (value: string) => {
+    data.scheduleValue = value;
+  };
 
   return (
     <>
@@ -92,13 +101,13 @@ function TriggerJobForm({ id, data, nodes }: any) {//id and nodes remove
           {scheduleMode === 'runSchedule' && (
             <>
               <div className="create-scheduler-form-element-trigger">
-                <Cron value={scheduleValue} setValue={setScheduleValue} />
+                <Cron value={data.scheduleValue} setValue={handleCronChange} />
               </div>
               <div className="create-scheduler-form-element-trigger">
                 <Autocomplete
                   className="create-scheduler-style-trigger"
                   options={timezones}
-                  value={timeZoneSelected}
+                  value={data.timeZone}
                   onChange={(_event, val) => handleTimeZoneSelected(val)}
                   renderInput={params => (
                     <TextField {...params} label="Time Zone" />
@@ -111,6 +120,6 @@ function TriggerJobForm({ id, data, nodes }: any) {//id and nodes remove
       </div>
     </>
   );
-}
+};
 
 export default TriggerJobForm;
