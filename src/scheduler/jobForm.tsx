@@ -170,144 +170,135 @@ const JobForm = ({
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
-          <Grid item xs={3}>
-            <div>
-              <div className="submit-job-container">
-                <div className="create-scheduler-form-element">
-                  <Input
-                    className="create-scheduler-style"
-                    value={initialJobPayload.job_name}
-                    onChange={e => handleJobNameChange(e)}
-                    type="text"
-                    placeholder=""
-                    Label="Job name*"
-                    disabled={editMode}
-                  />
+        <Grid item xs={3}>
+          <div>
+            <div className="submit-job-container">
+              <div className="create-scheduler-form-element">
+                <Input
+                  className="create-scheduler-style"
+                  value={initialJobPayload.job_name}
+                  onChange={e => handleJobNameChange(e)}
+                  type="text"
+                  placeholder=""
+                  Label="Job name*"
+                  disabled={editMode}
+                />
+              </div>
+              {!jobNameValidation && !editMode && (
+                <div className="error-key-parent">
+                  <iconError.react tag="div" className="logo-alignment-style" />
+                  <div className="error-key-missing">Name is required</div>
                 </div>
-                {!jobNameValidation && !editMode && (
-                  <div className="error-key-parent">
-                    <iconError.react
-                      tag="div"
-                      className="logo-alignment-style"
-                    />
-                    <div className="error-key-missing">Name is required</div>
+              )}
+              {jobNameSpecialValidation && jobNameValidation && !editMode && (
+                <div className="error-key-parent">
+                  <iconError.react tag="div" className="logo-alignment-style" />
+                  <div className="error-key-missing">
+                    Name must contain only letters, numbers, hyphens, and
+                    underscores
                   </div>
-                )}
-                {jobNameSpecialValidation && jobNameValidation && !editMode && (
-                  <div className="error-key-parent">
-                    <iconError.react
-                      tag="div"
-                      className="logo-alignment-style"
-                    />
-                    <div className="error-key-missing">
-                      Name must contain only letters, numbers, hyphens, and
-                      underscores
-                    </div>
-                  </div>
-                )}
-                {!jobNameUniqueValidation && !editMode && (
-                  <div className="error-key-parent">
-                    <iconError.react
-                      tag="div"
-                      className="logo-alignment-style"
-                    />
-                    <div className="error-key-missing">
-                      Job name must be unique for the selected environment
-                    </div>
-                  </div>
-                )}
-                <div className="create-scheduler-form-element">
-                  <Autocomplete
-                    className="create-scheduler-style"
-                    options={composerList}
-                    value={initialJobPayload.composer_environment_name}
-                    onChange={(_event, val) => handleComposerSelected(val)}
-                    renderInput={params => (
-                      <TextField {...params} label="Environment*" />
-                    )}
-                    disabled={editMode}
-                  />
                 </div>
-                <div className="create-scheduler-form-element">
-                  <FormGroup row={true}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={initialJobPayload.email_failure}
-                          onChange={handleFailureChange}
-                        />
-                      }
-                      className="create-scheduler-label-style"
-                      label={
-                        <Typography sx={{ fontSize: 13 }}>
-                          Email on failure
-                        </Typography>
-                      }
-                    />
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={initialJobPayload.email_delay}
-                          onChange={handleRetryChange}
-                        />
-                      }
-                      className="create-scheduler-label-style"
-                      label={
-                        <Typography sx={{ fontSize: 13 }}>
-                          Email on retry
-                        </Typography>
-                      }
-                    />
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          size="small"
-                          checked={initialJobPayload.email_success}
-                          onChange={handleSuccessChange}
-                        />
-                      }
-                      className="create-scheduler-label-style"
-                      label={
-                        <Typography sx={{ fontSize: 13 }}>
-                          Email on success
-                        </Typography>
-                      }
-                    />
-                  </FormGroup>
+              )}
+              {!jobNameUniqueValidation && !editMode && (
+                <div className="error-key-parent">
+                  <iconError.react tag="div" className="logo-alignment-style" />
+                  <div className="error-key-missing">
+                    Job name must be unique for the selected environment
+                  </div>
                 </div>
-                <div className="create-scheduler-form-element">
-                  {(initialJobPayload.email_failure ||
-                    initialJobPayload.email_delay ||
-                    initialJobPayload.email_success) && (
-                    <MuiChipsInput
-                      className="select-job-style"
-                      onChange={e => handleEmailList(e)}
-                      addOnBlur={true}
-                      value={initialJobPayload.email_ids}
-                      inputProps={{ placeholder: '' }}
-                      label="Email recipients"
-                    />
+              )}
+              <div className="create-scheduler-form-element">
+                <Autocomplete
+                  className="create-scheduler-style"
+                  options={composerList}
+                  value={initialJobPayload.composer_environment_name}
+                  onChange={(_event, val) => handleComposerSelected(val)}
+                  renderInput={params => (
+                    <TextField {...params} label="Environment*" />
                   )}
-                </div>
+                  disabled={editMode}
+                />
+              </div>
+              <div className="create-scheduler-form-element">
+                <FormGroup row={true}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={initialJobPayload.email_failure}
+                        onChange={handleFailureChange}
+                      />
+                    }
+                    className="create-scheduler-label-style"
+                    label={
+                      <Typography sx={{ fontSize: 13 }}>
+                        Email on failure
+                      </Typography>
+                    }
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={initialJobPayload.email_delay}
+                        onChange={handleRetryChange}
+                      />
+                    }
+                    className="create-scheduler-label-style"
+                    label={
+                      <Typography sx={{ fontSize: 13 }}>
+                        Email on retry
+                      </Typography>
+                    }
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={initialJobPayload.email_success}
+                        onChange={handleSuccessChange}
+                      />
+                    }
+                    className="create-scheduler-label-style"
+                    label={
+                      <Typography sx={{ fontSize: 13 }}>
+                        Email on success
+                      </Typography>
+                    }
+                  />
+                </FormGroup>
+              </div>
+              <div className="create-scheduler-form-element">
                 {(initialJobPayload.email_failure ||
                   initialJobPayload.email_delay ||
-                  initialJobPayload.email_success) &&
-                  !initialJobPayload.email_ids.length && (
-                    <div className="error-key-parent">
-                      <iconError.react
-                        tag="div"
-                        className="logo-alignment-style"
-                      />
-                      <div className="error-key-missing">
-                        Email recipients is required field
-                      </div>
-                    </div>
-                  )}
+                  initialJobPayload.email_success) && (
+                  <MuiChipsInput
+                    className="select-job-style"
+                    onChange={e => handleEmailList(e)}
+                    addOnBlur={true}
+                    value={initialJobPayload.email_ids}
+                    inputProps={{ placeholder: '' }}
+                    label="Email recipients"
+                  />
+                )}
               </div>
+              {(initialJobPayload.email_failure ||
+                initialJobPayload.email_delay ||
+                initialJobPayload.email_success) &&
+                !initialJobPayload.email_ids.length && (
+                  <div className="error-key-parent">
+                    <iconError.react
+                      tag="div"
+                      className="logo-alignment-style"
+                    />
+                    <div className="error-key-missing">
+                      Email recipients is required field
+                    </div>
+                  </div>
+                )}
             </div>
-          </Grid>
+          </div>
+        </Grid>
       </Grid>
     </>
   );

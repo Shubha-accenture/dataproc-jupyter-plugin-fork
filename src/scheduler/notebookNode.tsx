@@ -53,14 +53,14 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const handleNodeClick = () => {
     setClickedNodeId(id);
     setIsNodeClicked(true);
-    setIsSelected(true)//select node logic
+    setIsSelected(true); //select node logic
     console.log(clickedNodeId);
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
   };
 
   eventEmitter.on('unselectNode', (isCancel: boolean) => {
-    setIsSelected(isCancel)
-  });//need to recheck this
+    setIsSelected(isCancel);
+  });
 
   useEffect(() => {
     if (id === '1') {
@@ -102,11 +102,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
                 : 'black'
             }`}
           />
-          <Handle
-            type="target"
-            position={Position.Top}
-            isConnectable={false}
-          />
+          <Handle type="target" position={Position.Top} isConnectable={false} />
           <div className="node-content">
             <div className="node-parent">
               <div className="node-column logo-column">

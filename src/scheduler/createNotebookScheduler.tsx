@@ -42,11 +42,11 @@ const CreateNotebookScheduler = ({
   context: any;
   factory: IFileBrowserFactory;
 }): JSX.Element => {
-  const [composerSelected] = useState('');//check n remove* //needed for notebookjob component
+  const [composerSelected] = useState('');
   const [createCompleted, setCreateCompleted] =
     context !== '' ? useState(false) : useState(true);
-  const [creatingScheduler, setCreatingScheduler] = useState(false);//check //keeping for disabling button
-  const [editMode, setEditMode] = useState(false);//remove** //keeping for edit flow
+  const [creatingScheduler, setCreatingScheduler] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [nodeDataValidation, setNodeDataValidation] = useState(false);
   const [jobPayloadValidation, setJobPayloadValidation] = useState(false);
 
@@ -104,12 +104,11 @@ const CreateNotebookScheduler = ({
         }
       }
       setNodeDataValidation(allNodesHaveData);
-      //return allNodesHaveData;//remove return statement
     });
   };
   useEffect(() => {
-    const tempValidateJobPayload =validateJobPayload()
-    setJobPayloadValidation(!tempValidateJobPayload);//need to refactor store variable and get it in set
+    const tempValidateJobPayload = validateJobPayload();
+    setJobPayloadValidation(!tempValidateJobPayload);
   }, [jobPayload]);
 
   useEffect(() => {
@@ -138,7 +137,7 @@ const CreateNotebookScheduler = ({
       editMode
     );
     setEditMode(false);
-    setJobPayload(initialPayload)//after save
+    setJobPayload(initialPayload); //after save
   };
 
   const handleCancel = async () => {
@@ -152,7 +151,7 @@ const CreateNotebookScheduler = ({
         <NotebookJobComponent
           app={app}
           themeManager={themeManager}
-          composerSelectedFromCreate={composerSelected}//check n remove
+          composerSelectedFromCreate={composerSelected}
           setCreateCompleted={setCreateCompleted}
           setEditMode={setEditMode}
         />
@@ -171,7 +170,7 @@ const CreateNotebookScheduler = ({
                 />
               </div>
 
-              {editMode ? (//check
+              {editMode ? (
                 <div className="create-job-scheduler-title">
                   Update A Scheduled Job
                 </div>
@@ -185,7 +184,7 @@ const CreateNotebookScheduler = ({
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"
-                disabled={(!nodeDataValidation || !jobPayloadValidation) } //|| creatingScheduler}
+                disabled={!nodeDataValidation || !jobPayloadValidation} //|| creatingScheduler}
                 aria-label="Save scheduler"
                 onClick={handleCreateJobScheduler}
               >

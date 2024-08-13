@@ -75,7 +75,7 @@ const GraphicalScheduler = ({
         retryCount: 0,
         retryDelay: 0,
         parameter: [],
-        stopCluster: '', //boolean
+        stopCluster: '',
         clusterName: '',
         serverless: '',
         scheduleValue: '',
@@ -90,7 +90,7 @@ const GraphicalScheduler = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
-  const [clickedNodeData, setClickedNodeData] = useState<any>(null); //check if its same as configure form
+  const [clickedNodeData, setClickedNodeData] = useState<any>(null);
   const { screenToFlowPosition } = useReactFlow();
 
   const onConnect = useCallback((params: Connection) => {
@@ -114,7 +114,7 @@ const GraphicalScheduler = ({
       if (!connectingNodeId.current) return;
       if (event.target instanceof HTMLElement) {
         const targetIsPane =
-          event.target.classList.contains('react-flow__pane'); //check if we can rename//tried we cannot
+          event.target.classList.contains('react-flow__pane');
         if (targetIsPane) {
           // we need to remove the wrapper bounds, in order to get the correct position
           const nodeId = getNodeId();
@@ -130,10 +130,10 @@ const GraphicalScheduler = ({
             data: {
               nodeType: '',
               inputFile: inputFileSelected,
-              retryCount: 2, //2
-              retryDelay: 5, //5
+              retryCount: 2,
+              retryDelay: 5,
               parameter: [],
-              stopCluster: '', //boolean
+              stopCluster: '',
               clusterName: '',
               serverless: '',
               scheduleValue: '',
