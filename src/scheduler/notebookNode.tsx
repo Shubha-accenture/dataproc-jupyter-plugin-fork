@@ -110,7 +110,8 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
                       className="logo-alignment-react-flow"
                     />
                   )}
-                  {data.nodeType === 'sql' && (
+                  {(data.nodeType === 'Bigquery-Serverless' ||
+                    data.nodeType === 'Bigquery-Sql') && (
                     <iconSaveToBigQuery.react
                       tag="div"
                       className="logo-alignment-react-flow"

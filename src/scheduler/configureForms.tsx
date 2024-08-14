@@ -21,6 +21,8 @@ import ClusterServerlessForm from './clusterServerlessForm';
 import TriggerJobForm from './triggerJobForm';
 import { LabIcon } from '@jupyterlab/ui-components';
 import searchClearIcon from '../../style/icons/search_clear_icon.svg';
+import BigQueryNotebookForm from './bigQueryNotebookForm';
+import BigQuerySqlForm from './bigQuerySqlForm';
 
 const iconSearchClear = new LabIcon({
   name: 'launcher:search-clear-icon',
@@ -31,6 +33,8 @@ function ConfigureForm({ id, data, nodes, setTaskFormVisible }: any) {
   const nodeTypes = [
     { key: 'Serverless', label: 'Run a notebook on dataproc serverless' },
     { key: 'Cluster', label: 'Run a notebook on dataproc cluster' },
+    { key: 'Bigquery-Serverless', label: 'Execute a Notebook on BigQuery' },
+    { key: 'Bigquery-Sql', label: 'Execute a SQL on BigQuery' },
     // { key: 'sql', label: 'Execute a SQL on BigQuery' },
     // {
     //   key: 'gcs_operations',
@@ -118,6 +122,19 @@ function ConfigureForm({ id, data, nodes, setTaskFormVisible }: any) {
           {nodeTypeSelected === 'Cluster' && clickedNodeData !== null && (
             <ClusterServerlessForm data={clickedNodeData} mode={'cluster'} />
           )}
+          {nodeTypeSelected === 'Bigquery-Serverless' &&
+            clickedNodeData !== null && (
+              <BigQueryNotebookForm
+                data={clickedNodeData}
+                mode={'serverless'}
+              />
+            )}
+           {nodeTypeSelected === 'Bigquery-Sql' &&
+            clickedNodeData !== null && (
+              <BigQuerySqlForm
+                data={clickedNodeData}
+              />
+            )}
         </div>
       </form>
     </>

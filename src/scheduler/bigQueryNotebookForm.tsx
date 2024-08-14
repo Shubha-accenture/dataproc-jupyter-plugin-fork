@@ -1,19 +1,3 @@
-/**
- * @license
- * Copyright 2024 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 import React, { useEffect, useState } from 'react';
 import { Input } from '../controls/MuiWrappedInput';
 import LabelProperties from '../jobs/labelProperties';
@@ -29,7 +13,7 @@ import {
 } from '@mui/material';
 import { SchedulerService } from './schedulerServices';
 
-function ClusterServerlessForm({ data, mode }: any) {
+function BigQueryNotebookForm({ id, data, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
@@ -39,21 +23,21 @@ function ClusterServerlessForm({ data, mode }: any) {
   const [valueValidation, setValueValidation] = useState(-1);
   const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
   const [isLoadingKernelDetail, setIsLoadingKernelDetail] = useState(false);
-  const [clusterList, setClusterList] = useState<string[]>([]);
-  const [clusterSelected, setClusterSelected] = useState('');
   const [serverlessList, setServerlessList] = useState<string[]>([]);
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [serverlessSelected, setServerlessSelected] = useState('');
-  const [stopCluster, setStopCluster] = useState(false);
-
+  const [executeTypeSelected, setExecuteTypeSelected] = useState('');
+  const executeTypes = [
+    { value: 'Execute as Admin' },
+    { value: 'Execute as User' }
+  ];
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
       setInputFileSelectedLocal(evt.target.value);
-      eventEmitter.emit(`uploadProgress-cluster`, evt, data);
+      eventEmitter.emit(`uploadProgress-bq`, evt, data);
     }
   };
-
   const handleRetryCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === '') {
@@ -69,7 +53,6 @@ function ClusterServerlessForm({ data, mode }: any) {
       }
     }
   };
-
   const handleRetryDelayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === '') {
@@ -86,26 +69,12 @@ function ClusterServerlessForm({ data, mode }: any) {
     }
   };
 
-  const listClustersAPI = async () => {
-    await SchedulerService.listClustersAPIService(
-      setClusterList,
-      setIsLoadingKernelDetail
-    );
-  };
-
   const listSessionTemplatesAPI = async () => {
     await SchedulerService.listSessionTemplatesAPIService(
       setServerlessDataList,
       setServerlessList,
       setIsLoadingKernelDetail
     );
-  };
-  const handleClusterSelected = (value: any) => {
-    if (value) {
-      const selectedCluster = value.toString();
-      data.clusterName = selectedCluster;
-      setClusterSelected(selectedCluster);
-    }
   };
 
   const handleServerlessSelected = (value: any) => {
@@ -119,9 +88,8 @@ function ClusterServerlessForm({ data, mode }: any) {
     }
   };
 
-  const handleStopCluster = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setStopCluster(event.target.checked);
-    data.stopCluster = event.target.checked;
+  const handleExecuteType = (value: any) => {
+    setExecuteTypeSelected(value);
   };
 
   useEffect(() => {
@@ -135,20 +103,14 @@ function ClusterServerlessForm({ data, mode }: any) {
       setInputFileSelectedLocal(data.inputFile);
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
-      setClusterSelected(data.clusterName);
       if (data.serverless && data.serverless.jupyterSession.displayName) {
         setServerlessSelected(data.serverless.jupyterSession.displayName);
       }
-      setStopCluster(data.stopCluster);
     }
   }, [data]);
 
   useEffect(() => {
-    if (mode === 'cluster') {
-      listClustersAPI();
-    } else {
-      listSessionTemplatesAPI();
-    }
+    listSessionTemplatesAPI();
   }, [mode]);
 
   return (
@@ -157,13 +119,14 @@ function ClusterServerlessForm({ data, mode }: any) {
         <form>
           <div className="custom-node__body">
             <label htmlFor="file-input" className="create-scheduler-style">
-              Input file*
+              Notebook*
             </label>
             <div className="input-file-container">
               <input
                 className="create-scheduler-style"
                 type="file"
                 value={''}
+                // {inputFileSelectedLocal}
                 onChange={e => onInputFileNameChange(e)}
               />
               {
@@ -186,23 +149,31 @@ function ClusterServerlessForm({ data, mode }: any) {
               setDuplicateKeyError={setDuplicateKeyError}
               fromPage="react-flow"
             />
+            <div className="create-scheduler-form-element">
+              <div> Output Format </div>
+              <FormGroup row={true}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      //checked={stopCluster}
+                      //onChange={e => handleStopCluster(e)}
+                    />
+                  }
+                  className="create-scheduler-label-style"
+                  label={
+                    <Typography sx={{ fontSize: 13 }}>Notebook</Typography>
+                  }
+                />
+              </FormGroup>
+            </div>
+
             <div className="scheduler-dropdown-form-element">
               {isLoadingKernelDetail && (
                 <CircularProgress
                   size={18}
                   aria-label="Loading Spinner"
                   data-testid="loader"
-                />
-              )}
-              {mode === 'cluster' && !isLoadingKernelDetail && (
-                <Autocomplete
-                  className="create-scheduler-style-trigger"
-                  options={clusterList}
-                  value={clusterSelected}
-                  onChange={(_event, val) => handleClusterSelected(val)}
-                  renderInput={params => (
-                    <TextField {...params} label="Cluster*" />
-                  )}
                 />
               )}
               {mode === 'serverless' && !isLoadingKernelDetail && (
@@ -216,31 +187,22 @@ function ClusterServerlessForm({ data, mode }: any) {
                   )}
                 />
               )}
+              <Autocomplete
+                className="create-scheduler-style-trigger"
+                options={executeTypes}
+                getOptionLabel={option => option.value}
+                value={
+                  executeTypes.find(
+                    option => option.value === executeTypeSelected
+                  ) || null
+                }
+                onChange={handleExecuteType}
+                renderInput={params => (
+                  <TextField {...params} label="Execute as" />
+                )}
+                disabled={true}
+              />
             </div>
-            {mode === 'cluster' && (
-              <div className="create-scheduler-form-element">
-                <FormGroup row={true}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        size="small"
-                        checked={stopCluster}
-                        onChange={e => handleStopCluster(e)}
-                      />
-                    }
-                    className="create-scheduler-label-style"
-                    label={
-                      <Typography
-                        sx={{ fontSize: 13 }}
-                        title="Stopping cluster abruptly will impact if any other job is running on the cluster at the moment"
-                      >
-                        Stop the cluster after notebook execution
-                      </Typography>
-                    }
-                  />
-                </FormGroup>
-              </div>
-            )}
             <div className="scheduler-retry-parent">
               <Input
                 className="retry-count"
@@ -262,4 +224,4 @@ function ClusterServerlessForm({ data, mode }: any) {
   );
 }
 
-export default ClusterServerlessForm;
+export default BigQueryNotebookForm;

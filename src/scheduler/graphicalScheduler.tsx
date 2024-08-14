@@ -79,7 +79,9 @@ const GraphicalScheduler = ({
         clusterName: '',
         serverless: '',
         scheduleValue: '',
-        timeZone: ''
+        timeZone: '',
+        datasetId: '',
+        tableID: ''
       }
     }
   ];
@@ -136,7 +138,9 @@ const GraphicalScheduler = ({
               clusterName: '',
               serverless: '',
               scheduleValue: '',
-              timeZone: ''
+              timeZone: '',
+              datasetId: '',
+              tableID: ''
             },
             origin: [0.5, 0.0]
           };
@@ -153,7 +157,13 @@ const GraphicalScheduler = ({
     [screenToFlowPosition]
   );
 
-  eventEmitter.on('uploadProgress', (event: any, data: any) => {
+  eventEmitter.on('uploadProgress-cluster', (event: any, data: any) => {
+    handleFileUpload(event, data);
+  });
+  eventEmitter.on('uploadProgress-bq', (event: any, data: any) => {
+    handleFileUpload(event, data);
+  });
+  eventEmitter.on('uploadProgress-bqsql', (event: any, data: any) => {
     handleFileUpload(event, data);
   });
 
@@ -248,7 +258,10 @@ const GraphicalScheduler = ({
             clusterName: node.data.clusterName
           }
         };
-      } else if (node.data.nodeType === 'Serverless') {
+      } else if (
+        node.data.nodeType === 'Serverless' ||
+        node.data.nodeType === 'Bigquery-Serverless'
+      ) {
         return {
           ...node,
           data: {
@@ -258,6 +271,19 @@ const GraphicalScheduler = ({
             retryDelay: node.data.retryDelay,
             parameter: node.data.parameter,
             serverless: node.data.serverless
+          }
+        };
+      } else if (node.data.nodeType === 'Bigquery-Sql') {
+        return {
+          ...node,
+          data: {
+            nodeType: node.data.nodeType,
+            inputFile: node.data.inputFile,
+            retryCount: node.data.retryCount,
+            retryDelay: node.data.retryDelay,
+            parameter: node.data.parameter,
+            tableID: node.data.tableID,
+            datasetId: node.data.datasetId
           }
         };
       }
