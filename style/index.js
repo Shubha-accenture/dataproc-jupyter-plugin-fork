@@ -34,3 +34,6 @@ import './gcsBucket.css';
 import './notebookScheduler.css';
 import './notebookTemplates.css';
 import './overview.css';
+import './reactFlow.css';
+import './notebookNode.css';
+

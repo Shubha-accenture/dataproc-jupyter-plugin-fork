@@ -1,3 +1,19 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import React, { useEffect, useState } from 'react';
 import { Handle, NodeProps, Position } from 'reactflow';
 
@@ -17,13 +33,11 @@ const iconSaveToBigQuery = new LabIcon({
 });
 
 function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
-  const [clickedNodeId, setClickedNodeId] = useState('');
   const [isNodeClicked, setIsNodeClicked] = useState(false);
 
   const [isSelected, setIsSelected] = useState(selected);
 
   useEffect(() => {
-    // Update the local state if the selected prop changes
     setIsSelected(selected);
   }, [selected]);
 
@@ -33,17 +47,16 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const [nodeSubLabel, setNodeSubLabel] = useState('');
 
   const [status, setStatus] = useState('');
+
   const handleNodeClick = () => {
-    setClickedNodeId(id);
     setIsNodeClicked(true);
-    setIsSelected(true)//select logic
-    console.log('clicked node in notebook', clickedNodeId);
+    setIsSelected(true); //select node logic
     eventEmitter.emit(`nodeClick`, id, isNodeClicked);
   };
 
   eventEmitter.on('unselectNode', (isCancel: boolean) => {
-    setIsSelected(isCancel)
-  });//need to recheck this
+    setIsSelected(isCancel);
+  });
 
   useEffect(() => {
     if (id === '1') {
@@ -77,7 +90,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
       <div onClick={handleNodeClick}>
         <div className={isSelected ? 'selected-node' : 'notebook-node'}>
           <div
-            className={`box ${
+            className={`color-coding-node ${
               status === 'complete'
                 ? 'green'
                 : status === 'incomplete'
@@ -85,12 +98,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
                 : 'black'
             }`}
           />
-          <Handle
-            type="target"
-            id="a"
-            position={Position.Top}
-            isConnectable={false}
-          />
+          <Handle type="target" position={Position.Top} isConnectable={false} />
           <div className="node-content">
             <div className="node-parent">
               <div className="node-column logo-column">
@@ -102,7 +110,8 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
                       className="logo-alignment-react-flow"
                     />
                   )}
-                  {data.nodeType === 'sql' && (
+                  {(data.nodeType === 'Bigquery-Serverless' ||
+                    data.nodeType === 'Bigquery-Sql') && (
                     <iconSaveToBigQuery.react
                       tag="div"
                       className="logo-alignment-react-flow"
@@ -123,7 +132,6 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
           <Handle
             type="source"
             position={Position.Bottom}
-            id="b"
             isConnectable={isConnectable}
           />
         </div>

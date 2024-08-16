@@ -1,3 +1,19 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import React, { useEffect, useState } from 'react';
 import { eventEmitter } from '../utils/signalEmitter';
 import { Autocomplete, IconButton, TextField } from '@mui/material';
@@ -5,16 +21,20 @@ import ClusterServerlessForm from './clusterServerlessForm';
 import TriggerJobForm from './triggerJobForm';
 import { LabIcon } from '@jupyterlab/ui-components';
 import searchClearIcon from '../../style/icons/search_clear_icon.svg';
+import BigQueryNotebookForm from './bigQueryNotebookForm';
+import BigQuerySqlForm from './bigQuerySqlForm';
 
 const iconSearchClear = new LabIcon({
   name: 'launcher:search-clear-icon',
   svgstr: searchClearIcon
 });
 
-function ConfigureForm({ id, data, nodes }: any) {
+function ConfigureForm({ id, data, nodes, setTaskFormVisible }: any) {
   const nodeTypes = [
     { key: 'Serverless', label: 'Run a notebook on dataproc serverless' },
     { key: 'Cluster', label: 'Run a notebook on dataproc cluster' },
+    { key: 'Bigquery-Serverless', label: 'Execute a Notebook on BigQuery' },
+    { key: 'Bigquery-Sql', label: 'Execute a SQL on BigQuery' },
     // { key: 'sql', label: 'Execute a SQL on BigQuery' },
     // {
     //   key: 'gcs_operations',
@@ -29,7 +49,7 @@ function ConfigureForm({ id, data, nodes }: any) {
     id === '1' ? nodeTypes : nodeTypes.filter(node => node.key !== 'Trigger');
 
   const defaultNodeType =
-    data && data.nodeType ? data.nodeType : id === '1' ? 'Trigger' : '';//check same as use effect
+    data && data.nodeType ? data.nodeType : id === '1' ? 'Trigger' : '';
 
   const [nodeTypeSelected, setNodeTypeSelected] = useState(defaultNodeType);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
@@ -53,10 +73,10 @@ function ConfigureForm({ id, data, nodes }: any) {
       data.nodeType = value;
     }
   };
+
   const handleCancel = () => {
-    eventEmitter.emit(`closeForm`, false);
-    console.log("event emitter called")
-    eventEmitter.emit(`unselectNode` ,false)
+    setTaskFormVisible(false);
+    eventEmitter.emit(`unselectNode`, false);
   };
 
   useEffect(() => {
@@ -67,55 +87,56 @@ function ConfigureForm({ id, data, nodes }: any) {
 
   return (
     <>
-      <>
-        <form>
-          <div className="configure-node-container">
-            <div className="task-form-header">
-              <div className="create-job-scheduler-title">Configure Node</div>
-              <IconButton aria-label="cancel" onClick={handleCancel}>
-                <iconSearchClear.react
-                  tag="div"
-                  className="icon-white logo-alignment-style search-clear-icon"
-                />
-              </IconButton>
-            </div>
-            <Autocomplete
-              className="nodetype-seletion-style"
-              options={filteredNodeTypes}
-              getOptionLabel={option => option.label}
-              value={
-                filteredNodeTypes.find(
-                  option => option.key === nodeTypeSelected
-                ) || null
-              }
-              onChange={(_event, value) =>
-                handleNodeTypeChange(value?.key || null)
-              }
-              renderInput={params => (
-                <TextField {...params} label="Node Type*" />
-              )}
-              disabled={id === '1'}
-            />
-            {nodeTypeSelected === 'Trigger' && clickedNodeData !== null && (
-              <TriggerJobForm id={id} data={clickedNodeData} nodes={nodes} />
-            )}
-            {nodeTypeSelected === 'Serverless' && clickedNodeData !== null && (
-              <ClusterServerlessForm
-                id={id}
+      <form>
+        <div className="configure-node-container">
+          <div className="task-form-header">
+            <div className="create-job-scheduler-title">Configure Node</div>
+            <IconButton aria-label="cancel" onClick={handleCancel}>
+              <iconSearchClear.react
+                tag="div"
+                className="icon-white logo-alignment-style search-clear-icon"
+              />
+            </IconButton>
+          </div>
+          <Autocomplete
+            className="nodetype-seletion-style"
+            options={filteredNodeTypes}
+            getOptionLabel={option => option.label}
+            value={
+              filteredNodeTypes.find(
+                option => option.key === nodeTypeSelected
+              ) || null
+            }
+            onChange={(_event, value) =>
+              handleNodeTypeChange(value?.key || null)
+            }
+            renderInput={params => <TextField {...params} label="Node Type*" />}
+            disabled={id === '1'}
+          />
+          {nodeTypeSelected === 'Trigger' && clickedNodeData !== null && (
+            <TriggerJobForm data={clickedNodeData} />
+          )}
+          {nodeTypeSelected === 'Serverless' && clickedNodeData !== null && (
+            <ClusterServerlessForm data={clickedNodeData} mode={'serverless'} />
+          )}
+          {nodeTypeSelected === 'Cluster' && clickedNodeData !== null && (
+            <ClusterServerlessForm data={clickedNodeData} mode={'cluster'} />
+          )}
+          {nodeTypeSelected === 'Bigquery-Serverless' &&
+            clickedNodeData !== null && (
+              <BigQueryNotebookForm
                 data={clickedNodeData}
                 mode={'serverless'}
               />
             )}
-            {nodeTypeSelected === 'Cluster' && clickedNodeData !== null && (
-              <ClusterServerlessForm
-                id={id}
+           {nodeTypeSelected === 'Bigquery-Sql' &&
+            clickedNodeData !== null && (
+              <BigQuerySqlForm
                 data={clickedNodeData}
-                mode={'cluster'}
               />
             )}
-          </div>
-        </form>
-      </>
+        </div>
+      </form>
     </>
   );
 }
