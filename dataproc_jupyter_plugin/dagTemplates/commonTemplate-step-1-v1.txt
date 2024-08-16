@@ -15,13 +15,16 @@
 
 from datetime import datetime, timedelta, timezone
 import uuid
+import os
 from airflow import DAG
 from airflow.providers.google.cloud.operators.dataproc import DataprocCreateBatchOperator
 from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator
 from airflow.operators.python_operator import PythonOperator
 from google.cloud import dataproc_v1
 from google.api_core.client_options import ClientOptions
-import os
+from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+from airflow.providers.google.cloud.hooks.gcs import GCSHook
+from airflow.utils.dates import days_ago
 
 
 default_args = {
@@ -146,3 +149,35 @@ stop_cluster = PythonOperator(
 )
 
 {% endif %} 
+
+# Function to read the SQL query from GCS
+def read_sql_query_from_gcs(gcs_path, **kwargs):
+    if gcs_path.startswith('gs://'):
+        gcs_path = gcs_path[5:]
+    bucket_name, object_name = gcs_path.split('/', 1)
+    
+    gcs_hook = GCSHook()
+    sql_query_bytes = gcs_hook.download(bucket_name, object_name)
+    sql_query = sql_query_bytes.decode('utf-8')
+    return sql_query
+
+# Function to prepare the BigQuery configuration
+def prepare_bigquery_config(id, datasetId,tableId, **kwargs):
+    ti = kwargs['ti']
+    sql_query = ti.xcom_pull(task_ids=f'read_sql_query_{id}')
+    config = {
+        "query": {
+            "query": sql_query,
+            "useLegacySql": False,
+            "destinationTable": {
+               "projectId": "{{projectId}}",
+                "datasetId": "{{datasetId}}",
+                "tableId": "{{tableId}}",
+            },
+           "writeDisposition": "WRITE_APPEND",
+        }
+    }
+    ti.xcom_push(key='bigquery_config', value=config)
+    return config
+   
+    

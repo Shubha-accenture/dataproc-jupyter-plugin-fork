@@ -45,6 +45,7 @@ job_name = ""
 TEMPLATES_FOLDER_PATH = "dagTemplates"
 TEMPLATES_FOLDER_PATH_SERVERLESS = "dagTemplates/serverless"
 TEMPLATES_FOLDER_PATH_CLUSTER = "dagTemplates/cluster"
+TEMPLATES_FOLDER_PATH_DATAPROC = "dagTemplates/bigquery"
 
 
 
@@ -144,10 +145,13 @@ class Client:
                   continue
             else:
                 node_data = next((n for n in job.nodes if n.get('id',{}) == nodes), None)
-                if node_data and node_data.get('data', {}).get('nodeType') == 'Serverless':
+                node_types = node_data and node_data.get('data', {}).get('nodeType')
+                if node_types == 'Serverless' or  node_types == 'Bigquery-Serverless':
                     node_exec_list.append(f"write_output_task_{nodes} >> create_batch_{nodes}")
-                elif node_data and node_data.get('data', {}).get('nodeType') == 'Cluster':
+                elif node_types == 'Cluster':
                     node_exec_list.append(f"start_cluster_{nodes} >> write_output_task_{nodes} >> submit_pyspark_job_{nodes}")
+                elif node_types == 'Bigquery-Sql':
+                    node_exec_list.append(f"read_sql_query_task_{nodes} >>prepare_config_task_{nodes} >> run_query_task_{nodes}")
         if node_exec_list:
             order_of_execution.append(f"[{', '.join(node_exec_list)}]")
         for node, deps in dependencies.items():
@@ -155,23 +159,30 @@ class Client:
             node_type = next((n for n in job.nodes if n.get('id',{}) == node), {}).get('data', {}).get('nodeType')
             for dep in deps:
                 node_data = next((n for n in job.nodes if n.get('id',{}) == dep), None)
-                if node_data and node_data.get('data', {}).get('nodeType') == 'Serverless':
+                if node_data and node_data.get('data', {}).get('nodeType') == 'Serverless' or node_data and node_data.get('data', {}).get('nodeType') == 'Bigquery-Serverless':
                     dep_str_list.append(f"write_output_task_{dep} >> create_batch_{dep}")
                 elif node_data and node_data.get('data', {}).get('nodeType') == 'Cluster':
                     dep_str_list.append(f"start_cluster_{dep} >> write_output_task_{dep} >> submit_pyspark_job_{dep}")
+                elif node_data and node_data.get('data', {}).get('nodeType') == 'Bigquery-Sql':
+                    dep_str_list.append(f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep}")
+
             if len(dep_str_list) > 1:
                 dep_str = ', '.join(dep_str_list)
-                if node_type == 'Serverless':
+                if node_type == 'Serverless' or node_type == 'Bigquery-Serverless':
                     order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> [{dep_str}]")
                 elif node_type == 'Cluster':
                     order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> [{dep_str}]")
+                elif node_type == 'Bigquery-Sql':
+                    order_of_execution.append(f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep} >> [{dep_str}]")
             else:
                 if dep_str_list:
                     dep_str = dep_str_list[0]
-                    if node_type == 'Serverless':
+                    if node_type == 'Serverless' or node_type == 'Bigquery-Serverless':
                         order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> {dep_str}")
                     elif node_type == 'Cluster':
                         order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> {dep_str}")
+                    elif node_type == 'Bigquery-Sql':
+                        order_of_execution.append(f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep} >> [{dep_str}]")
                 
    
         final_order = '\n'.join(order_of_execution)
@@ -199,6 +210,9 @@ class Client:
         )
         environment_cluster = Environment(
             loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_CLUSTER)
+        )
+        environment_bq = Environment(
+            loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_DATAPROC)
         )
         #getting the common values needed for dag generation
         gcp_project_id = self.project_id
@@ -288,6 +302,7 @@ class Client:
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
                         if not input_file.startswith("gs://") else input_file
                     )
+                    print(input_notebook)
                     content = serverless_template.render(
                         job,
                         id = id,
@@ -350,6 +365,35 @@ class Client:
                             cluster_contents = ''.join(lines)
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(cluster_contents)
+                elif node_type == 'Bigquery-Sql':
+                    input_notebook = (
+                        f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
+                        if not input_file.startswith("gs://") else input_file
+                    )
+                    bq_template = environment_bq.get_template(DAG_TEMPLATE_BIGQUERY_V3)
+                    content = bq_template.render(
+                    job,
+                    id = id,
+                    inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
+                    inputNotebook=input_notebook,
+                    gcpProjectId=gcp_project_id,
+                    bqRegion=node.get('data',{}).get('region',{}),
+                    parameters=parameters,
+                    retries = node.get('data', {}).get('retryCount', {}),
+                    datasetId  =node.get('data',{}).get('datasetId',{}),
+                    tableId =node.get('data',{}).get('tableId',{})
+                    )
+                    bq_file = f"dag_{input_file}.py"
+                    with open(bq_file, mode="w", encoding="utf-8") as message:
+                        message.write(content)
+                    with open(bq_file, 'r', encoding='utf-8') as file:
+                        lines = file.readlines()
+                        if len(lines) > 16:
+                            bq_contents = ''.join(lines[15:])
+                        else:
+                            bq_contents = ''.join(lines)
+                    with open(file_path, mode="a", encoding="utf-8") as message:
+                        message.write(bq_contents)
 
         final_order = await self.get_execution_order(job,edges, cluster_stop_dict)
         #creating a folder 'scheduled-jobs' and place the papermill file and dag file
