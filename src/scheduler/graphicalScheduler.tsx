@@ -81,7 +81,9 @@ const GraphicalScheduler = ({
         scheduleValue: '',
         timeZone: '',
         datasetId: '',
-        tableID: ''
+        tableID: '',
+        location: '',
+        writeDisposition: ''
       }
     }
   ];
@@ -140,7 +142,9 @@ const GraphicalScheduler = ({
               scheduleValue: '',
               timeZone: '',
               datasetId: '',
-              tableID: ''
+              tableID: '',
+              location: '',
+              writeDisposition: ''
             },
             origin: [0.5, 0.0]
           };
@@ -283,7 +287,9 @@ const GraphicalScheduler = ({
             retryDelay: node.data.retryDelay,
             parameter: node.data.parameter,
             tableID: node.data.tableID,
-            datasetId: node.data.datasetId
+            datasetId: node.data.datasetId,
+            location: node.data.location,
+            writeDisposition: node.data.writeDisposition
           }
         };
       }
