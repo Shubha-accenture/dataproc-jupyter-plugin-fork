@@ -201,6 +201,7 @@ def setup_handlers(web_app):
         "editJobScheduler": airflow.EditDagController,
         "importErrorsList": airflow.ImportErrorController,
         "triggerDag": airflow.TriggerDagController,
+        "regionList": airflow.Regioncontroller,
         "downloadOutput": executor.DownloadOutputController,
         "bigQueryDataset": bigquery.DatasetController,
         "bigQueryTable": bigquery.TableController,

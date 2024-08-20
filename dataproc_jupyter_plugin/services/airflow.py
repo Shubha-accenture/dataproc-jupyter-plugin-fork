@@ -15,6 +15,8 @@
 import re
 import subprocess
 import urllib
+import google.oauth2.credentials as oauth2
+from google.cloud import compute_v1
 
 from dataproc_jupyter_plugin import urls
 from dataproc_jupyter_plugin.commons.commands import async_run_gsutil_subcommand
@@ -353,4 +355,17 @@ class Client:
                     )
         except Exception as e:
             self.log.exception(f"Error triggering dag: {str(e)}")
+            return {"error": str(e)}
+        
+    async def list_regions(self, project_id):
+        try:
+            credentials = oauth2.Credentials(self._access_token)
+            client = compute_v1.RegionsClient(credentials = credentials)
+
+            regions = client.list(project=project_id)
+            region_names = [region.name for region in regions]
+            print(region_names)
+            return region_names
+        except Exception as e:
+            self.log.exception(f"Error listing regions: {str(e)}")
             return {"error": str(e)}

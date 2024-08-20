@@ -54,7 +54,7 @@ export interface IAuthCredentials {
 
 export const authApi = async (): Promise<IAuthCredentials | undefined> => {
   try {
-    const data = await requestAPI('credentials');
+    const data = await requestAPI('regionList');
     if (typeof data === 'object' && data !== null) {
       const credentials: IAuthCredentials = {
         access_token: (data as { access_token: string }).access_token,

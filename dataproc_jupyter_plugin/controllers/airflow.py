@@ -209,3 +209,11 @@ class TriggerDagController(AirflowHandler):
 
     async def _handle_post(self, client):
         return await client.dag_trigger(self.dag_id, self.composer_environment)
+    
+class Regioncontroller(AirflowHandler):
+    def description(self):
+        return "Region"
+    
+    async def _handle_get(self, client):
+        project_id = self.get_argument("project_id")
+        return await client.list_regions(project_id)
