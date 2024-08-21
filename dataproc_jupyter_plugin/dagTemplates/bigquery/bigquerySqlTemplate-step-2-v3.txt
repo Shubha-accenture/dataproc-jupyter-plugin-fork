@@ -40,7 +40,9 @@ def run_bigquery_insert_job_{{id}}(**kwargs):
     insert_job = BigQueryInsertJobOperator(
         task_id='run_query_{{id}}',
         configuration=config,
+        {% if bqRegion %}
         location='{{bqRegion}}',  # Specify your BigQuery location
+        {% endif %}
         impersonation_chain=service_account,
         dag=kwargs['dag'],
     )
