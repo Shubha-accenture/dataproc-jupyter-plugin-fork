@@ -41,8 +41,10 @@ function BigQuerySqlForm({ id, data }: any) {
   //   { value: 'Execute as User' }
   // ];
   const multiRegionList = ['EU', 'US'];
-  const [serviceAccounts, setServiceAccounts] = useState<{ displayName: string, email: string }[]>([]);
-  const [serviceAccountSelected, setServiceAccountSelected]= useState('');
+  const [serviceAccounts, setServiceAccounts] = useState<
+    { displayName: string; email: string }[]
+  >([]);
+  const [serviceAccountSelected, setServiceAccountSelected] = useState('');
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -101,10 +103,11 @@ function BigQuerySqlForm({ id, data }: any) {
     data.datasetId = event.target.value;
   };
   const handleServiceAccountChange = (
-    event: any, value: { displayName: string; email: string } | null,
+    event: any,
+    value: { displayName: string; email: string } | null
   ) => {
-    setServiceAccountSelected(value?.displayName|| '');
-    data.serviceAccount=value?.email
+    setServiceAccountSelected(value?.displayName || '');
+    data.serviceAccount = value?.email;
   };
 
   const fetchServiceAccounts = async () => {
@@ -170,8 +173,47 @@ function BigQuerySqlForm({ id, data }: any) {
   }, [regionTypeSelected]);
 
   useEffect(() => {
-      fetchServiceAccounts();
+    fetchServiceAccounts();
   }, [serviceAccountSelected]);
+
+  useEffect(() => {
+    if (data) {
+      setInputFileSelectedLocal(data.inputFile);
+      setRetryCount(data.retryCount);
+      setRetryDelay(data.retryDelay);
+      setTableID(data.tableId);
+      setDatasetId(data.datasetId);
+      setServiceAccountSelected(data.serviceAccount);
+      setWriteDisposition(data.writeDisposition);
+      if (data.serviceAccount) {
+        setServiceAccountSelected(data.serviceAccount);
+      }
+      if (data.datasetId || data.tableId) {
+        setIsSaveQueryChecked(true);
+      }
+      const selectedServiceAccount = serviceAccounts.find(
+        option => option.email === data.serviceAccount
+      );
+      if (selectedServiceAccount) {
+        setServiceAccountSelected(selectedServiceAccount.displayName);
+      }
+      if (data.location) {
+        console.log(data.location)
+        if (regionList.includes(data.location)) {
+          console.log(regionList)
+          setRegionTypeSelected("region");
+          setRegionSelected(data.region);
+        } else if (multiRegionList.includes(data.location)) {
+          console.log(multiRegionList)
+          setRegionTypeSelected("multiRegion");
+          setMultiRegionSelected(data.location);
+        }
+      } 
+      else
+      setRegionRadioBtnSelected(true)
+      
+    }
+  }, [data, serviceAccounts]);
 
   return (
     <>
@@ -233,7 +275,7 @@ function BigQuerySqlForm({ id, data }: any) {
                   onChange={e => handleDatasetIdChange(e)}
                   type="text"
                   placeholder=""
-                  Label="DataSet ID*"
+                  Label="DataSet Id*"
                 />
                 <Input
                   className="create-scheduler-style-trigger"
@@ -241,7 +283,7 @@ function BigQuerySqlForm({ id, data }: any) {
                   onChange={e => handleTableIDChange(e)}
                   type="text"
                   placeholder=""
-                  Label="Table ID"
+                  Label="Table Id*"
                 />
                 <Input
                   className="create-scheduler-style-trigger"

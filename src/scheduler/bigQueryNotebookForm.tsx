@@ -119,8 +119,14 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
       if (data.serverless && data.serverless.jupyterSession.displayName) {
         setServerlessSelected(data.serverless.jupyterSession.displayName);
       }
+      const selectedServiceAccount = serviceAccounts.find(
+        option => option.email === data.serviceAccount
+      );
+      if (selectedServiceAccount) {
+        setServiceAccountSelected(selectedServiceAccount.displayName);
+      }
     }
-  }, [data]);
+  }, [data, serviceAccounts]);
 
   useEffect(() => {
     listSessionTemplatesAPI();
