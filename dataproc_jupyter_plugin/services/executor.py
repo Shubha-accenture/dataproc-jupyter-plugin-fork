@@ -385,6 +385,7 @@ class Client:
                     retries = node.get('data', {}).get('retryCount', {}),
                     datasetId  =node.get('data',{}).get('datasetId',{}),
                     tableId =node.get('data',{}).get('tableId',{}),
+                    serviceAccount = service_account,
                     writeDisposition =node.get('data',{}).get('writeDisposition',{})
                     )
                     bq_file = f"dag_{input_file}.py"

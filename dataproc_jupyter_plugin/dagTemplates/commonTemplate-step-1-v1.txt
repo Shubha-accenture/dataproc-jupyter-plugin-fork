@@ -154,7 +154,7 @@ stop_cluster = PythonOperator(
 service_account = '{{serviceAccount}}'
 {% endif %}
 # Function to read the SQL query from GCS
-def read_sql_query_from_gcs(gcs_path,service_account **kwargs):
+def read_sql_query_from_gcs(gcs_path,service_account, **kwargs):
     if gcs_path.startswith('gs://'):
         gcs_path = gcs_path[5:]
     bucket_name, object_name = gcs_path.split('/', 1)
@@ -169,7 +169,7 @@ def read_sql_query_from_gcs(gcs_path,service_account **kwargs):
 
 
 # Function to prepare the BigQuery configuration
-def prepare_bigquery_config(id, datasetId,tableId,writeDisposition, **kwargs):
+def prepare_bigquery_config(id,projectId,datasetId,tableId,writeDisposition, **kwargs):
     ti = kwargs['ti']
     sql_query = ti.xcom_pull(task_ids=f'read_sql_query_{id}')
     config = {
