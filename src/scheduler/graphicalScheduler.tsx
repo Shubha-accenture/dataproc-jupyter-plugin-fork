@@ -81,9 +81,10 @@ const GraphicalScheduler = ({
         scheduleValue: '',
         timeZone: '',
         datasetId: '',
-        tableID: '',
+        tableId: '',
         location: '',
-        writeDisposition: ''
+        writeDisposition: '',
+        serviceAccount:''
       }
     }
   ];
@@ -142,9 +143,10 @@ const GraphicalScheduler = ({
               scheduleValue: '',
               timeZone: '',
               datasetId: '',
-              tableID: '',
+              tableId: '',
               location: '',
-              writeDisposition: ''
+              writeDisposition: '',
+              serviceAccount:''
             },
             origin: [0.5, 0.0]
           };
@@ -286,10 +288,11 @@ const GraphicalScheduler = ({
             retryCount: node.data.retryCount,
             retryDelay: node.data.retryDelay,
             parameter: node.data.parameter,
-            tableID: node.data.tableID,
+            tableId: node.data.tableId,
             datasetId: node.data.datasetId,
             location: node.data.location,
-            writeDisposition: node.data.writeDisposition
+            writeDisposition: node.data.writeDisposition,
+            serviceAccount:node.data.serviceAccount
           }
         };
       }

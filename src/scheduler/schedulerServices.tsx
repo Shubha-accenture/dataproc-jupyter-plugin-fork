@@ -897,24 +897,22 @@ export class SchedulerService {
     }
   };
 
-  static getServiceAccounts = async (name: string) => {
+  static getServiceAccounts = async (
+    project_id: string,
+    setServiceAccounts: (value: { displayName: string, email: string }[]) => void
+  ) => {
     try {
-      const response = await fetch(
-        `https://iam.googleapis.com/v1/${name}/serviceAccounts`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+      const formattedResponse: any = await requestAPI(
+        `serviceAccountList?project_id=${project_id}`
       );
-
-      const formattedResponse = await response.json();
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
       } else {
-        // Process the response as needed
-        // console.log('Service Accounts:', formattedResponse);
+        const serviceAccounts = formattedResponse.map((account: any) => ({
+          displayName: account.displayName,
+          email: account.email,
+        }));
+        setServiceAccounts(serviceAccounts);
       }
     } catch (error) {
       DataprocLoggingService.log(
@@ -922,7 +920,7 @@ export class SchedulerService {
         LOG_LEVEL.ERROR
       );
       toast.error(
-        `Failed to fetch the service accounts for ${name}: ${error}`,
+        `Failed to fetch the service accounts for ${project_id}: ${error}`,
         toastifyCustomStyle
       );
     }

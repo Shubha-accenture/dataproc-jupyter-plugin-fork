@@ -6,11 +6,11 @@ import {
   Autocomplete,
   Checkbox,
   CircularProgress,
-  FormControl,
+  // FormControl,
   FormControlLabel,
   FormGroup,
-  Radio,
-  RadioGroup,
+  // Radio,
+  // RadioGroup,
   TextField,
   Typography
 } from '@mui/material';
@@ -29,8 +29,8 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
   const [serverlessList, setServerlessList] = useState<string[]>([]);
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [serverlessSelected, setServerlessSelected] = useState('');
-  const [executeTypeSelected, setExecuteTypeSelected] = useState('');
-  const [serviceAccounts] = useState([]);
+  const [serviceAccounts, setServiceAccounts] = useState<{ displayName: string, email: string }[]>([]);
+  const [serviceAccountSelected, setServiceAccountSelected]= useState('');
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -88,20 +88,19 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
     }
   };
 
-  const handleExecuteTypeChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+  const handleServiceAccountChange = (
+    event: any, value: { displayName: string; email: string } | null,
   ) => {
-    setExecuteTypeSelected(event.target.value);
-    fetchServiceAccounts();
+    setServiceAccountSelected(value?.displayName|| '');
+    data.serviceAccount=value?.email
   };
 
   const fetchServiceAccounts = async () => {
     await SchedulerService.getServiceAccounts(
-      'projects/dataproc-jupyter-extension-dev'
+      'dataproc-jupyter-extension-dev',
+      setServiceAccounts
     );
-    //setServiceAccounts(accounts);
   };
-
   useEffect(() => {
     if (data) {
       data.parameter = parameterDetailUpdated;
@@ -122,6 +121,10 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
   useEffect(() => {
     listSessionTemplatesAPI();
   }, [mode]);
+
+  useEffect(() => {
+    fetchServiceAccounts();
+}, [serviceAccountSelected]);
 
   return (
     <>
@@ -197,12 +200,12 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
                   )}
                 />
               )}
-              <FormControl className="trigger-form">
+              {/* <FormControl className="trigger-form">
                 <RadioGroup
                   aria-labelledby="demo-controlled-radio-buttons-group"
                   name="controlled-radio-buttons-group"
                   value={executeTypeSelected}
-                  onChange={handleExecuteTypeChange}
+                  // onChange={handleExecuteTypeChange}
                 >
                   <FormControlLabel
                     value="user"
@@ -226,27 +229,22 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
                     }
                   />
                 </RadioGroup>
-              </FormControl>
-              {executeTypeSelected === 'serviceAccount' && (
-                <Autocomplete
-                  className="create-scheduler-style-trigger"
-                  options={serviceAccounts}
-                  //getOptionLabel={option => option.value}
-                  // value={
-                  //   executeTypes.find(
-                  //     option => option.value === executeTypeSelected
-                  //   ) || null
-                  // }
-                  // onChange={handleExecuteType}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      label="Execute as service account "
-                    />
-                  )}
-                  disabled={executeTypeSelected !== 'serviceAccount'}
-                />
-              )}
+              </FormControl> */}
+              <Autocomplete
+                className="create-scheduler-style-trigger"
+                options={serviceAccounts}
+                getOptionLabel={option => option.displayName}
+                value={
+                  serviceAccounts.find(
+                    option => option.displayName === serviceAccountSelected
+                  ) || null
+                }
+                onChange={handleServiceAccountChange}
+                renderInput={params => (
+                  <TextField {...params} label="Service account " />
+                )}
+                // disabled={executeTypeSelected !== 'serviceAccount'}
+              />
             </div>
             <div className="scheduler-retry-parent">
               <Input

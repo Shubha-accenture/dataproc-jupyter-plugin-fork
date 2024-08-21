@@ -24,23 +24,25 @@ function BigQuerySqlForm({ id, data }: any) {
   const [keyValidation, setKeyValidation] = useState(-1);
   const [valueValidation, setValueValidation] = useState(-1);
   const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
-  const [executeTypeSelected, setExecuteTypeSelected] = useState('');
+  // const [executeTypeSelected, setExecuteTypeSelected] = useState('');
   const [isSaveQueryChecked, setIsSaveQueryChecked] = useState(false);
   const [tableID, setTableID] = useState('');
   const [partitionField, setPartitionField] = useState('');
   const [datasetId, setDatasetId] = useState('');
-  const [serviceAccounts] = useState([]);
+
   const [regionRadioBtnSelected, setRegionRadioBtnSelected] = useState(false);
   const [regionTypeSelected, setRegionTypeSelected] = useState('');
   const [regionSelected, setRegionSelected] = useState('');
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
   const [writeDisposition, setWriteDisposition] = useState('');
-  const executeTypes = [
-    { value: 'Execute as Admin' },
-    { value: 'Execute as User' }
-  ];
+  // const executeTypes = [
+  //   { value: 'Execute as Admin' },
+  //   { value: 'Execute as User' }
+  // ];
   const multiRegionList = ['EU', 'US'];
+  const [serviceAccounts, setServiceAccounts] = useState<{ displayName: string, email: string }[]>([]);
+  const [serviceAccountSelected, setServiceAccountSelected]= useState('');
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -84,7 +86,7 @@ function BigQuerySqlForm({ id, data }: any) {
 
   const handleTableIDChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTableID(event.target.value);
-    data.tableID = event.target.value;
+    data.tableId = event.target.value;
   };
   const handlePartitionFieldChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -98,25 +100,24 @@ function BigQuerySqlForm({ id, data }: any) {
     setDatasetId(event.target.value);
     data.datasetId = event.target.value;
   };
-  const handleExecuteTypeChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+  const handleServiceAccountChange = (
+    event: any, value: { displayName: string; email: string } | null,
   ) => {
-    setExecuteTypeSelected(event.target.value);
-    fetchServiceAccounts();
+    setServiceAccountSelected(value?.displayName|| '');
+    data.serviceAccount=value?.email
+  };
+
+  const fetchServiceAccounts = async () => {
+    await SchedulerService.getServiceAccounts(
+      'dataproc-jupyter-extension-dev',
+      setServiceAccounts
+    );
   };
 
   const handleRegionTypeChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRegionTypeSelected(event.target.value);
-    // fetchServiceAccounts();
-  };
-
-  const fetchServiceAccounts = async () => {
-    await SchedulerService.getServiceAccounts(
-      'projects/dataproc-jupyter-extension-dev'
-    );
-    //setServiceAccounts(accounts);
   };
 
   const fetchRegionList = async () => {
@@ -167,6 +168,10 @@ function BigQuerySqlForm({ id, data }: any) {
       fetchRegionList();
     }
   }, [regionTypeSelected]);
+
+  useEffect(() => {
+      fetchServiceAccounts();
+  }, [serviceAccountSelected]);
 
   return (
     <>
@@ -357,8 +362,7 @@ function BigQuerySqlForm({ id, data }: any) {
                     )}
                   />
                 )}
-
-              <FormControl className="trigger-form">
+              {/* <FormControl className="trigger-form">
                 <RadioGroup
                   aria-labelledby="demo-controlled-radio-buttons-group"
                   name="controlled-radio-buttons-group"
@@ -387,44 +391,23 @@ function BigQuerySqlForm({ id, data }: any) {
                     }
                   />
                 </RadioGroup>
-              </FormControl>
-              {executeTypeSelected === 'serviceAccount' && (
-                <Autocomplete
-                  className="create-scheduler-style-trigger"
-                  options={serviceAccounts}
-                  //getOptionLabel={option => option.value}
-                  // value={
-                  //   executeTypes.find(
-                  //     option => option.value === executeTypeSelected
-                  //   ) || null
-                  // }
-                  // onChange={handleExecuteType}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      label="Execute as service account "
-                    />
-                  )}
-                  disabled={executeTypeSelected !== 'serviceAccount'}
-                />
-              )}
+              </FormControl> */}
               <Autocomplete
                 className="create-scheduler-style-trigger"
-                options={executeTypes}
-                // getOptionLabel={option => option.value}
-                // value={
-                //   executeTypes.find(
-                //     option => option.value === executeTypeSelected
-                //   ) || null
-                // }
-                // onChange={handleExecuteType}
+                options={serviceAccounts}
+                getOptionLabel={option => option.displayName}
+                value={
+                  serviceAccounts.find(
+                    option => option.displayName === serviceAccountSelected
+                  ) || null
+                }
+                onChange={handleServiceAccountChange}
                 renderInput={params => (
-                  <TextField {...params} label="Encryption" />
+                  <TextField {...params} label="Service account " />
                 )}
-                disabled={true}
+                // disabled={executeTypeSelected !== 'serviceAccount'}
               />
             </div>
-
             <div className="scheduler-retry-parent">
               <Input
                 className="retry-count"
