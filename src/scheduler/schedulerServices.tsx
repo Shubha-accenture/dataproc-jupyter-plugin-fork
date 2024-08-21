@@ -24,18 +24,18 @@ import { scheduleMode } from '../utils/const';
 
 interface IPayload {
   //input_filename: string;
-//   composer_environment_name: string;
-//   //output_formats: string[];
-//   //parameters: string[];
-//  // cluster_name?: string;
-//   //serverless_name?: {} | undefined;
-//   //mode_selected: string;
-//   email_failure: boolean;
-//   email_delay: boolean;
-//   email: string[];
-//   name: string;
+  //   composer_environment_name: string;
+  //   //output_formats: string[];
+  //   //parameters: string[];
+  //  // cluster_name?: string;
+  //   //serverless_name?: {} | undefined;
+  //   //mode_selected: string;
+  //   email_failure: boolean;
+  //   email_delay: boolean;
+  //   email: string[];
+  //   name: string;
   // schedule_value: string;
- // stop_cluster: boolean;
+  // stop_cluster: boolean;
   // time_zone?: string;
   //dag_id: string;
 }
@@ -306,7 +306,9 @@ export class SchedulerService {
     setEditNotebookLoading(dagId);
     try {
       const serviceURL = `editJobScheduler?&dag_id=${dagId}&bucket_name=${bucketName}`;
-      const formattedResponse: any = await requestAPI(serviceURL, {method: 'POST'});
+      const formattedResponse: any = await requestAPI(serviceURL, {
+        method: 'POST'
+      });
       setInputNotebookFilePath(formattedResponse.input_filename);
       setEditNotebookLoading('');
     } catch (reason) {
@@ -353,7 +355,9 @@ export class SchedulerService {
     setEditDagLoading(dagId);
     try {
       const serviceURL = `editJobScheduler?&dag_id=${dagId}&bucket_name=${bucketName}`;
-      const formattedResponse: any = await requestAPI(serviceURL, {method: 'POST'});
+      const formattedResponse: any = await requestAPI(serviceURL, {
+        method: 'POST'
+      });
       if (
         setCreateCompleted &&
         setJobNameSelected &&
@@ -729,7 +733,7 @@ export class SchedulerService {
       const serviceURL = `dagDelete?composer=${composerSelected}&dag_id=${dag_id}&from_page=${fromPage}`;
       const deleteResponse: IUpdateSchedulerAPIResponse = await requestAPI(
         serviceURL,
-	{method: 'DELETE'}
+        { method: 'DELETE' }
       );
       if (deleteResponse.status === 0) {
         await SchedulerService.listDagInfoAPIService(
@@ -765,7 +769,7 @@ export class SchedulerService {
       const serviceURL = `dagUpdate?composer=${composerSelected}&dag_id=${dag_id}&status=${is_status_paused}`;
       const formattedResponse: IUpdateSchedulerAPIResponse = await requestAPI(
         serviceURL,
-	{method: 'POST'}
+        { method: 'POST' }
       );
       if (formattedResponse && formattedResponse.status === 0) {
         toast.success(
@@ -880,7 +884,7 @@ export class SchedulerService {
     try {
       const data: any = await requestAPI(
         `triggerDag?dag_id=${dagId}&composer=${composerSelectedList}`,
-	{method: 'POST'}
+        { method: 'POST' }
       );
       if (data) {
         toast.success(`${dagId} triggered successfully `, toastifyCustomStyle);
@@ -888,6 +892,60 @@ export class SchedulerService {
     } catch (reason) {
       toast.error(
         `Failed to Trigger ${dagId} : ${reason}`,
+        toastifyCustomStyle
+      );
+    }
+  };
+
+  static getServiceAccounts = async (name: string) => {
+    try {
+      const response = await fetch(
+        `https://iam.googleapis.com/v1/${name}/serviceAccounts`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const formattedResponse = await response.json();
+      if (formattedResponse?.error?.code) {
+        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+      } else {
+        // Process the response as needed
+        // console.log('Service Accounts:', formattedResponse);
+      }
+    } catch (error) {
+      DataprocLoggingService.log(
+        'Error fetching service accounts',
+        LOG_LEVEL.ERROR
+      );
+      toast.error(
+        `Failed to fetch the service accounts for ${name}: ${error}`,
+        toastifyCustomStyle
+      );
+    }
+  };
+
+  static getRegionList = async (
+    project_id: string,
+    setRegionList: (value: string[]) => void
+  ) => {
+    try {
+      const formattedResponse: any = await requestAPI(
+        `regionList?project_id=${project_id}`
+      );
+      // const formattedResponse = await response
+      if (formattedResponse?.error?.code) {
+        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+      } else {
+        setRegionList(formattedResponse);
+      }
+    } catch (error) {
+      DataprocLoggingService.log('Error fetching Region List', LOG_LEVEL.ERROR);
+      toast.error(
+        `Failed to fetch the Region List for ${project_id}: ${error}`,
         toastifyCustomStyle
       );
     }

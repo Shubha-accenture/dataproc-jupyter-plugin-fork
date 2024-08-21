@@ -5,11 +5,15 @@ import { eventEmitter } from '../utils/signalEmitter';
 import {
   Autocomplete,
   Checkbox,
+  FormControl,
   FormControlLabel,
   FormGroup,
+  Radio,
+  RadioGroup,
   TextField,
   Typography
 } from '@mui/material';
+import { SchedulerService } from './schedulerServices';
 
 function BigQuerySqlForm({ id, data }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
@@ -23,11 +27,20 @@ function BigQuerySqlForm({ id, data }: any) {
   const [executeTypeSelected, setExecuteTypeSelected] = useState('');
   const [isSaveQueryChecked, setIsSaveQueryChecked] = useState(false);
   const [tableID, setTableID] = useState('');
+  const [partitionField, setPartitionField] = useState('');
   const [datasetId, setDatasetId] = useState('');
+  const [serviceAccounts] = useState([]);
+  const [regionRadioBtnSelected, setRegionRadioBtnSelected] = useState(false);
+  const [regionTypeSelected, setRegionTypeSelected] = useState('');
+  const [regionSelected, setRegionSelected] = useState('');
+  const [multiRegionSelected, setMultiRegionSelected] = useState('');
+  const [regionList, setRegionList] = useState<string[]>([]);
+  const [writeDisposition, setWriteDisposition] = useState('');
   const executeTypes = [
     { value: 'Execute as Admin' },
     { value: 'Execute as User' }
   ];
+  const multiRegionList = ['EU', 'US'];
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -73,15 +86,44 @@ function BigQuerySqlForm({ id, data }: any) {
     setTableID(event.target.value);
     data.tableID = event.target.value;
   };
+  const handlePartitionFieldChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setPartitionField(event.target.value);
+    // data.tableID = event.target.value;
+  };
   const handleDatasetIdChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setDatasetId(event.target.value);
     data.datasetId = event.target.value;
   };
+  const handleExecuteTypeChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setExecuteTypeSelected(event.target.value);
+    fetchServiceAccounts();
+  };
 
-  const handleExecuteType = (value: any) => {
-    setExecuteTypeSelected(value);
+  const handleRegionTypeChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRegionTypeSelected(event.target.value);
+    // fetchServiceAccounts();
+  };
+
+  const fetchServiceAccounts = async () => {
+    await SchedulerService.getServiceAccounts(
+      'projects/dataproc-jupyter-extension-dev'
+    );
+    //setServiceAccounts(accounts);
+  };
+
+  const fetchRegionList = async () => {
+    await SchedulerService.getRegionList(
+      'dataproc-jupyter-extension-dev',
+      setRegionList
+    );
   };
 
   useEffect(() => {
@@ -97,6 +139,34 @@ function BigQuerySqlForm({ id, data }: any) {
       setRetryDelay(data.retryDelay);
     }
   }, [data]);
+
+  const handleRegionRadioBtn = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRegionRadioBtnSelected(event.target.checked);
+    data.location = '';
+  };
+
+  const handleMultiRegionTypeSelected = (event: any, value: string | null) => {
+    setMultiRegionSelected(value || '');
+    data.location = value || '';
+  };
+
+  const handleRegionTypeSelected = (event: any, value: string | null) => {
+    setRegionSelected(value || '');
+    data.location = value;
+  };
+
+  const handleWriteDisposition = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setWriteDisposition(event.target.value);
+    data.writeDisposition = event.target.value;
+  };
+
+  useEffect(() => {
+    if (regionTypeSelected === 'region') {
+      fetchRegionList();
+    }
+  }, [regionTypeSelected]);
 
   return (
     <>
@@ -168,40 +238,176 @@ function BigQuerySqlForm({ id, data }: any) {
                   placeholder=""
                   Label="Table ID"
                 />
+                <Input
+                  className="create-scheduler-style-trigger"
+                  value={partitionField}
+                  onChange={e => handlePartitionFieldChange(e)}
+                  type="text"
+                  placeholder=""
+                  Label="Partition field"
+                />
+                <FormControl className="trigger-form">
+                  <RadioGroup
+                    aria-labelledby="demo-controlled-radio-buttons-group"
+                    name="controlled-radio-buttons-group"
+                    value={writeDisposition}
+                    onChange={handleWriteDisposition}
+                  >
+                    <FormControlLabel
+                      value="WRITE_APPEND"
+                      className="create-scheduler-label-style"
+                      control={<Radio size="small" />}
+                      label={
+                        <Typography sx={{ fontSize: 13 }}>
+                          Append to table
+                        </Typography>
+                      }
+                    />
+                    <FormControlLabel
+                      value="WRITE_TRUNCATE"
+                      className="create-scheduler-label-style"
+                      control={<Radio size="small" />}
+                      label={
+                        <Typography sx={{ fontSize: 13 }}>
+                          Overwrite table
+                        </Typography>
+                      }
+                    />
+                  </RadioGroup>
+                </FormControl>
               </>
             )}
 
             <div className="scheduler-dropdown-form-element">
-              <Autocomplete
-                className="create-scheduler-style-trigger"
-                options={executeTypes}
-                // getOptionLabel={option => option.value}
-                // value={
-                //   executeTypes.find(
-                //     option => option.value === executeTypeSelected
-                //   ) || null
-                // }
-                // onChange={handleExecuteType}
-                renderInput={params => (
-                  <TextField {...params} label="Automatic region selection" />
+              <FormGroup row={true}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={regionRadioBtnSelected}
+                      onChange={handleRegionRadioBtn}
+                    />
+                  }
+                  className="create-scheduler-label-style"
+                  label={
+                    <Typography sx={{ fontSize: 13 }}>
+                      Automatic region selection
+                    </Typography>
+                  }
+                />
+              </FormGroup>
+              {!regionRadioBtnSelected && (
+                <FormControl className="trigger-form">
+                  <RadioGroup
+                    aria-labelledby="demo-controlled-radio-buttons-group"
+                    name="controlled-radio-buttons-group"
+                    value={regionTypeSelected}
+                    onChange={handleRegionTypeChange}
+                    aria-disabled={!regionRadioBtnSelected}
+                  >
+                    <FormControlLabel
+                      value="region"
+                      className="create-scheduler-label-style"
+                      control={<Radio size="small" />}
+                      label={
+                        <Typography sx={{ fontSize: 13 }}>Region</Typography>
+                      }
+                    />
+                    <FormControlLabel
+                      value="multiRegion"
+                      className="create-scheduler-label-style"
+                      control={<Radio size="small" />}
+                      label={
+                        <Typography sx={{ fontSize: 13 }}>
+                          MultiRegion
+                        </Typography>
+                      }
+                    />
+                  </RadioGroup>
+                </FormControl>
+              )}
+              {!regionRadioBtnSelected && regionTypeSelected === 'region' && (
+                <Autocomplete
+                  className="create-scheduler-style-trigger"
+                  options={regionList}
+                  getOptionLabel={option => option}
+                  value={
+                    regionList.find(option => option === regionSelected) || null
+                  }
+                  onChange={handleRegionTypeSelected}
+                  renderInput={params => (
+                    <TextField {...params} label="Region" />
+                  )}
+                />
+              )}
+              {!regionRadioBtnSelected &&
+                regionTypeSelected === 'multiRegion' && (
+                  <Autocomplete
+                    className="create-scheduler-style-trigger"
+                    options={multiRegionList}
+                    getOptionLabel={option => option}
+                    value={
+                      multiRegionList.find(
+                        option => option === multiRegionSelected
+                      ) || null
+                    }
+                    onChange={handleMultiRegionTypeSelected}
+                    renderInput={params => (
+                      <TextField {...params} label="MultiRegion" />
+                    )}
+                  />
                 )}
-                disabled={true}
-              />
-              <Autocomplete
-                className="create-scheduler-style-trigger"
-                options={executeTypes}
-                getOptionLabel={option => option.value}
-                value={
-                  executeTypes.find(
-                    option => option.value === executeTypeSelected
-                  ) || null
-                }
-                onChange={handleExecuteType}
-                renderInput={params => (
-                  <TextField {...params} label="Execute as" />
-                )}
-                disabled={true}
-              />
+
+              <FormControl className="trigger-form">
+                <RadioGroup
+                  aria-labelledby="demo-controlled-radio-buttons-group"
+                  name="controlled-radio-buttons-group"
+                  value={executeTypeSelected}
+                  onChange={handleExecuteTypeChange}
+                >
+                  <FormControlLabel
+                    value="user"
+                    className="create-scheduler-label-style"
+                    control={<Radio size="small" />}
+                    label={
+                      <Typography sx={{ fontSize: 13 }}>
+                        {' '}
+                        Execute as User
+                      </Typography>
+                    }
+                  />
+                  <FormControlLabel
+                    value="serviceAccount"
+                    className="create-scheduler-label-style"
+                    control={<Radio size="small" />}
+                    label={
+                      <Typography sx={{ fontSize: 13 }}>
+                        Execute as Service Account
+                      </Typography>
+                    }
+                  />
+                </RadioGroup>
+              </FormControl>
+              {executeTypeSelected === 'serviceAccount' && (
+                <Autocomplete
+                  className="create-scheduler-style-trigger"
+                  options={serviceAccounts}
+                  //getOptionLabel={option => option.value}
+                  // value={
+                  //   executeTypes.find(
+                  //     option => option.value === executeTypeSelected
+                  //   ) || null
+                  // }
+                  // onChange={handleExecuteType}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      label="Execute as service account "
+                    />
+                  )}
+                  disabled={executeTypeSelected !== 'serviceAccount'}
+                />
+              )}
               <Autocomplete
                 className="create-scheduler-style-trigger"
                 options={executeTypes}

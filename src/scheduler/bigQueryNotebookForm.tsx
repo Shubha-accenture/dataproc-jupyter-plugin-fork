@@ -6,8 +6,11 @@ import {
   Autocomplete,
   Checkbox,
   CircularProgress,
+  FormControl,
   FormControlLabel,
   FormGroup,
+  Radio,
+  RadioGroup,
   TextField,
   Typography
 } from '@mui/material';
@@ -27,10 +30,7 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [serverlessSelected, setServerlessSelected] = useState('');
   const [executeTypeSelected, setExecuteTypeSelected] = useState('');
-  const executeTypes = [
-    { value: 'Execute as Admin' },
-    { value: 'Execute as User' }
-  ];
+  const [serviceAccounts] = useState([]);
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -88,8 +88,18 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
     }
   };
 
-  const handleExecuteType = (value: any) => {
-    setExecuteTypeSelected(value);
+  const handleExecuteTypeChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setExecuteTypeSelected(event.target.value);
+    fetchServiceAccounts();
+  };
+
+  const fetchServiceAccounts = async () => {
+    await SchedulerService.getServiceAccounts(
+      'projects/dataproc-jupyter-extension-dev'
+    );
+    //setServiceAccounts(accounts);
   };
 
   useEffect(() => {
@@ -156,8 +166,8 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
                   control={
                     <Checkbox
                       size="small"
-                      //checked={stopCluster}
-                      //onChange={e => handleStopCluster(e)}
+                      //checked={}
+                      //onChange={}
                     />
                   }
                   className="create-scheduler-label-style"
@@ -187,21 +197,56 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
                   )}
                 />
               )}
-              <Autocomplete
-                className="create-scheduler-style-trigger"
-                options={executeTypes}
-                getOptionLabel={option => option.value}
-                value={
-                  executeTypes.find(
-                    option => option.value === executeTypeSelected
-                  ) || null
-                }
-                onChange={handleExecuteType}
-                renderInput={params => (
-                  <TextField {...params} label="Execute as" />
-                )}
-                disabled={true}
-              />
+              <FormControl className="trigger-form">
+                <RadioGroup
+                  aria-labelledby="demo-controlled-radio-buttons-group"
+                  name="controlled-radio-buttons-group"
+                  value={executeTypeSelected}
+                  onChange={handleExecuteTypeChange}
+                >
+                  <FormControlLabel
+                    value="user"
+                    className="create-scheduler-label-style"
+                    control={<Radio size="small" />}
+                    label={
+                      <Typography sx={{ fontSize: 13 }}>
+                        {' '}
+                        Execute as User
+                      </Typography>
+                    }
+                  />
+                  <FormControlLabel
+                    value="serviceAccount"
+                    className="create-scheduler-label-style"
+                    control={<Radio size="small" />}
+                    label={
+                      <Typography sx={{ fontSize: 13 }}>
+                        Execute as Service Account
+                      </Typography>
+                    }
+                  />
+                </RadioGroup>
+              </FormControl>
+              {executeTypeSelected === 'serviceAccount' && (
+                <Autocomplete
+                  className="create-scheduler-style-trigger"
+                  options={serviceAccounts}
+                  //getOptionLabel={option => option.value}
+                  // value={
+                  //   executeTypes.find(
+                  //     option => option.value === executeTypeSelected
+                  //   ) || null
+                  // }
+                  // onChange={handleExecuteType}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      label="Execute as service account "
+                    />
+                  )}
+                  disabled={executeTypeSelected !== 'serviceAccount'}
+                />
+              )}
             </div>
             <div className="scheduler-retry-parent">
               <Input
