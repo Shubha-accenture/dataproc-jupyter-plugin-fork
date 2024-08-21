@@ -27,7 +27,7 @@ read_sql_query_task_{{id}} = PythonOperator(
 prepare_config_task_{{id}} = PythonOperator(
     task_id='prepare_config_{{id}}',
     python_callable=prepare_bigquery_config,
-    op_kwargs={'id': '{{id}}','projectId": '{{gcpProjectId}}', 'datasetId': '{{datasetId}}', 'tableId': '{{tableId}}', 'writeDisposition':'{{writeDisposition}}'},
+    op_kwargs={'id': '{{id}}','projectId': '{{gcpProjectId}}', 'datasetId': '{{datasetId}}', 'tableId': '{{tableId}}', 'writeDisposition':'{{writeDisposition}}'},
     provide_context=True,
     dag=dag,
 )
