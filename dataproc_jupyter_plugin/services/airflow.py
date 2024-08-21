@@ -368,7 +368,6 @@ class Client:
 
             regions = client.list(project=project_id)
             region_names = [region.name for region in regions]
-            print(region_names)
             return region_names
         except Exception as e:
             self.log.exception(f"Error listing regions: {str(e)}")
