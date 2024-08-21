@@ -84,7 +84,7 @@ const GraphicalScheduler = ({
         tableId: '',
         location: '',
         writeDisposition: '',
-        serviceAccount:''
+        serviceAccount: ''
       }
     }
   ];
@@ -146,7 +146,7 @@ const GraphicalScheduler = ({
               tableId: '',
               location: '',
               writeDisposition: '',
-              serviceAccount:''
+              serviceAccount: ''
             },
             origin: [0.5, 0.0]
           };
@@ -264,10 +264,7 @@ const GraphicalScheduler = ({
             clusterName: node.data.clusterName
           }
         };
-      } else if (
-        node.data.nodeType === 'Serverless' ||
-        node.data.nodeType === 'Bigquery-Serverless'
-      ) {
+      } else if (node.data.nodeType === 'Serverless') {
         return {
           ...node,
           data: {
@@ -277,6 +274,19 @@ const GraphicalScheduler = ({
             retryDelay: node.data.retryDelay,
             parameter: node.data.parameter,
             serverless: node.data.serverless
+          }
+        };
+      } else if (node.data.nodeType === 'Bigquery-Serverless') {
+        return {
+          ...node,
+          data: {
+            nodeType: node.data.nodeType,
+            inputFile: node.data.inputFile,
+            retryCount: node.data.retryCount,
+            retryDelay: node.data.retryDelay,
+            parameter: node.data.parameter,
+            serverless: node.data.serverless,
+            serviceAccount: node.data.serviceAccount
           }
         };
       } else if (node.data.nodeType === 'Bigquery-Sql') {
@@ -292,7 +302,7 @@ const GraphicalScheduler = ({
             datasetId: node.data.datasetId,
             location: node.data.location,
             writeDisposition: node.data.writeDisposition,
-            serviceAccount:node.data.serviceAccount
+            serviceAccount: node.data.serviceAccount
           }
         };
       }

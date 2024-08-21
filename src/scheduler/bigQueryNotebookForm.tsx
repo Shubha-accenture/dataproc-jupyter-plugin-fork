@@ -4,6 +4,7 @@ import LabelProperties from '../jobs/labelProperties';
 import { eventEmitter } from '../utils/signalEmitter';
 import {
   Autocomplete,
+  Box,
   Checkbox,
   CircularProgress,
   // FormControl,
@@ -29,8 +30,10 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
   const [serverlessList, setServerlessList] = useState<string[]>([]);
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [serverlessSelected, setServerlessSelected] = useState('');
-  const [serviceAccounts, setServiceAccounts] = useState<{ displayName: string, email: string }[]>([]);
-  const [serviceAccountSelected, setServiceAccountSelected]= useState('');
+  const [serviceAccounts, setServiceAccounts] = useState<
+    { displayName: string; email: string }[]
+  >([]);
+  const [serviceAccountSelected, setServiceAccountSelected] = useState('');
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -89,10 +92,11 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
   };
 
   const handleServiceAccountChange = (
-    event: any, value: { displayName: string; email: string } | null,
+    event: any,
+    value: { displayName: string; email: string } | null
   ) => {
-    setServiceAccountSelected(value?.displayName|| '');
-    data.serviceAccount=value?.email
+    setServiceAccountSelected(value?.displayName || '');
+    data.serviceAccount = value?.email;
   };
 
   const fetchServiceAccounts = async () => {
@@ -124,7 +128,7 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
 
   useEffect(() => {
     fetchServiceAccounts();
-}, [serviceAccountSelected]);
+  }, [serviceAccountSelected]);
 
   return (
     <>
@@ -244,6 +248,22 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
                   <TextField {...params} label="Service account " />
                 )}
                 // disabled={executeTypeSelected !== 'serviceAccount'}
+                renderOption={(props, option) => (
+                  <Box
+                    component="li"
+                    {...props}
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="flex-start" // Ensure left alignment
+                  >
+                    <Typography variant="body1">
+                      {option.displayName}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {option.email}
+                    </Typography>
+                  </Box>
+                )}
               />
             </div>
             <div className="scheduler-retry-parent">
