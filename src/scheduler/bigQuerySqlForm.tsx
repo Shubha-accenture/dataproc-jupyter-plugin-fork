@@ -197,20 +197,20 @@ function BigQuerySqlForm({ id, data }: any) {
       if (selectedServiceAccount) {
         setServiceAccountSelected(selectedServiceAccount.displayName);
       }
-      if (data.location) {
-        console.log(data.location)
-        if (regionList.includes(data.location)) {
-          console.log(regionList)
-          setRegionTypeSelected("region");
-          setRegionSelected(data.region);
-        } else if (multiRegionList.includes(data.location)) {
-          console.log(multiRegionList)
-          setRegionTypeSelected("multiRegion");
-          setMultiRegionSelected(data.location);
-        }
-      } 
-      else
-      setRegionRadioBtnSelected(true)
+      // if (data.location) {
+      //   console.log(data.location)
+      //   if (regionList.includes(data.location)) {
+      //     console.log(regionList)
+      //     setRegionTypeSelected("region");
+      //     setRegionSelected(data.region);
+      //   } else if (multiRegionList.includes(data.location)) {
+      //     console.log(multiRegionList)
+      //     setRegionTypeSelected("multiRegion");
+      //     setMultiRegionSelected(data.location);
+      //   }
+      // } 
+      // else
+      // setRegionRadioBtnSelected(true)
       
     }
   }, [data, serviceAccounts]);
