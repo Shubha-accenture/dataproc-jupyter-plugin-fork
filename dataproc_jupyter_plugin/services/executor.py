@@ -241,12 +241,15 @@ class Client:
 
         #checking if the taks has cluster and adds stop cluster state to stop the cluster at the end
         cluster_stop_dict = {}
-
+        service_account = ''
         for node in job.nodes:
             if node.get('data', {}).get('nodeType') == 'Cluster':
                 cluster_name = node.get('data', {}).get('clusterName')
                 stop_cluster = node.get('data', {}).get('stopCluster')
                 cluster_stop_dict[cluster_name] = stop_cluster
+            elif node.get('data', {}).get('nodeType') == 'Bigquery-Sql':
+                if service_account == '':
+                    service_account =  node.get('data', {}).get('serviceAccount', {})
 
         #generate dag file with common values
         LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.job_name}"
@@ -255,10 +258,10 @@ class Client:
         common_template = environment.get_template(DAG_TEMPLATE_JOB_V1)
         contents = common_template.render(job,
         owner=owner,scheduleInterval=schedule_interval,timeZone=time_zone, startDate=start_date,year= current_year,gcpProjectId=gcp_project_id,
-                    gcpRegion=gcp_region_id,clusterStop =  cluster_stop_dict)
+                    gcpRegion=gcp_region_id,clusterStop =  cluster_stop_dict, serviceAccount = service_account)
         with open(file_path, mode="w", encoding="utf-8") as message:
             message.write(contents)
-
+   
         #iterate and generate dag tasks for each node based on node type
         serverless_template = environment_serverless.get_template(DAG_TEMPLATE_SERVERLESS_V3)
         for node in job.nodes:
@@ -377,11 +380,12 @@ class Client:
                     inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
                     inputNotebook=input_notebook,
                     gcpProjectId=gcp_project_id,
-                    bqRegion=node.get('data',{}).get('region',{}),
+                    bqRegion=node.get('data',{}).get('location',{}),
                     parameters=parameters,
                     retries = node.get('data', {}).get('retryCount', {}),
                     datasetId  =node.get('data',{}).get('datasetId',{}),
-                    tableId =node.get('data',{}).get('tableId',{})
+                    tableId =node.get('data',{}).get('tableId',{}),
+                    writeDisposition =node.get('data',{}).get('writeDisposition',{})
                     )
                     bq_file = f"dag_{input_file}.py"
                     with open(bq_file, mode="w", encoding="utf-8") as message:

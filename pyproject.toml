@@ -29,7 +29,9 @@ dependencies = [
     "pendulum>=3.0.0",
     "pydantic~=1.10.0",
     "bigframes~=0.22.0",
-    "aiohttp~=3.9.5"
+    "aiohttp~=3.9.5",
+    "google-cloud-compute~=1.19.2",
+    "google-api-python-client~=2.142.0"
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 

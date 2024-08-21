@@ -217,3 +217,11 @@ class Regioncontroller(AirflowHandler):
     async def _handle_get(self, client):
         project_id = self.get_argument("project_id")
         return await client.list_regions(project_id)
+
+class ServiceAccountcontroller(AirflowHandler):
+    def description(self):
+        return "Region"
+    
+    async def _handle_get(self, client):
+        project_id = self.get_argument("project_id")
+        return await client.list_service_accounts(project_id)

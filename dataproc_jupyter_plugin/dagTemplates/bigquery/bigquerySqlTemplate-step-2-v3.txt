@@ -17,7 +17,7 @@
 read_sql_query_task_{{id}} = PythonOperator(
     task_id='read_sql_query_{{id}}',
     python_callable=read_sql_query_from_gcs,
-    op_kwargs={'gcs_path': '{{inputNotebook}}'},
+    op_kwargs={'gcs_path': '{{inputNotebook}}', 'service_account'='{{serviceAccount}}'},
     provide_context=True,
     dag=dag,
 )
@@ -27,7 +27,7 @@ read_sql_query_task_{{id}} = PythonOperator(
 prepare_config_task_{{id}} = PythonOperator(
     task_id='prepare_config_{{id}}',
     python_callable=prepare_bigquery_config,
-    op_kwargs={'id': "{{id}}","projectId": "{{gcpProjectId}}", "datasetId": "{{datasetId}}", "tableId": "{{tableId}}"},
+    op_kwargs={'id': '{{id}}','projectId": '{{gcpProjectId}}', 'datasetId': '{{datasetId}}', 'tableId': '{{tableId}}', 'writeDisposition':'{{writeDisposition}}'},
     provide_context=True,
     dag=dag,
 )
@@ -41,6 +41,7 @@ def run_bigquery_insert_job_{{id}}(**kwargs):
         task_id='run_query_task_{{id}}',
         configuration=config,
         location='{{bqRegion}}',  # Specify your BigQuery location
+        impersonate_service_account=service_account,
         dag=kwargs['dag'],
     )
     insert_job.execute(context=kwargs)

@@ -202,6 +202,7 @@ def setup_handlers(web_app):
         "importErrorsList": airflow.ImportErrorController,
         "triggerDag": airflow.TriggerDagController,
         "regionList": airflow.Regioncontroller,
+        "serviceAccountList": airflow.ServiceAccountcontroller,
         "downloadOutput": executor.DownloadOutputController,
         "bigQueryDataset": bigquery.DatasetController,
         "bigQueryTable": bigquery.TableController,
