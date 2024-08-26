@@ -130,14 +130,13 @@ function BigQueryNotebookForm({ data, mode }: any) {
   useEffect(() => {
     listSessionTemplatesAPI();
     fetchServiceAccounts();
-  }, []);//check if we can remove mode
+  }, []);
 
   return (
     <>
       <div>
         <form>
           <div className="custom-node-body">
-            {/* change the css name custom-node-body*/}
             <label htmlFor="file-input" className="create-scheduler-style">
               Notebook*
             </label>
