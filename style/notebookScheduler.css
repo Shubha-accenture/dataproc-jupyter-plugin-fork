@@ -324,6 +324,7 @@
 
 .scheduler-retry-parent {
   min-width: 100%;
+  margin-top: 15px;
   /* padding: 10px 0px; */
 }
 .retry-count {
@@ -356,7 +357,10 @@
 }
 .scheduler-dropdown-form-element {
   margin-top: 15px;
-  width: 512px;
+  width: 105%;
+}
+
+.configure-form-dropdown-element {
   width: 105%;
 }
 

@@ -155,7 +155,7 @@ function ClusterServerlessForm({ data, mode }: any) {
     <>
       <div>
         <form>
-          <div className="custom-node__body">
+          <div className="custom-node-body">
             <label htmlFor="file-input" className="create-scheduler-style">
               Input file*
             </label>

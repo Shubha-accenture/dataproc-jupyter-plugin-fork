@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { SchedulerService } from './schedulerServices';
 
-function BigQuerySqlForm({ id, data }: any) {
+function BigQuerySqlForm({ data }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
@@ -24,27 +24,24 @@ function BigQuerySqlForm({ id, data }: any) {
   const [keyValidation, setKeyValidation] = useState(-1);
   const [valueValidation, setValueValidation] = useState(-1);
   const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
-  // const [executeTypeSelected, setExecuteTypeSelected] = useState('');
+
   const [isSaveQueryChecked, setIsSaveQueryChecked] = useState(false);
   const [tableID, setTableID] = useState('');
   const [partitionField, setPartitionField] = useState('');
   const [datasetId, setDatasetId] = useState('');
 
-  const [regionRadioBtnSelected, setRegionRadioBtnSelected] = useState(false);
+  const [autoRegionSelected, setAutoRegionSelected] = useState(false);
   const [regionTypeSelected, setRegionTypeSelected] = useState('');
   const [regionSelected, setRegionSelected] = useState('');
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
   const [writeDisposition, setWriteDisposition] = useState('');
-  // const executeTypes = [
-  //   { value: 'Execute as Admin' },
-  //   { value: 'Execute as User' }
-  // ];
   const multiRegionList = ['EU', 'US'];
   const [serviceAccounts, setServiceAccounts] = useState<
     { displayName: string; email: string }[]
   >([]);
   const [serviceAccountSelected, setServiceAccountSelected] = useState('');
+
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -82,6 +79,7 @@ function BigQuerySqlForm({ id, data }: any) {
       }
     }
   };
+
   const handleSaveQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsSaveQueryChecked(event.target.checked);
   };
@@ -94,7 +92,6 @@ function BigQuerySqlForm({ id, data }: any) {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setPartitionField(event.target.value);
-    // data.tableID = event.target.value;
   };
   const handleDatasetIdChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -102,6 +99,7 @@ function BigQuerySqlForm({ id, data }: any) {
     setDatasetId(event.target.value);
     data.datasetId = event.target.value;
   };
+
   const handleServiceAccountChange = (
     event: any,
     value: { displayName: string; email: string } | null
@@ -130,31 +128,17 @@ function BigQuerySqlForm({ id, data }: any) {
     );
   };
 
-  useEffect(() => {
-    if (data) {
-      data.parameter = parameterDetailUpdated;
-    }
-  }, [parameterDetailUpdated]);
-
-  useEffect(() => {
-    if (data) {
-      setInputFileSelectedLocal(data.inputFile);
-      setRetryCount(data.retryCount);
-      setRetryDelay(data.retryDelay);
-    }
-  }, [data]);
-
   const handleRegionRadioBtn = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRegionRadioBtnSelected(event.target.checked);
+    setAutoRegionSelected(event.target.checked);
     data.location = '';
   };
 
-  const handleMultiRegionTypeSelected = (event: any, value: string | null) => {
+  const handleMultiRegionTypeSelected = (event: React.ChangeEvent<{}>, value: string | null) => {
     setMultiRegionSelected(value || '');
     data.location = value || '';
   };
 
-  const handleRegionTypeSelected = (event: any, value: string | null) => {
+  const handleRegionTypeSelected = (event: React.ChangeEvent<{}>, value: string | null) => {
     setRegionSelected(value || '');
     data.location = value;
   };
@@ -166,15 +150,21 @@ function BigQuerySqlForm({ id, data }: any) {
     data.writeDisposition = event.target.value;
   };
 
-  useEffect(() => {
-    if (regionTypeSelected === 'region') {
-      fetchRegionList();
-    }
-  }, [regionTypeSelected]);
 
   useEffect(() => {
-    fetchServiceAccounts();
-  }, [serviceAccountSelected]);
+    if (data) {
+      data.parameter = parameterDetailUpdated;
+    }
+  }, [parameterDetailUpdated]);
+
+  useEffect(() => {
+      fetchRegionList();
+      fetchServiceAccounts();
+  }, []);//check if can call this only one []
+
+  // useEffect(() => {
+  //   fetchServiceAccounts();
+  // }, [serviceAccountSelected]);//check if it need to call one time
 
   useEffect(() => {
     if (data) {
@@ -205,8 +195,8 @@ function BigQuerySqlForm({ id, data }: any) {
           setRegionTypeSelected('region');
           setRegionSelected(data.location);
         }
-      } else if(data.location === ''){
-        setRegionRadioBtnSelected(true);
+      } else if (data.location === '') {
+        setAutoRegionSelected(true);
       }
     }
   }, [data, serviceAccounts]);
@@ -215,7 +205,8 @@ function BigQuerySqlForm({ id, data }: any) {
     <>
       <div>
         <form>
-          <div className="custom-node__body">
+          <div className="custom-node-body">
+            {/* check class name */}
             <label htmlFor="file-input" className="create-scheduler-style">
               Input File*
             </label>
@@ -258,7 +249,9 @@ function BigQuerySqlForm({ id, data }: any) {
                   }
                   className="create-scheduler-label-style"
                   label={
-                    <Typography sx={{ fontSize: 13 }}>Save Query</Typography>
+                    <Typography sx={{ fontSize: 13 }}>
+                      Set a destination table for query results
+                    </Typography>
                   }
                 />
               </FormGroup>
@@ -320,14 +313,13 @@ function BigQuerySqlForm({ id, data }: any) {
                 </FormControl>
               </>
             )}
-
-            <div className="scheduler-dropdown-form-element">
+            <div className="configure-form-dropdown-element">
               <FormGroup row={true}>
                 <FormControlLabel
                   control={
                     <Checkbox
                       size="small"
-                      checked={regionRadioBtnSelected}
+                      checked={autoRegionSelected}
                       onChange={handleRegionRadioBtn}
                     />
                   }
@@ -339,19 +331,20 @@ function BigQuerySqlForm({ id, data }: any) {
                   }
                 />
               </FormGroup>
-              {!regionRadioBtnSelected && (
+              {!autoRegionSelected && (
                 <FormControl className="trigger-form">
                   <RadioGroup
                     aria-labelledby="demo-controlled-radio-buttons-group"
                     name="controlled-radio-buttons-group"
                     value={regionTypeSelected}
                     onChange={handleRegionTypeChange}
-                    aria-disabled={!regionRadioBtnSelected}
+                    aria-disabled={!autoRegionSelected}
                   >
                     <FormControlLabel
                       value="region"
                       className="create-scheduler-label-style"
                       control={<Radio size="small" />}
+                      disabled={autoRegionSelected}
                       label={
                         <Typography sx={{ fontSize: 13 }}>Region</Typography>
                       }
@@ -360,6 +353,7 @@ function BigQuerySqlForm({ id, data }: any) {
                       value="multiRegion"
                       className="create-scheduler-label-style"
                       control={<Radio size="small" />}
+                      disabled={autoRegionSelected}
                       label={
                         <Typography sx={{ fontSize: 13 }}>
                           MultiRegion
@@ -369,7 +363,7 @@ function BigQuerySqlForm({ id, data }: any) {
                   </RadioGroup>
                 </FormControl>
               )}
-              {!regionRadioBtnSelected && regionTypeSelected === 'region' && (
+              {!autoRegionSelected && regionTypeSelected === 'region' ? (
                 <Autocomplete
                   className="create-scheduler-style-trigger"
                   options={regionList}
@@ -377,13 +371,14 @@ function BigQuerySqlForm({ id, data }: any) {
                   value={
                     regionList.find(option => option === regionSelected) || null
                   }
+                  disabled={autoRegionSelected}
                   onChange={handleRegionTypeSelected}
                   renderInput={params => (
-                    <TextField {...params} label="Region" />
+                    <TextField {...params} label="Region*" />
                   )}
                 />
-              )}
-              {!regionRadioBtnSelected &&
+              ) : (
+                !autoRegionSelected &&
                 regionTypeSelected === 'multiRegion' && (
                   <Autocomplete
                     className="create-scheduler-style-trigger"
@@ -394,42 +389,15 @@ function BigQuerySqlForm({ id, data }: any) {
                         option => option === multiRegionSelected
                       ) || null
                     }
+                    disabled={autoRegionSelected}
                     onChange={handleMultiRegionTypeSelected}
                     renderInput={params => (
-                      <TextField {...params} label="MultiRegion" />
+                      <TextField {...params} label="MultiRegion*" />
                     )}
                   />
-                )}
-              {/* <FormControl className="trigger-form">
-                <RadioGroup
-                  aria-labelledby="demo-controlled-radio-buttons-group"
-                  name="controlled-radio-buttons-group"
-                  value={executeTypeSelected}
-                  onChange={handleExecuteTypeChange}
-                >
-                  <FormControlLabel
-                    value="user"
-                    className="create-scheduler-label-style"
-                    control={<Radio size="small" />}
-                    label={
-                      <Typography sx={{ fontSize: 13 }}>
-                        {' '}
-                        Execute as User
-                      </Typography>
-                    }
-                  />
-                  <FormControlLabel
-                    value="serviceAccount"
-                    className="create-scheduler-label-style"
-                    control={<Radio size="small" />}
-                    label={
-                      <Typography sx={{ fontSize: 13 }}>
-                        Execute as Service Account
-                      </Typography>
-                    }
-                  />
-                </RadioGroup>
-              </FormControl> */}
+                )
+              )}
+              <div className="scheduler-retry-parent">
               <Autocomplete
                 className="create-scheduler-style-trigger"
                 options={serviceAccounts}
@@ -443,8 +411,8 @@ function BigQuerySqlForm({ id, data }: any) {
                 renderInput={params => (
                   <TextField {...params} label="Service account " />
                 )}
-                // disabled={executeTypeSelected !== 'serviceAccount'}
               />
+              </div>
             </div>
             <div className="scheduler-retry-parent">
               <Input

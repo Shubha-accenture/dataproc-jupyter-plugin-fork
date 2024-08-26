@@ -7,17 +7,14 @@ import {
   Box,
   Checkbox,
   CircularProgress,
-  // FormControl,
   FormControlLabel,
   FormGroup,
-  // Radio,
-  // RadioGroup,
   TextField,
   Typography
 } from '@mui/material';
 import { SchedulerService } from './schedulerServices';
 
-function BigQueryNotebookForm({ id, data, mode }: any) {
+function BigQueryNotebookForm({ data, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
@@ -34,6 +31,7 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
     { displayName: string; email: string }[]
   >([]);
   const [serviceAccountSelected, setServiceAccountSelected] = useState('');
+
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
@@ -92,7 +90,7 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
   };
 
   const handleServiceAccountChange = (
-    event: any,
+    event: React.ChangeEvent<{}>,
     value: { displayName: string; email: string } | null
   ) => {
     setServiceAccountSelected(value?.displayName || '');
@@ -105,6 +103,7 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
       setServiceAccounts
     );
   };
+
   useEffect(() => {
     if (data) {
       data.parameter = parameterDetailUpdated;
@@ -130,17 +129,15 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
 
   useEffect(() => {
     listSessionTemplatesAPI();
-  }, [mode]);
-
-  useEffect(() => {
     fetchServiceAccounts();
-  }, [serviceAccountSelected]);
+  }, []);//check if we can remove mode
 
   return (
     <>
       <div>
         <form>
-          <div className="custom-node__body">
+          <div className="custom-node-body">
+            {/* change the css name custom-node-body*/}
             <label htmlFor="file-input" className="create-scheduler-style">
               Notebook*
             </label>
@@ -149,7 +146,6 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
                 className="create-scheduler-style"
                 type="file"
                 value={''}
-                // {inputFileSelectedLocal}
                 onChange={e => onInputFileNameChange(e)}
               />
               {
@@ -176,13 +172,7 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
               <div> Output Format </div>
               <FormGroup row={true}>
                 <FormControlLabel
-                  control={
-                    <Checkbox
-                      size="small"
-                      //checked={}
-                      //onChange={}
-                    />
-                  }
+                  control={<Checkbox size="small" />}
                   className="create-scheduler-label-style"
                   label={
                     <Typography sx={{ fontSize: 13 }}>Notebook</Typography>
@@ -210,36 +200,6 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
                   )}
                 />
               )}
-              {/* <FormControl className="trigger-form">
-                <RadioGroup
-                  aria-labelledby="demo-controlled-radio-buttons-group"
-                  name="controlled-radio-buttons-group"
-                  value={executeTypeSelected}
-                  // onChange={handleExecuteTypeChange}
-                >
-                  <FormControlLabel
-                    value="user"
-                    className="create-scheduler-label-style"
-                    control={<Radio size="small" />}
-                    label={
-                      <Typography sx={{ fontSize: 13 }}>
-                        {' '}
-                        Execute as User
-                      </Typography>
-                    }
-                  />
-                  <FormControlLabel
-                    value="serviceAccount"
-                    className="create-scheduler-label-style"
-                    control={<Radio size="small" />}
-                    label={
-                      <Typography sx={{ fontSize: 13 }}>
-                        Execute as Service Account
-                      </Typography>
-                    }
-                  />
-                </RadioGroup>
-              </FormControl> */}
               <Autocomplete
                 className="create-scheduler-style-trigger"
                 options={serviceAccounts}
@@ -253,14 +213,15 @@ function BigQueryNotebookForm({ id, data, mode }: any) {
                 renderInput={params => (
                   <TextField {...params} label="Service account " />
                 )}
-                // disabled={executeTypeSelected !== 'serviceAccount'}
                 renderOption={(props, option) => (
                   <Box
                     component="li"
                     {...props}
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="flex-start" // Ensure left alignment
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start'
+                    }}
                   >
                     <Typography variant="body1">
                       {option.displayName}

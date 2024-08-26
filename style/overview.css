@@ -40,11 +40,7 @@
     display: none;
   }
   
-  .custom-node__header {
-    padding: 8px 10px;
-  }
-  
-  .custom-node__body {
+  .custom-node-body {
     padding: 10px;
   }
   

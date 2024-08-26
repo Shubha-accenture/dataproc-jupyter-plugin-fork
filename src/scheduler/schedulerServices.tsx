@@ -23,21 +23,6 @@ import { JupyterLab } from '@jupyterlab/application';
 import { scheduleMode } from '../utils/const';
 
 interface IPayload {
-  //input_filename: string;
-  //   composer_environment_name: string;
-  //   //output_formats: string[];
-  //   //parameters: string[];
-  //  // cluster_name?: string;
-  //   //serverless_name?: {} | undefined;
-  //   //mode_selected: string;
-  //   email_failure: boolean;
-  //   email_delay: boolean;
-  //   email: string[];
-  //   name: string;
-  // schedule_value: string;
-  // stop_cluster: boolean;
-  // time_zone?: string;
-  //dag_id: string;
 }
 
 interface IUpdateSchedulerAPIResponse {
@@ -898,12 +883,12 @@ export class SchedulerService {
   };
 
   static getServiceAccounts = async (
-    project_id: string,
+    projectId: string,
     setServiceAccounts: (value: { displayName: string, email: string }[]) => void
   ) => {
     try {
       const formattedResponse: any = await requestAPI(
-        `serviceAccountList?project_id=${project_id}`
+        `serviceAccountList?project_id=${projectId}`
       );
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
@@ -920,21 +905,20 @@ export class SchedulerService {
         LOG_LEVEL.ERROR
       );
       toast.error(
-        `Failed to fetch the service accounts for ${project_id}: ${error}`,
+        `Failed to fetch the service accounts for ${projectId}: ${error}`,
         toastifyCustomStyle
       );
     }
   };
 
   static getRegionList = async (
-    project_id: string,
+    projectId: string,
     setRegionList: (value: string[]) => void
   ) => {
     try {
       const formattedResponse: any = await requestAPI(
-        `regionList?project_id=${project_id}`
+        `regionList?project_id=${projectId}`
       );
-      // const formattedResponse = await response
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
       } else {
@@ -943,7 +927,7 @@ export class SchedulerService {
     } catch (error) {
       DataprocLoggingService.log('Error fetching Region List', LOG_LEVEL.ERROR);
       toast.error(
-        `Failed to fetch the Region List for ${project_id}: ${error}`,
+        `Failed to fetch the Region List for ${projectId}: ${error}`,
         toastifyCustomStyle
       );
     }
