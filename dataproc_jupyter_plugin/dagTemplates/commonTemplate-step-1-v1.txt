@@ -17,14 +17,20 @@ from datetime import datetime, timedelta, timezone
 import uuid
 import os
 from airflow import DAG
+{% if serverless %}
 from airflow.providers.google.cloud.operators.dataproc import DataprocCreateBatchOperator
-from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator
+{% endif %}
 from airflow.operators.python_operator import PythonOperator
+{% if cluster %}
+from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator
 from google.cloud import dataproc_v1
 from google.api_core.client_options import ClientOptions
+{%endif%}
+{% if bqSql %}
 from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airflow.utils.dates import days_ago
+{% endif %}
 
 
 default_args = {
@@ -47,6 +53,7 @@ dag = DAG(
     catchup= False
 )
 
+{% if cluster or serverless %}
 #function to pass input notebook, output notebook path and parameters as arguments to task
 def get_notebook_args(input_notebook,parameter,task_id):
     input_notebook = input_notebook
@@ -60,6 +67,15 @@ def get_notebook_args(input_notebook,parameter,task_id):
         notebook_args.extend(["--parameters", parameters_str])
     return notebook_args
 
+
+def create_unique_output_file_path(run_id,task_id,output_notebook, **kwargs):
+    output_file_path = f"{output_notebook}{run_id}-{task_id}.ipynb"
+    print(output_file_path)
+    kwargs['ti'].xcom_push(key='output_file_path', value=output_file_path)
+    return output_file_path
+{%endif%}
+
+{% if cluster %}
 def get_client_cert():
     # code to load client certificate and private key.
     return client_cert_bytes, client_private_key_bytes
@@ -129,17 +145,12 @@ def stop_the_cluster(cluster,stopStatus):
         # Handle the response
         print(response)
 
-def create_unique_output_file_path(run_id,task_id,output_notebook, **kwargs):
-    output_file_path = f"{output_notebook}{run_id}-{task_id}.ipynb"
-    print(output_file_path)
-    kwargs['ti'].xcom_push(key='output_file_path', value=output_file_path)
-    return output_file_path
 
 def stop_multiple_clusters(cluster_stop):
     for cluster, stop in cluster_stop.items():
         stop_the_cluster(cluster, str(stop))
 
-{% if clusterStop %}
+
 stop_cluster = PythonOperator(
     task_id='stop_clusters',
     python_callable=stop_multiple_clusters,
@@ -147,12 +158,13 @@ stop_cluster = PythonOperator(
     provide_context=True,
     dag=dag
 )
-
 {% endif %} 
 
 {% if serviceAccount %}
 service_account = '{{serviceAccount}}'
 {% endif %}
+
+{%if bqSql %}
 # Function to read the SQL query from GCS
 def read_sql_query_from_gcs(gcs_path,service_account, **kwargs):
     if gcs_path.startswith('gs://'):
@@ -186,5 +198,5 @@ def prepare_bigquery_config(id,projectId,datasetId,tableId,writeDisposition, **k
     }
     ti.xcom_push(key='bigquery_config', value=config)
     return config
-   
+{% endif %}
     

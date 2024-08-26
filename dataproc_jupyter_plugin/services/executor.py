@@ -238,7 +238,21 @@ class Client:
             time_zone = job.nodes[0]['data']['timeZone']
         current_year = datetime.now().year
 
-
+        node_type_dict = {
+        'cluster': 0,
+        'serverless': 0,
+        'bq-sql': 0
+            }
+    
+        for node in job.nodes:
+            node_type = node.get('data', {}).get('nodeType')
+            
+            if node_type == 'Cluster':
+                node_type_dict['cluster'] = 1
+            elif node_type in ['Serverless', 'Bigquery-Serverless']:
+                node_type_dict['serverless'] = 1
+            elif node_type == 'Bigquery-Sql':
+                node_type_dict['bq-sql'] = 1
         #checking if the taks has cluster and adds stop cluster state to stop the cluster at the end
         cluster_stop_dict = {}
         service_account = ''
@@ -258,7 +272,7 @@ class Client:
         common_template = environment.get_template(DAG_TEMPLATE_JOB_V1)
         contents = common_template.render(job,
         owner=owner,scheduleInterval=schedule_interval,timeZone=time_zone, startDate=start_date,year= current_year,gcpProjectId=gcp_project_id,
-                    gcpRegion=gcp_region_id,clusterStop =  cluster_stop_dict, serviceAccount = service_account)
+                    gcpRegion=gcp_region_id,clusterStop =  cluster_stop_dict, serviceAccount = service_account,cluster = node_type_dict['cluster'], serverless = node_type_dict['serverless'], bqSql=node_type_dict['bq-sql'])
         with open(file_path, mode="w", encoding="utf-8") as message:
             message.write(contents)
    
@@ -275,7 +289,7 @@ class Client:
                 )
                 parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
                 
-                if node_type == 'Serverless' or node_type == 'Bigquery-notebooks':
+                if node_type == 'Serverless' or node_type == 'Bigquery-Serverless':
                     serverless_config = node.get('data', {}).get('serverless', {})
                     print(node.get('data', {}).get('retryCount', {}))
                     phs_path = (
