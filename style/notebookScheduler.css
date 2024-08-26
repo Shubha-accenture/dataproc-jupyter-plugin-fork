@@ -378,3 +378,48 @@
   color: #3367d6;
   cursor: pointer;
 }
+
+.encryption-header{
+  width: 95%;
+  height: 36px;
+  background: var(--jp-layout-color0);
+  outline: none;
+  margin-top: 15px;
+  margin-bottom: -25px;
+  height: 48px;
+  display: flex;
+}
+.create-scheduler-encrypt {
+  display: flex;
+  align-items: center;
+  margin-left: 45px;
+}
+.manual-key-style{
+  margin-top: 10px;
+}
+.create-scheduler-style-key {
+  width: 100%;
+  height: 36px;
+  background: var(--jp-layout-color0);
+  margin-top: 10px;
+  outline: none;
+  justify-content: space-between;
+  display: flex;
+}
+.create-scheduler-style-keys {
+  width: 45%;
+  height: 36px;
+  background: var(--jp-layout-color0);
+  margin-top: 10px;
+  outline: none;
+  margin-left: 5px;
+}
+
+.create-scheduler-style-key-rings {
+  width: 45%;
+  height: 36px;
+  background: var(--jp-layout-color0);
+  margin-top: 10px;
+  outline: none;
+}
+

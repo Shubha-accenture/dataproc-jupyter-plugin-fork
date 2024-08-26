@@ -14,6 +14,10 @@ import {
   Typography
 } from '@mui/material';
 import { SchedulerService } from './schedulerServices';
+import { LabIcon } from '@jupyterlab/ui-components';
+import errorIcon from '../../style/icons/error_icon.svg';
+import { KEY_MESSAGE } from '../utils/const';
+import { BatchService } from '../batches/batchService';
 
 function BigQuerySqlForm({ data }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
@@ -41,6 +45,25 @@ function BigQuerySqlForm({ data }: any) {
     { displayName: string; email: string }[]
   >([]);
   const [serviceAccountSelected, setServiceAccountSelected] = useState('');
+
+  let keyType = '';
+  let keyRing = '';
+  let keys = '';
+  const selectedKeyType = keyType ? 'customerManaged' : 'googleManaged';
+  const [selectedEncryptionRadio, setSelectedEncryptionRadio] =
+    useState(selectedKeyType);
+  const [selectedRadioValue, setSelectedRadioValue] = useState('key');
+  const [keyRingSelected, setKeyRingSelected] = useState(keyRing);
+  const [keySelected, setKeySelected] = useState(keys);
+  const [manualKeySelected, setManualKeySelected] = useState('');
+  const [manualValidation, setManualValidation] = useState(true);
+  const [keylist, setKeylist] = useState<string[]>([]);
+  const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
+
+  const iconError = new LabIcon({
+    name: 'launcher:error-icon',
+    svgstr: errorIcon
+  });
 
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
@@ -133,12 +156,18 @@ function BigQuerySqlForm({ data }: any) {
     data.location = '';
   };
 
-  const handleMultiRegionTypeSelected = (event: React.ChangeEvent<{}>, value: string | null) => {
+  const handleMultiRegionTypeSelected = (
+    event: React.ChangeEvent<{}>,
+    value: string | null
+  ) => {
     setMultiRegionSelected(value || '');
     data.location = value || '';
   };
 
-  const handleRegionTypeSelected = (event: React.ChangeEvent<{}>, value: string | null) => {
+  const handleRegionTypeSelected = (
+    event: React.ChangeEvent<{}>,
+    value: string | null
+  ) => {
     setRegionSelected(value || '');
     data.location = value;
   };
@@ -150,6 +179,57 @@ function BigQuerySqlForm({ data }: any) {
     data.writeDisposition = event.target.value;
   };
 
+  const handlekeyRingRadio = () => {
+    setSelectedRadioValue('key');
+    setManualKeySelected('');
+    setManualValidation(true);
+  };
+
+  const handleGoogleManagedRadio = () => {
+    setSelectedEncryptionRadio('googleManaged');
+    setKeyRingSelected('');
+    setKeySelected('');
+    setManualKeySelected('');
+  };
+  const handlekeyManuallyRadio = () => {
+    setSelectedRadioValue('manually');
+    setKeyRingSelected('');
+    setKeySelected('');
+  };
+
+  const handleManualKeySelected = (event: any) => {
+    //any
+    const inputValue = event.target.value;
+    const numericRegex =
+      /^projects\/[^/]+\/locations\/[^/]+\/keyRings\/[^/]+\/cryptoKeys\/[^/]+$/;
+
+    if (numericRegex.test(inputValue) || inputValue === '') {
+      setManualValidation(true);
+    } else {
+      setManualValidation(false);
+    }
+
+    setManualKeySelected(inputValue);
+  };
+
+  const handleKeyRingChange = (data: string | null) => {
+    if (data !== null) {
+      setKeyRingSelected(data!.toString());
+      listKeysAPI(data!.toString());
+    }
+  };
+  const handlekeyChange = (data: string | null) => {
+    if (data !== null) {
+      setKeySelected(data!.toString());
+    }
+  };
+
+  const listKeysAPI = async (keyRing: string) => {
+    await BatchService.listKeysAPIService(keyRing, setKeylist, setKeySelected); //batch imported
+  };
+  const listKeyRingsAPI = async () => {
+    await BatchService.listKeyRingsAPIService(setKeyRinglist); //batch imported
+  };
 
   useEffect(() => {
     if (data) {
@@ -158,15 +238,13 @@ function BigQuerySqlForm({ data }: any) {
   }, [parameterDetailUpdated]);
 
   useEffect(() => {
-      fetchRegionList();
-      fetchServiceAccounts();
-  }, []);//check if can call this only one []
-
-  // useEffect(() => {
-  //   fetchServiceAccounts();
-  // }, [serviceAccountSelected]);//check if it need to call one time
+    fetchRegionList();
+    fetchServiceAccounts();
+    listKeyRingsAPI();
+  }, []);
 
   useEffect(() => {
+    console.log(data, serviceAccounts);
     if (data) {
       setInputFileSelectedLocal(data.inputFile);
       setRetryCount(data.retryCount);
@@ -206,7 +284,6 @@ function BigQuerySqlForm({ data }: any) {
       <div>
         <form>
           <div className="custom-node-body">
-            {/* check class name */}
             <label htmlFor="file-input" className="create-scheduler-style">
               Input File*
             </label>
@@ -398,20 +475,147 @@ function BigQuerySqlForm({ data }: any) {
                 )
               )}
               <div className="scheduler-retry-parent">
-              <Autocomplete
-                className="create-scheduler-style-trigger"
-                options={serviceAccounts}
-                getOptionLabel={option => option.displayName}
-                value={
-                  serviceAccounts.find(
-                    option => option.displayName === serviceAccountSelected
-                  ) || null
-                }
-                onChange={handleServiceAccountChange}
-                renderInput={params => (
-                  <TextField {...params} label="Service account " />
+                <Autocomplete
+                  className="create-scheduler-style-trigger"
+                  options={serviceAccounts}
+                  getOptionLabel={option => option.displayName}
+                  value={
+                    serviceAccounts.find(
+                      option => option.displayName === serviceAccountSelected
+                    ) || null
+                  }
+                  onChange={handleServiceAccountChange}
+                  renderInput={params => (
+                    <TextField {...params} label="Service account " />
+                  )}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="encryption" className="encryption-header">
+                Encryption
+              </label>
+              <div>
+                <div className="create-batch-radio">
+                  <Radio
+                    size="small"
+                    className="select-batch-radio-style"
+                    value="googleManaged"
+                    checked={selectedEncryptionRadio === 'googleManaged'}
+                    onChange={handleGoogleManagedRadio}
+                  />
+                  <div className="create-batch-message">
+                    Google-managed encryption key
+                  </div>
+                </div>
+                <div className="create-batch-sub-message">
+                  No configuration required
+                </div>
+              </div>
+              <div>
+                <div className="create-batch-radio">
+                  <Radio
+                    size="small"
+                    className="select-batch-radio-style"
+                    value="googleManaged"
+                    checked={selectedEncryptionRadio === 'customerManaged'}
+                    onChange={() =>
+                      setSelectedEncryptionRadio('customerManaged')
+                    }
+                  />
+                  <div className="create-batch-message">
+                    Customer-managed encryption key (CMEK)
+                  </div>
+                </div>
+                <div className="create-batch-sub-message">
+                  Manage via{' '}
+                  <div
+                    className="submit-job-learn-more"
+                    // onClick={() => {
+                    //   window.open(
+                    //     `${SECURITY_KEY}?project=${projectName}`,
+                    //     '_blank'
+                    //   );
+                    // }}
+                  >
+                    Google Cloud Key Management Service
+                  </div>
+                </div>
+                {selectedEncryptionRadio === 'customerManaged' && (
+                  <>
+                    <div>
+                      <div className="create-scheduler-encrypt">
+                        <Radio
+                          size="small"
+                          className="select-batch-encrypt-radio-style"
+                          value="mainClass"
+                          checked={selectedRadioValue === 'key'}
+                          onChange={handlekeyRingRadio}
+                        />
+                        <div className="create-scheduler-style-key">
+                          <Autocomplete
+                           className="create-scheduler-style-key-rings"
+                            disabled={
+                              selectedRadioValue === 'manually' ? true : false
+                            }
+                            options={keyRinglist}
+                            value={keyRingSelected}
+                            onChange={(_event, val) => handleKeyRingChange(val)}
+                            renderInput={params => (
+                              <TextField {...params} label="Key rings" />
+                            )}
+                          />
+                          <Autocomplete
+                           className="create-scheduler-style-keys"
+                            disabled={
+                              selectedRadioValue === 'manually' ? true : false
+                            }
+                            options={keylist}
+                            value={keySelected}
+                            onChange={(_event, val) => handlekeyChange(val)}
+                            renderInput={params => (
+                              <TextField {...params} label="Keys" />
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="create-scheduler-encrypt">
+                      <Radio
+                        size="small"
+                        className="select-batch-encrypt-radio-style "
+                        value="mainClass"
+                        checked={selectedRadioValue === 'manually'}
+                        onChange={handlekeyManuallyRadio}
+                      />
+                      <div className="create-scheduler-style-key">
+                        <Input
+                          // className={
+                          //   selectedRadioValue === 'key'
+                          //     ? 'disable-text create-batch-key manual-key'
+                          //     : 'create-batch-style manual-key'
+                          // }
+                          className="create-scheduler-style-key"
+                          value={manualKeySelected}
+                          type="text"
+                          disabled={selectedRadioValue === 'key'}
+                          onChange={handleManualKeySelected}
+                          Label="Enter key manually"
+                        />
+                      </div>
+                    </div>
+                    {!manualValidation && (
+                      <div className="error-key-parent-manual">
+                        <iconError.react
+                          tag="div"
+                          className="logo-alignment-style"
+                        />
+                        <div className="error-key-missing">{KEY_MESSAGE}</div>
+                      </div>
+                    )}
+                  </>
                 )}
-              />
               </div>
             </div>
             <div className="scheduler-retry-parent">
