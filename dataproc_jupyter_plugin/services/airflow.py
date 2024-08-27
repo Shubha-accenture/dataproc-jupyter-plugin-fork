@@ -396,7 +396,7 @@ class Client:
         try:
             credentials = oauth2.Credentials(self._access_token)
             client = kms.KeyManagementServiceAsyncClient(credentials=credentials)
-            location_name = f"projects/{self.project_id}/locations/{self.location_id}"
+            location_name = f"projects/{self.project_id}/locations/{self.region_id}"
             key_rings = await client.list_key_rings(request={"parent": location_name})
             key_ring_list =[]
             async for key in key_rings:
