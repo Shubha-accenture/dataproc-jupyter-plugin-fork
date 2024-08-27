@@ -203,6 +203,8 @@ def setup_handlers(web_app):
         "triggerDag": airflow.TriggerDagController,
         "regionList": airflow.Regioncontroller,
         "serviceAccountList": airflow.ServiceAccountcontroller,
+        "keyRingsList": airflow.KeyRingscontroller,
+        "keysList": airflow.Keyscontroller,
         "downloadOutput": executor.DownloadOutputController,
         "bigQueryDataset": bigquery.DatasetController,
         "bigQueryTable": bigquery.TableController,

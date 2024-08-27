@@ -32,7 +32,8 @@ dependencies = [
     "aiohttp~=3.9.5",
     "google-cloud-compute~=1.19.2",
     "google-api-python-client~=2.142.0",
-    "google-cloud-iam~=2.15.2"
+    "google-cloud-iam~=2.15.2",
+    "google-cloud-kms~=2.24.2"
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 

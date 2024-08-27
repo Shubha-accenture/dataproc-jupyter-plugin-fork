@@ -21,6 +21,8 @@ from google.cloud import compute_v1
 from google.cloud import iam_admin_v1
 import proto
 from google.cloud.iam_admin_v1 import types
+from google.cloud import kms
+from google.cloud import kms_v1
 
 from dataproc_jupyter_plugin import urls
 from dataproc_jupyter_plugin.commons.commands import async_run_gsutil_subcommand
@@ -388,4 +390,31 @@ class Client:
             return account_list
         except Exception as e:
             self.log.exception(f"Error listing service accounts: {str(e)}")
+            return {"error": str(e)}
+
+    async def list_key_rings(self,project_id,location_id) -> kms_v1.services.key_management_service.pagers.ListKeyRingsPager:
+        try:
+            credentials = oauth2.Credentials(self._access_token)
+            client = kms.KeyManagementServiceAsyncClient(credentials=credentials)
+            location_name = f"projects/{project_id}/locations/{location_id}"
+            key_rings = await client.list_key_rings(request={"parent": location_name})
+            key_ring_list =[]
+            async for key in key_rings:
+                key_ring_list.append(key.name)
+            return key_ring_list
+        except Exception as e:
+            self.log.exception(f"Error listing key rings: {str(e)}")
+            return {"error": str(e)}
+        
+    async def list_keys(self,project_id, location_id, key_ring_id):
+        try:
+            client = kms.KeyManagementServiceAsyncClient()
+            parent = client.key_ring_path(project_id, location_id, key_ring_id)
+            keys = await client.list_crypto_keys(request={"parent": parent})
+            keys_list =[]
+            async for key in keys:
+                keys_list.append(key.name)
+            return keys_list
+        except Exception as e:
+            self.log.exception(f"Error listing keys: {str(e)}")
             return {"error": str(e)}
