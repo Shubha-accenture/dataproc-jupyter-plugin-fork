@@ -231,16 +231,12 @@ class KeyRingscontroller(AirflowHandler):
         return "Key rings"
     
     async def _handle_get(self, client):
-        project_id = self.get_argument("project_id")
-        region_id = self.get_argument("region_id")
-        return await client.list_key_rings(project_id,region_id)
+        return await client.list_key_rings()
     
 class Keyscontroller(AirflowHandler):
     def description(self):
         return "Keys"
     
     async def _handle_get(self, client):
-        project_id = self.get_argument("project_id")
-        region_id = self.get_argument("region_id")
         key_ring_id = self.get_argument("key_ring_id")
-        return await client.list_keys(project_id,region_id,key_ring_id)
+        return await client.list_keys(key_ring_id)
