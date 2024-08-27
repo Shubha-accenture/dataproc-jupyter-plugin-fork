@@ -336,7 +336,8 @@ class Client:
                         customContainer=custom_container,
                         metastoreService=metastore_service,
                         version=version,
-                        retries = node.get('data', {}).get('retryCount', {})
+                        retries = node.get('data', {}).get('retryCount', {}),
+                        serviceAccount = node.get('data', {}).get('serviceAccount', {})
                     )
 
 
