@@ -942,8 +942,8 @@ export class SchedulerService {
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
       } else {
-        const keyRingNames = formattedResponse.map((path: string) =>
-          path.split('/').pop()
+        const keyRingNames = formattedResponse.map((e: string) =>
+          e.split('/').pop()
         );
         setKeyRinglist(keyRingNames);
       }
@@ -961,7 +961,7 @@ export class SchedulerService {
 
   static getKeysList = async (
     Id: string,
-    setKeyslist: (value: string[]) => void
+    setKeyslist:(value: { displaykey: string; key: string }[]) => void
   ) => {
     try {
       const formattedResponse: any = await requestAPI(
@@ -970,9 +970,10 @@ export class SchedulerService {
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
       } else {
-        const keys = formattedResponse.map((path: string) =>
-          path.split('/').pop()
-        );
+        const keys = formattedResponse.map((path: string) => ({
+          displaykey: path.split('/').pop() || '',
+          key: path,
+        }));
         setKeyslist(keys);
       }
     } catch (error) {

@@ -56,7 +56,7 @@ function BigQuerySqlForm({ data }: any) {
   const [keySelected, setKeySelected] = useState(keys);
   const [manualKeySelected, setManualKeySelected] = useState('');
   const [manualValidation, setManualValidation] = useState(true);
-  const [keylist, setKeylist] = useState<string[]>([]);
+  const [keylist, setKeylist] = useState<{displaykey: string; key: string }[]>([]);
   const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
 
   const iconError = new LabIcon({
@@ -211,15 +211,23 @@ function BigQuerySqlForm({ data }: any) {
     setManualKeySelected(inputValue);
   };
 
-  const handleKeyRingChange = (data: string | null) => {
+  const handleKeyRingChange = (value: string | null) => {
     if (data !== null) {
-      setKeyRingSelected(data!.toString());
-      listKeysAPI(data!.toString());
+      setKeyRingSelected(value!.toString());
+      listKeysAPI(value!.toString());
+      data.keyRings=value
     }
   };
-  const handlekeyChange = (data: string | null) => {
-    if (data !== null) {
-      setKeySelected(data!.toString());
+  const handleKeyChange = (
+    event: React.SyntheticEvent<Element, Event>,
+    value: { displaykey: string; key: string } | null
+  ) => {
+    if (value) {
+      setKeySelected(value.displaykey);
+      data.kmsKey=value.key
+    } else {
+      setKeySelected('');
+      data.kmsKey=''
     }
   };
 
@@ -274,8 +282,22 @@ function BigQuerySqlForm({ data }: any) {
       } else if (data.location === '') {
         setAutoRegionSelected(true);
       }
+      if(data.keyRings){
+        setKeyRingSelected(data.keyRings)
+        setSelectedEncryptionRadio('customerManaged')
+      }
+      if (data.kmsKey) {
+        // console.log(data.kmsKey, keylist)
+        // const selectedKey = keylist.find(option => option.key === data.kmsKey);
+        // console.log(selectedKey)
+        // if (selectedKey) {
+        //   setKeySelected(selectedKey.displaykey);
+        // }
+        let displayKey=data.kmsKey.split('/').pop()
+        setKeySelected(displayKey)
+      }
     }
-  }, [data, serviceAccounts]);
+  }, [data, serviceAccounts,keylist]);
 
   return (
     <>
@@ -570,8 +592,11 @@ function BigQuerySqlForm({ data }: any) {
                               selectedRadioValue === 'manually' ? true : false
                             }
                             options={keylist}
-                            value={keySelected}
-                            onChange={(_event, val) => handlekeyChange(val)}
+                            getOptionLabel={(option) => option.displaykey} 
+                            value={ keylist.find(
+                              option => option.displaykey === keySelected
+                            ) || null}
+                            onChange={handleKeyChange}
                             renderInput={params => (
                               <TextField {...params} label="Keys" />
                             )}
