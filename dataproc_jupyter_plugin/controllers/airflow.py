@@ -231,10 +231,8 @@ class KeyRingscontroller(AirflowHandler):
         return "Key rings"
     
     async def _handle_get(self, client):
-        # project_id = self.get_argument("project_id")
-        # region_id = self.get_argument("region_id")
-        project_id = 'dataproc-jupyter-extension-dev'
-        region_id = 'us-central1'
+        project_id = self.get_argument("project_id")
+        region_id = self.get_argument("region_id")
         return await client.list_key_rings(project_id,region_id)
     
 class Keyscontroller(AirflowHandler):
@@ -242,10 +240,7 @@ class Keyscontroller(AirflowHandler):
         return "Keys"
     
     async def _handle_get(self, client):
-        # project_id = self.get_argument("project_id")
-        # region_id = self.get_argument("region_id")
-        # key_ring_id = self.get_argument("key_ring_id")
-        project_id = 'dataproc-jupyter-extension-dev'
-        region_id = 'us-central1'
-        key_ring_id = 'keyring1'
+        project_id = self.get_argument("project_id")
+        region_id = self.get_argument("region_id")
+        key_ring_id = self.get_argument("key_ring_id")
         return await client.list_keys(project_id,region_id,key_ring_id)
