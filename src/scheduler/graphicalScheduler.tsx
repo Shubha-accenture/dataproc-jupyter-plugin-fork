@@ -84,7 +84,9 @@ const GraphicalScheduler = ({
         tableId: '',
         location: '',
         writeDisposition: '',
-        serviceAccount: ''
+        serviceAccount: '',
+        keyRings:'',
+        kmsKey:''
       }
     }
   ];
@@ -146,7 +148,9 @@ const GraphicalScheduler = ({
               tableId: '',
               location: '',
               writeDisposition: '',
-              serviceAccount: ''
+              serviceAccount: '',
+              keyRings:'',
+              kmsKey:''
             },
             origin: [0.5, 0.0]
           };
@@ -302,7 +306,8 @@ const GraphicalScheduler = ({
             datasetId: node.data.datasetId,
             location: node.data.location,
             writeDisposition: node.data.writeDisposition,
-            serviceAccount: node.data.serviceAccount
+            serviceAccount: node.data.serviceAccount,
+            kmsKey:node.data. kmsKey
           }
         };
       }
