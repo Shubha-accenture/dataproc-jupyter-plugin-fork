@@ -319,7 +319,6 @@ class Client:
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
                         if not input_file.startswith("gs://") else input_file
                     )
-                    print(input_notebook)
                     content = serverless_template.render(
                         job,
                         id = id,
@@ -400,8 +399,9 @@ class Client:
                     retries = node.get('data', {}).get('retryCount', {}),
                     datasetId  =node.get('data',{}).get('datasetId',{}),
                     tableId =node.get('data',{}).get('tableId',{}),
-                    serviceAccount = service_account,
-                    writeDisposition =node.get('data',{}).get('writeDisposition',{})
+                    serviceAccount = node.get('data',{}).get('serviceAccount',{}),
+                    writeDisposition =node.get('data',{}).get('writeDisposition',{}),
+                    kmsKey = node.get('data',{}).get('kmsKey',{})
                     )
                     bq_file = f"dag_{input_file}.py"
                     with open(bq_file, mode="w", encoding="utf-8") as message:

@@ -392,11 +392,11 @@ class Client:
             self.log.exception(f"Error listing service accounts: {str(e)}")
             return {"error": str(e)}
 
-    async def list_key_rings(self) -> kms_v1.services.key_management_service.pagers.ListKeyRingsPager:
+    async def list_key_rings(self,region_id) -> kms_v1.services.key_management_service.pagers.ListKeyRingsPager:
         try:
             credentials = oauth2.Credentials(self._access_token)
             client = kms.KeyManagementServiceAsyncClient(credentials=credentials)
-            location_name = f"projects/{self.project_id}/locations/{self.region_id}"
+            location_name = f"projects/{self.project_id}/locations/{region_id}"
             key_rings = await client.list_key_rings(request={"parent": location_name})
             key_ring_list =[]
             async for key in key_rings:
@@ -406,11 +406,11 @@ class Client:
             self.log.exception(f"Error listing key rings: {str(e)}")
             return {"error": str(e)}
         
-    async def list_keys(self, key_ring_id):
+    async def list_keys(self, region_id, key_ring_id):
         try:
             credentials = oauth2.Credentials(self._access_token)
             client = kms.KeyManagementServiceAsyncClient(credentials=credentials)
-            parent = client.key_ring_path(self.project_id, self.region_id, key_ring_id)
+            parent = client.key_ring_path(self.project_id, region_id, key_ring_id)
             keys = await client.list_crypto_keys(request={"parent": parent})
             keys_list =[]
             async for key in keys:
