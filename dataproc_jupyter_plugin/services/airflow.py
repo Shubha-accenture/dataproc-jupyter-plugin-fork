@@ -408,7 +408,8 @@ class Client:
         
     async def list_keys(self, key_ring_id):
         try:
-            client = kms.KeyManagementServiceAsyncClient()
+            credentials = oauth2.Credentials(self._access_token)
+            client = kms.KeyManagementServiceAsyncClient(credentials=credentials)
             parent = client.key_ring_path(self.project_id, self.region_id, key_ring_id)
             keys = await client.list_crypto_keys(request={"parent": parent})
             keys_list =[]
