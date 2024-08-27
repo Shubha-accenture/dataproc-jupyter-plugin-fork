@@ -181,7 +181,7 @@ def read_sql_query_from_gcs(gcs_path,service_account, **kwargs):
 
 
 # Function to prepare the BigQuery configuration
-def prepare_bigquery_config(id,projectId,datasetId,tableId,writeDisposition, **kwargs):
+def prepare_bigquery_config(id, projectId, datasetId, tableId, kmsKey, writeDisposition, **kwargs):
     ti = kwargs['ti']
     sql_query = ti.xcom_pull(task_ids=f'read_sql_query_{id}')
     config = {
@@ -194,6 +194,9 @@ def prepare_bigquery_config(id,projectId,datasetId,tableId,writeDisposition, **k
                 "tableId": tableId,
             },
            "writeDisposition": writeDisposition,
+           "destinationEncryptionConfiguration": {
+                "kmsKeyName": kmsKey
+            }
         }
     }
     ti.xcom_push(key='bigquery_config', value=config)
