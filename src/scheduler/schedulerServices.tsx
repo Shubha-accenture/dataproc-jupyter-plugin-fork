@@ -22,8 +22,7 @@ import { toastifyCustomStyle } from '../utils/utils';
 import { JupyterLab } from '@jupyterlab/application';
 import { scheduleMode } from '../utils/const';
 
-interface IPayload {
-}
+interface IPayload {}
 
 interface IUpdateSchedulerAPIResponse {
   status: number;
@@ -884,7 +883,9 @@ export class SchedulerService {
 
   static getServiceAccounts = async (
     projectId: string,
-    setServiceAccounts: (value: { displayName: string, email: string }[]) => void
+    setServiceAccounts: (
+      value: { displayName: string; email: string }[]
+    ) => void
   ) => {
     try {
       const formattedResponse: any = await requestAPI(
@@ -895,7 +896,7 @@ export class SchedulerService {
       } else {
         const serviceAccounts = formattedResponse.map((account: any) => ({
           displayName: account.displayName,
-          email: account.email,
+          email: account.email
         }));
         setServiceAccounts(serviceAccounts);
       }
@@ -928,6 +929,56 @@ export class SchedulerService {
       DataprocLoggingService.log('Error fetching Region List', LOG_LEVEL.ERROR);
       toast.error(
         `Failed to fetch the Region List for ${projectId}: ${error}`,
+        toastifyCustomStyle
+      );
+    }
+  };
+
+  static getKeyRingsList = async (
+    setKeyRinglist: (value: string[]) => void
+  ) => {
+    try {
+      const formattedResponse: any = await requestAPI(`keyRingsList`);
+      if (formattedResponse?.error?.code) {
+        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+      } else {
+        const keyRingNames = formattedResponse.map((path: string) =>
+          path.split('/').pop()
+        );
+        setKeyRinglist(keyRingNames);
+      }
+    } catch (error) {
+      DataprocLoggingService.log(
+        'Error fetching KeyRingsList ',
+        LOG_LEVEL.ERROR
+      );
+      toast.error(
+        `Failed to fetch the KeyRingsList :${error}`,
+        toastifyCustomStyle
+      );
+    }
+  };
+
+  static getKeysList = async (
+    Id: string,
+    setKeyslist: (value: string[]) => void
+  ) => {
+    try {
+      const formattedResponse: any = await requestAPI(
+        `keysList?key_ring_id=${Id}`
+      );
+      if (formattedResponse?.error?.code) {
+        toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
+      } else {
+        const keys = formattedResponse.map((path: string) =>
+          path.split('/').pop()
+        );
+        setKeyslist(keys);
+      }
+    } catch (error) {
+      DataprocLoggingService.log('Error fetching KeysList ', LOG_LEVEL.ERROR);
+      toast.error(
+        `Failed to fetch the KeysList :${error}`,
         toastifyCustomStyle
       );
     }
