@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import plusIcon from '../../style/icons/plus_icon.svg';
 import plusIconDisable from '../../style/icons/plus_icon_disable.svg';
 import deleteIcon from '../../style/icons/delete_icon.svg';
 import errorIcon from '../../style/icons/error_icon.svg';
-import { DEFAULT_LABEL_DETAIL } from '../utils/const';
+import { SCHEDULER_DEFAULT_LABEL_DETAIL } from '../utils/const';
 import { Input } from '../controls/MuiWrappedInput';
 import { Autocomplete, TextField } from '@mui/material';
 
@@ -73,8 +73,9 @@ function SchedulerProperties({
         selectedRuntimeClone === undefined &&
         !createBatch
       ) {
-        setLabelDetail([DEFAULT_LABEL_DETAIL]);
-        setLabelDetailUpdated([DEFAULT_LABEL_DETAIL]);
+        const defaultDetail = [`${SCHEDULER_DEFAULT_LABEL_DETAIL}`];
+        setLabelDetail(defaultDetail);
+        setLabelDetailUpdated(defaultDetail);
       } else {
         if (!selectedRuntimeClone) {
           setLabelDetailUpdated([]);
@@ -83,24 +84,6 @@ function SchedulerProperties({
       }
     }
   }, []);
-
-  const Types = [
-    'STRING',
-    'BYTES',
-    'INTEGER',
-    'FLOAT',
-    'NUMERIC',
-    'BIGNUMERIC',
-    'TIMESTAMP',
-    'DATE',
-    'TIME',
-    'DATETIME',
-    'GEOGRAPHY',
-    'RECORD',
-    'JSON',
-    'RANGE'
-  ];
-  console.log(Types);
 
   const handleAddLabel = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
@@ -127,14 +110,11 @@ function SchedulerProperties({
   };
   const handleEditLabel = (value: string, index: number, keyValue: string) => {
     const labelEdit = [...labelDetail];
-
     labelEdit.forEach((data, dataNumber: number) => {
       if (index === dataNumber) {
-        /*
-          allowed aplhanumeric and spaces and underscores
-        */
-        const regexp = /^[a-z0-9-_]+$/;
+        const parts = data.split(':');
         if (keyValue === 'key') {
+          const regexp = /^[a-z0-9-_]+$/;
           if (
             (value.search(regexp) === -1 ||
               value.charAt(0) !== value.charAt(0).toLowerCase()) &&
@@ -145,7 +125,6 @@ function SchedulerProperties({
             setKeyValidation(-1);
           }
 
-          // Check for duplicate key when editing
           const newKey = value;
           const duplicateIndex = labelEdit.findIndex(
             (label, i) => i !== index && label.split(':')[0] === newKey
@@ -155,28 +134,26 @@ function SchedulerProperties({
           } else {
             setDuplicateKeyError(-1);
           }
-
-          data = data.replace(data.split(':')[0], value);
-        } else {
+          parts[0] = value; // Update the key part
+        } else if (keyValue === 'value') {
+          const regexp = /^[a-z0-9-_]+$/;
           if (value.search(regexp) === -1 && buttonText === 'ADD LABEL') {
             setValueValidation(index);
           } else {
             setValueValidation(-1);
           }
-          /*
-          value is split from labels
-          Example:"client:dataproc_jupyter_plugin"
-          */
-          if (data.split(':')[1] === '') {
-            data = data + value;
-          } else {
-            data = data.replace(data.split(':')[1], value);
-          }
+          parts[1] = value; // Update the value part
+        } else if (keyValue === 'type') {
+          // Handle updating the type part
+          parts[2] = value; // Update the type part
         }
+        // Rejoin the parts to form the updated label string
+        labelEdit[dataNumber] = parts.join(':');
       }
-      labelEdit[dataNumber] = data;
     });
+
     setLabelDetailUpdated(labelEdit);
+    setLabelDetail(labelEdit);
   };
 
   const styleAddLabelButton = (buttonText: string, labelDetail: string) => {
@@ -205,6 +182,23 @@ function SchedulerProperties({
     }
   };
 
+  const Types = [
+    'STRING',
+    'BYTES',
+    'INTEGER',
+    'FLOAT',
+    'NUMERIC',
+    'BIGNUMERIC',
+    'TIMESTAMP',
+    'DATE',
+    'TIME',
+    'DATETIME',
+    'GEOGRAPHY',
+    'RECORD',
+    'JSON',
+    'RANGE'
+  ];
+
   return (
     <div>
       <div
@@ -216,10 +210,8 @@ function SchedulerProperties({
       >
         {labelDetail.length > 0 &&
           labelDetail.map((label: string, index: number) => {
-            /*
-                     Extracting key, value from label
-                      Example: "{client:dataProc_plugin}"
-                  */
+            /*Extracting key, value from label 
+            Example: "{client:dataProc_plugin}"*/
             const labelSplit = label.split(':');
 
             return (
@@ -297,7 +289,7 @@ function SchedulerProperties({
                       <Input
                         sx={{ margin: 0 }}
                         className={`edit-input-style ${
-                          label === DEFAULT_LABEL_DETAIL &&
+                          label === SCHEDULER_DEFAULT_LABEL_DETAIL &&
                           buttonText === 'ADD LABEL'
                             ? ' disable-text'
                             : ''
@@ -307,14 +299,10 @@ function SchedulerProperties({
                           handleEditLabel(e.target.value, index, 'value')
                         }
                         disabled={
-                          label === DEFAULT_LABEL_DETAIL &&
+                          label === SCHEDULER_DEFAULT_LABEL_DETAIL &&
                           buttonText === 'ADD LABEL'
                         }
-                        defaultValue={
-                          labelSplit.length > 2
-                            ? labelSplit[1] + ':' + labelSplit[2]
-                            : labelSplit[1]
-                        }
+                        defaultValue={labelSplit[1]}
                         Label={`Value ${index + 1}`}
                       />
                     </div>
@@ -333,21 +321,28 @@ function SchedulerProperties({
                     )}
                   </div>
                   <div className="key-message-wrapper">
-                  <div className="select-text-overlay-label">
-                    <Autocomplete
-                      options={Types}
-                      // value={}
-                      // onChange={}
-                      renderInput={params => (
-                        <TextField {...params} label="Type*" />
-                      )}
-                    />
+                    <div className="select-text-overlay-label">
+                      <Autocomplete
+                        options={Types}
+                        value={
+                          Types.find(
+                            option =>
+                              option === labelDetail[index].split(':')[2]
+                          ) || null
+                        }
+                        onChange={(e, newValue) =>
+                          handleEditLabel(newValue || '', index, 'type')
+                        }
+                        renderInput={params => (
+                          <TextField {...params} label={`Type ${index + 1}`} />
+                        )}
+                      />
                     </div>
                   </div>
                   <div
                     role="button"
                     className={
-                      label === DEFAULT_LABEL_DETAIL &&
+                      label === SCHEDULER_DEFAULT_LABEL_DETAIL &&
                       buttonText === 'ADD LABEL'
                         ? 'labels-delete-icon-hide'
                         : 'labels-delete-icon'
@@ -355,7 +350,7 @@ function SchedulerProperties({
                     onClick={() => {
                       if (
                         !(
-                          label === DEFAULT_LABEL_DETAIL &&
+                          label === SCHEDULER_DEFAULT_LABEL_DETAIL &&
                           buttonText === 'ADD LABEL'
                         )
                       ) {

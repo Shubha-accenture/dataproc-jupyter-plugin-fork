@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Input } from '../controls/MuiWrappedInput';
-import LabelProperties from '../jobs/labelProperties';
 import { eventEmitter } from '../utils/signalEmitter';
 import {
   Autocomplete,
@@ -17,7 +16,7 @@ import { SchedulerService } from './schedulerServices';
 import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
 import { KEY_MESSAGE } from '../utils/const';
-// import SchedulerProperties from './schedulerProperties';
+import SchedulerProperties from './schedulerProperties';
 
 function BigQuerySqlForm({ data }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
@@ -337,8 +336,7 @@ function BigQuerySqlForm({ data }: any) {
                 </div>
               }
             </div>
-            {/* <SchedulerProperties */}
-            <LabelProperties
+            <SchedulerProperties
               labelDetail={parameterDetail}
               setLabelDetail={setParameterDetail}
               labelDetailUpdated={parameterDetailUpdated}
