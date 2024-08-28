@@ -307,7 +307,7 @@ const GraphicalScheduler = ({
             location: node.data.location,
             writeDisposition: node.data.writeDisposition,
             serviceAccount: node.data.serviceAccount,
-            kmsKey:node.data. kmsKey
+            kmsKey:node.data.kmsKey
           }
         };
       }

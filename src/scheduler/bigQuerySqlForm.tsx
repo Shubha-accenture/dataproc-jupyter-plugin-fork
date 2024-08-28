@@ -17,6 +17,7 @@ import { SchedulerService } from './schedulerServices';
 import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
 import { KEY_MESSAGE } from '../utils/const';
+// import SchedulerProperties from './schedulerProperties';
 
 function BigQuerySqlForm({ data }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
@@ -51,12 +52,12 @@ function BigQuerySqlForm({ data }: any) {
   const selectedKeyType = keyType ? 'customerManaged' : 'googleManaged';
   const [selectedEncryptionRadio, setSelectedEncryptionRadio] =
     useState(selectedKeyType);
-  const [selectedRadioValue, setSelectedRadioValue] = useState('key');
+  const [selectedRadioValue, setSelectedRadioValue] = useState('key');//check this if causing any issue
   const [keyRingSelected, setKeyRingSelected] = useState(keyRing);
   const [keySelected, setKeySelected] = useState(keys);
   const [manualKeySelected, setManualKeySelected] = useState('');
   const [manualValidation, setManualValidation] = useState(true);
-  const [keylist, setKeylist] = useState<{displaykey: string; key: string }[]>([]);
+  const [keylist, setKeylist] = useState<{displaykey: string; key: string }[]>([]);//change this to only array of strings
   const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
 
   const iconError = new LabIcon({
@@ -209,6 +210,7 @@ function BigQuerySqlForm({ data }: any) {
     }
 
     setManualKeySelected(inputValue);
+    data.kmsKey=inputValue
   };
 
   const handleKeyRingChange = (value: string | null) => {
@@ -218,6 +220,7 @@ function BigQuerySqlForm({ data }: any) {
       data.keyRings=value
     }
   };
+
   const handleKeyChange = (
     event: React.SyntheticEvent<Element, Event>,
     value: { displaykey: string; key: string } | null
@@ -232,10 +235,11 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   const listKeysAPI = async (keyRingSelected: string) => {
-    await SchedulerService.getKeysList(keyRingSelected, setKeylist);
+    await SchedulerService.getKeysList(data.location,keyRingSelected, setKeylist);
   };
   const listKeyRingsAPI = async () => {
-    await SchedulerService.getKeyRingsList(setKeyRinglist);
+    console.log(data.location)
+    await SchedulerService.getKeyRingsList(data.location,setKeyRinglist);
   };
 
   useEffect(() => {
@@ -247,8 +251,16 @@ function BigQuerySqlForm({ data }: any) {
   useEffect(() => {
     fetchRegionList();
     fetchServiceAccounts();
-    listKeyRingsAPI();
+    listKeyRingsAPI();//check now as we don't have region here
   }, []);
+
+  useEffect(() => {
+    console.log("useeffect called")
+    listKeyRingsAPI();//check now as we don't have region here
+  }, [data.location,regionSelected,multiRegionSelected]);
+  // useEffect(() => {
+  //   listKeysAPI();
+  // }, []);
 
   useEffect(() => {
     if (data) {
@@ -282,22 +294,27 @@ function BigQuerySqlForm({ data }: any) {
       } else if (data.location === '') {
         setAutoRegionSelected(true);
       }
-      if(data.keyRings){
-        setKeyRingSelected(data.keyRings)
-        setSelectedEncryptionRadio('customerManaged')
-      }
+      // if(data.keyRings){
+      //   setKeyRingSelected(data.keyRings)
+      //   setSelectedEncryptionRadio('customerManaged')
+      // }
       if (data.kmsKey) {
+        setSelectedEncryptionRadio('customerManaged')
         // console.log(data.kmsKey, keylist)
         // const selectedKey = keylist.find(option => option.key === data.kmsKey);
         // console.log(selectedKey)
         // if (selectedKey) {
         //   setKeySelected(selectedKey.displaykey);
         // }
-        let displayKey=data.kmsKey.split('/').pop()
-        setKeySelected(displayKey)
+        // projects/dataproc-jupyter-extension-dev/locations/us-central1/keyRings/keyring1/cryptoKeys/key3 // handle rings with this 
+        let kmsKeyArray=data.kmsKey.split('/')
+        console.log(kmsKeyArray)
+        setKeyRingSelected(kmsKeyArray[5])
+        setKeySelected(kmsKeyArray[7])
+
       }
     }
-  }, [data, serviceAccounts,keylist]);
+  }, [data, serviceAccounts,keylist]);//remove keylist by checking
 
   return (
     <>
@@ -320,6 +337,7 @@ function BigQuerySqlForm({ data }: any) {
                 </div>
               }
             </div>
+            {/* <SchedulerProperties */}
             <LabelProperties
               labelDetail={parameterDetail}
               setLabelDetail={setParameterDetail}
@@ -593,9 +611,9 @@ function BigQuerySqlForm({ data }: any) {
                             }
                             options={keylist}
                             getOptionLabel={(option) => option.displaykey} 
-                            value={ keylist.find(
+                            value={keylist.find(
                               option => option.displaykey === keySelected
-                            ) || null}
+                            )}
                             onChange={handleKeyChange}
                             renderInput={params => (
                               <TextField {...params} label="Keys" />

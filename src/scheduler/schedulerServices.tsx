@@ -935,10 +935,11 @@ export class SchedulerService {
   };
 
   static getKeyRingsList = async (
+    regionId:string,
     setKeyRinglist: (value: string[]) => void
   ) => {
     try {
-      const formattedResponse: any = await requestAPI(`keyRingsList`);
+      const formattedResponse: any = await requestAPI(`keyRingsList?region_id=${regionId}`);//pass region_id
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
       } else {
@@ -960,12 +961,13 @@ export class SchedulerService {
   };
 
   static getKeysList = async (
+    regionId:string,
     Id: string,
     setKeyslist:(value: { displaykey: string; key: string }[]) => void
   ) => {
     try {
       const formattedResponse: any = await requestAPI(
-        `keysList?key_ring_id=${Id}`
+        `keysList?region_id=${regionId}&key_ring_id=${Id}`//pass region_id
       );
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
@@ -973,7 +975,7 @@ export class SchedulerService {
         const keys = formattedResponse.map((path: string) => ({
           displaykey: path.split('/').pop() || '',
           key: path,
-        }));
+        }));//change this to string array
         setKeyslist(keys);
       }
     } catch (error) {
