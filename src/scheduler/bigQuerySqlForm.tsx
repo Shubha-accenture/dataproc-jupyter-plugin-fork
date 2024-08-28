@@ -40,7 +40,7 @@ function BigQuerySqlForm({ data }: any) {
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
   const [writeDisposition, setWriteDisposition] = useState('');
-  const multiRegionList = ['EU', 'US'];
+  const multiRegionList =['us','europe']//['EU', 'US'];
   const [serviceAccounts, setServiceAccounts] = useState<
     { displayName: string; email: string }[]
   >([]);
@@ -59,6 +59,7 @@ function BigQuerySqlForm({ data }: any) {
   const [manualValidation, setManualValidation] = useState(true);
   const [keylist, setKeylist] = useState<{displaykey: string; key: string }[]>([]);//change this to only array of strings
   const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
+  // const [regionId, setRegionId]=useState('')//for api passing
 
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
@@ -162,6 +163,13 @@ function BigQuerySqlForm({ data }: any) {
   ) => {
     setMultiRegionSelected(value || '');
     data.location = value || '';
+    // if(value === 'US'){
+    //   data.location='us'
+    // }
+    // else if(value === 'EU')
+    // {
+    //     data.location='europe'
+    // }
   };
 
   const handleRegionTypeSelected = (
@@ -255,12 +263,15 @@ function BigQuerySqlForm({ data }: any) {
   }, []);
 
   useEffect(() => {
-    console.log("useeffect called")
+    console.log("useeffect called", regionTypeSelected)
+    // if(regionSelected){
+    //   setRegionId(data.location)
+    // }
+    // else if(multiRegionSelected){
+    //   setDatasetId(data.location)
+    // }
     listKeyRingsAPI();//check now as we don't have region here
   }, [data.location,regionSelected,multiRegionSelected]);
-  // useEffect(() => {
-  //   listKeysAPI();
-  // }, []);
 
   useEffect(() => {
     if (data) {
