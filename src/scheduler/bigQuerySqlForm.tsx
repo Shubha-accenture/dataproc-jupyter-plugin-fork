@@ -160,7 +160,7 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleRegionRadioBtn = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAutoRegionSelected(event.target.checked);
-    data.location = '';
+    data.location = 'us';//as per backend requirement
   };
 
   const handleMultiRegionTypeSelected = (

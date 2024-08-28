@@ -277,7 +277,8 @@ const GraphicalScheduler = ({
             retryCount: node.data.retryCount,
             retryDelay: node.data.retryDelay,
             parameter: node.data.parameter,
-            serverless: node.data.serverless
+            serverless: node.data.serverless,
+            serviceAccount: node.data.serviceAccount
           }
         };
       } else if (node.data.nodeType === 'Bigquery-Serverless') {
