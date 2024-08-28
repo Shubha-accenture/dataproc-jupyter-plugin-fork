@@ -3,6 +3,7 @@ import { Input } from '../controls/MuiWrappedInput';
 import { eventEmitter } from '../utils/signalEmitter';
 import {
   Autocomplete,
+  Box,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -511,20 +512,38 @@ function BigQuerySqlForm({ data }: any) {
                 )
               )}
               <div className="scheduler-retry-parent">
-                <Autocomplete
-                  className="create-scheduler-style-trigger"
-                  options={serviceAccounts}
-                  getOptionLabel={option => option.displayName}
-                  value={
-                    serviceAccounts.find(
-                      option => option.displayName === serviceAccountSelected
-                    ) || null
-                  }
-                  onChange={handleServiceAccountChange}
-                  renderInput={params => (
-                    <TextField {...params} label="Service account " />
-                  )}
-                />
+              <Autocomplete
+                className="create-scheduler-style-trigger"
+                options={serviceAccounts}
+                getOptionLabel={option => option.displayName}
+                value={
+                  serviceAccounts.find(
+                    option => option.displayName === serviceAccountSelected
+                  ) || null
+                }
+                onChange={handleServiceAccountChange}
+                renderInput={params => (
+                  <TextField {...params} label="Service account " />
+                )}
+                renderOption={(props, option) => (
+                  <Box
+                    component="li"
+                    {...props}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start'
+                    }}
+                  >
+                    <Typography variant="body1">
+                      {option.displayName}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {option.email}
+                    </Typography>
+                  </Box>
+                )}
+              />
               </div>
             </div>
 
