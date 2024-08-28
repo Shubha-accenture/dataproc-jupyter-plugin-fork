@@ -40,7 +40,11 @@ function BigQuerySqlForm({ data }: any) {
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
   const [writeDisposition, setWriteDisposition] = useState('');
-  const multiRegionList =['us','europe']//['EU', 'US'];
+  const multiRegionList = [
+    { key: 'us', label: 'US' },
+    { key: 'europe', label: 'EU' }
+  ]; //['us','europe']//['EU', 'US'];
+
   const [serviceAccounts, setServiceAccounts] = useState<
     { displayName: string; email: string }[]
   >([]);
@@ -52,12 +56,14 @@ function BigQuerySqlForm({ data }: any) {
   const selectedKeyType = keyType ? 'customerManaged' : 'googleManaged';
   const [selectedEncryptionRadio, setSelectedEncryptionRadio] =
     useState(selectedKeyType);
-  const [selectedRadioValue, setSelectedRadioValue] = useState('key');//check this if causing any issue
+  const [selectedRadioValue, setSelectedRadioValue] = useState('key'); //check this if causing any issue
   const [keyRingSelected, setKeyRingSelected] = useState(keyRing);
   const [keySelected, setKeySelected] = useState(keys);
   const [manualKeySelected, setManualKeySelected] = useState('');
   const [manualValidation, setManualValidation] = useState(true);
-  const [keylist, setKeylist] = useState<{displaykey: string; key: string }[]>([]);//change this to only array of strings
+  const [keylist, setKeylist] = useState<{ displaykey: string; key: string }[]>(
+    []
+  ); //change this to only array of strings
   const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
   // const [regionId, setRegionId]=useState('')//for api passing
 
@@ -159,17 +165,11 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleMultiRegionTypeSelected = (
     event: React.ChangeEvent<{}>,
-    value: string | null
+    value: { key: string; label: string } | null
   ) => {
-    setMultiRegionSelected(value || '');
-    data.location = value || '';
-    // if(value === 'US'){
-    //   data.location='us'
-    // }
-    // else if(value === 'EU')
-    // {
-    //     data.location='europe'
-    // }
+    setMultiRegionSelected(value?.label || '');
+    data.location = value?.key || '';
+    console.log(data.location);
   };
 
   const handleRegionTypeSelected = (
@@ -218,14 +218,14 @@ function BigQuerySqlForm({ data }: any) {
     }
 
     setManualKeySelected(inputValue);
-    data.kmsKey=inputValue
+    data.kmsKey = inputValue;
   };
 
   const handleKeyRingChange = (value: string | null) => {
     if (data !== null) {
       setKeyRingSelected(value!.toString());
       listKeysAPI(value!.toString());
-      data.keyRings=value
+      data.keyRings = value;
     }
   };
 
@@ -235,19 +235,23 @@ function BigQuerySqlForm({ data }: any) {
   ) => {
     if (value) {
       setKeySelected(value.displaykey);
-      data.kmsKey=value.key
+      data.kmsKey = value.key;
     } else {
       setKeySelected('');
-      data.kmsKey=''
+      data.kmsKey = '';
     }
   };
 
   const listKeysAPI = async (keyRingSelected: string) => {
-    await SchedulerService.getKeysList(data.location,keyRingSelected, setKeylist);
+    await SchedulerService.getKeysList(
+      data.location,
+      keyRingSelected,
+      setKeylist
+    );
   };
   const listKeyRingsAPI = async () => {
-    console.log(data.location)
-    await SchedulerService.getKeyRingsList(data.location,setKeyRinglist);
+    console.log(data.location);
+    await SchedulerService.getKeyRingsList(data.location, setKeyRinglist);
   };
 
   useEffect(() => {
@@ -259,19 +263,14 @@ function BigQuerySqlForm({ data }: any) {
   useEffect(() => {
     fetchRegionList();
     fetchServiceAccounts();
-    listKeyRingsAPI();//check now as we don't have region here
+    //  listKeyRingsAPI();//check now as we don't have region here
   }, []);
 
   useEffect(() => {
-    console.log("useeffect called", regionTypeSelected)
-    // if(regionSelected){
-    //   setRegionId(data.location)
-    // }
-    // else if(multiRegionSelected){
-    //   setDatasetId(data.location)
-    // }
-    listKeyRingsAPI();//check now as we don't have region here
-  }, [data.location,regionSelected,multiRegionSelected]);
+    if (data.location) {
+      listKeyRingsAPI();
+    }
+  }, [regionSelected, multiRegionSelected]);
 
   useEffect(() => {
     if (data) {
@@ -294,38 +293,38 @@ function BigQuerySqlForm({ data }: any) {
       if (selectedServiceAccount) {
         setServiceAccountSelected(selectedServiceAccount.displayName);
       }
-      if (data.location) {
-        if (multiRegionList.includes(data.location)) {
-          setRegionTypeSelected('multiRegion');
-          setMultiRegionSelected(data.location);
-        } else {
-          setRegionTypeSelected('region');
-          setRegionSelected(data.location);
-        }
-      } else if (data.location === '') {
-        setAutoRegionSelected(true);
-      }
+      // if (data.location) {
+      //   if (multiRegionList.includes(data.location)) {
+      //     setRegionTypeSelected('multiRegion');
+      //     setMultiRegionSelected(data.location);
+      //   } else {
+      //     setRegionTypeSelected('region');
+      //     setRegionSelected(data.location);
+      //   }
+      // } else if (data.location === '') {
+      //   setAutoRegionSelected(true);
+      // }
+      // due to region change this is not working properly
       // if(data.keyRings){
       //   setKeyRingSelected(data.keyRings)
       //   setSelectedEncryptionRadio('customerManaged')
       // }
       if (data.kmsKey) {
-        setSelectedEncryptionRadio('customerManaged')
+        setSelectedEncryptionRadio('customerManaged');
         // console.log(data.kmsKey, keylist)
         // const selectedKey = keylist.find(option => option.key === data.kmsKey);
         // console.log(selectedKey)
         // if (selectedKey) {
         //   setKeySelected(selectedKey.displaykey);
         // }
-        // projects/dataproc-jupyter-extension-dev/locations/us-central1/keyRings/keyring1/cryptoKeys/key3 // handle rings with this 
-        let kmsKeyArray=data.kmsKey.split('/')
-        console.log(kmsKeyArray)
-        setKeyRingSelected(kmsKeyArray[5])
-        setKeySelected(kmsKeyArray[7])
-
+        // projects/dataproc-jupyter-extension-dev/locations/us-central1/keyRings/keyring1/cryptoKeys/key3 // handle rings with this
+        let kmsKeyArray = data.kmsKey.split('/');
+        console.log(kmsKeyArray);
+        setKeyRingSelected(kmsKeyArray[5]);
+        setKeySelected(kmsKeyArray[7]);
       }
     }
-  }, [data, serviceAccounts,keylist]);//remove keylist by checking
+  }, [data, serviceAccounts, keylist]); //remove keylist by checking
 
   return (
     <>
@@ -508,10 +507,10 @@ function BigQuerySqlForm({ data }: any) {
                   <Autocomplete
                     className="create-scheduler-style-trigger"
                     options={multiRegionList}
-                    getOptionLabel={option => option}
+                    getOptionLabel={option => option.label}
                     value={
                       multiRegionList.find(
-                        option => option === multiRegionSelected
+                        option => option.label === multiRegionSelected
                       ) || null
                     }
                     disabled={autoRegionSelected}
@@ -523,38 +522,38 @@ function BigQuerySqlForm({ data }: any) {
                 )
               )}
               <div className="scheduler-retry-parent">
-              <Autocomplete
-                className="create-scheduler-style-trigger"
-                options={serviceAccounts}
-                getOptionLabel={option => option.displayName}
-                value={
-                  serviceAccounts.find(
-                    option => option.displayName === serviceAccountSelected
-                  ) || null
-                }
-                onChange={handleServiceAccountChange}
-                renderInput={params => (
-                  <TextField {...params} label="Service account " />
-                )}
-                renderOption={(props, option) => (
-                  <Box
-                    component="li"
-                    {...props}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start'
-                    }}
-                  >
-                    <Typography variant="body1">
-                      {option.displayName}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      {option.email}
-                    </Typography>
-                  </Box>
-                )}
-              />
+                <Autocomplete
+                  className="create-scheduler-style-trigger"
+                  options={serviceAccounts}
+                  getOptionLabel={option => option.displayName}
+                  value={
+                    serviceAccounts.find(
+                      option => option.displayName === serviceAccountSelected
+                    ) || null
+                  }
+                  onChange={handleServiceAccountChange}
+                  renderInput={params => (
+                    <TextField {...params} label="Service account " />
+                  )}
+                  renderOption={(props, option) => (
+                    <Box
+                      component="li"
+                      {...props}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start'
+                      }}
+                    >
+                      <Typography variant="body1">
+                        {option.displayName}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {option.email}
+                      </Typography>
+                    </Box>
+                  )}
+                />
               </div>
             </div>
 
@@ -621,7 +620,7 @@ function BigQuerySqlForm({ data }: any) {
                         />
                         <div className="create-scheduler-style-key">
                           <Autocomplete
-                           className="create-scheduler-style-key-rings"
+                            className="create-scheduler-style-key-rings"
                             disabled={
                               selectedRadioValue === 'manually' ? true : false
                             }
@@ -633,12 +632,12 @@ function BigQuerySqlForm({ data }: any) {
                             )}
                           />
                           <Autocomplete
-                           className="create-scheduler-style-keys"
+                            className="create-scheduler-style-keys"
                             disabled={
                               selectedRadioValue === 'manually' ? true : false
                             }
                             options={keylist}
-                            getOptionLabel={(option) => option.displaykey} 
+                            getOptionLabel={option => option.displaykey}
                             value={keylist.find(
                               option => option.displaykey === keySelected
                             )}
