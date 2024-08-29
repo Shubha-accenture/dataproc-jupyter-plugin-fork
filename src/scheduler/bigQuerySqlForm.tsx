@@ -54,7 +54,7 @@ function BigQuerySqlForm({ data }: any) {
   const selectedKeyType = keyType ? 'customerManaged' : 'googleManaged';
   const [selectedEncryptionRadio, setSelectedEncryptionRadio] =
     useState(selectedKeyType);
-  const [selectedRadioValue, setSelectedRadioValue] = useState('key'); //check this if causing any issue
+  const [selectedRadioValue, setSelectedRadioValue] = useState('key');
   const [keyRingSelected, setKeyRingSelected] = useState(keyRing);
   const [keySelected, setKeySelected] = useState(keys);
   const [manualKeySelected, setManualKeySelected] = useState('');
@@ -63,7 +63,7 @@ function BigQuerySqlForm({ data }: any) {
     []
   ); //change this to only array of strings
   const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
-  // const [regionId, setRegionId]=useState('')//for api passing
+  const [regionId, setRegionId]=useState('us')//for api passing
 
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
@@ -159,7 +159,10 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleRegionRadioBtn = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAutoRegionSelected(event.target.checked);
-    data.location = 'us'; //as per backend requirement // in the payload it should be empty but for encryption api as a region id it should send us
+    data.location = ''; 
+    if(event.target.checked){
+      setRegionId('us')
+    }
   };
 
   const handleMultiRegionTypeSelected = (
@@ -168,15 +171,16 @@ function BigQuerySqlForm({ data }: any) {
   ) => {
     setMultiRegionSelected(value?.label || '');
     data.location = value?.key || '';
-    console.log(data.location);
+    setRegionId(value?.key || '')
   };
 
-  const handleRegionTypeSelected = (
+  const handleRegionSelected = (
     event: React.ChangeEvent<{}>,
     value: string | null
   ) => {
     setRegionSelected(value || '');
     data.location = value;
+    setRegionId(value|| '')
   };
 
   const handleWriteDisposition = (
@@ -243,13 +247,13 @@ function BigQuerySqlForm({ data }: any) {
 
   const listKeysAPI = async (keyRingSelected: string) => {
     await SchedulerService.getKeysList(
-      data.location,
+     regionId,
       keyRingSelected,
       setKeylist
     );
   };
   const listKeyRingsAPI = async () => {
-    await SchedulerService.getKeyRingsList(data.location, setKeyRinglist);
+    await SchedulerService.getKeyRingsList(regionId, setKeyRinglist);
   };
 
   useEffect(() => {
@@ -261,14 +265,12 @@ function BigQuerySqlForm({ data }: any) {
   useEffect(() => {
     fetchRegionList();
     fetchServiceAccounts();
-    //  listKeyRingsAPI();//check now as we don't have region here
+     listKeyRingsAPI();
   }, []);
 
   useEffect(() => {
-    if (data.location) {
       listKeyRingsAPI();
-    }
-  }, [regionSelected, multiRegionSelected, autoRegionSelected]);
+  }, [regionId]);
 
   useEffect(() => {
     if (data) {
@@ -323,7 +325,7 @@ function BigQuerySqlForm({ data }: any) {
         setKeySelected(kmsKeyArray[7]);
       }
     }
-  }, [data, serviceAccounts, keylist]); //remove keylist by checking
+  }, [data, serviceAccounts, keylist]);
 
   useEffect(() => {
     if (isSaveQueryChecked) {
@@ -501,7 +503,7 @@ function BigQuerySqlForm({ data }: any) {
                     regionList.find(option => option === regionSelected) || null
                   }
                   disabled={autoRegionSelected}
-                  onChange={handleRegionTypeSelected}
+                  onChange={handleRegionSelected}
                   renderInput={params => (
                     <TextField {...params} label="Region*" />
                   )}

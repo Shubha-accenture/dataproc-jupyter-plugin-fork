@@ -938,8 +938,9 @@ export class SchedulerService {
     regionId:string,
     setKeyRinglist: (value: string[]) => void
   ) => {
+    console.log(regionId)
     try {
-      const formattedResponse: any = await requestAPI(`keyRingsList?region_id=${regionId}`);//pass region_id
+      const formattedResponse: any = await requestAPI(`keyRingsList?region_id=${regionId}`);
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
       } else {
@@ -966,8 +967,9 @@ export class SchedulerService {
     setKeyslist:(value: { displaykey: string; key: string }[]) => void
   ) => {
     try {
+      console.log(regionId)
       const formattedResponse: any = await requestAPI(
-        `keysList?region_id=${regionId}&key_ring_id=${Id}`//pass region_id
+        `keysList?region_id=${regionId}&key_ring_id=${Id}`
       );
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
