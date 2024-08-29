@@ -20,6 +20,7 @@ import LabelProperties from '../jobs/labelProperties';
 import { eventEmitter } from '../utils/signalEmitter';
 import {
   Autocomplete,
+  Box,
   Checkbox,
   CircularProgress,
   FormControlLabel,
@@ -45,6 +46,11 @@ function ClusterServerlessForm({ data, mode }: any) {
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [serverlessSelected, setServerlessSelected] = useState('');
   const [stopCluster, setStopCluster] = useState(false);
+
+  const [serviceAccounts, setServiceAccounts] = useState<
+    { displayName: string; email: string }[]
+  >([]);
+  const [serviceAccountSelected, setServiceAccountSelected] = useState('');
 
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
@@ -124,6 +130,21 @@ function ClusterServerlessForm({ data, mode }: any) {
     data.stopCluster = event.target.checked;
   };
 
+  const handleServiceAccountChange = (
+    event: React.ChangeEvent<{}>,
+    value: { displayName: string; email: string } | null
+  ) => {
+    setServiceAccountSelected(value?.displayName || '');
+    data.serviceAccount = value?.email;
+  };
+
+  const fetchServiceAccounts = async () => {
+    await SchedulerService.getServiceAccounts(
+      'dataproc-jupyter-extension-dev',
+      setServiceAccounts
+    );
+  };
+
   useEffect(() => {
     if (data) {
       data.parameter = parameterDetailUpdated;
@@ -140,14 +161,21 @@ function ClusterServerlessForm({ data, mode }: any) {
         setServerlessSelected(data.serverless.jupyterSession.displayName);
       }
       setStopCluster(data.stopCluster);
+      const selectedServiceAccount = serviceAccounts.find(
+        option => option.email === data.serviceAccount
+      );
+      if (selectedServiceAccount) {
+        setServiceAccountSelected(selectedServiceAccount.displayName);
+      }
     }
-  }, [data]);
+  }, [data, serviceAccounts]);
 
   useEffect(() => {
     if (mode === 'cluster') {
       listClustersAPI();
     } else {
       listSessionTemplatesAPI();
+      fetchServiceAccounts();
     }
   }, [mode]);
 
@@ -186,6 +214,18 @@ function ClusterServerlessForm({ data, mode }: any) {
               setDuplicateKeyError={setDuplicateKeyError}
               fromPage="react-flow"
             />
+            <div className="create-scheduler-form-element">
+              <div> Output Format </div>
+              <FormGroup row={true}>
+                <FormControlLabel
+                  control={<Checkbox size="small" />}
+                  className="create-scheduler-label-style"
+                  label={
+                    <Typography sx={{ fontSize: 13 }}>Notebook</Typography>
+                  }
+                />
+              </FormGroup>
+            </div>
             <div className="scheduler-dropdown-form-element">
               {isLoadingKernelDetail && (
                 <CircularProgress
@@ -206,15 +246,49 @@ function ClusterServerlessForm({ data, mode }: any) {
                 />
               )}
               {mode === 'serverless' && !isLoadingKernelDetail && (
-                <Autocomplete
-                  className="create-scheduler-style-trigger"
-                  options={serverlessList}
-                  value={serverlessSelected}
-                  onChange={(_event, val) => handleServerlessSelected(val)}
-                  renderInput={params => (
-                    <TextField {...params} label="Serverless*" />
-                  )}
-                />
+                <>
+                  <Autocomplete
+                    className="create-scheduler-style-trigger"
+                    options={serverlessList}
+                    value={serverlessSelected}
+                    onChange={(_event, val) => handleServerlessSelected(val)}
+                    renderInput={params => (
+                      <TextField {...params} label="Serverless*" />
+                    )}
+                  />
+                  <Autocomplete
+                    className="create-scheduler-style-trigger"
+                    options={serviceAccounts}
+                    getOptionLabel={option => option.displayName}
+                    value={
+                      serviceAccounts.find(
+                        option => option.displayName === serviceAccountSelected
+                      ) || null
+                    }
+                    onChange={handleServiceAccountChange}
+                    renderInput={params => (
+                      <TextField {...params} label="Service account " />
+                    )}
+                    renderOption={(props, option) => (
+                      <Box
+                        component="li"
+                        {...props}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start'
+                        }}
+                      >
+                        <Typography variant="body1">
+                          {option.displayName}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          {option.email}
+                        </Typography>
+                      </Box>
+                    )}
+                  />
+                </>
               )}
             </div>
             {mode === 'cluster' && (
