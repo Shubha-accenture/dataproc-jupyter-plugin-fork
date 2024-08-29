@@ -287,7 +287,7 @@ class Client:
                     await self.upload_input_file_to_gcs( 
                     input_file, gcs_dag_bucket, job_name
                 )
-                parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
+                parameters = "\n".join(item.replace(":", ":") for item in node.get('data', {}).get('parameter', []))
                 
                 if node_type == 'Serverless' or node_type == 'Bigquery-Serverless':
                     serverless_config = node.get('data', {}).get('serverless', {})
@@ -340,7 +340,7 @@ class Client:
                     )
 
 
-                    serverless_file = f"dag_{input_file}.py"
+                    serverless_file = f"dag_{input_file}"
                     with open(serverless_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
                     with open(serverless_file, 'r', encoding='utf-8') as file:
@@ -351,6 +351,7 @@ class Client:
                             serverless_contents = ''.join(lines)
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(serverless_contents)
+                    os.remove(serverless_file)
                 elif node_type == 'Cluster':
                     input_notebook = (
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
@@ -371,7 +372,7 @@ class Client:
                     clusterName =node.get('data',{}).get('clusterName',{}),
                     stopStatus =node.get('data',{}).get('stopCluster',{})
                     )
-                    cluster_file = f"dag_{input_file}.py"
+                    cluster_file = f"dag_{input_file}"
                     with open(cluster_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
                     with open(cluster_file, 'r', encoding='utf-8') as file:
@@ -382,6 +383,7 @@ class Client:
                             cluster_contents = ''.join(lines)
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(cluster_contents)
+                    os.remove(cluster_file)
                 elif node_type == 'Bigquery-Sql':
                     input_notebook = (
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
@@ -403,7 +405,7 @@ class Client:
                     writeDisposition =node.get('data',{}).get('writeDisposition',{}),
                     kmsKey = node.get('data',{}).get('kmsKey',{})
                     )
-                    bq_file = f"dag_{input_file}.py"
+                    bq_file = f"dag_{input_file}"
                     with open(bq_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
                     with open(bq_file, 'r', encoding='utf-8') as file:
@@ -414,6 +416,7 @@ class Client:
                             bq_contents = ''.join(lines)
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(bq_contents)
+                    os.remove(bq_file)
 
         final_order = await self.get_execution_order(job,edges, cluster_stop_dict)
         #creating a folder 'scheduled-jobs' and place the papermill file and dag file

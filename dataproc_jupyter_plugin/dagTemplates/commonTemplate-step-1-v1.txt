@@ -180,26 +180,48 @@ def read_sql_query_from_gcs(gcs_path,service_account, **kwargs):
     return sql_query
 
 
+
+
 # Function to prepare the BigQuery configuration
-def prepare_bigquery_config(id, projectId, datasetId, tableId, kmsKey, writeDisposition, **kwargs):
+def prepare_bigquery_config(id, projectId, parameterString=None, datasetId=None, tableId=None,kmsKey=None, writeDisposition=None, **kwargs):
+    query_params = []
+    if parameterString is not None:
+        parameter_list = [param.strip() for param in parameterString.split(',') if param]
+        for param in parameter_list:
+            name, value, param_type = param.split(':')
+            query_params.append({
+                "name": name,
+                "parameterType": {
+                    "type": param_type.upper()
+                },
+                "parameterValue": {
+                    "value": value
+                }
+            })
     ti = kwargs['ti']
     sql_query = ti.xcom_pull(task_ids=f'read_sql_query_{id}')
     config = {
         "query": {
             "query": sql_query,
             "useLegacySql": False,
-            "destinationTable": {
-               "projectId": projectId,
-                "datasetId": datasetId,
-                "tableId": tableId,
-            },
-           "writeDisposition": writeDisposition,
-           "destinationEncryptionConfiguration": {
-                "kmsKeyName": kmsKey
-            }
         }
     }
-    ti.xcom_push(key='bigquery_config', value=config)
+    if parameterString:
+        config["query"]["queryParameters"] = query_params
+    if datasetId and tableId:
+        config["query"]["destinationTable"] = {
+            "projectId": projectId,
+            "datasetId": datasetId,
+            "tableId": tableId,
+        }
+    if writeDisposition:
+        config["query"]["writeDisposition"] = writeDisposition
+
+    if kmsKey:
+        config["query"]["destinationEncryptionConfiguration"] = {
+            "kmsKeyName": kmsKey
+        }
+    ti.xcom_push(key='bigquery_config', value=config)    
     return config
 {% endif %}
     
