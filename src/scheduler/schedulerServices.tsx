@@ -938,7 +938,6 @@ export class SchedulerService {
     regionId:string,
     setKeyRinglist: (value: string[]) => void
   ) => {
-    console.log(regionId)
     try {
       const formattedResponse: any = await requestAPI(`keyRingsList?region_id=${regionId}`);
       if (formattedResponse?.error?.code) {
@@ -967,7 +966,6 @@ export class SchedulerService {
     setKeyslist:(value: { displaykey: string; key: string }[]) => void
   ) => {
     try {
-      console.log(regionId)
       const formattedResponse: any = await requestAPI(
         `keysList?region_id=${regionId}&key_ring_id=${Id}`
       );

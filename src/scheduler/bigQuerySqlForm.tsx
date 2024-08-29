@@ -63,7 +63,7 @@ function BigQuerySqlForm({ data }: any) {
     []
   ); //change this to only array of strings
   const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
-  const [regionId, setRegionId]=useState('us')//for api passing
+  const [regionId, setRegionId]=useState('us')
 
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
@@ -111,6 +111,7 @@ function BigQuerySqlForm({ data }: any) {
   const handleSaveQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsSaveQueryChecked(event.target.checked);
     data.saveQuery=event.target.checked
+    eventEmitter.emit(`saveQuery`,event.target.checked)
   };
 
   const handleTableIDChange = (event: React.ChangeEvent<HTMLInputElement>) => {
