@@ -25,9 +25,6 @@ function BigQuerySqlForm({ data }: any) {
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
   const [parameterDetail, setParameterDetail] = useState(['']);
   const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
-  const [keyValidation, setKeyValidation] = useState(-1);
-  const [valueValidation, setValueValidation] = useState(-1);
-  const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
 
   const [isSaveQueryChecked, setIsSaveQueryChecked] = useState(false);
   const [tableID, setTableID] = useState('');
@@ -39,8 +36,8 @@ function BigQuerySqlForm({ data }: any) {
   const [regionSelected, setRegionSelected] = useState('');
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
-  // const defaultwriteDisposition= isSaveQueryChecked?'WRITE_APPEND': '';
-  const [writeDisposition, setWriteDisposition] = useState('');
+  const defaultwriteDisposition= isSaveQueryChecked?'WRITE_APPEND': '';
+  const [writeDisposition, setWriteDisposition] = useState(defaultwriteDisposition);
   const multiRegionList = [
     { key: 'us', label: 'US' },
     { key: 'europe', label: 'EU' }
@@ -113,6 +110,7 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleSaveQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsSaveQueryChecked(event.target.checked);
+    data.saveQuery=event.target.checked
   };
 
   const handleTableIDChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -281,12 +279,13 @@ function BigQuerySqlForm({ data }: any) {
       setDatasetId(data.datasetId);
       setServiceAccountSelected(data.serviceAccount);
       setWriteDisposition(data.writeDisposition);
+      setIsSaveQueryChecked(data.saveQuery)
       if (data.serviceAccount) {
         setServiceAccountSelected(data.serviceAccount);
       }
-      if (data.datasetId || data.tableId) {
-        setIsSaveQueryChecked(true);
-      }
+      // if (data.datasetId || data.tableId) {
+      //   setIsSaveQueryChecked(true);
+      // }
       const selectedServiceAccount = serviceAccounts.find(
         option => option.email === data.serviceAccount
       );
@@ -358,14 +357,14 @@ function BigQuerySqlForm({ data }: any) {
               setLabelDetail={setParameterDetail}
               labelDetailUpdated={parameterDetailUpdated}
               setLabelDetailUpdated={setParameterDetailUpdated}
-              buttonText="ADD PARAMETER"
-              keyValidation={keyValidation}
-              setKeyValidation={setKeyValidation}
-              valueValidation={valueValidation}
-              setValueValidation={setValueValidation}
-              duplicateKeyError={duplicateKeyError}
-              setDuplicateKeyError={setDuplicateKeyError}
-              fromPage="react-flow"
+              // buttonText="ADD PARAMETER"
+              // keyValidation={keyValidation}
+              // setKeyValidation={setKeyValidation}
+              // valueValidation={valueValidation}
+              // setValueValidation={setValueValidation}
+              // duplicateKeyError={duplicateKeyError}
+              // setDuplicateKeyError={setDuplicateKeyError}
+              // fromPage="react-flow"
             />
             <div className="create-scheduler-form-element">
               <FormGroup row={true}>

@@ -171,7 +171,6 @@ export const GB_MONTHS = 2592000;
 export const TITLE_LAUNCHER_CATEGORY = 'Google Cloud Resources';
 export const SPARK_HISTORY_SERVER = 'Spark History Server';
 export const DEFAULT_LABEL_DETAIL = 'client:dataproc-jupyter-plugin';
-export const SCHEDULER_DEFAULT_LABEL_DETAIL = 'client:dataproc-jupyter-plugin:STRING';
 export const JOB_FIELDS_EXCLUDED = ['queryList', 'properties', 'args'];
 export const BATCH_FIELDS_EXCLUDED = ['queryList', 'properties'];
 export const KEY_MESSAGE =

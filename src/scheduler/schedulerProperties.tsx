@@ -21,7 +21,7 @@ import plusIcon from '../../style/icons/plus_icon.svg';
 import plusIconDisable from '../../style/icons/plus_icon_disable.svg';
 import deleteIcon from '../../style/icons/delete_icon.svg';
 import errorIcon from '../../style/icons/error_icon.svg';
-import { SCHEDULER_DEFAULT_LABEL_DETAIL } from '../utils/const';
+import { DEFAULT_LABEL_DETAIL } from '../utils/const';
 import { Input } from '../controls/MuiWrappedInput';
 import { Autocomplete, TextField } from '@mui/material';
 
@@ -46,49 +46,21 @@ function SchedulerProperties({
   labelDetail,
   setLabelDetail,
   labelDetailUpdated,
-  setLabelDetailUpdated,
-  selectedJobClone,
-  buttonText,
-  keyValidation,
-  setKeyValidation,
-  valueValidation,
-  setValueValidation,
-  duplicateKeyError,
-  setDuplicateKeyError,
-  labelEditMode,
-  selectedRuntimeClone,
-  batchInfoResponse,
-  createBatch,
-  fromPage
+  setLabelDetailUpdated
 }: any) {
   /*
   labelDetail used to store the permanent label details when onblur
   labelDetailUpdated used to store the temporay label details when onchange
   */
   useEffect(() => {
-    if (!labelEditMode && fromPage !== 'scheduler') {
-      if (
-        buttonText === 'ADD LABEL' &&
-        !selectedJobClone &&
-        selectedRuntimeClone === undefined &&
-        !createBatch
-      ) {
-        const defaultDetail = [`${SCHEDULER_DEFAULT_LABEL_DETAIL}`];
-        setLabelDetail(defaultDetail);
-        setLabelDetailUpdated(defaultDetail);
-      } else {
-        if (!selectedRuntimeClone) {
-          setLabelDetailUpdated([]);
-          setLabelDetail([]);
-        }
-      }
-    }
-  }, []);
+    setLabelDetailUpdated([]);
+    setLabelDetail([]);
+  }, []); //try removing complete useeffect
 
   const handleAddLabel = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     const labelAdd = [...labelDetail];
-    labelAdd.push(':');
+    labelAdd.push('::');
     setLabelDetailUpdated(labelAdd);
     setLabelDetail(labelAdd);
   };
@@ -98,80 +70,34 @@ function SchedulerProperties({
     labelDelete.splice(index, 1);
     setLabelDetailUpdated(labelDelete);
     setLabelDetail(labelDelete);
-    setDuplicateKeyError(-1);
-    setKeyValidation(-1);
-    setValueValidation(-1);
   };
 
   const handleEditLabelSwitch = () => {
-    if (duplicateKeyError === -1) {
-      setLabelDetail(labelDetailUpdated);
-    }
+    setLabelDetail(labelDetailUpdated);
   };
+
   const handleEditLabel = (value: string, index: number, keyValue: string) => {
     const labelEdit = [...labelDetail];
     labelEdit.forEach((data, dataNumber: number) => {
       if (index === dataNumber) {
-        const parts = data.split(':');
+        /*
+          allowed aplhanumeric and spaces and underscores
+        */
         if (keyValue === 'key') {
-          const regexp = /^[a-z0-9-_]+$/;
-          if (
-            (value.search(regexp) === -1 ||
-              value.charAt(0) !== value.charAt(0).toLowerCase()) &&
-            buttonText === 'ADD LABEL'
-          ) {
-            setKeyValidation(index);
-          } else {
-            setKeyValidation(-1);
-          }
-
-          const newKey = value;
-          const duplicateIndex = labelEdit.findIndex(
-            (label, i) => i !== index && label.split(':')[0] === newKey
-          );
-          if (duplicateIndex !== -1 && buttonText === 'ADD LABEL') {
-            setDuplicateKeyError(index);
-          } else {
-            setDuplicateKeyError(-1);
-          }
-          parts[0] = value; // Update the key part
+          data = data.replace(data.split(':')[0], value);
         } else if (keyValue === 'value') {
-          const regexp = /^[a-z0-9-_]+$/;
-          if (value.search(regexp) === -1 && buttonText === 'ADD LABEL') {
-            setValueValidation(index);
-          } else {
-            setValueValidation(-1);
-          }
-          parts[1] = value; // Update the value part
+          data = data.split(':')[0] + ':' + value + ':' + data.split(':')[2];
         } else if (keyValue === 'type') {
-          // Handle updating the type part
-          parts[2] = value; // Update the type part
+          data = data.split(':')[0] + ':' + data.split(':')[1] + ':' + value;
         }
-        // Rejoin the parts to form the updated label string
-        labelEdit[dataNumber] = parts.join(':');
       }
+      labelEdit[dataNumber] = data;
     });
-
     setLabelDetailUpdated(labelEdit);
-    setLabelDetail(labelEdit);
   };
 
   const styleAddLabelButton = (buttonText: string, labelDetail: string) => {
     if (
-      buttonText === 'ADD LABEL' &&
-      (labelDetail.length === 0 ||
-        labelDetail[labelDetail.length - 1].split(':')[0].length > 0) &&
-      duplicateKeyError === -1
-    ) {
-      return 'job-add-label-button';
-    } else if (
-      buttonText === 'ADD LABEL' &&
-      (labelDetail.length === 0 ||
-        labelDetail[labelDetail.length - 1].split(':')[0].length === 0) &&
-      duplicateKeyError !== -1
-    ) {
-      return 'job-add-property-button-disabled';
-    } else if (
       buttonText !== 'ADD LABEL' &&
       (labelDetail.length === 0 ||
         labelDetail[labelDetail.length - 1].split(':')[0].length > 0)
@@ -201,17 +127,9 @@ function SchedulerProperties({
 
   return (
     <div>
-      <div
-        className={
-          fromPage == 'react-flow'
-            ? 'job-label-react-flow-parent'
-            : 'job-label-edit-parent'
-        }
-      >
+      <div className={'job-label-react-flow-parent'}>
         {labelDetail.length > 0 &&
           labelDetail.map((label: string, index: number) => {
-            /*Extracting key, value from label 
-            Example: "{client:dataProc_plugin}"*/
             const labelSplit = label.split(':');
 
             return (
@@ -221,20 +139,7 @@ function SchedulerProperties({
                     <div className="select-text-overlay-label">
                       <Input
                         sx={{ margin: 0 }}
-                        className={`edit-input-style ${
-                          labelSplit[0] === '' ||
-                          buttonText !== 'ADD LABEL' ||
-                          duplicateKeyError !== -1
-                            ? ''
-                            : ' disable-text'
-                        }`}
-                        disabled={
-                          labelSplit[0] === '' ||
-                          buttonText !== 'ADD LABEL' ||
-                          duplicateKeyError !== -1
-                            ? false
-                            : true
-                        }
+                        className="edit-input-style"
                         onBlur={() => handleEditLabelSwitch()}
                         onChange={e =>
                           handleEditLabel(e.target.value, index, 'key')
@@ -245,41 +150,14 @@ function SchedulerProperties({
                     </div>
 
                     {labelDetailUpdated[index].split(':')[0] === '' &&
-                    labelDetailUpdated[index] !== '' &&
-                    duplicateKeyError !== index ? (
-                      <div role="alert" className="error-key-parent">
-                        <iconError.react
-                          tag="div"
-                          className="logo-alignment-style"
-                        />
-                        <div className="error-key-missing">key is required</div>
-                      </div>
-                    ) : (
-                      keyValidation === index &&
-                      buttonText === 'ADD LABEL' && (
-                        <div className="error-key-parent">
+                      labelDetailUpdated[index] !== '' && (
+                        <div role="alert" className="error-key-parent">
                           <iconError.react
                             tag="div"
                             className="logo-alignment-style"
                           />
                           <div className="error-key-missing">
-                            Only hyphens (-), underscores (_), lowercase
-                            characters, and numbers are allowed. Keys must start
-                            with a lowercase character. International characters
-                            are allowed.
-                          </div>
-                        </div>
-                      )
-                    )}
-                    {duplicateKeyError === index &&
-                      buttonText === 'ADD LABEL' && (
-                        <div className="error-key-parent">
-                          <iconError.react
-                            tag="div"
-                            className="logo-alignment-style"
-                          />
-                          <div className="error-key-missing">
-                            The key is already present
+                            key is required
                           </div>
                         </div>
                       )}
@@ -288,37 +166,15 @@ function SchedulerProperties({
                     <div className="select-text-overlay-label">
                       <Input
                         sx={{ margin: 0 }}
-                        className={`edit-input-style ${
-                          label === SCHEDULER_DEFAULT_LABEL_DETAIL &&
-                          buttonText === 'ADD LABEL'
-                            ? ' disable-text'
-                            : ''
-                        }`}
+                        className="edit-input-style "
                         onBlur={() => handleEditLabelSwitch()}
                         onChange={e =>
                           handleEditLabel(e.target.value, index, 'value')
-                        }
-                        disabled={
-                          label === SCHEDULER_DEFAULT_LABEL_DETAIL &&
-                          buttonText === 'ADD LABEL'
                         }
                         defaultValue={labelSplit[1]}
                         Label={`Value ${index + 1}`}
                       />
                     </div>
-                    {valueValidation === index && (
-                      <div className="error-key-parent">
-                        <iconError.react
-                          tag="div"
-                          className="logo-alignment-style"
-                        />
-                        <div className="error-key-missing">
-                          Only hyphens (-), underscores (_), lowercase
-                          characters, and numbers are allowed. International
-                          characters are allowed.
-                        </div>
-                      </div>
-                    )}
                   </div>
                   <div className="key-message-wrapper">
                     <div className="select-text-overlay-label">
@@ -330,6 +186,7 @@ function SchedulerProperties({
                               option === labelDetail[index].split(':')[2]
                           ) || null
                         }
+                        onBlur={() => handleEditLabelSwitch()}
                         onChange={(e, newValue) =>
                           handleEditLabel(newValue || '', index, 'type')
                         }
@@ -342,18 +199,12 @@ function SchedulerProperties({
                   <div
                     role="button"
                     className={
-                      label === SCHEDULER_DEFAULT_LABEL_DETAIL &&
-                      buttonText === 'ADD LABEL'
+                      label === DEFAULT_LABEL_DETAIL
                         ? 'labels-delete-icon-hide'
                         : 'labels-delete-icon'
                     }
                     onClick={() => {
-                      if (
-                        !(
-                          label === SCHEDULER_DEFAULT_LABEL_DETAIL &&
-                          buttonText === 'ADD LABEL'
-                        )
-                      ) {
+                      if (!(label === DEFAULT_LABEL_DETAIL)) {
                         handleDeleteLabel(index, labelSplit[0]);
                       }
                     }}
@@ -369,7 +220,7 @@ function SchedulerProperties({
             );
           })}
         <button
-          className={styleAddLabelButton(buttonText, labelDetail)}
+          className={styleAddLabelButton('ADD PARAMETER', labelDetail)}
           onClick={e => {
             const buttonClasses = e.currentTarget.className;
             const isDisabled =
@@ -402,18 +253,13 @@ function SchedulerProperties({
           )}
           <span
             className={
-              fromPage == 'react-flow'
-                ? labelDetail.length === 0 ||
-                  labelDetail[labelDetail.length - 1].split(':')[0].length > 0
-                  ? 'job-react-flow-text'
-                  : 'job-react-flow-text-disabled'
-                : labelDetail.length === 0 ||
-                  labelDetail[labelDetail.length - 1].split(':')[0].length > 0
-                ? 'job-edit-text'
-                : 'job-edit-text-disabled'
+              labelDetail.length === 0 ||
+              labelDetail[labelDetail.length - 1].split(':')[0].length > 0
+                ? 'job-react-flow-text'
+                : 'job-react-flow-text-disabled'
             }
           >
-            {buttonText}
+            ADD PARAMETER
           </span>
         </button>
       </div>
