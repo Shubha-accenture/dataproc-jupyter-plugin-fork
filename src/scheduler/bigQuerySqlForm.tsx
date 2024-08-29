@@ -34,16 +34,17 @@ function BigQuerySqlForm({ data }: any) {
   const [partitionField, setPartitionField] = useState('');
   const [datasetId, setDatasetId] = useState('');
 
-  const [autoRegionSelected, setAutoRegionSelected] = useState(false);
+  const [autoRegionSelected, setAutoRegionSelected] = useState(true);
   const [regionTypeSelected, setRegionTypeSelected] = useState('');
   const [regionSelected, setRegionSelected] = useState('');
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
+  // const defaultwriteDisposition= isSaveQueryChecked?'WRITE_APPEND': '';
   const [writeDisposition, setWriteDisposition] = useState('');
   const multiRegionList = [
     { key: 'us', label: 'US' },
     { key: 'europe', label: 'EU' }
-  ]; //['us','europe']//['EU', 'US'];
+  ];
 
   const [serviceAccounts, setServiceAccounts] = useState<
     { displayName: string; email: string }[]
@@ -160,7 +161,7 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleRegionRadioBtn = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAutoRegionSelected(event.target.checked);
-    data.location = 'us';//as per backend requirement
+    data.location = 'us'; //as per backend requirement // in the payload it should be empty but for encryption api as a region id it should send us
   };
 
   const handleMultiRegionTypeSelected = (
@@ -250,7 +251,6 @@ function BigQuerySqlForm({ data }: any) {
     );
   };
   const listKeyRingsAPI = async () => {
-    console.log(data.location);
     await SchedulerService.getKeyRingsList(data.location, setKeyRinglist);
   };
 
@@ -270,7 +270,7 @@ function BigQuerySqlForm({ data }: any) {
     if (data.location) {
       listKeyRingsAPI();
     }
-  }, [regionSelected, multiRegionSelected]);
+  }, [regionSelected, multiRegionSelected, autoRegionSelected]);
 
   useEffect(() => {
     if (data) {
@@ -325,6 +325,12 @@ function BigQuerySqlForm({ data }: any) {
       }
     }
   }, [data, serviceAccounts, keylist]); //remove keylist by checking
+
+  useEffect(() => {
+    if (isSaveQueryChecked) {
+      setWriteDisposition('WRITE_APPEND');
+    }
+  }, [isSaveQueryChecked]);
 
   return (
     <>
