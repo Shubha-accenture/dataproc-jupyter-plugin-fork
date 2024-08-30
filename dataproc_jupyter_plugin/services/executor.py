@@ -338,9 +338,8 @@ class Client:
                         retries = node.get('data', {}).get('retryCount', {}),
                         serviceAccount = node.get('data', {}).get('serviceAccount', {})
                     )
-
-
-                    serverless_file = f"dag_{input_file}"
+                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
+                    serverless_file = f"dag_{file_name}"
                     with open(serverless_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
                     with open(serverless_file, 'r', encoding='utf-8') as file:
@@ -362,7 +361,6 @@ class Client:
                     job,
                     id = id,
                     inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
-                    inputFile = input_file,
                     gcpProjectId=gcp_project_id,
                     gcpRegion=gcp_region_id,
                     inputNotebook=input_notebook,
@@ -372,7 +370,8 @@ class Client:
                     clusterName =node.get('data',{}).get('clusterName',{}),
                     stopStatus =node.get('data',{}).get('stopCluster',{})
                     )
-                    cluster_file = f"dag_{input_file}"
+                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
+                    cluster_file = f"dag_{file_name}"
                     with open(cluster_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
                     with open(cluster_file, 'r', encoding='utf-8') as file:
@@ -405,7 +404,8 @@ class Client:
                     writeDisposition =node.get('data',{}).get('writeDisposition',{}),
                     kmsKey = node.get('data',{}).get('kmsKey',{})
                     )
-                    bq_file = f"dag_{input_file}"
+                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
+                    bq_file = f"dag_{file_name}"
                     with open(bq_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
                     with open(bq_file, 'r', encoding='utf-8') as file:
