@@ -5,10 +5,10 @@ import { eventEmitter } from '../utils/signalEmitter';
 import {
   Autocomplete,
   Box,
-  Checkbox,
+  // Checkbox,
   CircularProgress,
-  FormControlLabel,
-  FormGroup,
+  // FormControlLabel,
+  // FormGroup,
   TextField,
   Typography
 } from '@mui/material';
@@ -167,7 +167,7 @@ function BigQueryNotebookForm({ data, mode }: any) {
               setDuplicateKeyError={setDuplicateKeyError}
               fromPage="react-flow"
             />
-            <div className="create-scheduler-form-element">
+            {/* <div className="create-scheduler-form-element">
               <div> Output Format </div>
               <FormGroup row={true}>
                 <FormControlLabel
@@ -178,7 +178,7 @@ function BigQueryNotebookForm({ data, mode }: any) {
                   }
                 />
               </FormGroup>
-            </div>
+            </div> */}
 
             <div className="scheduler-dropdown-form-element">
               {isLoadingKernelDetail && (

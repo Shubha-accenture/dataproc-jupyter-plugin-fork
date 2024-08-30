@@ -214,7 +214,7 @@ function ClusterServerlessForm({ data, mode }: any) {
               setDuplicateKeyError={setDuplicateKeyError}
               fromPage="react-flow"
             />
-            <div className="create-scheduler-form-element">
+            {/* <div className="create-scheduler-form-element">
               <div> Output Format </div>
               <FormGroup row={true}>
                 <FormControlLabel
@@ -225,7 +225,7 @@ function ClusterServerlessForm({ data, mode }: any) {
                   }
                 />
               </FormGroup>
-            </div>
+            </div> */}
             <div className="scheduler-dropdown-form-element">
               {isLoadingKernelDetail && (
                 <CircularProgress
