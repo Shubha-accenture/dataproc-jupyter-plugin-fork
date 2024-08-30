@@ -36,8 +36,10 @@ function BigQuerySqlForm({ data }: any) {
   const [regionSelected, setRegionSelected] = useState('');
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
-  const defaultwriteDisposition= isSaveQueryChecked?'WRITE_APPEND': '';
-  const [writeDisposition, setWriteDisposition] = useState(defaultwriteDisposition);
+  const defaultwriteDisposition = isSaveQueryChecked ? 'WRITE_APPEND' : '';
+  const [writeDisposition, setWriteDisposition] = useState(
+    defaultwriteDisposition
+  );
   const multiRegionList = [
     { key: 'us', label: 'US' },
     { key: 'europe', label: 'EU' }
@@ -63,7 +65,8 @@ function BigQuerySqlForm({ data }: any) {
     []
   ); //change this to only array of strings
   const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
-  const [regionId, setRegionId]=useState('us')
+  const [regionId, setRegionId] = useState('us');
+  // const [validNode, setValidNode] = useState(false);
 
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
@@ -110,8 +113,11 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleSaveQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsSaveQueryChecked(event.target.checked);
-    data.saveQuery=event.target.checked
-    eventEmitter.emit(`saveQuery`,event.target.checked)
+    data.saveQuery = event.target.checked;
+    // if(event.target.checked){
+    // eventEmitter.emit(`saveQuery`,true)
+    // }
+    // eventEmitter.emit(`saveQuery`,event.target.checked)
   };
 
   const handleTableIDChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,9 +166,9 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleRegionRadioBtn = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAutoRegionSelected(event.target.checked);
-    data.location = ''; 
-    if(event.target.checked){
-      setRegionId('us')
+    data.location = '';
+    if (event.target.checked) {
+      setRegionId('us');
     }
   };
 
@@ -172,7 +178,7 @@ function BigQuerySqlForm({ data }: any) {
   ) => {
     setMultiRegionSelected(value?.label || '');
     data.location = value?.key || '';
-    setRegionId(value?.key || '')
+    setRegionId(value?.key || '');
   };
 
   const handleRegionSelected = (
@@ -181,7 +187,7 @@ function BigQuerySqlForm({ data }: any) {
   ) => {
     setRegionSelected(value || '');
     data.location = value;
-    setRegionId(value|| '')
+    setRegionId(value || '');
   };
 
   const handleWriteDisposition = (
@@ -247,11 +253,7 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   const listKeysAPI = async (keyRingSelected: string) => {
-    await SchedulerService.getKeysList(
-     regionId,
-      keyRingSelected,
-      setKeylist
-    );
+    await SchedulerService.getKeysList(regionId, keyRingSelected, setKeylist);
   };
   const listKeyRingsAPI = async () => {
     await SchedulerService.getKeyRingsList(regionId, setKeyRinglist);
@@ -266,11 +268,11 @@ function BigQuerySqlForm({ data }: any) {
   useEffect(() => {
     fetchRegionList();
     fetchServiceAccounts();
-     listKeyRingsAPI();
+    listKeyRingsAPI();
   }, []);
 
   useEffect(() => {
-      listKeyRingsAPI();
+    listKeyRingsAPI();
   }, [regionId]);
 
   useEffect(() => {
@@ -282,7 +284,7 @@ function BigQuerySqlForm({ data }: any) {
       setDatasetId(data.datasetId);
       setServiceAccountSelected(data.serviceAccount);
       setWriteDisposition(data.writeDisposition);
-      setIsSaveQueryChecked(data.saveQuery)
+      setIsSaveQueryChecked(data.saveQuery);
       if (data.serviceAccount) {
         setServiceAccountSelected(data.serviceAccount);
       }
@@ -321,12 +323,38 @@ function BigQuerySqlForm({ data }: any) {
         // }
         // projects/dataproc-jupyter-extension-dev/locations/us-central1/keyRings/keyring1/cryptoKeys/key3 // handle rings with this
         let kmsKeyArray = data.kmsKey.split('/');
-        console.log(kmsKeyArray);
         setKeyRingSelected(kmsKeyArray[5]);
         setKeySelected(kmsKeyArray[7]);
       }
     }
   }, [data, serviceAccounts, keylist]);
+
+  useEffect(() => {
+    if (data) {
+      let validData = true;
+      if (!inputFileSelectedLocal) {
+        validData = false;
+      }
+      if (isSaveQueryChecked) {
+        if (datasetId === '') {
+          validData = false;
+        }
+        if (tableID === '') {
+          validData = false;
+        }
+        if (writeDisposition === '') {
+          validData = false;
+        }
+      }
+      eventEmitter.emit(`saveQuery`, validData);
+    }
+  }, [
+    isSaveQueryChecked,
+    inputFileSelectedLocal,
+    tableID,
+    datasetId,
+    writeDisposition
+  ]);
 
   useEffect(() => {
     if (isSaveQueryChecked) {
