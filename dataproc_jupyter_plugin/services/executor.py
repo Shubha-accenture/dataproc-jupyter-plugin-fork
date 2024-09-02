@@ -287,7 +287,6 @@ class Client:
                     await self.upload_input_file_to_gcs( 
                     input_file, gcs_dag_bucket, job_name
                 )
-                parameters = "\n".join(item.replace(":", ":") for item in node.get('data', {}).get('parameter', []))
                 
                 if node_type == 'Serverless' or node_type == 'Bigquery-Serverless':
                     serverless_config = node.get('data', {}).get('serverless', {})
@@ -319,6 +318,7 @@ class Client:
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
                         if not input_file.startswith("gs://") else input_file
                     )
+                    parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
                     content = serverless_template.render(
                         job,
                         id = id,
@@ -356,6 +356,7 @@ class Client:
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
                         if not input_file.startswith("gs://") else input_file
                     )
+                    parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
                     cluster_template = environment_cluster.get_template(DAG_TEMPLATE_CLUSTER_V3)
                     content = cluster_template.render(
                     job,
@@ -388,6 +389,7 @@ class Client:
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
                         if not input_file.startswith("gs://") else input_file
                     )
+                    parameters = "\n".join(item.replace(":", ":") for item in node.get('data', {}).get('parameter', []))
                     bq_template = environment_bq.get_template(DAG_TEMPLATE_BIGQUERY_V3)
                     content = bq_template.render(
                     job,
