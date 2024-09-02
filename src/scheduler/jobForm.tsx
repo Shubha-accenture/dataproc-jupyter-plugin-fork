@@ -180,9 +180,9 @@ const JobForm = ({
                 />
               </div>
               {!jobNameValidation && !editMode && (
-                <div className="error-key-parent">
+                <div className="jobform-error-key-parent">
                   <iconError.react tag="div" className="logo-alignment-style" />
-                  <div className="error-key-missing">Name is required</div>
+                  <div className="jobform-error-key-missing">Name is required</div>
                 </div>
               )}
               {jobNameSpecialValidation && jobNameValidation && !editMode && (
@@ -281,12 +281,12 @@ const JobForm = ({
                 initialJobPayload.email_delay ||
                 initialJobPayload.email_success) &&
                 !initialJobPayload.email_ids.length && (
-                  <div className="error-key-parent">
+                  <div className="jobform-error-key-parent">
                     <iconError.react
                       tag="div"
                       className="logo-alignment-style"
                     />
-                    <div className="error-key-missing">
+                    <div className="jobform-error-key-missing">
                       Email recipients is required field
                     </div>
                   </div>
