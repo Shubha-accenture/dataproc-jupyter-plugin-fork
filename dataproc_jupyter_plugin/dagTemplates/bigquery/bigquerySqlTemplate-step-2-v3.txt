@@ -43,7 +43,10 @@ def run_bigquery_insert_job_{{id}}(**kwargs):
         {% if bqRegion %}
         location='{{bqRegion}}',  # Specify your BigQuery location
         {% endif %}
-        impersonation_chain=service_account,
+        {% if ser}
+        {% if serviceAccount %}
+        impersonation_chain='{{serviceAccount}}',
+        {% endif %}
         dag=kwargs['dag'],
     )
     insert_job.execute(context=kwargs)

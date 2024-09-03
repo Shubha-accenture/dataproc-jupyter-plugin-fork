@@ -54,7 +54,9 @@ create_batch_{{id}} = DataprocCreateBatchOperator(
             },
             
         },
+        {% if serviceAccount %}
         impersonation_chain='{{serviceAccount}}',
+        {% endif %}
         retries = {{retries}},
         batch_id=str(uuid.uuid4()),
         dag = dag,
