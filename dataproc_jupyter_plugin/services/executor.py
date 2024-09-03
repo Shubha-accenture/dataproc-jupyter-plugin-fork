@@ -19,6 +19,8 @@ import subprocess
 import uuid
 from datetime import datetime, timedelta
 import urllib
+from google.cloud import storage
+from google.api_core.exceptions import NotFound
 
 import aiohttp
 import pendulum
@@ -46,9 +48,6 @@ TEMPLATES_FOLDER_PATH = "dagTemplates"
 TEMPLATES_FOLDER_PATH_SERVERLESS = "dagTemplates/serverless"
 TEMPLATES_FOLDER_PATH_CLUSTER = "dagTemplates/cluster"
 TEMPLATES_FOLDER_PATH_DATAPROC = "dagTemplates/bigquery"
-
-
-
 ROOT_FOLDER = PACKAGE_NAME
 
 
@@ -97,37 +96,40 @@ class Client:
 
     async def check_file_exists(self, bucket, file_path):
         try:
-            cmd = f"gsutil ls gs://{bucket}/dataproc-notebooks/{file_path}"
-            await async_run_gsutil_subcommand(cmd)
-            return True
-        except subprocess.CalledProcessError as error:
-            self.log.exception(f"Error checking papermill file: {error.decode()}")
-            raise IOError(error.decode)
+            if not bucket:
+                raise ValueError("Bucket name cannot be empty")
+            bucket_name = storage.Client().bucket(bucket)
+            blob = bucket_name.blob(file_path)
+            return blob.exists()
+        except Exception as error:
+            self.log.exception(f"Error checking file: {error}")
+            raise IOError(f"Error creating dag: {error}")
 
-    async def upload_papermill_to_gcs(self, gcs_dag_bucket):
-        env = Environment(
-            loader=PackageLoader(PACKAGE_NAME, "dagTemplates"),
-            autoescape=select_autoescape(["py"]),
-        )
-        wrapper_papermill_path = env.get_template("wrapper_papermill.py").filename
+    async def upload_to_gcs(self,gcs_dag_bucket, file_path=None, template_name=None, destination_dir=None):
         try:
-            cmd = f"gsutil cp '{wrapper_papermill_path}' gs://{gcs_dag_bucket}/dataproc-notebooks/"
-            await async_run_gsutil_subcommand(cmd)
-            self.log.info("Papermill file uploaded to gcs successfully")
-        except subprocess.CalledProcessError as error:
-            self.log.exception(
-                f"Error uploading papermill file to gcs: {error.decode()}"
-            )
-            raise IOError(error.decode)
-
-    async def upload_input_file_to_gcs(self, input, gcs_dag_bucket, job_name):
-        try:
-            cmd = f"gsutil cp './{input}' gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/"
-            await async_run_gsutil_subcommand(cmd)
-            self.log.info("Input file uploaded to gcs successfully")
-        except subprocess.CalledProcessError as error:
-            self.log.exception(f"Error uploading input file to gcs: {error.decode()}")
-            raise IOError(error.decode)
+            storage_client = storage.Client()
+            bucket = storage_client.bucket(gcs_dag_bucket)
+            if template_name:
+                env = Environment(
+                    loader=PackageLoader(PACKAGE_NAME, TEMPLATES_FOLDER_PATH),
+                    autoescape=select_autoescape(["py"]),
+                )
+                file_path = env.get_template(template_name).filename
+            
+            if not file_path:
+                raise ValueError("No file path or template name provided for upload.")
+            if destination_dir:
+                blob_name = f"{destination_dir}/{file_path.split('/')[-1]}"
+            else:
+                blob_name = f"{file_path.split('/')[-1]}"
+            
+            blob = bucket.blob(blob_name)
+            blob.upload_from_filename(file_path)
+            self.log.info(f"File {file_path} uploaded to gcs successfully")
+            
+        except Exception as error:
+            self.log.exception(f"Error uploading file to GCS: {str(error)}")
+            raise IOError(str(error))
         
     async def get_execution_order(self,job,edges,cluster_stop_dict):
          #creating execution order based on the tasks  
@@ -193,10 +195,6 @@ class Client:
 
     async def prepare_dag(self, job, gcs_dag_bucket, dag_file, execution_order, edges):
         self.log.info("Generating dag file")
-        DAG_TEMPLATE_CLUSTER_V1 = "pysparkJobTemplate-v1.txt"
-        DAG_TEMPLATE_SERVERLESS_V1 = "pysparkBatchTemplate-v1.txt"
-        DAG_TEMPLATE_CLUSTER_V2 = "pysparkJobTemplate-v2.txt"
-        DAG_TEMPLATE_SERVERLESS_V2 = "pysparkBatchTemplate-v2.txt"
         DAG_TEMPLATE_JOB_V1 = "commonTemplate-step-1-v1.txt"
         DAG_TEMPLATE_SERVERLESS_V3 = "pysparkBatchTemplate-step-2-v3.txt"
         DAG_TEMPLATE_CLUSTER_V3 = "pysparkJobTemplate-step-2-v3.txt"
@@ -223,7 +221,6 @@ class Client:
             schedule_interval = "@once"
         else:
             schedule_interval = job.nodes[0]['data']['scheduleValue']
-        print('dataaaaaa', job.nodes[0]['data']['timeZone'])
         if job.nodes[0]['data']['timeZone'] == "":
             yesterday = datetime.combine(
                 datetime.today() - timedelta(1), datetime.min.time()
@@ -284,9 +281,7 @@ class Client:
             if node_type != 'Trigger':
                 input_file = node.get('data', {}).get('inputFile', '')
                 if not input_file.startswith(GCS):
-                    await self.upload_input_file_to_gcs( 
-                    input_file, gcs_dag_bucket, job_name
-                )
+                    await self.upload_to_gcs(gcs_dag_bucket, file_path=f"./{input_file}", destination_dir=f"dataproc-notebooks/{job_name}/input_notebooks")
                 
                 if node_type == 'Serverless' or node_type == 'Bigquery-Serverless':
                     serverless_config = node.get('data', {}).get('serverless', {})
@@ -314,11 +309,12 @@ class Client:
                         serverless_config.get("runtimeConfig", {})
                         .get("version", "")
                     )
+                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
                     input_notebook = (
-                        f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
-                        if not input_file.startswith("gs://") else input_file
+                        f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{file_name}"
+                        if not input_file.startswith("gs://") else file_name
                     )
-                    parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
+                    parameters = [item.replace(":", ": ") for item in node.get('data', {}).get('parameter', [])]
                     content = serverless_template.render(
                         job,
                         id = id,
@@ -338,7 +334,6 @@ class Client:
                         retries = node.get('data', {}).get('retryCount', {}),
                         serviceAccount = node.get('data', {}).get('serviceAccount', {})
                     )
-                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
                     serverless_file = f"dag_{file_name}"
                     with open(serverless_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
@@ -352,11 +347,13 @@ class Client:
                         message.write(serverless_contents)
                     os.remove(serverless_file)
                 elif node_type == 'Cluster':
+                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
                     input_notebook = (
-                        f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
-                        if not input_file.startswith("gs://") else input_file
+                        f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{file_name}"
+                        if not input_file.startswith("gs://") else file_name
                     )
-                    parameters = "\n".join(item.replace(":", ": ") for item in node.get('data', {}).get('parameter', []))
+                    parameters = [item.replace(":", ": ") for item in node.get('data', {}).get('parameter', [])]
+
                     cluster_template = environment_cluster.get_template(DAG_TEMPLATE_CLUSTER_V3)
                     content = cluster_template.render(
                     job,
@@ -371,7 +368,6 @@ class Client:
                     clusterName =node.get('data',{}).get('clusterName',{}),
                     stopStatus =node.get('data',{}).get('stopCluster',{})
                     )
-                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
                     cluster_file = f"dag_{file_name}"
                     with open(cluster_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
@@ -385,11 +381,12 @@ class Client:
                         message.write(cluster_contents)
                     os.remove(cluster_file)
                 elif node_type == 'Bigquery-Sql':
+                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
                     input_notebook = (
-                        f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
-                        if not input_file.startswith("gs://") else input_file
+                        f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{file_name}"
+                        if not input_file.startswith("gs://") else file_name
                     )
-                    parameters = "\n".join(item.replace(":", ":") for item in node.get('data', {}).get('parameter', []))
+                    parameters = ",".join(item for item in node.get('data', {}).get('parameter', []))
                     bq_template = environment_bq.get_template(DAG_TEMPLATE_BIGQUERY_V3)
                     content = bq_template.render(
                     job,
@@ -406,7 +403,6 @@ class Client:
                     writeDisposition =node.get('data',{}).get('writeDisposition',{}),
                     kmsKey = node.get('data',{}).get('kmsKey',{})
                     )
-                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
                     bq_file = f"dag_{file_name}"
                     with open(bq_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
@@ -464,16 +460,6 @@ class Client:
         else:
             raise ValueError("The graph has at least one cycle, topological sorting is not possible.")
 
-
-    async def upload_dag_to_gcs(self, gcs_dag_bucket, file_path):
-        try:
-            cmd = f"gsutil cp '{file_path}' gs://{gcs_dag_bucket}/dags/"
-            await async_run_gsutil_subcommand(cmd)
-            self.log.info("Dag file uploaded to gcs successfully")
-        except subprocess.CalledProcessError as error:
-            self.log.exception(f"Error uploading dag file to gcs: {error.decode()}")
-            raise IOError(error.decode)
-
     async def execute(self, input):
         try:
             job = DescribeJob(**input)
@@ -497,11 +483,11 @@ class Client:
                     f"The file gs://{gcs_dag_bucket}/{wrapper_pappermill_file_path} exists."
                 )
             else:
-                await self.upload_papermill_to_gcs(gcs_dag_bucket)
+                await self.upload_to_gcs(gcs_dag_bucket, template_name=WRAPPER_PAPPERMILL_FILE, destination_dir="dataproc-notebooks")
                 print(
                     f"The file gs://{gcs_dag_bucket}/{wrapper_pappermill_file_path} does not exist."
                 )
-            await self.upload_dag_to_gcs(gcs_dag_bucket, file_path)         
+            await self.upload_to_gcs(gcs_dag_bucket, file_path=file_path, destination_dir="dags")    
             return {"status": 0}
         except Exception as e:
             return {"error": str(e)}

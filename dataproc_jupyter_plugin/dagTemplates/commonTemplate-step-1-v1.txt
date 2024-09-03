@@ -59,9 +59,7 @@ def get_notebook_args(input_notebook,parameter,task_id):
     input_notebook = input_notebook
     output_notebook = {% raw %}"{{ ti.xcom_pull(task_ids='" + task_id + "',key='output_file_path') }}"{% endraw %}
     notebook_args = [input_notebook, output_notebook]
-    parameters_str = '''
-    {}
-    '''.format(',\n'.join(parameter)).replace('\n', '')
+    parameters_str = "\n".join(parameter)
     # Check if parameters is not empty or contains only whitespace
     if parameters_str.strip():  
         notebook_args.extend(["--parameters", parameters_str])
