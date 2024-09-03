@@ -31,9 +31,9 @@ const iconSearchClear = new LabIcon({
 
 function ConfigureForm({ id, data, nodes, setTaskFormVisible }: any) {
   const nodeTypes = [
-    { key: 'Serverless', label: 'Run a notebook on dataproc serverless' },
-    { key: 'Cluster', label: 'Run a notebook on dataproc cluster' },
-    { key: 'Bigquery-Serverless', label: 'Execute a Notebook on BigQuery' },
+    { key: 'Serverless', label: 'Run a notebook on Dataproc Serverless' },
+    { key: 'Cluster', label: 'Run a notebook on Dataproc Cluster' },
+    { key: 'Bigquery-Serverless', label: 'Execute a notebook on BigQuery' },
     { key: 'Bigquery-Sql', label: 'Execute a SQL on BigQuery' },
     // { key: 'sql', label: 'Execute a SQL on BigQuery' },
     // {
