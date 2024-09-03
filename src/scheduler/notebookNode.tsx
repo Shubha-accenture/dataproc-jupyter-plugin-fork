@@ -40,9 +40,8 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   useEffect(() => {
     setIsSelected(selected);
   }, [selected]);
-
   const nodeLabel = data.inputFile
-    ? `${id}.${data.inputFile}`
+    ? `${id}.${data.inputFile.split('/').pop()}`
     : `${id}.New Node`;
   const [nodeSubLabel, setNodeSubLabel] = useState('');
 
