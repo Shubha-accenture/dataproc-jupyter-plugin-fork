@@ -63,7 +63,7 @@ const CreateNotebookScheduler = ({
     email_success: false,
     email_ids: []
   };
-  
+
   const [jobPayload, setJobPayload] = useState(initialPayload);
 
   const validateJobPayload = () => {
@@ -76,11 +76,11 @@ const CreateNotebookScheduler = ({
         jobPayload.email_ids.length === 0)
     );
   };
-  const bigQuerySqlValidation =() =>{
+  const bigQuerySqlValidation = () => {
     eventEmitter.on('saveQuery', (value: boolean) => {
-      setNodeDataValidation(value)
+      setNodeDataValidation(value);
     });
-  }
+  };
 
   const validateTaskPayload = () => {
     let allNodesHaveData = true;
@@ -112,9 +112,9 @@ const CreateNotebookScheduler = ({
         if (!serverless) {
           allNodesHaveData = false;
         }
-      } 
+      }
       setNodeDataValidation(allNodesHaveData);
-      bigQuerySqlValidation();//change this 
+      bigQuerySqlValidation(); //change this
     });
   };
   useEffect(() => {
@@ -124,7 +124,7 @@ const CreateNotebookScheduler = ({
 
   useEffect(() => {
     validateTaskPayload();
-  }, [nodes]);//calling this multiple times // handle it using data only 
+  }, [nodes]); //calling this multiple times // handle it using data only
 
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
@@ -195,11 +195,15 @@ const CreateNotebookScheduler = ({
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"
-                disabled={!nodeDataValidation || !jobPayloadValidation}
+                disabled={
+                  !nodeDataValidation ||
+                  !jobPayloadValidation ||
+                  creatingScheduler
+                }
                 aria-label="Save scheduler"
                 onClick={handleCreateJobScheduler}
               >
-                <div>SAVE</div>
+                <div>{creatingScheduler ? 'SAVING...' : 'SAVE'}</div>
               </Button>
               <Button
                 sx={{ width: '100px' }}
