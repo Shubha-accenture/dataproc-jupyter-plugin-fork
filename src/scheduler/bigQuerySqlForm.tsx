@@ -61,12 +61,9 @@ function BigQuerySqlForm({ data }: any) {
   const [keySelected, setKeySelected] = useState(keys);
   const [manualKeySelected, setManualKeySelected] = useState('');
   const [manualValidation, setManualValidation] = useState(true);
-  const [keylist, setKeylist] = useState<{ displaykey: string; key: string }[]>(
-    []
-  ); //change this to only array of strings
+  const [keylist, setKeylist] = useState<string[]>([]);
   const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
   const [regionId, setRegionId] = useState('us');
-  // const [validNode, setValidNode] = useState(false);
 
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
@@ -241,11 +238,12 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleKeyChange = (
     event: React.SyntheticEvent<Element, Event>,
-    value: { displaykey: string; key: string } | null
+    value:string | null
   ) => {
     if (value) {
-      setKeySelected(value.displaykey);
-      data.kmsKey = value.key;
+      let key = value.split('/');
+      setKeySelected(key[7]);
+      data.kmsKey = value;
     } else {
       setKeySelected('');
       data.kmsKey = '';
@@ -253,7 +251,7 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   const listKeysAPI = async (keyRingSelected: string) => {
-    await SchedulerService.getKeysList(regionId, keyRingSelected, setKeylist);
+    await SchedulerService.getKeysList(regionId, keyRingSelected,  setKeylist);
   };
   const listKeyRingsAPI = async () => {
     await SchedulerService.getKeyRingsList(regionId, setKeyRinglist);
@@ -297,31 +295,19 @@ function BigQuerySqlForm({ data }: any) {
       if (selectedServiceAccount) {
         setServiceAccountSelected(selectedServiceAccount.displayName);
       }
-      // if (data.location) {
-      //   if (multiRegionList.includes(data.location)) {
-      //     setRegionTypeSelected('multiRegion');
-      //     setMultiRegionSelected(data.location);
-      //   } else {
-      //     setRegionTypeSelected('region');
-      //     setRegionSelected(data.location);
-      //   }
-      // } else if (data.location === '') {
-      //   setAutoRegionSelected(true);
-      // }
-      // due to region change this is not working properly
-      // if(data.keyRings){
-      //   setKeyRingSelected(data.keyRings)
-      //   setSelectedEncryptionRadio('customerManaged')
-      // }
+      if (data.location) {
+        if (multiRegionList.includes(data.location)) {
+          setRegionTypeSelected('multiRegion');
+          setMultiRegionSelected(data.location);
+        } else {
+          setRegionTypeSelected('region');
+          setRegionSelected(data.location);
+        }
+      } else if (data.location === '') {
+        setAutoRegionSelected(true);
+      }
       if (data.kmsKey) {
         setSelectedEncryptionRadio('customerManaged');
-        // console.log(data.kmsKey, keylist)
-        // const selectedKey = keylist.find(option => option.key === data.kmsKey);
-        // console.log(selectedKey)
-        // if (selectedKey) {
-        //   setKeySelected(selectedKey.displaykey);
-        // }
-        // projects/dataproc-jupyter-extension-dev/locations/us-central1/keyRings/keyring1/cryptoKeys/key3 // handle rings with this
         let kmsKeyArray = data.kmsKey.split('/');
         setKeyRingSelected(kmsKeyArray[5]);
         setKeySelected(kmsKeyArray[7]);
@@ -388,14 +374,6 @@ function BigQuerySqlForm({ data }: any) {
               setLabelDetail={setParameterDetail}
               labelDetailUpdated={parameterDetailUpdated}
               setLabelDetailUpdated={setParameterDetailUpdated}
-              // buttonText="ADD PARAMETER"
-              // keyValidation={keyValidation}
-              // setKeyValidation={setKeyValidation}
-              // valueValidation={valueValidation}
-              // setValueValidation={setValueValidation}
-              // duplicateKeyError={duplicateKeyError}
-              // setDuplicateKeyError={setDuplicateKeyError}
-              // fromPage="react-flow"
             />
             <div className="create-scheduler-form-element">
               <FormGroup row={true}>
@@ -673,10 +651,11 @@ function BigQuerySqlForm({ data }: any) {
                               selectedRadioValue === 'manually' ? true : false
                             }
                             options={keylist}
-                            getOptionLabel={option => option.displaykey}
-                            value={keylist.find(
-                              option => option.displaykey === keySelected
-                            )}
+                            // getOptionLabel={option => option.displaykey}
+                            // value={keylist.find(
+                            //   option => option.displaykey === keySelected
+                            // )}
+                            value={keySelected}
                             onChange={handleKeyChange}
                             renderInput={params => (
                               <TextField {...params} label="Keys" />
