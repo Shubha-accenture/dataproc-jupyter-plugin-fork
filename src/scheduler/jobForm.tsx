@@ -65,8 +65,7 @@ const JobForm = ({
     useState(false);
   const [jobNameUniqueValidation, setJobNameUniqueValidation] = useState(true);
   const [dagList, setDagList] = useState<IDagList[]>([]);
-  const [editMode] = useState(false);
-
+  const [emailVailidation, setEmailValidation] = useState(true);
   const listComposersAPI = async () => {
     await SchedulerService.listComposersAPIService(setComposerList);
   };
@@ -125,6 +124,7 @@ const JobForm = ({
       ...prev,
       email_ids: data
     }));
+    data.length > 0 ? setEmailValidation(true) : setEmailValidation(false);
   };
 
   const handleJobNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,16 +176,17 @@ const JobForm = ({
                   type="text"
                   placeholder=""
                   Label="Job name*"
-                  disabled={editMode}
                 />
               </div>
-              {!jobNameValidation && !editMode && (
+              {!jobNameValidation && (
                 <div className="jobform-error-key-parent">
                   <iconError.react tag="div" className="logo-alignment-style" />
-                  <div className="jobform-error-key-missing">Name is required</div>
+                  <div className="jobform-error-key-missing">
+                    Name is required
+                  </div>
                 </div>
               )}
-              {jobNameSpecialValidation && jobNameValidation && !editMode && (
+              {jobNameSpecialValidation && jobNameValidation && (
                 <div className="error-key-parent">
                   <iconError.react tag="div" className="logo-alignment-style" />
                   <div className="error-key-missing">
@@ -194,7 +195,7 @@ const JobForm = ({
                   </div>
                 </div>
               )}
-              {!jobNameUniqueValidation && !editMode && (
+              {!jobNameUniqueValidation && (
                 <div className="error-key-parent">
                   <iconError.react tag="div" className="logo-alignment-style" />
                   <div className="error-key-missing">
@@ -211,7 +212,6 @@ const JobForm = ({
                   renderInput={params => (
                     <TextField {...params} label="Environment*" />
                   )}
-                  disabled={editMode}
                 />
               </div>
               <div className="create-scheduler-form-element">
@@ -273,14 +273,15 @@ const JobForm = ({
                     addOnBlur={true}
                     value={initialJobPayload.email_ids}
                     inputProps={{ placeholder: '' }}
-                    label="Email recipients"
+                    label="Email recipients*"
                   />
                 )}
               </div>
               {(initialJobPayload.email_failure ||
                 initialJobPayload.email_delay ||
                 initialJobPayload.email_success) &&
-                !initialJobPayload.email_ids.length && (
+                !initialJobPayload.email_ids.length &&
+                !emailVailidation && (
                   <div className="jobform-error-key-parent">
                     <iconError.react
                       tag="div"
