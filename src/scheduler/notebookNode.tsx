@@ -68,21 +68,40 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   }, [id, data.scheduleValue, data.nodeType]);
 
   useEffect(() => {
+    console.log(data)
     if (!data.nodeType) {
       setStatus('');
       return;
     }
-    if (data.nodeType === 'Cluster' && (!data.inputFile || !data.clusterName)) {
+    else if (data.nodeType === 'Cluster' && (!data.inputFile || !data.clusterName)) {
       setStatus('incomplete');
-    } else if (
-      data.nodeType === 'Serverless' &&
-      (!data.inputFile || !data.serverless)
+    }
+    else if (
+      (data.nodeType === 'Serverless' ||
+        data.nodeType === 'Bigquery-Serverless') &&
+      (!data.inputFile || !data.serverless || data.serviceAccount)
     ) {
       setStatus('incomplete');
-    } else {
+    }
+   else if (data.nodeType === 'Bigquery-Sql')
+    {
+        if(!data.inputFile || data.serviceAccount){
+          setStatus('incomplete');
+        }
+       else if (
+         data.isSaveQuery &&
+        (!data.datasetId || !data.tableId)
+      ) {
+        setStatus('incomplete');
+      }
+      else {
+        setStatus('complete');
+      }
+    } 
+    else {
       setStatus('complete');
     }
-  }, [data.nodeType, data.inputFile, data.clusterName, data.serverless]);
+  }, [data.nodeType, data.inputFile, data.clusterName, data.serverless, data.isSaveQuery,data.datasetId,data.tableId]);
 
   return (
     <>

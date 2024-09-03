@@ -86,7 +86,8 @@ const GraphicalScheduler = ({
         writeDisposition: '',
         serviceAccount: '',
         keyRings:'',
-        kmsKey:''
+        kmsKey:'',
+        isSaveQuery:false
       }
     }
   ];
@@ -150,7 +151,8 @@ const GraphicalScheduler = ({
               writeDisposition: '',
               serviceAccount: '',
               keyRings:'',
-              kmsKey:''
+              kmsKey:'',   
+              isSaveQuery:false
             },
             origin: [0.5, 0.0]
           };

@@ -110,11 +110,7 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleSaveQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsSaveQueryChecked(event.target.checked);
-    data.saveQuery = event.target.checked;
-    // if(event.target.checked){
-    // eventEmitter.emit(`saveQuery`,true)
-    // }
-    // eventEmitter.emit(`saveQuery`,event.target.checked)
+    data.isSaveQuery = event.target.checked;
   };
 
   const handleTableIDChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -329,6 +325,10 @@ function BigQuerySqlForm({ data }: any) {
           validData = false;
         }
         if (writeDisposition === '') {
+          validData = false;
+        }
+        if(!serviceAccountSelected)
+        {
           validData = false;
         }
       }
