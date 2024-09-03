@@ -935,11 +935,13 @@ export class SchedulerService {
   };
 
   static getKeyRingsList = async (
-    regionId:string,
+    regionId: string,
     setKeyRinglist: (value: string[]) => void
   ) => {
     try {
-      const formattedResponse: any = await requestAPI(`keyRingsList?region_id=${regionId}`);
+      const formattedResponse: any = await requestAPI(
+        `keyRingsList?region_id=${regionId}`
+      );
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
       } else {
@@ -961,9 +963,10 @@ export class SchedulerService {
   };
 
   static getKeysList = async (
-    regionId:string,
+    regionId: string,
     Id: string,
-    setKeyslist:(value: { displaykey: string; key: string }[]) => void
+    setKeyslist: (value: string[]) => void,
+    // setDisplayList:(value: string[]) => void
   ) => {
     try {
       const formattedResponse: any = await requestAPI(
@@ -972,11 +975,12 @@ export class SchedulerService {
       if (formattedResponse?.error?.code) {
         toast.error(formattedResponse?.error?.message, toastifyCustomStyle);
       } else {
-        const keys = formattedResponse.map((path: string) => ({
-          displaykey: path.split('/').pop() || '',
-          key: path,
-        }));//change this to string array
-        setKeyslist(keys);
+        // const keys = formattedResponse.map((path: string) => ({
+        //   displaykey: path.split('/').pop() || '',
+        //   key: path,
+        // }));//change this to string array
+        // setKeyslist(keys);
+        setKeyslist(formattedResponse);
       }
     } catch (error) {
       DataprocLoggingService.log('Error fetching KeysList ', LOG_LEVEL.ERROR);

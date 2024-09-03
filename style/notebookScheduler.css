@@ -381,13 +381,13 @@
 
 .encryption-header{
   width: 95%;
-  height: 36px;
   background: var(--jp-layout-color0);
   outline: none;
   margin-top: 15px;
   margin-bottom: -25px;
   height: 48px;
   display: flex;
+  font-size: 15px;
 }
 .create-scheduler-encrypt {
   display: flex;
