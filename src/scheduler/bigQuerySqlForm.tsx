@@ -21,6 +21,7 @@ import SchedulerProperties from './schedulerProperties';
 
 function BigQuerySqlForm({ data }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
+  const [inputFileValidation, setInputFileValidation] = useState(false);
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
   const [parameterDetail, setParameterDetail] = useState(['']);
@@ -73,6 +74,9 @@ function BigQuerySqlForm({ data }: any) {
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
+      const fileName = file.name;
+      const isSQLFile = fileName.endsWith('.sql');
+      setInputFileValidation(!isSQLFile);
       setInputFileSelectedLocal(evt.target.value);
       eventEmitter.emit(`uploadProgress-bqsql`, evt, data);
     }
@@ -234,7 +238,7 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleKeyChange = (
     event: React.SyntheticEvent<Element, Event>,
-    value:string | null
+    value: string | null
   ) => {
     if (value) {
       let key = value.split('/');
@@ -247,7 +251,7 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   const listKeysAPI = async (keyRingSelected: string) => {
-    await SchedulerService.getKeysList(regionId, keyRingSelected,  setKeylist);
+    await SchedulerService.getKeysList(regionId, keyRingSelected, setKeylist);
   };
   const listKeyRingsAPI = async () => {
     await SchedulerService.getKeyRingsList(regionId, setKeyRinglist);
@@ -327,8 +331,7 @@ function BigQuerySqlForm({ data }: any) {
         if (writeDisposition === '') {
           validData = false;
         }
-        if(!serviceAccountSelected)
-        {
+        if (!serviceAccountSelected) {
           validData = false;
         }
       }
@@ -367,8 +370,16 @@ function BigQuerySqlForm({ data }: any) {
                 <div className="create-scheduler-style">
                   {inputFileSelectedLocal}
                 </div>
-              }
+              }{' '}
             </div>
+            {inputFileValidation && (
+                <div className="jobform-error-key-parent">
+                  <iconError.react tag="div" className="logo-alignment-style" />
+                  <div className="jobform-error-key-missing">
+                  Please select a .sql file.
+                  </div>
+                </div>
+              )}
             <SchedulerProperties
               labelDetail={parameterDetail}
               setLabelDetail={setParameterDetail}

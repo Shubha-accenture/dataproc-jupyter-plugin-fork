@@ -5,17 +5,22 @@ import { eventEmitter } from '../utils/signalEmitter';
 import {
   Autocomplete,
   Box,
-  // Checkbox,
   CircularProgress,
-  // FormControlLabel,
-  // FormGroup,
   TextField,
   Typography
 } from '@mui/material';
 import { SchedulerService } from './schedulerServices';
+import { LabIcon } from '@jupyterlab/ui-components';
+import errorIcon from '../../style/icons/error_icon.svg';
+
+  const iconError = new LabIcon({
+    name: 'launcher:error-icon',
+    svgstr: errorIcon
+  });
 
 function BigQueryNotebookForm({ data, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
+  const [inputFileValidation, setInputFileValidation] = useState(false);
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
   const [parameterDetail, setParameterDetail] = useState(['']);
@@ -35,6 +40,9 @@ function BigQueryNotebookForm({ data, mode }: any) {
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
     if (file) {
+      const fileName = file.name;
+      const isIpynbFile = fileName.endsWith('.ipynb');
+      setInputFileValidation(!isIpynbFile);
       setInputFileSelectedLocal(evt.target.value);
       eventEmitter.emit(`uploadProgress-bq`, evt, data);
     }
@@ -153,6 +161,14 @@ function BigQueryNotebookForm({ data, mode }: any) {
                 </div>
               }
             </div>
+            {inputFileValidation && (
+                <div className="jobform-error-key-parent">
+                  <iconError.react tag="div" className="logo-alignment-style" />
+                  <div className="jobform-error-key-missing">
+                  Please select a .ipynb file.
+                  </div>
+                </div>
+              )}
             <LabelProperties
               labelDetail={parameterDetail}
               setLabelDetail={setParameterDetail}
