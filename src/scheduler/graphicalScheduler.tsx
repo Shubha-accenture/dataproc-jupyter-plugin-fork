@@ -87,7 +87,8 @@ const GraphicalScheduler = ({
         serviceAccount: '',
         keyRings:'',
         kmsKey:'',
-        isSaveQuery:false
+        isSaveQuery:false,
+        isAutoRegion:true
       }
     }
   ];
@@ -152,7 +153,8 @@ const GraphicalScheduler = ({
               serviceAccount: '',
               keyRings:'',
               kmsKey:'',   
-              isSaveQuery:false
+              isSaveQuery:false,  
+              isAutoRegion:true
             },
             origin: [0.5, 0.0]
           };

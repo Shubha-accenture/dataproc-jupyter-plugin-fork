@@ -166,6 +166,7 @@ function BigQuerySqlForm({ data }: any) {
   const handleRegionRadioBtn = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAutoRegionSelected(event.target.checked);
     data.location = '';
+    data.isAutoRegion=event.target.checked;
     if (event.target.checked) {
       setRegionId('us');
     }
@@ -243,9 +244,6 @@ function BigQuerySqlForm({ data }: any) {
     value: string | null
   ) => {
     if (value) {
-      // let key = value.split('/');
-      // setKeySelected(key[7]);
-      console.log('keyselected', value);
       setKeySelected(value);
       data.kmsKey = value;
     } else {
@@ -291,35 +289,33 @@ function BigQuerySqlForm({ data }: any) {
       setInputFileSelectedLocal(data.inputFile);
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
+      setServiceAccountSelected(data.serviceAccount);
+
+      setIsSaveQueryChecked(data.isSaveQuery);
       setTableID(data.tableId);
       setDatasetId(data.datasetId);
-      setServiceAccountSelected(data.serviceAccount);
       setWriteDisposition(data.writeDisposition);
-      setIsSaveQueryChecked(data.saveQuery);
-      if (data.serviceAccount) {
-        setServiceAccountSelected(data.serviceAccount);
-      }
-      // if (data.datasetId || data.tableId) {
-      //   setIsSaveQueryChecked(true);
-      // }
+
       const selectedServiceAccount = serviceAccounts.find(
         option => option.email === data.serviceAccount
       );
       if (selectedServiceAccount) {
         setServiceAccountSelected(selectedServiceAccount.displayName);
       }
-      // projects/dataproc-jupyter-extension-dev/locations/us/keyRings/keyring_US/cryptoKeys/key1
+      setAutoRegionSelected(data.isAutoRegion)
+      
       if (data.location) {
-        if (multiRegionList.includes(data.location)) {
+        const selectedRegion = multiRegionList.find(region => region.key === data.location);
+      
+        if (selectedRegion) {
           setRegionTypeSelected('multiRegion');
-          setMultiRegionSelected(data.location);
+          setMultiRegionSelected(selectedRegion.label);
         } else {
           setRegionTypeSelected('region');
           setRegionSelected(data.location);
         }
-      } else if (data.location === '') {
-        setAutoRegionSelected(true);
       }
+      
       if (data.kmsKey) {
         setSelectedEncryptionRadio('customerManaged');
         let kmsKeyArray = data.kmsKey.split('/');
@@ -650,21 +646,21 @@ function BigQuerySqlForm({ data }: any) {
                   <>
                     <div>
                       <div className="create-scheduler-encrypt">
-                          <Radio
-                            size="small"
-                            className="select-batch-encrypt-radio-style"
-                            value="mainClass"
-                            checked={selectedRadioValue === 'key'}
-                            onChange={handlekeyRingRadio}
-                          />
+                        <Radio
+                          size="small"
+                          className="select-batch-encrypt-radio-style"
+                          value="mainClass"
+                          checked={selectedRadioValue === 'key'}
+                          onChange={handlekeyRingRadio}
+                        />
                         <div className="create-scheduler-style-key">
                           {isLoadingDetail && (
-                          <CircularProgress
-                            size={18}
-                            aria-label="Loading Spinner"
-                            data-testid="loader"
-                          />
-                        )}
+                            <CircularProgress
+                              size={18}
+                              aria-label="Loading Spinner"
+                              data-testid="loader"
+                            />
+                          )}
                           {!isLoadingDetail && (
                             <Autocomplete
                               className="create-scheduler-style-key-rings"
@@ -681,38 +677,39 @@ function BigQuerySqlForm({ data }: any) {
                               )}
                             />
                           )}
-                            {isLoadingKeyDetail && (
-                          <CircularProgress
-                            size={18}
-                            aria-label="Loading Spinner"
-                            data-testid="loader"
-                          />
-                        )} {(!isLoadingKeyDetail && 
-                          <Autocomplete
-                            className="create-scheduler-style-keys"
-                            disabled={
-                              selectedRadioValue === 'manually' ? true : false
-                            }
-                            options={keylist}
-                            getOptionLabel={option => {
-                              const key = option.split('/');
-                              return key[key.length - 1];
-                            }}
-                            value={keySelected}
-                            onChange={handleKeyChange}
-                            renderInput={params => (
-                              <TextField
-                                {...params}
-                                label="Keys"
-                                value={
-                                  keySelected
-                                    ? keySelected.split('/').pop()
-                                    : ''
-                                }
-                              />
-                            )}
-                          />
-                        )}
+                          {isLoadingKeyDetail && (
+                            <CircularProgress
+                              size={18}
+                              aria-label="Loading Spinner"
+                              data-testid="loader"
+                            />
+                          )}{' '}
+                          {!isLoadingKeyDetail && (
+                            <Autocomplete
+                              className="create-scheduler-style-keys"
+                              disabled={
+                                selectedRadioValue === 'manually' ? true : false
+                              }
+                              options={keylist}
+                              getOptionLabel={option => {
+                                const key = option.split('/');
+                                return key[key.length - 1];
+                              }}
+                              value={keySelected}
+                              onChange={handleKeyChange}
+                              renderInput={params => (
+                                <TextField
+                                  {...params}
+                                  label="Keys"
+                                  value={
+                                    keySelected
+                                      ? keySelected.split('/').pop()
+                                      : ''
+                                  }
+                                />
+                              )}
+                            />
+                          )}
                         </div>
                       </div>
                     </div>
