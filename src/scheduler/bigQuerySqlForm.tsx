@@ -5,6 +5,7 @@ import {
   Autocomplete,
   Box,
   Checkbox,
+  CircularProgress,
   FormControl,
   FormControlLabel,
   FormGroup,
@@ -65,7 +66,8 @@ function BigQuerySqlForm({ data }: any) {
   const [keylist, setKeylist] = useState<string[]>([]);
   const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
   const [regionId, setRegionId] = useState('us');
-
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [isLoadingKeyDetail, setIsLoadingKeyDetail] = useState(false);
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
     svgstr: errorIcon
@@ -253,10 +255,19 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   const listKeysAPI = async (keyRingSelected: string) => {
-    await SchedulerService.getKeysList(regionId, keyRingSelected, setKeylist);
+    await SchedulerService.getKeysList(
+      regionId,
+      keyRingSelected,
+      setKeylist,
+      setIsLoadingKeyDetail
+    );
   };
   const listKeyRingsAPI = async () => {
-    await SchedulerService.getKeyRingsList(regionId, setKeyRinglist);
+    await SchedulerService.getKeyRingsList(
+      regionId,
+      setKeyRinglist,
+      setIsLoadingDetail
+    );
   };
 
   useEffect(() => {
@@ -639,26 +650,44 @@ function BigQuerySqlForm({ data }: any) {
                   <>
                     <div>
                       <div className="create-scheduler-encrypt">
-                        <Radio
-                          size="small"
-                          className="select-batch-encrypt-radio-style"
-                          value="mainClass"
-                          checked={selectedRadioValue === 'key'}
-                          onChange={handlekeyRingRadio}
-                        />
-                        <div className="create-scheduler-style-key">
-                          <Autocomplete
-                            className="create-scheduler-style-key-rings"
-                            disabled={
-                              selectedRadioValue === 'manually' ? true : false
-                            }
-                            options={keyRinglist}
-                            value={keyRingSelected}
-                            onChange={(_event, val) => handleKeyRingChange(val)}
-                            renderInput={params => (
-                              <TextField {...params} label="Key rings" />
-                            )}
+                          <Radio
+                            size="small"
+                            className="select-batch-encrypt-radio-style"
+                            value="mainClass"
+                            checked={selectedRadioValue === 'key'}
+                            onChange={handlekeyRingRadio}
                           />
+                        <div className="create-scheduler-style-key">
+                          {isLoadingDetail && (
+                          <CircularProgress
+                            size={18}
+                            aria-label="Loading Spinner"
+                            data-testid="loader"
+                          />
+                        )}
+                          {!isLoadingDetail && (
+                            <Autocomplete
+                              className="create-scheduler-style-key-rings"
+                              disabled={
+                                selectedRadioValue === 'manually' ? true : false
+                              }
+                              options={keyRinglist}
+                              value={keyRingSelected}
+                              onChange={(_event, val) =>
+                                handleKeyRingChange(val)
+                              }
+                              renderInput={params => (
+                                <TextField {...params} label="Key rings" />
+                              )}
+                            />
+                          )}
+                            {isLoadingKeyDetail && (
+                          <CircularProgress
+                            size={18}
+                            aria-label="Loading Spinner"
+                            data-testid="loader"
+                          />
+                        )} {(!isLoadingKeyDetail && 
                           <Autocomplete
                             className="create-scheduler-style-keys"
                             disabled={
@@ -683,6 +712,7 @@ function BigQuerySqlForm({ data }: any) {
                               />
                             )}
                           />
+                        )}
                         </div>
                       </div>
                     </div>

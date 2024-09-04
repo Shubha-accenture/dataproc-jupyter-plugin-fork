@@ -936,8 +936,10 @@ export class SchedulerService {
 
   static getKeyRingsList = async (
     regionId: string,
-    setKeyRinglist: (value: string[]) => void
+    setKeyRinglist: (value: string[]) => void,
+    setIsLoadingDetail: (value: boolean) => void,
   ) => {
+    setIsLoadingDetail(true);
     try {
       const formattedResponse: any = await requestAPI(
         `keyRingsList?region_id=${regionId}`
@@ -949,6 +951,7 @@ export class SchedulerService {
           e.split('/').pop()
         );
         setKeyRinglist(keyRingNames);
+        setIsLoadingDetail(false)
       }
     } catch (error) {
       DataprocLoggingService.log(
@@ -966,8 +969,10 @@ export class SchedulerService {
     regionId: string,
     Id: string,
     setKeyslist: (value: string[]) => void,
+    setIsLoadingDetail: (value: boolean) => void,
     // setDisplayList:(value: string[]) => void
   ) => {
+    setIsLoadingDetail(true);
     try {
       const formattedResponse: any = await requestAPI(
         `keysList?region_id=${regionId}&key_ring_id=${Id}`
@@ -981,6 +986,7 @@ export class SchedulerService {
         // }));//change this to string array
         // setKeyslist(keys);
         setKeyslist(formattedResponse);
+        setIsLoadingDetail(false)
       }
     } catch (error) {
       DataprocLoggingService.log('Error fetching KeysList ', LOG_LEVEL.ERROR);
