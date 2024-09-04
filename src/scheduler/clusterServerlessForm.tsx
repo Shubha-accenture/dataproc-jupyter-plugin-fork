@@ -31,11 +31,13 @@ import {
 import { SchedulerService } from './schedulerServices';
 import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
+import Button from '@mui/material/Button';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
-  const iconError = new LabIcon({
-    name: 'launcher:error-icon',
-    svgstr: errorIcon
-  });
+const iconError = new LabIcon({
+  name: 'launcher:error-icon',
+  svgstr: errorIcon
+});
 
 function ClusterServerlessForm({ data, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
@@ -54,7 +56,6 @@ function ClusterServerlessForm({ data, mode }: any) {
   const [serverlessDataList, setServerlessDataList] = useState<string[]>([]);
   const [serverlessSelected, setServerlessSelected] = useState('');
   const [stopCluster, setStopCluster] = useState(false);
-
   const [serviceAccounts, setServiceAccounts] = useState<
     { displayName: string; email: string }[]
   >([]);
@@ -199,26 +200,32 @@ function ClusterServerlessForm({ data, mode }: any) {
               Input file*
             </label>
             <div className="input-file-container">
-              <input
-                className="create-scheduler-style"
-                type="file"
-                value={''}
-                onChange={e => onInputFileNameChange(e)}
-              />
-              {
-                <div className="create-scheduler-style">
-                  {inputFileSelectedLocal}
-                </div>
-              }
+              <Button
+                component="label"
+                role={undefined}
+                variant="contained"
+                tabIndex={-1}
+                startIcon={<CloudUploadIcon />}
+              >
+                Upload file
+                <input
+                  type="file"
+                  className="visually-hidden-input"
+                  onChange={event => onInputFileNameChange(event)}
+                  multiple={false}
+                  value={''}
+                />
+              </Button>
+              {inputFileSelectedLocal}
             </div>
             {inputFileValidation && (
-                <div className="jobform-error-key-parent">
-                  <iconError.react tag="div" className="logo-alignment-style" />
-                  <div className="jobform-error-key-missing">
+              <div className="jobform-error-key-parent">
+                <iconError.react tag="div" className="logo-alignment-style" />
+                <div className="jobform-error-key-missing">
                   Please select a .ipynb file.
-                  </div>
                 </div>
-              )}
+              </div>
+            )}
             <LabelProperties
               labelDetail={parameterDetail}
               setLabelDetail={setParameterDetail}
