@@ -241,8 +241,10 @@ function BigQuerySqlForm({ data }: any) {
     value: string | null
   ) => {
     if (value) {
-      let key = value.split('/');
-      setKeySelected(key[7]);
+      // let key = value.split('/');
+      // setKeySelected(key[7]);
+      console.log('keyselected', value);
+      setKeySelected(value);
       data.kmsKey = value;
     } else {
       setKeySelected('');
@@ -295,6 +297,7 @@ function BigQuerySqlForm({ data }: any) {
       if (selectedServiceAccount) {
         setServiceAccountSelected(selectedServiceAccount.displayName);
       }
+      // projects/dataproc-jupyter-extension-dev/locations/us/keyRings/keyring_US/cryptoKeys/key1
       if (data.location) {
         if (multiRegionList.includes(data.location)) {
           setRegionTypeSelected('multiRegion');
@@ -373,13 +376,13 @@ function BigQuerySqlForm({ data }: any) {
               }{' '}
             </div>
             {inputFileValidation && (
-                <div className="jobform-error-key-parent">
-                  <iconError.react tag="div" className="logo-alignment-style" />
-                  <div className="jobform-error-key-missing">
+              <div className="jobform-error-key-parent">
+                <iconError.react tag="div" className="logo-alignment-style" />
+                <div className="jobform-error-key-missing">
                   Please select a .sql file.
-                  </div>
                 </div>
-              )}
+              </div>
+            )}
             <SchedulerProperties
               labelDetail={parameterDetail}
               setLabelDetail={setParameterDetail}
@@ -662,14 +665,22 @@ function BigQuerySqlForm({ data }: any) {
                               selectedRadioValue === 'manually' ? true : false
                             }
                             options={keylist}
-                            // getOptionLabel={option => option.displaykey}
-                            // value={keylist.find(
-                            //   option => option.displaykey === keySelected
-                            // )}
+                            getOptionLabel={option => {
+                              const key = option.split('/');
+                              return key[key.length - 1];
+                            }}
                             value={keySelected}
                             onChange={handleKeyChange}
                             renderInput={params => (
-                              <TextField {...params} label="Keys" />
+                              <TextField
+                                {...params}
+                                label="Keys"
+                                value={
+                                  keySelected
+                                    ? keySelected.split('/').pop()
+                                    : ''
+                                }
+                              />
                             )}
                           />
                         </div>
