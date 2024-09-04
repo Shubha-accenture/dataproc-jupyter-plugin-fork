@@ -112,10 +112,10 @@ const CreateNotebookScheduler = ({
         if (!serverless) {
           allNodesHaveData = false;
         }
-        let serviceAccount=e.data.serviceAccount
-        if (!serviceAccount) {
-          allNodesHaveData = false;
-        }
+        // let serviceAccount=e.data.serviceAccount
+        // if (!serviceAccount) {
+        //   allNodesHaveData = false;
+        // }
       }
       setNodeDataValidation(allNodesHaveData);
       bigQuerySqlValidation(); //change this

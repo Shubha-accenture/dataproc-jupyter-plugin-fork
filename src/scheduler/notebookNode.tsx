@@ -79,13 +79,13 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
     else if (
       (data.nodeType === 'Serverless' ||
         data.nodeType === 'Bigquery-Serverless') &&
-      (!data.inputFile || !data.serverless || data.serviceAccount)
+      (!data.inputFile || !data.serverless)
     ) {
       setStatus('incomplete');
     }
    else if (data.nodeType === 'Bigquery-Sql')
     {
-        if(!data.inputFile || data.serviceAccount){
+        if(!data.inputFile){
           setStatus('incomplete');
         }
        else if (
