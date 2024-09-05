@@ -165,6 +165,7 @@ function BigQueryNotebookForm({ data, mode }: any) {
                   onChange={event => onInputFileNameChange(event)}
                   multiple={false}
                   value={''}
+                  accept=".ipynb"
                 />
               </Button>
               {inputFileSelectedLocal}

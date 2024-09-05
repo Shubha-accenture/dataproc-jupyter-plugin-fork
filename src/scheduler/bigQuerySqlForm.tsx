@@ -168,7 +168,7 @@ function BigQuerySqlForm({ data }: any) {
   const handleRegionRadioBtn = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAutoRegionSelected(event.target.checked);
     data.location = '';
-    data.isAutoRegion=event.target.checked;
+    data.isAutoRegion = event.target.checked;
     if (event.target.checked) {
       setRegionId('us');
     }
@@ -304,11 +304,13 @@ function BigQuerySqlForm({ data }: any) {
       if (selectedServiceAccount) {
         setServiceAccountSelected(selectedServiceAccount.displayName);
       }
-      setAutoRegionSelected(data.isAutoRegion)
-      
+      setAutoRegionSelected(data.isAutoRegion);
+
       if (data.location) {
-        const selectedRegion = multiRegionList.find(region => region.key === data.location);
-      
+        const selectedRegion = multiRegionList.find(
+          region => region.key === data.location
+        );
+
         if (selectedRegion) {
           setRegionTypeSelected('multiRegion');
           setMultiRegionSelected(selectedRegion.label);
@@ -317,7 +319,7 @@ function BigQuerySqlForm({ data }: any) {
           setRegionSelected(data.location);
         }
       }
-      
+
       if (data.kmsKey) {
         setSelectedEncryptionRadio('customerManaged');
         let kmsKeyArray = data.kmsKey.split('/');
@@ -373,6 +375,7 @@ function BigQuerySqlForm({ data }: any) {
             </label>
             <div className="input-file-container">
               <Button
+                className="job-add-property-button"
                 component="label"
                 role={undefined}
                 variant="contained"
@@ -386,9 +389,12 @@ function BigQuerySqlForm({ data }: any) {
                   onChange={event => onInputFileNameChange(event)}
                   multiple={false}
                   value={''}
+                  accept=".sql"
                 />
               </Button>
+              <div className='input-file-name'>
               {inputFileSelectedLocal}
+              </div>
             </div>
             {inputFileValidation && (
               <div className="jobform-error-key-parent">
