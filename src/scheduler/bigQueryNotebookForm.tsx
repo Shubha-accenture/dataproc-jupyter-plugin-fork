@@ -5,6 +5,7 @@ import { eventEmitter } from '../utils/signalEmitter';
 import {
   Autocomplete,
   Box,
+  Button,
   CircularProgress,
   TextField,
   Typography
@@ -12,6 +13,7 @@ import {
 import { SchedulerService } from './schedulerServices';
 import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
@@ -149,17 +151,23 @@ function BigQueryNotebookForm({ data, mode }: any) {
               Notebook*
             </label>
             <div className="input-file-container">
-              <input
-                className="create-scheduler-style"
-                type="file"
-                value={''}
-                onChange={e => onInputFileNameChange(e)}
-              />
-              {
-                <div className="create-scheduler-style">
-                  {inputFileSelectedLocal}
-                </div>
-              }
+              <Button
+                component="label"
+                role={undefined}
+                variant="contained"
+                tabIndex={-1}
+                startIcon={<CloudUploadIcon />}
+              >
+                Upload file
+                <input
+                  type="file"
+                  className="visually-hidden-input"
+                  onChange={event => onInputFileNameChange(event)}
+                  multiple={false}
+                  value={''}
+                />
+              </Button>
+              {inputFileSelectedLocal}
             </div>
             {inputFileValidation && (
                 <div className="jobform-error-key-parent">
