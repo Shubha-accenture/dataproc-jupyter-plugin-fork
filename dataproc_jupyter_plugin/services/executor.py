@@ -19,6 +19,7 @@ import subprocess
 import uuid
 from datetime import datetime, timedelta
 import urllib
+import aiofiles
 from google.cloud import storage
 from google.api_core.exceptions import NotFound
 
@@ -492,61 +493,28 @@ class Client:
         except Exception as e:
             return {"error": str(e)}
 
-    async def get_output_file(self, bucket_name, dag_id, dag_run_id):
+    async def download_dag_output(
+        self, composer_environment_name, bucket_name, dag_id, dag_run_id
+    ):
         try:
-            match_string = f'{dag_id}_{dag_run_id}'
-            params = {
-                'delimiter': '/',
-                'includeFoldersAsPrefixes': 'true',
-                'matchGlob': f'**/{{{{{match_string}}}}}**.ipynb',
-                'prefix': f'dataproc-output/{dag_id}/output-notebooks/'
-            }
-            encoded_params = '&'.join([f"{k}={urllib.parse.quote(v, safe='*')}" for k, v in params.items()])
-            api_endpoint = (
-                f"{STORAGE_SERVICE_DEFAULT_URL}b/{bucket_name}/o?{encoded_params}"
+            await self.airflow_client.list_dag_run_task(
+                composer_environment_name, dag_id, dag_run_id
             )
-            headers = {
-                "Content-Type": CONTENT_TYPE,
-                "Authorization": f"Bearer {self._access_token}",
-                "X-Goog-User-Project": self.project_id,
-            }
-            async with self.client_session.get(
-                api_endpoint, headers=headers
-            ) as response:
-                if response.status == 200:
-                    resp = await response.json()  # Ensure that the response is awaited
-                    output_files = []
-                    for item in resp.get("items", []):
-                        name = item.get("name")
-                        if name:
-                            output_files.append(name)
-                    return output_files
-                else:
-                    self.log.exception(f"Error getting output file response")
-                    raise ValueError("Error getting output file response")
-        except Exception as e:
-            self.log.exception(f"Error getting output file: {str(e)}")
-            return {"error": str(e)}
+        except Exception as ex:
+            return {"error": f"Invalid DAG run ID {dag_run_id}"}
         
-    async def download_dag_output(self, bucket_name, dag_id, dag_run_id):
         try:
-            output_files = await self.get_output_file(bucket_name, dag_id, dag_run_id)
-            for file_name in output_files:
-                try:
-                    cmd = f"gsutil cp 'gs://{bucket_name}/{file_name}' ./"
-                    process = subprocess.Popen(
-                        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-                    )
-                    output, _ = process.communicate()
-                    if process.returncode == 0:
-                        print(f"Downloaded file: {file_name}")
-                    else:
-                        self.log.exception(f"Error downloading output notebook file")
-                        return 1
-                except Exception as e:
-                    self.log.exception(f"Error downloading file: {str(e)}")
-                    return 1
+            storage_client = storage.Client()
+            blob_name = f"dataproc-output/{dag_id}/output-notebooks/{dag_id}_{dag_run_id}-generate_output_file_3.ipynb"
+            bucket = storage_client.bucket(bucket_name)
+            blob = bucket.blob(blob_name)
+            original_file_name = os.path.basename(blob_name) 
+            destination_file_name = os.path.join(".", original_file_name)
+            async with aiofiles.open(destination_file_name, "wb") as f:
+                file_data = blob.download_as_bytes() 
+                await f.write(file_data) 
+            self.log.info(f"Output notebook file '{original_file_name}' downloaded successfully")
             return 0
-        except Exception as e:
-            self.log.exception(f"Error downloading output notebook file: {str(e)}")
-            return {"error": str(e)}
+        except Exception as error:
+            self.log.exception(f"Error downloading output notebook file: {str(error)}")
+            return {"error": str(error)}
