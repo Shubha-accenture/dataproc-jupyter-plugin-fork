@@ -25,8 +25,8 @@ function BigQueryNotebookForm({ data, mode }: any) {
   const [inputFileValidation, setInputFileValidation] = useState(false);
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
-  const [parameterDetail, setParameterDetail] = useState(['']);
-  const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
+  const [parameterDetail, setParameterDetail] = useState<any>([]);
+  const [parameterDetailUpdated, setParameterDetailUpdated] = useState<any>([]);
   const [keyValidation, setKeyValidation] = useState(-1);
   const [valueValidation, setValueValidation] = useState(-1);
   const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
@@ -115,7 +115,7 @@ function BigQueryNotebookForm({ data, mode }: any) {
   };
 
   useEffect(() => {
-    if (data) {
+    if (data && parameterDetailUpdated.length > 0) {
       data.parameter = parameterDetailUpdated;
     }
   }, [parameterDetailUpdated]);
@@ -134,6 +134,8 @@ function BigQueryNotebookForm({ data, mode }: any) {
       if (selectedServiceAccount) {
         setServiceAccountSelected(selectedServiceAccount.displayName);
       }
+      setParameterDetailUpdated(data.parameter);
+      setParameterDetail(data.parameter);
     }
   }, [data, serviceAccounts]);
 

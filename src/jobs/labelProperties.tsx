@@ -75,7 +75,7 @@ function LabelProperties({
         setLabelDetail([DEFAULT_LABEL_DETAIL]);
         setLabelDetailUpdated([DEFAULT_LABEL_DETAIL]);
       } else {
-        if (!selectedRuntimeClone) {
+        if (!selectedRuntimeClone && fromPage !== 'react-flow') {
           setLabelDetailUpdated([]);
           setLabelDetail([]);
         }
