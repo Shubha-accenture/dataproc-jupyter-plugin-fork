@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { LabIcon } from '@jupyterlab/ui-components';
 import plusIcon from '../../style/icons/plus_icon.svg';
 import plusIconDisable from '../../style/icons/plus_icon_disable.svg';
@@ -52,10 +52,6 @@ function SchedulerProperties({
   labelDetail used to store the permanent label details when onblur
   labelDetailUpdated used to store the temporay label details when onchange
   */
-  useEffect(() => {
-    setLabelDetailUpdated([]);
-    setLabelDetail([]);
-  }, []); //try removing complete useeffect
 
   const handleAddLabel = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();

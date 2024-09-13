@@ -27,8 +27,8 @@ function BigQuerySqlForm({ data }: any) {
   const [inputFileValidation, setInputFileValidation] = useState(false);
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
   const [retryDelay, setRetryDelay] = useState<number | undefined>(5);
-  const [parameterDetail, setParameterDetail] = useState(['']);
-  const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
+  const [parameterDetail, setParameterDetail] = useState<any>([]);
+  const [parameterDetailUpdated, setParameterDetailUpdated] = useState<any>([]);
 
   const [isSaveQueryChecked, setIsSaveQueryChecked] = useState(false);
   const [tableID, setTableID] = useState('');
@@ -172,6 +172,9 @@ function BigQuerySqlForm({ data }: any) {
     if (event.target.checked) {
       setRegionId('us');
     }
+    if (!event.target.checked) {
+      setRegionTypeSelected('region');
+    }
   };
 
   const handleMultiRegionTypeSelected = (
@@ -271,7 +274,7 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   useEffect(() => {
-    if (data) {
+    if (data && parameterDetailUpdated.length>0) {
       data.parameter = parameterDetailUpdated;
     }
   }, [parameterDetailUpdated]);
@@ -292,6 +295,8 @@ function BigQuerySqlForm({ data }: any) {
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
       setServiceAccountSelected(data.serviceAccount);
+      setParameterDetailUpdated(data.parameter)
+      setParameterDetail(data.parameter)
 
       setIsSaveQueryChecked(data.isSaveQuery);
       setTableID(data.tableId);
@@ -375,6 +380,9 @@ function BigQuerySqlForm({ data }: any) {
             </label>
             <div className="input-file-container">
               <Button
+                sx={{
+                  textTransform: 'none'
+                }}
                 className="job-add-property-button"
                 component="label"
                 role={undefined}
@@ -392,9 +400,7 @@ function BigQuerySqlForm({ data }: any) {
                   accept=".sql"
                 />
               </Button>
-              <div className='input-file-name'>
-              {inputFileSelectedLocal}
-              </div>
+              <div className="input-file-name">{inputFileSelectedLocal}</div>
             </div>
             {inputFileValidation && (
               <div className="jobform-error-key-parent">
@@ -670,6 +676,7 @@ function BigQuerySqlForm({ data }: any) {
                         <div className="create-scheduler-style-key">
                           {isLoadingDetail && (
                             <CircularProgress
+                              className="spin-loader-custom-style"
                               size={18}
                               aria-label="Loading Spinner"
                               data-testid="loader"
@@ -693,11 +700,12 @@ function BigQuerySqlForm({ data }: any) {
                           )}
                           {isLoadingKeyDetail && (
                             <CircularProgress
+                              className="spin-loader-custom-style"
                               size={18}
                               aria-label="Loading Spinner"
                               data-testid="loader"
                             />
-                          )}{' '}
+                          )}
                           {!isLoadingKeyDetail && (
                             <Autocomplete
                               className="create-scheduler-style-keys"
