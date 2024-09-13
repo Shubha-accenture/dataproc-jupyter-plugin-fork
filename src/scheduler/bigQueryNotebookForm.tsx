@@ -15,10 +15,10 @@ import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
-  const iconError = new LabIcon({
-    name: 'launcher:error-icon',
-    svgstr: errorIcon
-  });
+const iconError = new LabIcon({
+  name: 'launcher:error-icon',
+  svgstr: errorIcon
+});
 
 function BigQueryNotebookForm({ data, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
@@ -152,6 +152,9 @@ function BigQueryNotebookForm({ data, mode }: any) {
             </label>
             <div className="input-file-container">
               <Button
+                sx={{
+                  textTransform: 'none'
+                }}
                 component="label"
                 role={undefined}
                 variant="contained"
@@ -171,13 +174,13 @@ function BigQueryNotebookForm({ data, mode }: any) {
               {inputFileSelectedLocal}
             </div>
             {inputFileValidation && (
-                <div className="jobform-error-key-parent">
-                  <iconError.react tag="div" className="logo-alignment-style" />
-                  <div className="jobform-error-key-missing">
+              <div className="jobform-error-key-parent">
+                <iconError.react tag="div" className="logo-alignment-style" />
+                <div className="jobform-error-key-missing">
                   Please select a .ipynb file.
-                  </div>
                 </div>
-              )}
+              </div>
+            )}
             <LabelProperties
               labelDetail={parameterDetail}
               setLabelDetail={setParameterDetail}

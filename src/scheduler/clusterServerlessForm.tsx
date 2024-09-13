@@ -179,6 +179,8 @@ function ClusterServerlessForm({ data, mode }: any) {
       if (selectedServiceAccount) {
         setServiceAccountSelected(selectedServiceAccount.displayName);
       }
+      setParameterDetailUpdated(data.parameter)
+      setParameterDetail(data.parameter)
     }
   }, [data, serviceAccounts]);
 
@@ -201,6 +203,9 @@ function ClusterServerlessForm({ data, mode }: any) {
             </label>
             <div className="input-file-container">
               <Button
+                sx={{
+                  textTransform: 'none'
+                }}
                 component="label"
                 role={undefined}
                 variant="contained"
