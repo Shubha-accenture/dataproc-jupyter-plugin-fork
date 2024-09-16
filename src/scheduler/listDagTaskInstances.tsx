@@ -213,7 +213,8 @@ const ListDagTaskInstances = ({
                   <div className="accordion-row-data">
                   {(
                     taskInstance.taskId.startsWith('submit_pyspark_job') || 
-                    taskInstance.taskId.startsWith('batch_create')
+                    taskInstance.taskId.startsWith('batch_create') || 
+                    taskInstance.taskId.startsWith('run_query_task')
                   ) && (
                     <div className="logo-row-container">
                       <IconButton
