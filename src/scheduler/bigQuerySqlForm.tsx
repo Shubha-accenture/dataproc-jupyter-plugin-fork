@@ -286,6 +286,7 @@ function BigQuerySqlForm({ data }: any) {
   }, []);
 
   useEffect(() => {
+    if(regionId)
     listKeyRingsAPI();
   }, [regionId]);
 
