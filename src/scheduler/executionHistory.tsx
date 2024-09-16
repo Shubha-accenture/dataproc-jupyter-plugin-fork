@@ -251,6 +251,7 @@ const ExecutionHistory = ({
                 composerName={composerName}
                 dagId={dagId}
                 dagRunId={dagRunId}
+                bucketName={bucketName}
               />
             )}
           </div>

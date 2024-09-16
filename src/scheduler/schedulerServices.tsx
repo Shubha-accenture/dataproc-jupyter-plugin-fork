@@ -435,7 +435,7 @@ export class SchedulerService {
     }
   };
 
-  static listDagRunsListService = async (
+  static listDagRunsListService = async ( //check
     composerName: string,
     dagId: string,
     startDate: string,
@@ -674,17 +674,19 @@ export class SchedulerService {
       }
     }
   };
-  static handleDownloadOutputNotebookAPIService = async (
+  static handleDownloadOutputNotebookAPIService = async ( // modify here
     composerName: string,
     dagRunId: string,
     bucketName: string,
     dagId: string,
-    setDownloadOutputDagRunId: (value: string) => void
+    // setDownloadOutputDagRunId: (value: string) => void
+    generateOutputFile:string
   ) => {
-    setDownloadOutputDagRunId(dagRunId);
+    // setDownloadOutputDagRunId(dagRunId);
     try {
-      dagRunId = encodeURIComponent(dagRunId);
-      const serviceURL = `downloadOutput?composer=${composerName}&bucket_name=${bucketName}&dag_id=${dagId}&dag_run_id=${dagRunId}`;
+      // dagRunId = encodeURIComponent(dagRunId);
+      console.log("in service file",dagRunId)
+      const serviceURL = `downloadOutput?composer=${composerName}&bucket_name=${bucketName}&dag_id=${dagId}&dag_run_id=${dagRunId}&generate_output_file=${generateOutputFile}`;
       const formattedResponse: any = await requestAPI(serviceURL);
       dagRunId = decodeURIComponent(dagRunId);
       if (formattedResponse.status === 0) {
@@ -698,11 +700,11 @@ export class SchedulerService {
           toastifyCustomStyle
         );
       }
-      setDownloadOutputDagRunId('');
+      // setDownloadOutputDagRunId('');
     } catch (error) {
       DataprocLoggingService.log('Error in Download api', LOG_LEVEL.ERROR);
       toast.error(`Error in Download api : ${error}`, toastifyCustomStyle);
-      setDownloadOutputDagRunId('');
+      // setDownloadOutputDagRunId('');
     }
   };
   static handleDeleteSchedulerAPIService = async (
@@ -796,6 +798,7 @@ export class SchedulerService {
           return {
             tryNumber: dagRunTask.try_number,
             taskId: dagRunTask.task_id,
+            startTime:dagRunTask.start_date.split('T')[1].split('.')[0],
             duration: dagRunTask.duration,
             state: dagRunTask.state,
             date: new Date(dagRunTask.start_date).toDateString(),

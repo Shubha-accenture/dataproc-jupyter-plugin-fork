@@ -25,6 +25,8 @@ import stopIcon from '../../style/icons/stop_icon.svg';
 import expandLessIcon from '../../style/icons/expand_less.svg';
 import expandMoreIcon from '../../style/icons/expand_more.svg';
 import { handleDebounce } from '../utils/utils';
+import downloadIcon from '../../style/icons/scheduler_download.svg';
+// import { CircularProgress } from '@mui/material';
 
 const iconDagTaskFailed = new LabIcon({
   name: 'launcher:dag-task-failed-icon',
@@ -47,14 +49,21 @@ const iconExpandMore = new LabIcon({
   svgstr: expandMoreIcon
 });
 
+const iconDownload = new LabIcon({
+  name: 'launcher:download-icon',
+  svgstr: downloadIcon
+});
+
 const ListDagTaskInstances = ({
   composerName,
   dagId,
-  dagRunId
+  dagRunId,
+  bucketName
 }: {
   composerName: string;
   dagId: string;
   dagRunId: string;
+  bucketName: string;
 }): JSX.Element => {
   const [dagTaskInstancesList, setDagTaskInstancesList] = useState<any>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -117,6 +126,24 @@ const ListDagTaskInstances = ({
     }
   };
 
+
+   const handleDownloadOutput = async (event: React.MouseEvent, taskId:string) => {
+    console.log("trying to download with",taskId)
+
+    const taskNumber = taskId.split('_').pop();
+    let generateOutputFile = "generate_output_file_" + taskNumber;
+    
+    // const dagRunId = event.currentTarget.getAttribute('data-dag-run-id')!;
+    await SchedulerService.handleDownloadOutputNotebookAPIService(
+      composerName,
+      dagRunId,
+      bucketName,
+      dagId,
+      generateOutputFile
+      // setDownloadOutputDagRunId
+    );
+  };
+
   const listDagTaskLogList = async (index: string, iconIndex: number) => {
     await SchedulerService.listDagTaskLogsListService(
       composerName,
@@ -135,7 +162,9 @@ const ListDagTaskInstances = ({
           <div className="accordion-row-parent-header">
             <div className="accordion-row-data">Task Id</div>
             <div className="accordion-row-data">Attempts</div>
+            <div className="accordion-row-data">Start Time</div>
             <div className="accordion-row-data">Duration (in seconds)</div>
+            <div className="accordion-row-data">Download Output</div>
             <div className="accordion-row-data-expand-logo"></div>
           </div>
           {dagTaskInstancesList.length > 0 &&
@@ -176,7 +205,24 @@ const ListDagTaskInstances = ({
                     )}
                   </div>
                   <div className="accordion-row-data">
+                    {taskInstance.startTime}
+                  </div>
+                  <div className="accordion-row-data">
                     {taskInstance.duration}
+                  </div>
+                  <div className="accordion-row-data">
+                  {(
+                    taskInstance.taskId.startsWith('submit_pyspark_job') || 
+                    taskInstance.taskId.startsWith('batch_create')
+                  ) && (
+                    <div className="logo-row-container">
+                      <IconButton
+                        onClick={e => handleDownloadOutput(e, taskInstance.taskId)}
+                      >
+                        <iconDownload.react tag="div" />
+                      </IconButton>
+                    </div>
+                  )}
                   </div>
                   {taskInstance.tryNumber !== 0 ? (
                     <div

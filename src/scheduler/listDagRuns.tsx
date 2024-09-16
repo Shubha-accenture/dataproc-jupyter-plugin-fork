@@ -22,14 +22,14 @@ import TableData from '../utils/tableData';
 import { ICellProps, handleDebounce } from '../utils/utils';
 import { SchedulerService } from './schedulerServices';
 import { Dayjs } from 'dayjs';
-import { LabIcon } from '@jupyterlab/ui-components';
-import downloadIcon from '../../style/icons/scheduler_download.svg';
-import { CircularProgress } from '@mui/material';
+// import { LabIcon } from '@jupyterlab/ui-components';
+// import downloadIcon from '../../style/icons/scheduler_download.svg';
+// import { CircularProgress } from '@mui/material';
 
-const iconDownload = new LabIcon({
-  name: 'launcher:download-icon',
-  svgstr: downloadIcon
-});
+// const iconDownload = new LabIcon({
+//   name: 'launcher:download-icon',
+//   svgstr: downloadIcon
+// });
 
 interface IDagRunList {
   dagRunId: string;
@@ -75,7 +75,7 @@ const ListDagRuns = ({
 }): JSX.Element => {
   const [dagRunsList, setDagRunsList] = useState<IDagRunList[]>([]);
   const [dagRunsCurrentDateList, setDagRunsCurrentDateList] = useState([]);
-  const [downloadOutputDagRunId, setDownloadOutputDagRunId] = useState('');
+  // const [downloadOutputDagRunId, setDownloadOutputDagRunId] = useState('');
   const [listDagRunHeight, setListDagRunHeight] = useState(
     window.innerHeight - 485
   );
@@ -115,10 +115,10 @@ const ListDagRuns = ({
         Header: 'Time',
         accessor: 'time'
       },
-      {
-        Header: 'Actions',
-        accessor: 'actions'
-      }
+      // {
+      //   Header: 'Actions',
+      //   accessor: 'actions'
+      // }
     ],
     []
   );
@@ -145,13 +145,14 @@ const ListDagRuns = ({
   );
 
   const tableDataCondition = (cell: ICellProps) => {
-    if (cell.column.Header === 'Actions') {
-      return (
-        <td {...cell.getCellProps()} className="clusters-table-data">
-          {renderActions(cell.row.original)}
-        </td>
-      );
-    } else if (cell.column.Header === 'State') {
+    // if (cell.column.Header === 'Actions') {
+    //   return (
+    //     <td {...cell.getCellProps()} className="clusters-table-data">
+    //       {renderActions(cell.row.original)}
+    //     </td>
+    //   );
+    // } else 
+    if (cell.column.Header === 'State') {
       if (cell.value === 'success') {
         return (
           <div className="dag-run-state-parent">
@@ -213,53 +214,53 @@ const ListDagRuns = ({
     setDagRunId(data.dagRunId);
   };
 
-  const handleDownloadOutput = async (event: React.MouseEvent) => {
-    const dagRunId = event.currentTarget.getAttribute('data-dag-run-id')!;
-    await SchedulerService.handleDownloadOutputNotebookAPIService(
-      composerName,
-      dagRunId,
-      bucketName,
-      dagId,
-      setDownloadOutputDagRunId
-    );
-  };
+  // const handleDownloadOutput = async (event: React.MouseEvent) => {
+  //   const dagRunId = event.currentTarget.getAttribute('data-dag-run-id')!;
+  //   await SchedulerService.handleDownloadOutputNotebookAPIService(
+  //     composerName,
+  //     dagRunId,
+  //     bucketName,
+  //     dagId,
+  //     setDownloadOutputDagRunId
+  //   );
+  // };
 
-  const renderActions = (data: any) => {
-    return (
-      <div className="actions-icon">
-        {data.dagRunId === downloadOutputDagRunId ? (
-          <div className="icon-buttons-style">
-            <CircularProgress
-              size={18}
-              aria-label="Loading Spinner"
-              data-testid="loader"
-            />
-          </div>
-        ) : (
-          <div
-            role="button"
-            className={
-              data.state === 'success'
-                ? 'icon-buttons-style'
-                : 'icon-buttons-style-disable'
-            }
-            title="Download Output"
-            data-dag-run-id={data.dagRunId}
-            onClick={
-              data.state === 'success'
-                ? e => handleDownloadOutput(e)
-                : undefined
-            }
-          >
-            <iconDownload.react
-              tag="div"
-              className="icon-white logo-alignment-style"
-            />
-          </div>
-        )}
-      </div>
-    );
-  };
+  // const renderActions = (data: any) => {
+  //   return (
+  //     <div className="actions-icon">
+  //       {data.dagRunId === downloadOutputDagRunId ? (
+  //         <div className="icon-buttons-style">
+  //           <CircularProgress
+  //             size={18}
+  //             aria-label="Loading Spinner"
+  //             data-testid="loader"
+  //           />
+  //         </div>
+  //       ) : (
+  //         <div
+  //           role="button"
+  //           className={
+  //             data.state === 'success'
+  //               ? 'icon-buttons-style'
+  //               : 'icon-buttons-style-disable'
+  //           }
+  //           title="Download Output"
+  //           data-dag-run-id={data.dagRunId}
+  //           onClick={
+  //             data.state === 'success'
+  //               ? e => handleDownloadOutput(e)
+  //               : undefined
+  //           }
+  //         >
+  //           <iconDownload.react
+  //             tag="div"
+  //             className="icon-white logo-alignment-style"
+  //           />
+  //         </div>
+  //       )}
+  //     </div>
+  //   );
+  // };
 
   const listDagRunsList = async () => {
     await SchedulerService.listDagRunsListService(
