@@ -131,7 +131,7 @@ const ListDagTaskInstances = ({
     console.log("trying to download with",taskId)
 
     const taskNumber = taskId.split('_').pop();
-    let outputTaskId = "output_task_id_" + taskNumber;
+    let outputTaskId = "generate_output_file_" + taskNumber;
     
     // const dagRunId = event.currentTarget.getAttribute('data-dag-run-id')!;
     await SchedulerService.handleDownloadOutputNotebookAPIService(
