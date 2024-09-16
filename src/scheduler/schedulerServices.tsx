@@ -686,7 +686,7 @@ export class SchedulerService {
     try {
       // dagRunId = encodeURIComponent(dagRunId);
       console.log("in service file",dagRunId)
-      const serviceURL = `downloadOutput?composer=${composerName}&bucket_name=${bucketName}&dag_id=${dagId}&dag_run_id=${dagRunId}&generate_output_file=${generateOutputFile}`;
+      const serviceURL = `downloadOutput?composer=${composerName}&bucket_name=${bucketName}&dag_id=${dagId}&dag_run_id=${dagRunId}&output_task_id=${generateOutputFile}`;
       const formattedResponse: any = await requestAPI(serviceURL);
       dagRunId = decodeURIComponent(dagRunId);
       if (formattedResponse.status === 0) {
