@@ -680,13 +680,13 @@ export class SchedulerService {
     bucketName: string,
     dagId: string,
     // setDownloadOutputDagRunId: (value: string) => void
-    generateOutputFile:string
+    outputTaskId:string
   ) => {
     // setDownloadOutputDagRunId(dagRunId);
     try {
       // dagRunId = encodeURIComponent(dagRunId);
       console.log("in service file",dagRunId)
-      const serviceURL = `downloadOutput?composer=${composerName}&bucket_name=${bucketName}&dag_id=${dagId}&dag_run_id=${dagRunId}&output_task_id=${generateOutputFile}`;
+      const serviceURL = `downloadOutput?composer=${composerName}&bucket_name=${bucketName}&dag_id=${dagId}&dag_run_id=${dagRunId}&output_task_id=${outputTaskId}`;
       const formattedResponse: any = await requestAPI(serviceURL);
       dagRunId = decodeURIComponent(dagRunId);
       if (formattedResponse.status === 0) {
