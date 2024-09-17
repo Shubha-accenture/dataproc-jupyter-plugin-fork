@@ -19,6 +19,7 @@ import subprocess
 import uuid
 from datetime import datetime, timedelta
 import urllib
+import google.oauth2.credentials as oauth2
 import aiofiles
 from google.cloud import storage
 from google.api_core.exceptions import NotFound
@@ -504,7 +505,8 @@ class Client:
             return {"error": f"Invalid DAG run ID {dag_run_id}"}
         
         try:
-            storage_client = storage.Client()
+            credentials = oauth2.Credentials(self._access_token)
+            storage_client = storage.Client(credentials=credentials)
             blob_name = f"dataproc-output/{dag_id}/output-notebooks/{dag_id}_{dag_run_id}-{output_task_id}.ipynb"
             bucket = storage_client.bucket(bucket_name)
             blob = bucket.blob(blob_name)
