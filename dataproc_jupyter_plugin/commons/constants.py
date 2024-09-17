@@ -55,3 +55,5 @@ DAG_RUN_ID_REGEXP = re.compile("[a-zA-Z0-9_:\\+-]+")
 
 # This matches the requirements set by the scheduler form.
 AIRFLOW_JOB_REGEXP = re.compile("[a-zA-Z0-9_-]+")
+
+DAG_OUTPUT_FILE_ID = re.compile("^generate_output_file_\d+$")

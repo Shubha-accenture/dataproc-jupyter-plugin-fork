@@ -55,6 +55,7 @@ class DownloadOutputController(APIHandler):
             bucket_name = self.get_argument("bucket_name")
             dag_id = self.get_argument("dag_id")
             dag_run_id = self.get_argument("dag_run_id")
+            output_task_id = self.get_argument("output_task_id")
             if not re.fullmatch(constants.COMPOSER_ENVIRONMENT_REGEXP, composer_name):
                 raise ValueError(f"Invalid Composer environment name: {composer_name}")
             if not re.fullmatch(constants.BUCKET_NAME_REGEXP, bucket_name):
@@ -63,12 +64,14 @@ class DownloadOutputController(APIHandler):
                 raise ValueError(f"Invalid DAG ID: {dag_id}")
             if not re.fullmatch(constants.DAG_RUN_ID_REGEXP, dag_run_id):
                 raise ValueError(f"Invalid DAG Run ID: {dag_run_id}")
+            if not re.fullmatch(constants.DAG_OUTPUT_FILE_ID, output_task_id):
+                raise ValueError(f"Invalid DAG Run ID: {output_task_id}")
             async with aiohttp.ClientSession() as client_session:
                 client = executor.Client(
                     await credentials.get_cached(), self.log, client_session
                 )
                 download_status = await client.download_dag_output(
-                    bucket_name, dag_id, dag_run_id
+                   composer_name, bucket_name, dag_id, dag_run_id,output_task_id
                 )
                 self.finish(json.dumps({"status": download_status}))
         except Exception as e:

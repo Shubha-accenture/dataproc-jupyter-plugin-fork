@@ -494,7 +494,7 @@ class Client:
             return {"error": str(e)}
 
     async def download_dag_output(
-        self, composer_environment_name, bucket_name, dag_id, dag_run_id
+        self, composer_environment_name, bucket_name, dag_id, dag_run_id, output_task_id
     ):
         try:
             await self.airflow_client.list_dag_run_task(
@@ -505,7 +505,7 @@ class Client:
         
         try:
             storage_client = storage.Client()
-            blob_name = f"dataproc-output/{dag_id}/output-notebooks/{dag_id}_{dag_run_id}-generate_output_file_3.ipynb"
+            blob_name = f"dataproc-output/{dag_id}/output-notebooks/{dag_id}_{dag_run_id}-{output_task_id}.ipynb"
             bucket = storage_client.bucket(bucket_name)
             blob = bucket.blob(blob_name)
             original_file_name = os.path.basename(blob_name) 
