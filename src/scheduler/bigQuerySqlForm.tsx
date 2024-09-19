@@ -40,14 +40,7 @@ function BigQuerySqlForm({ data }: any) {
   const [regionSelected, setRegionSelected] = useState('');
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
-  const defaultwriteDisposition = isSaveQueryChecked ? 'WRITE_APPEND' : '';
-  // const defaultwriteDisposition = isSaveQueryChecked
-  // ? (data.disposition ? data.disposition : 'WRITE_APPEND')
-  // : '';
-  console.log(defaultwriteDisposition);
-  const [writeDisposition, setWriteDisposition] = useState(
-    defaultwriteDisposition
-  );
+  const [writeDisposition, setWriteDisposition] = useState('');
   const multiRegionList = [
     { key: 'us', label: 'US' },
     { key: 'europe', label: 'EU' }
@@ -74,7 +67,7 @@ function BigQuerySqlForm({ data }: any) {
   const [regionId, setRegionId] = useState('us');
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isLoadingKeyDetail, setIsLoadingKeyDetail] = useState(false);
-  // const [isAppendLoading, setIsAppendLoading] = useState(false);
+  const [isLoadingDisposition, setIsLoadingDisposition] = useState(true);
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
     svgstr: errorIcon
@@ -306,7 +299,7 @@ function BigQuerySqlForm({ data }: any) {
       setIsSaveQueryChecked(data.isSaveQuery);
       setTableID(data.tableId);
       setDatasetId(data.datasetId);
-      setWriteDisposition(data.writeDisposition);
+      // setWriteDisposition(data.writeDisposition);
       const selectedServiceAccount = serviceAccounts.find(
         option => option.email === data.serviceAccount
       );
@@ -370,9 +363,17 @@ function BigQuerySqlForm({ data }: any) {
 
   useEffect(() => {
     if (isSaveQueryChecked) {
-      setWriteDisposition('WRITE_APPEND');
+       if (data.writeDisposition !== undefined) {
+        setWriteDisposition(data.writeDisposition ||'WRITE_APPEND'); 
+        setIsLoadingDisposition(false);
+      }
+       else {
+        setIsLoadingDisposition(true);
+      }
+    } else {
+      setIsLoadingDisposition(false);
     }
-  }, [isSaveQueryChecked]);
+  }, [data.writeDisposition, isSaveQueryChecked]);
 
   return (
     <>
@@ -465,47 +466,48 @@ function BigQuerySqlForm({ data }: any) {
                   placeholder=""
                   Label="Partition field"
                 />
-                {/* <div className="create-scheduler-style-key"> */}
-                {/* {isAppendLoading && ( */}
-                {/* <CircularProgress
+                {isLoadingDisposition && (
+                  <div className="create-scheduler-style-key">
+                    <CircularProgress
                       className="spin-loader-custom-style"
                       size={18}
                       aria-label="Loading Spinner"
                       data-testid="loader"
-                    /> */}
-                {/* )} */}
-                {/* </div> */}
-                {/* {!isAppendLoading && ( */}
-                <FormControl className="trigger-form">
-                  <RadioGroup
-                    aria-labelledby="demo-controlled-radio-buttons-group"
-                    name="controlled-radio-buttons-group"
-                    value={writeDisposition}
-                    onChange={handleWriteDisposition}
-                  >
-                    <FormControlLabel
-                      value="WRITE_APPEND"
-                      className="create-scheduler-label-style"
-                      control={<Radio size="small" />}
-                      label={
-                        <Typography sx={{ fontSize: 13 }}>
-                          Append to table
-                        </Typography>
-                      }
                     />
-                    <FormControlLabel
-                      value="WRITE_TRUNCATE"
-                      className="create-scheduler-label-style"
-                      control={<Radio size="small" />}
-                      label={
-                        <Typography sx={{ fontSize: 13 }}>
-                          Overwrite table
-                        </Typography>
-                      }
-                    />
-                  </RadioGroup>
-                </FormControl>
-                {/* )} */}
+                  </div>
+                )}
+
+                {!isLoadingDisposition && (
+                  <FormControl className="trigger-form">
+                    <RadioGroup
+                      aria-labelledby="demo-controlled-radio-buttons-group"
+                      name="controlled-radio-buttons-group"
+                      value={writeDisposition}
+                      onChange={handleWriteDisposition}
+                    >
+                      <FormControlLabel
+                        value="WRITE_APPEND"
+                        className="create-scheduler-label-style"
+                        control={<Radio size="small" />}
+                        label={
+                          <Typography sx={{ fontSize: 13 }}>
+                            Append to table
+                          </Typography>
+                        }
+                      />
+                      <FormControlLabel
+                        value="WRITE_TRUNCATE"
+                        className="create-scheduler-label-style"
+                        control={<Radio size="small" />}
+                        label={
+                          <Typography sx={{ fontSize: 13 }}>
+                            Overwrite table
+                          </Typography>
+                        }
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                )}
               </>
             )}
             <div className="configure-form-dropdown-element">
