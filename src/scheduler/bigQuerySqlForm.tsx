@@ -41,6 +41,10 @@ function BigQuerySqlForm({ data }: any) {
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
   const defaultwriteDisposition = isSaveQueryChecked ? 'WRITE_APPEND' : '';
+  // const defaultwriteDisposition = isSaveQueryChecked
+  // ? (data.disposition ? data.disposition : 'WRITE_APPEND')
+  // : '';
+  console.log(defaultwriteDisposition);
   const [writeDisposition, setWriteDisposition] = useState(
     defaultwriteDisposition
   );
@@ -70,6 +74,7 @@ function BigQuerySqlForm({ data }: any) {
   const [regionId, setRegionId] = useState('us');
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isLoadingKeyDetail, setIsLoadingKeyDetail] = useState(false);
+  // const [isAppendLoading, setIsAppendLoading] = useState(false);
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
     svgstr: errorIcon
@@ -274,7 +279,7 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   useEffect(() => {
-    if (data && parameterDetailUpdated.length>0) {
+    if (data && parameterDetailUpdated.length > 0) {
       data.parameter = parameterDetailUpdated;
     }
   }, [parameterDetailUpdated]);
@@ -286,8 +291,7 @@ function BigQuerySqlForm({ data }: any) {
   }, []);
 
   useEffect(() => {
-    if(regionId)
-    listKeyRingsAPI();
+    if (regionId) listKeyRingsAPI();
   }, [regionId]);
 
   useEffect(() => {
@@ -296,14 +300,13 @@ function BigQuerySqlForm({ data }: any) {
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
       setServiceAccountSelected(data.serviceAccount);
-      setParameterDetailUpdated(data.parameter)
-      setParameterDetail(data.parameter)
+      setParameterDetailUpdated(data.parameter);
+      setParameterDetail(data.parameter);
 
       setIsSaveQueryChecked(data.isSaveQuery);
       setTableID(data.tableId);
       setDatasetId(data.datasetId);
       setWriteDisposition(data.writeDisposition);
-
       const selectedServiceAccount = serviceAccounts.find(
         option => option.email === data.serviceAccount
       );
@@ -462,6 +465,17 @@ function BigQuerySqlForm({ data }: any) {
                   placeholder=""
                   Label="Partition field"
                 />
+                {/* <div className="create-scheduler-style-key"> */}
+                {/* {isAppendLoading && ( */}
+                {/* <CircularProgress
+                      className="spin-loader-custom-style"
+                      size={18}
+                      aria-label="Loading Spinner"
+                      data-testid="loader"
+                    /> */}
+                {/* )} */}
+                {/* </div> */}
+                {/* {!isAppendLoading && ( */}
                 <FormControl className="trigger-form">
                   <RadioGroup
                     aria-labelledby="demo-controlled-radio-buttons-group"
@@ -491,6 +505,7 @@ function BigQuerySqlForm({ data }: any) {
                     />
                   </RadioGroup>
                 </FormControl>
+                {/* )} */}
               </>
             )}
             <div className="configure-form-dropdown-element">
@@ -707,7 +722,7 @@ function BigQuerySqlForm({ data }: any) {
                               data-testid="loader"
                             />
                           )}
-                          {!isLoadingKeyDetail && (
+                          {!isLoadingDetail && !isLoadingKeyDetail && (
                             <Autocomplete
                               className="create-scheduler-style-keys"
                               disabled={
@@ -739,19 +754,18 @@ function BigQuerySqlForm({ data }: any) {
                     <div className="create-scheduler-encrypt">
                       <Radio
                         size="small"
-                        className="select-batch-encrypt-radio-style "
+                        className="scheduler-encrypt-radio-style "
                         value="mainClass"
                         checked={selectedRadioValue === 'manually'}
                         onChange={handlekeyManuallyRadio}
                       />
                       <div className="create-scheduler-style-key">
                         <Input
-                          // className={
-                          //   selectedRadioValue === 'key'
-                          //     ? 'disable-text create-batch-key manual-key'
-                          //     : 'create-batch-style manual-key'
-                          // }
-                          className="create-scheduler-style-key"
+                          className={
+                            selectedRadioValue === 'key'
+                              ? 'disable-text create-batch-key manual-key'
+                              : 'create-batch-style manual-key'
+                          }
                           value={manualKeySelected}
                           type="text"
                           disabled={selectedRadioValue === 'key'}
