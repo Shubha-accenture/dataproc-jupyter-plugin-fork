@@ -20,7 +20,7 @@ import { requestAPI } from '../handler/handler';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import { toastifyCustomStyle } from '../utils/utils';
 import { JupyterLab } from '@jupyterlab/application';
-import { scheduleMode } from '../utils/const';
+// import { scheduleMode } from '../utils/const';
 
 interface IPayload {}
 
@@ -303,38 +303,39 @@ export class SchedulerService {
       );
     }
   };
-
   static editJobSchedulerService = async (
     bucketName: string,
     dagId: string,
     composerSelectedList: string,
     setEditDagLoading: (value: string) => void,
+    setPayload:(value:any)=>void,//new
     setCreateCompleted?: (value: boolean) => void,
-    setJobNameSelected?: (value: string) => void,
-    setComposerSelected?: (value: string) => void,
-    setScheduleMode?: (value: scheduleMode) => void,
-    setScheduleValue?: (value: string) => void,
+    // setJobNameSelected?: (value: string) => void,
+    // setComposerSelected?: (value: string) => void,
+    // setScheduleMode?: (value: scheduleMode) => void,
+    // setScheduleValue?: (value: string) => void,
 
-    setInputFileSelected?: (value: string) => void,
-    setParameterDetail?: (value: string[]) => void,
-    setParameterDetailUpdated?: (value: string[]) => void,
-    setSelectedMode?: (value: string) => void,
-    setClusterSelected?: (value: string) => void,
-    setServerlessSelected?: (value: string) => void,
-    setServerlessDataSelected?: (value: {}) => void,
-    serverlessDataList?: string[],
-    setServerlessDataList?: (value: string[]) => void,
-    setServerlessList?: (value: string[]) => void,
-    setRetryCount?: (value: number) => void,
-    setRetryDelay?: (value: number) => void,
-    setEmailOnFailure?: (value: boolean) => void,
-    setEmailonRetry?: (value: boolean) => void,
-    setEmailOnSuccess?: (value: boolean) => void,
-    setEmailList?: (value: string[]) => void,
-    setStopCluster?: (value: boolean) => void,
-    setTimeZoneSelected?: (value: string) => void,
+    // setInputFileSelected?: (value: string) => void,
+    // setParameterDetail?: (value: string[]) => void,
+    // setParameterDetailUpdated?: (value: string[]) => void,
+    // setSelectedMode?: (value: string) => void,
+    // setClusterSelected?: (value: string) => void,
+    // setServerlessSelected?: (value: string) => void,
+    // setServerlessDataSelected?: (value: {}) => void,
+    // serverlessDataList?: string[],
+    // setServerlessDataList?: (value: string[]) => void,
+    // setServerlessList?: (value: string[]) => void,
+    // setRetryCount?: (value: number) => void,
+    // setRetryDelay?: (value: number) => void,
+    // setEmailOnFailure?: (value: boolean) => void,
+    // setEmailonRetry?: (value: boolean) => void,
+    // setEmailOnSuccess?: (value: boolean) => void,
+    // setEmailList?: (value: string[]) => void,
+    // setStopCluster?: (value: boolean) => void,
+    // setTimeZoneSelected?: (value: string) => void,
     setEditMode?: (value: boolean) => void,
-    setIsLoadingKernelDetail?: (value: boolean) => void
+    // setIsLoadingKernelDetail?: (value: boolean) => void,
+
   ) => {
     setEditDagLoading(dagId);
     try {
@@ -342,88 +343,90 @@ export class SchedulerService {
       const formattedResponse: any = await requestAPI(serviceURL, {
         method: 'POST'
       });
+      setPayload(formattedResponse)
+      console.log("from service file",formattedResponse)
       if (
         setCreateCompleted &&
-        setJobNameSelected &&
-        setComposerSelected &&
-        setScheduleMode &&
-        setScheduleValue &&
-        setInputFileSelected &&
-        setParameterDetail &&
-        setParameterDetailUpdated &&
-        setSelectedMode &&
-        setClusterSelected &&
-        setServerlessSelected &&
-        setServerlessDataSelected &&
-        serverlessDataList &&
-        setServerlessDataList &&
-        setServerlessList &&
-        setRetryCount &&
-        setRetryDelay &&
-        setEmailOnFailure &&
-        setEmailonRetry &&
-        setEmailOnSuccess &&
-        setEmailList &&
-        setStopCluster &&
-        setTimeZoneSelected &&
+        // setJobNameSelected &&
+        // setComposerSelected &&
+        // setScheduleMode &&
+        // setScheduleValue &&
+        // setInputFileSelected &&
+        // setParameterDetail &&
+        // setParameterDetailUpdated &&
+        // setSelectedMode &&
+        // setClusterSelected &&
+        // setServerlessSelected &&
+        // setServerlessDataSelected &&
+        // serverlessDataList &&
+        // setServerlessDataList &&
+        // setServerlessList &&
+        // setRetryCount &&
+        // setRetryDelay &&
+        // setEmailOnFailure &&
+        // setEmailonRetry &&
+        // setEmailOnSuccess &&
+        // setEmailList &&
+        // setStopCluster &&
+        // setTimeZoneSelected &&
         setEditMode &&
         dagId !== null
       ) {
-        setJobNameSelected(dagId);
-        setComposerSelected(composerSelectedList);
-        setInputFileSelected(formattedResponse.input_filename);
-        setParameterDetail(formattedResponse.parameters);
-        setParameterDetailUpdated(formattedResponse.parameters);
-        setSelectedMode(formattedResponse.mode_selected);
-        setClusterSelected(formattedResponse.cluster_name);
-        setServerlessSelected(formattedResponse.serverless_name);
-        if (formattedResponse.mode_selected === 'serverless') {
-          await this.listSessionTemplatesAPIService(
-            setServerlessDataList,
-            setServerlessList,
-            setIsLoadingKernelDetail
-          );
-          if (serverlessDataList.length > 0) {
-            const selectedData: any = serverlessDataList.filter(
-              (serverless: any) => {
-                return (
-                  serverless.serverlessName ===
-                  formattedResponse.serverless_name
-                );
-              }
-            );
-            setServerlessDataSelected(selectedData[0].serverlessData);
-          }
-        }
-        setRetryCount(formattedResponse.retry_count);
-        setRetryDelay(formattedResponse.retry_delay);
-        formattedResponse.email_failure.toLowerCase() === 'true'
-          ? setEmailOnFailure(true)
-          : setEmailOnFailure(false);
-        formattedResponse.email_delay.toLowerCase() === 'true'
-          ? setEmailonRetry(true)
-          : setEmailonRetry(false);
-        formattedResponse.email_success.toLowerCase() === 'true'
-          ? setEmailOnSuccess(true)
-          : setEmailOnSuccess(false);
-        setEmailList(formattedResponse.email);
-        formattedResponse.stop_cluster.toLowerCase() === 'true'
-          ? setStopCluster(true)
-          : setStopCluster(false);
-        if (formattedResponse.time_zone === '') {
-          setTimeZoneSelected(Intl.DateTimeFormat().resolvedOptions().timeZone);
-        } else {
-          setTimeZoneSelected(formattedResponse.time_zone);
-        }
+        // setJobNameSelected(dagId);
+        // setComposerSelected(composerSelectedList);
+        // setInputFileSelected(formattedResponse.input_filename);
+        // setParameterDetail(formattedResponse.parameters);
+        // setParameterDetailUpdated(formattedResponse.parameters);
+        // setSelectedMode(formattedResponse.mode_selected);
+        // setClusterSelected(formattedResponse.cluster_name);
+        // setServerlessSelected(formattedResponse.serverless_name);
+        // if (formattedResponse.mode_selected === 'serverless') {
+        //   await this.listSessionTemplatesAPIService(
+        //     setServerlessDataList,
+        //     setServerlessList,
+        //     setIsLoadingKernelDetail
+        //   );
+        //   if (serverlessDataList.length > 0) {
+        //     const selectedData: any = serverlessDataList.filter(
+        //       (serverless: any) => {
+        //         return (
+        //           serverless.serverlessName ===
+        //           formattedResponse.serverless_name
+        //         );
+        //       }
+        //     );
+        //     setServerlessDataSelected(selectedData[0].serverlessData);
+        //   }
+        // }
+        // setRetryCount(formattedResponse.retry_count);
+        // setRetryDelay(formattedResponse.retry_delay);
+        // formattedResponse.email_failure.toLowerCase() === 'true'
+        //   ? setEmailOnFailure(true)
+        //   : setEmailOnFailure(false);
+        // formattedResponse.email_delay.toLowerCase() === 'true'
+        //   ? setEmailonRetry(true)
+        //   : setEmailonRetry(false);
+        // formattedResponse.email_success.toLowerCase() === 'true'
+        //   ? setEmailOnSuccess(true)
+        //   : setEmailOnSuccess(false);
+        // setEmailList(formattedResponse.email);
+        // formattedResponse.stop_cluster.toLowerCase() === 'true'
+        //   ? setStopCluster(true)
+        //   : setStopCluster(false);
+        // if (formattedResponse.time_zone === '') {
+        //   setTimeZoneSelected(Intl.DateTimeFormat().resolvedOptions().timeZone);
+        // } else {
+        //   setTimeZoneSelected(formattedResponse.time_zone);
+        // }
         setEditMode(true);
         setCreateCompleted(false);
-        if (formattedResponse.schedule_value === '@once') {
-          setScheduleMode('runNow');
-          setScheduleValue('');
-        } else if (formattedResponse.schedule_value !== '@once') {
-          setScheduleMode('runSchedule');
-          setScheduleValue(formattedResponse.schedule_value);
-        }
+        // if (formattedResponse.schedule_value === '@once') {
+        //   setScheduleMode('runNow');
+        //   setScheduleValue('');
+        // } else if (formattedResponse.schedule_value !== '@once') {
+        //   setScheduleMode('runSchedule');
+        //   setScheduleValue(formattedResponse.schedule_value);
+        // }
       }
       setEditDagLoading('');
     } catch (reason) {

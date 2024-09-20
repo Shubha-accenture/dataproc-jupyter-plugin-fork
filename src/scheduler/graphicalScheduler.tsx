@@ -49,6 +49,7 @@ interface IGraphicalSchedulerProps {
   factory: IFileBrowserFactory;
   jobPayload: any;
   setJobPayload: any;
+  // setEditPayload:any;
 }
 const nodeTypes = { composerNode: NotebookNode };
 
@@ -59,16 +60,19 @@ const GraphicalScheduler = ({
   app,
   factory,
   jobPayload,
-  setJobPayload
+  setJobPayload,
+  // setEditPayload
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
-
   const initialNode = [
     {
       id: '1',
       type: 'composerNode',
-      position: { x: 0, y: 0 },
+      // position: { x: -60.99160589613848,
+      //     y: -450.85951809498465 }, 
+        position: { x: 0,
+          y: 0 }, 
       data: {
         nodeType: 'Trigger',
         inputFile: inputFileSelected,
@@ -85,18 +89,89 @@ const GraphicalScheduler = ({
         location: '',
         writeDisposition: '',
         serviceAccount: '',
-        keyRings:'',
-        kmsKey:'',
-        isSaveQuery:false,
-        isAutoRegion:true
+        keyRings: '',
+        kmsKey: '',
+        isSaveQuery: false,
+        isAutoRegion: true
       }
-    }
-  ];
+    },
+  // {
+  //   id: "2",
+  //   type: "composerNode",
+  //   position: {
+  //     x: -231.4928727243676,
+  //     y: -251.4640478260099
+  //   },
+  //   data: {
+  //     nodeType: "Serverless",
+  //     inputFile: "test1.ipynb",
+  //     retryCount: 22,
+  //     retryDelay: 22,
+  //     parameter: [],
+  //     serverless: "",
+  //     serviceAccount: "",
+  //     stopCluster: '',
+  //     clusterName: '',
+  //     scheduleValue: '',
+  //     timeZone: '',
+  //     datasetId: '',
+  //     tableId: '',
+  //     location: '',
+  //     writeDisposition: '',
+  //     keyRings: '',
+  //     kmsKey: '',
+  //     isSaveQuery: false,
+  //     isAutoRegion: true
+  //   }
+  // },
 
+  // {
+  //   id: "3",
+  //   type: "composerNode",
+  //   position: {
+  //     x: -230.29695888326685,
+  //     y: -74.46879934309815
+  //   },
+  //   data: {
+  //     nodeType: "Cluster",
+  //     inputFile: "test2.ipynb",
+  //     retryCount: 44,
+  //     retryDelay: 44,
+  //     parameter: [],
+  //     stopCluster: "",
+  //     clusterName: "cluster-dpms-test",
+  //     serverless: '',
+  //     scheduleValue: '',
+  //     timeZone: '',
+  //     datasetId: '',
+  //     tableId: '',
+  //     location: '',
+  //     writeDisposition: '',
+  //     serviceAccount: '',
+  //     keyRings: '',
+  //     kmsKey: '',
+  //     isSaveQuery: false,
+  //     isAutoRegion: true
+  //   },
+  // },
+]
+
+const initialEdge= [
+  {
+    id: "2",
+    source: "1",
+    target: "2"
+  },
+  {
+    id: "3",
+    source: "2",
+    target: "3"
+  }
+]
   let nodeId = initialNode.length + 1;
   const getNodeId = () => `${nodeId++}`;
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdge);
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
@@ -151,10 +226,10 @@ const GraphicalScheduler = ({
               location: '',
               writeDisposition: '',
               serviceAccount: '',
-              keyRings:'',
-              kmsKey:'',   
-              isSaveQuery:false,  
-              isAutoRegion:true
+              keyRings: '',
+              kmsKey: '',
+              isSaveQuery: false,
+              isAutoRegion: true
             },
             origin: [0.5, 0.0]
           };
@@ -233,9 +308,9 @@ const GraphicalScheduler = ({
     }
   });
 
-  useEffect(() => {
-    NodesChange(transformedNodes);
-  }, [nodes]);
+  // useEffect(() => {
+  //   NodesChange(transformedNodes);
+  // }, [nodes]);
 
   useEffect(() => {
     if (clickedNodeId) {
@@ -248,85 +323,98 @@ const GraphicalScheduler = ({
   }, [clickedNodeId, nodes]);
 
   EdgesChange(edges);
-  const transformNodeData = (nodes: any) => {
-    return nodes.map((node: any) => {
-      if (node.data.nodeType === 'Trigger') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            scheduleValue: node.data.scheduleValue,
-            timeZone: node.data.timeZone
-          }
-        };
-      } else if (node.data.nodeType === 'Cluster') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            inputFile: node.data.inputFile,
-            retryCount: node.data.retryCount,
-            retryDelay: node.data.retryDelay,
-            parameter: node.data.parameter,
-            stopCluster: node.data.stopCluster,
-            clusterName: node.data.clusterName
-          }
-        };
-      } else if (node.data.nodeType === 'Serverless') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            inputFile: node.data.inputFile,
-            retryCount: node.data.retryCount,
-            retryDelay: node.data.retryDelay,
-            parameter: node.data.parameter,
-            serverless: node.data.serverless,
-            serviceAccount: node.data.serviceAccount
-          }
-        };
-      } else if (node.data.nodeType === 'Bigquery-Serverless') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            inputFile: node.data.inputFile,
-            retryCount: node.data.retryCount,
-            retryDelay: node.data.retryDelay,
-            parameter: node.data.parameter,
-            serverless: node.data.serverless,
-            serviceAccount: node.data.serviceAccount
-          }
-        };
-      } else if (node.data.nodeType === 'Bigquery-Sql') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            inputFile: node.data.inputFile,
-            retryCount: node.data.retryCount,
-            retryDelay: node.data.retryDelay,
-            parameter: node.data.parameter,
-            tableId: node.data.tableId,
-            datasetId: node.data.datasetId,
-            location: node.data.location,
-            writeDisposition: node.data.writeDisposition,
-            serviceAccount: node.data.serviceAccount,
-            kmsKey:node.data.kmsKey
-          }
-        };
-      }
-      return node;
-    });
-  };
+  NodesChange(nodes);
 
-  const transformedNodes = transformNodeData(nodes);
+  // const transformNodeData = (nodes: any) => {
+  //   return nodes.map((node: any) => {
+  //     if (node.data.nodeType === 'Trigger') {
+  //       return {
+  //         ...node,
+  //         data: {
+  //           nodeType: node.data.nodeType,
+  //           scheduleValue: node.data.scheduleValue,
+  //           timeZone: node.data.timeZone
+  //         }
+  //       };
+  //     } else if (node.data.nodeType === 'Cluster') {
+  //       return {
+  //         ...node,
+  //         data: {
+  //           nodeType: node.data.nodeType,
+  //           inputFile: node.data.inputFile,
+  //           retryCount: node.data.retryCount,
+  //           retryDelay: node.data.retryDelay,
+  //           parameter: node.data.parameter,
+  //           stopCluster: node.data.stopCluster,
+  //           clusterName: node.data.clusterName
+  //         }
+  //       };
+  //     } else if (node.data.nodeType === 'Serverless') {
+  //       return {
+  //         ...node,
+  //         data: {
+  //           nodeType: node.data.nodeType,
+  //           inputFile: node.data.inputFile,
+  //           retryCount: node.data.retryCount,
+  //           retryDelay: node.data.retryDelay,
+  //           parameter: node.data.parameter,
+  //           serverless: node.data.serverless,
+  //           serviceAccount: node.data.serviceAccount
+  //         }
+  //       };
+  //     } else if (node.data.nodeType === 'Bigquery-Serverless') {
+  //       return {
+  //         ...node,
+  //         data: {
+  //           nodeType: node.data.nodeType,
+  //           inputFile: node.data.inputFile,
+  //           retryCount: node.data.retryCount,
+  //           retryDelay: node.data.retryDelay,
+  //           parameter: node.data.parameter,
+  //           serverless: node.data.serverless,
+  //           serviceAccount: node.data.serviceAccount
+  //         }
+  //       };
+  //     } else if (node.data.nodeType === 'Bigquery-Sql') {
+  //       return {
+  //         ...node,
+  //         data: {
+  //           nodeType: node.data.nodeType,
+  //           inputFile: node.data.inputFile,
+  //           retryCount: node.data.retryCount,
+  //           retryDelay: node.data.retryDelay,
+  //           parameter: node.data.parameter,
+  //           tableId: node.data.tableId,
+  //           datasetId: node.data.datasetId,
+  //           location: node.data.location,
+  //           writeDisposition: node.data.writeDisposition,
+  //           serviceAccount: node.data.serviceAccount,
+  //           kmsKey: node.data.kmsKey
+  //         }
+  //       };
+  //     }
+  //     return node;
+  //   });
+  // };
+
+  // const transformedNodes = transformNodeData(nodes);
 
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
         <Grid item xs={8}>
-          <div className="wrapper" ref={reactFlowWrapper}>
+          {/* <div className="wrapper" ref={reactFlowWrapper} > */}
+          <div
+            className="wrapper"
+            ref={reactFlowWrapper}
+            // style={{
+            //   overflowX: 'auto',
+            //   height: '100%', // Maintain full height
+            //   position: 'relative'
+            // }}
+            // style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}
+            style={{ width: '100%', height: '100%', overflowX: 'auto', overflowY: 'hidden' }} // Horizontal scroll enabled
+          >
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -336,8 +424,9 @@ const GraphicalScheduler = ({
               onConnectStart={onConnectStart}
               onConnectEnd={onConnectEnd}
               fitView
-              fitViewOptions={{ padding: 2 }}
-              nodeOrigin={[0.5, 0]}
+              // fitViewOptions={{ padding: 2, minZoom: 0.5, maxZoom: 1.5 }}
+              zoomOnScroll={true}
+              nodeOrigin={[0.5, 0]}//change this
               nodeTypes={nodeTypes}
             >
               <Controls />
@@ -375,6 +464,7 @@ export default (props: IGraphicalSchedulerProps) => (
       factory={props.factory}
       jobPayload={props.jobPayload}
       setJobPayload={props.setJobPayload}
+      // setEditPayload={props.setEditPayload}
     />
   </ReactFlowProvider>
 );

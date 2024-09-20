@@ -34,7 +34,7 @@ import PollingTimer from '../utils/pollingTimer';
 import PollingImportErrorTimer from '../utils/pollingImportErrorTimer';
 import ImportErrorPopup from '../utils/importErrorPopup';
 import triggerIcon from '../../style/icons/scheduler_trigger.svg';
-import { scheduleMode } from '../utils/const';
+// import { scheduleMode } from '../utils/const';
 
 const iconDelete = new LabIcon({
   name: 'launcher:delete-icon',
@@ -74,64 +74,66 @@ function listNotebookScheduler({
   backButtonComposerName,
   composerSelectedFromCreate,
   setCreateCompleted,
-  setJobNameSelected,
-  setComposerSelected,
-  setScheduleMode,
-  setScheduleValue,
+  setEditPayload,
+  // setJobNameSelected,
+  // setComposerSelected,
+  // setScheduleMode,
+  // setScheduleValue,
 
-  setInputFileSelected,
-  setParameterDetail,
-  setParameterDetailUpdated,
-  setSelectedMode,
-  setClusterSelected,
-  setServerlessSelected,
-  setServerlessDataSelected,
-  serverlessDataList,
-  setServerlessDataList,
-  setServerlessList,
-  setRetryCount,
-  setRetryDelay,
-  setEmailOnFailure,
-  setEmailonRetry,
-  setEmailOnSuccess,
-  setEmailList,
-  setStopCluster,
-  setTimeZoneSelected,
+  // setInputFileSelected,
+  // setParameterDetail,
+  // setParameterDetailUpdated,
+  // setSelectedMode,
+  // setClusterSelected,
+  // setServerlessSelected,
+  // setServerlessDataSelected,
+  // serverlessDataList,
+  // setServerlessDataList,
+  // setServerlessList,
+  // setRetryCount,
+  // setRetryDelay,
+  // setEmailOnFailure,
+  // setEmailonRetry,
+  // setEmailOnSuccess,
+  // setEmailList,
+  // setStopCluster,
+  // setTimeZoneSelected,
   setEditMode,
   bucketName,
   setBucketName,
-  setIsLoadingKernelDetail
+  // setIsLoadingKernelDetail
 }: {
   app: JupyterFrontEnd;
   handleDagIdSelection: (composerName: string, dagId: string) => void;
   backButtonComposerName: string;
   composerSelectedFromCreate: string;
   setCreateCompleted?: (value: boolean) => void;
-  setJobNameSelected?: (value: string) => void;
-  setComposerSelected?: (value: string) => void;
-  setScheduleMode?: (value: scheduleMode) => void;
-  setScheduleValue?: (value: string) => void;
+  setEditPayload:(value:any)=>void
+  // setJobNameSelected?: (value: string) => void;
+  // setComposerSelected?: (value: string) => void;
+  // setScheduleMode?: (value: scheduleMode) => void;
+  // setScheduleValue?: (value: string) => void;
 
-  setInputFileSelected?: (value: string) => void;
-  setParameterDetail?: (value: string[]) => void;
-  setParameterDetailUpdated?: (value: string[]) => void;
-  setSelectedMode?: (value: string) => void;
-  setClusterSelected?: (value: string) => void;
-  setServerlessSelected?: (value: string) => void;
-  setServerlessDataSelected?: (value: {}) => void;
-  serverlessDataList?: string[];
-  setServerlessDataList?: (value: string[]) => void;
-  setServerlessList?: (value: string[]) => void;
-  setRetryCount?: (value: number) => void;
-  setRetryDelay?: (value: number) => void;
-  setEmailOnFailure?: (value: boolean) => void;
-  setEmailonRetry?: (value: boolean) => void;
-  setEmailOnSuccess?: (value: boolean) => void;
-  setEmailList?: (value: string[]) => void;
-  setStopCluster?: (value: boolean) => void;
-  setTimeZoneSelected?: (value: string) => void;
+  // setInputFileSelected?: (value: string) => void;
+  // setParameterDetail?: (value: string[]) => void;
+  // setParameterDetailUpdated?: (value: string[]) => void;
+  // setSelectedMode?: (value: string) => void;
+  // setClusterSelected?: (value: string) => void;
+  // setServerlessSelected?: (value: string) => void;
+  // setServerlessDataSelected?: (value: {}) => void;
+  // serverlessDataList?: string[];
+  // setServerlessDataList?: (value: string[]) => void;
+  // setServerlessList?: (value: string[]) => void;
+  // setRetryCount?: (value: number) => void;
+  // setRetryDelay?: (value: number) => void;
+  // setEmailOnFailure?: (value: boolean) => void;
+  // setEmailonRetry?: (value: boolean) => void;
+  // setEmailOnSuccess?: (value: boolean) => void;
+  // setEmailList?: (value: string[]) => void;
+  // setStopCluster?: (value: boolean) => void;
+  // setTimeZoneSelected?: (value: string) => void;
   setEditMode?: (value: boolean) => void;
-  setIsLoadingKernelDetail?: (value: boolean) => void;
+  // setIsLoadingKernelDetail?: (value: boolean) => void;
   bucketName: string;
   setBucketName: (value: string) => void;
 }) {
@@ -151,6 +153,7 @@ function listNotebookScheduler({
   const [deletingNotebook, setDeletingNotebook] = useState(false);
   const [importErrorData, setImportErrorData] = useState<string[]>([]);
   const [importErrorEntries, setImportErrorEntries] = useState<number>(0);
+  // const [payload, setPayload]=useState<any>([])
   const columns = React.useMemo(
     () => [
       {
@@ -243,33 +246,36 @@ function listNotebookScheduler({
         jobid,
         composerSelectedList,
         setEditDagLoading,
+        setEditPayload,//new
         setCreateCompleted,
-        setJobNameSelected,
-        setComposerSelected,
-        setScheduleMode,
-        setScheduleValue,
+        // setJobNameSelected,
+        // setComposerSelected,
+        // setScheduleMode,
+        // setScheduleValue,
 
-        setInputFileSelected,
-        setParameterDetail,
-        setParameterDetailUpdated,
-        setSelectedMode,
-        setClusterSelected,
-        setServerlessSelected,
-        setServerlessDataSelected,
-        serverlessDataList,
-        setServerlessDataList,
-        setServerlessList,
-        setRetryCount,
-        setRetryDelay,
-        setEmailOnFailure,
-        setEmailonRetry,
-        setEmailOnSuccess,
-        setEmailList,
-        setStopCluster,
-        setTimeZoneSelected,
+        // setInputFileSelected,
+        // setParameterDetail,
+        // setParameterDetailUpdated,
+        // setSelectedMode,
+        // setClusterSelected,
+        // setServerlessSelected,
+        // setServerlessDataSelected,
+        // serverlessDataList,
+        // setServerlessDataList,
+        // setServerlessList,
+        // setRetryCount,
+        // setRetryDelay,
+        // setEmailOnFailure,
+        // setEmailonRetry,
+        // setEmailOnSuccess,
+        // setEmailList,
+        // setStopCluster,
+        // setTimeZoneSelected,
         setEditMode,
-        setIsLoadingKernelDetail
+        // setIsLoadingKernelDetail,
       );
+      // setCreateCompleted(false)// temporary change
+      // console.log("in list comp", payload)
     }
   };
 
@@ -407,7 +413,7 @@ function listNotebookScheduler({
             className="icon-buttons-style"
             title="Edit Schedule"
             data-jobid={data.jobid}
-            onClick={e => handleEditDags(e)}
+            onClick={e => handleEditDags(e)} //here I need new page to come
           >
             <iconEditNotebook.react
               tag="div"

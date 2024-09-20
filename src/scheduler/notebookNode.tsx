@@ -68,7 +68,6 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   }, [id, data.scheduleValue, data.nodeType]);
 
   useEffect(() => {
-    console.log(data)
     if (!data.nodeType) {
       setStatus('');
       return;

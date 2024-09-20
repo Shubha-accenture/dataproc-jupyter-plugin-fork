@@ -53,7 +53,10 @@ const CreateNotebookScheduler = ({
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
+  const [editPayload, setEditPayload]=useState<any>([])
+  console.log("in create ",editPayload)
   // const [bqSqlSaveQuery, setBqSqlSaveQuery] = useState(false);
+
 
   const initialPayload = {
     job_name: '',
@@ -169,6 +172,7 @@ const CreateNotebookScheduler = ({
           composerSelectedFromCreate={composerSelected}
           setCreateCompleted={setCreateCompleted}
           setEditMode={setEditMode}
+          setEditPayload={setEditPayload}
         />
       ) : (
         <>
@@ -229,6 +233,7 @@ const CreateNotebookScheduler = ({
               factory={factory}
               jobPayload={jobPayload}
               setJobPayload={setJobPayload}
+              // setEditPayload={setEditPayload}
             />
           </Grid>
         </>
