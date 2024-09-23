@@ -49,7 +49,8 @@ interface IGraphicalSchedulerProps {
   factory: IFileBrowserFactory;
   jobPayload: any;
   setJobPayload: any;
-  // setEditPayload:any;
+  nodesFromEditPayload: any;
+  edgesFromEditPayload: any;
 }
 const nodeTypes = { composerNode: NotebookNode };
 
@@ -61,7 +62,8 @@ const GraphicalScheduler = ({
   factory,
   jobPayload,
   setJobPayload,
-  // setEditPayload
+  nodesFromEditPayload,
+  edgesFromEditPayload
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
@@ -69,10 +71,7 @@ const GraphicalScheduler = ({
     {
       id: '1',
       type: 'composerNode',
-      // position: { x: -60.99160589613848,
-      //     y: -450.85951809498465 }, 
-        position: { x: 0,
-          y: 0 }, 
+      position: { x: 0, y: 0 },
       data: {
         nodeType: 'Trigger',
         inputFile: inputFileSelected,
@@ -94,84 +93,19 @@ const GraphicalScheduler = ({
         isSaveQuery: false,
         isAutoRegion: true
       }
-    },
-  // {
-  //   id: "2",
-  //   type: "composerNode",
-  //   position: {
-  //     x: -231.4928727243676,
-  //     y: -251.4640478260099
-  //   },
-  //   data: {
-  //     nodeType: "Serverless",
-  //     inputFile: "test1.ipynb",
-  //     retryCount: 22,
-  //     retryDelay: 22,
-  //     parameter: [],
-  //     serverless: "",
-  //     serviceAccount: "",
-  //     stopCluster: '',
-  //     clusterName: '',
-  //     scheduleValue: '',
-  //     timeZone: '',
-  //     datasetId: '',
-  //     tableId: '',
-  //     location: '',
-  //     writeDisposition: '',
-  //     keyRings: '',
-  //     kmsKey: '',
-  //     isSaveQuery: false,
-  //     isAutoRegion: true
-  //   }
-  // },
+    }
+  ];
 
-  // {
-  //   id: "3",
-  //   type: "composerNode",
-  //   position: {
-  //     x: -230.29695888326685,
-  //     y: -74.46879934309815
-  //   },
-  //   data: {
-  //     nodeType: "Cluster",
-  //     inputFile: "test2.ipynb",
-  //     retryCount: 44,
-  //     retryDelay: 44,
-  //     parameter: [],
-  //     stopCluster: "",
-  //     clusterName: "cluster-dpms-test",
-  //     serverless: '',
-  //     scheduleValue: '',
-  //     timeZone: '',
-  //     datasetId: '',
-  //     tableId: '',
-  //     location: '',
-  //     writeDisposition: '',
-  //     serviceAccount: '',
-  //     keyRings: '',
-  //     kmsKey: '',
-  //     isSaveQuery: false,
-  //     isAutoRegion: true
-  //   },
-  // },
-]
-
-const initialEdge= [
-  {
-    id: "2",
-    source: "1",
-    target: "2"
-  },
-  {
-    id: "3",
-    source: "2",
-    target: "3"
-  }
-]
-  let nodeId = initialNode.length + 1;
+  let nodeId = nodesFromEditPayload
+    ? nodesFromEditPayload.length + 1
+    : initialNode.length + 1;
   const getNodeId = () => `${nodeId++}`;
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNode);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdge);
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    nodesFromEditPayload ? nodesFromEditPayload : initialNode
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    edgesFromEditPayload ? edgesFromEditPayload : []
+  );
   const [isTaskFormVisible, setIsTaskFormVisible] = useState(true);
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
@@ -413,7 +347,12 @@ const initialEdge= [
             //   position: 'relative'
             // }}
             // style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}
-            style={{ width: '100%', height: '100%', overflowX: 'auto', overflowY: 'hidden' }} // Horizontal scroll enabled
+            style={{
+              width: '100%',
+              height: '100%',
+              overflowX: 'auto',
+              overflowY: 'hidden'
+            }} // Horizontal scroll enabled
           >
             <ReactFlow
               nodes={nodes}
@@ -426,7 +365,7 @@ const initialEdge= [
               fitView
               // fitViewOptions={{ padding: 2, minZoom: 0.5, maxZoom: 1.5 }}
               zoomOnScroll={true}
-              nodeOrigin={[0.5, 0]}//change this
+              nodeOrigin={[0.5, 0]} //change this
               nodeTypes={nodeTypes}
             >
               <Controls />
@@ -464,7 +403,8 @@ export default (props: IGraphicalSchedulerProps) => (
       factory={props.factory}
       jobPayload={props.jobPayload}
       setJobPayload={props.setJobPayload}
-      // setEditPayload={props.setEditPayload}
+      nodesFromEditPayload={props.nodesFromEditPayload}
+      edgesFromEditPayload={props.edgesFromEditPayload}
     />
   </ReactFlowProvider>
 );
