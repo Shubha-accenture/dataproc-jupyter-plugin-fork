@@ -686,7 +686,7 @@ function BigQuerySqlForm({ data }: any) {
                       <div className="create-scheduler-encrypt">
                         <Radio
                           size="small"
-                          className="select-batch-encrypt-radio-style"
+                          className="select-scheduler-encrypt-radio-style"
                           value="mainClass"
                           checked={selectedRadioValue === 'key'}
                           onChange={handlekeyRingRadio}
@@ -694,7 +694,7 @@ function BigQuerySqlForm({ data }: any) {
                         <div className="create-scheduler-style-key">
                           {isLoadingDetail && (
                             <CircularProgress
-                              className="spin-loader-custom-style"
+                              className="spin-loader-custom-style-keyRings"
                               size={18}
                               aria-label="Loading Spinner"
                               data-testid="loader"
@@ -718,7 +718,7 @@ function BigQuerySqlForm({ data }: any) {
                           )}
                           {isLoadingKeyDetail && (
                             <CircularProgress
-                              className="spin-loader-custom-style"
+                              className="spin-loader-custom-style-keys"
                               size={18}
                               aria-label="Loading Spinner"
                               data-testid="loader"

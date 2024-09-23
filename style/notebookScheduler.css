@@ -381,7 +381,7 @@
   cursor: pointer;
 }
 
-.encryption-header{
+.encryption-header {
   width: 95%;
   background: var(--jp-layout-color0);
   outline: none;
@@ -395,9 +395,9 @@
   display: flex;
   align-items: center;
   margin-left: 45px;
-  padding-top:10px
+  padding-top: 10px;
 }
-.manual-key-style{
+.manual-key-style {
   margin-top: 10px;
 }
 .create-scheduler-style-key {
@@ -435,13 +435,24 @@
   white-space: nowrap;
   width: 1px;
 }
-.input-file-name{
+.input-file-name {
   padding-top: 5px;
   margin-left: 5px;
 }
-.upload-file-button{
+.upload-file-button {
   width: 110px;
 }
 .scheduler-encrypt-radio-style {
+  margin-right: 10px;
+}
+.spin-loader-custom-style-keyRings {
+  margin-right: 5px;
+  margin-left: 100px;
+}
+.spin-loader-custom-style-keys {
+  margin-right: 5px;
+  margin-left: 35px;
+}
+.select-scheduler-encrypt-radio-style {
   margin-right: 10px;
 }
