@@ -53,10 +53,12 @@ interface IJobPayload {
 
 const JobForm = ({
   jobPayload: initialJobPayload,
-  setJobPayload
+  setJobPayload,
+  editMode
 }: {
   jobPayload: IJobPayload;
   setJobPayload: any;
+  editMode: boolean;
 }) => {
   const [composerList, setComposerList] = useState<string[]>([]);
   const [jobNameValidation, setJobNameValidation] = useState(true);
@@ -69,6 +71,7 @@ const JobForm = ({
     await SchedulerService.listComposersAPIService(setComposerList);
   };
 
+  console.log('edit Mode', editMode);
   const handleComposerSelected = (data: string | null) => {
     if (data) {
       const selectedComposer = data.toString();
@@ -173,6 +176,7 @@ const JobForm = ({
               type="text"
               placeholder=""
               Label="Job name*"
+              disabled={editMode}
             />
             {!jobNameValidation && (
               <div className="jobform-error-key-parent">
@@ -204,6 +208,7 @@ const JobForm = ({
               options={composerList}
               value={initialJobPayload.composer_environment_name}
               onChange={(_event, val) => handleComposerSelected(val)}
+              disabled={editMode}
               renderInput={params => (
                 <TextField {...params} label="Environment*" />
               )}

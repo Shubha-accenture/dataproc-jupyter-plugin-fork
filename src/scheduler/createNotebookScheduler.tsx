@@ -50,15 +50,13 @@ const CreateNotebookScheduler = ({
   const [editMode, setEditMode] = useState(false);
   const [nodeDataValidation, setNodeDataValidation] = useState(false);
   const [jobPayloadValidation, setJobPayloadValidation] = useState(false);
-
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
-  const [editPayload, setEditPayload]=useState<any>([])
-  // const [bqSqlSaveQuery, setBqSqlSaveQuery] = useState(false);
+  const [editPayload, setEditPayload] = useState<any>([]);
 
   const initialPayload = {
     job_name: '',
-    composer_environment_name:'',
+    composer_environment_name: '',
     email_failure: false,
     email_delay: false,
     email_success: false,
@@ -66,14 +64,19 @@ const CreateNotebookScheduler = ({
   };
 
   const EditInitialPayload = {
-    job_name: editPayload?.job_name || '',
-    composer_environment_name: editPayload?.composer_environment_name || '',
+    job_name: editPayload.job_name,
+    composer_environment_name: editPayload.composer_environment_name,
     email_failure: editPayload?.email_failure || false,
     email_delay: editPayload?.email_delay || false,
     email_success: editPayload?.email_success || false,
     email_ids: editPayload?.email_ids || []
   };
-  const [jobPayload, setJobPayload] = useState(EditInitialPayload);
+  const defaultPayload = editMode ? EditInitialPayload : initialPayload;
+  const [jobPayload, setJobPayload] = useState(defaultPayload);
+
+  useEffect(() => {
+    setJobPayload(defaultPayload);
+  }, [editMode]);
 
   const validateJobPayload = () => {
     return (
@@ -88,7 +91,7 @@ const CreateNotebookScheduler = ({
   const bigQuerySqlValidation = () => {
     eventEmitter.on('saveQuery', (value: boolean) => {
       setNodeDataValidation(value);
-    }); 
+    });
   };
 
   const validateTaskPayload = () => {
@@ -167,6 +170,7 @@ const CreateNotebookScheduler = ({
   const handleCancel = async () => {
     setCreateCompleted(true);
     setJobPayload(initialPayload);
+    setEditMode(false);
   };
 
   return (
@@ -239,8 +243,9 @@ const CreateNotebookScheduler = ({
               factory={factory}
               jobPayload={jobPayload}
               setJobPayload={setJobPayload}
-              nodesFromEditPayload={editPayload.nodes}
-              edgesFromEditPayload={editPayload.edges}
+              nodesFromEditPayload={editMode ? editPayload.nodes : ''}
+              edgesFromEditPayload={editMode ? editPayload.edges : ''}
+              editMode={editMode}
             />
           </Grid>
         </>

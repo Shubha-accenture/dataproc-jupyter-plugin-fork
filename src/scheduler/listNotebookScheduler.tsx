@@ -26,7 +26,7 @@ import deleteIcon from '../../style/icons/scheduler_delete.svg';
 import { LabIcon } from '@jupyterlab/ui-components';
 import playIcon from '../../style/icons/scheduler_play.svg';
 import pauseIcon from '../../style/icons/scheduler_pause.svg';
-import EditIconDisable from '../../style/icons/scheduler_edit_dag.svg';
+// import EditIconDisable from '../../style/icons/scheduler_edit_dag.svg';
 import EditNotebookIcon from '../../style/icons/scheduler_edit_calendar.svg';
 import { SchedulerService } from './schedulerServices';
 import DeletePopup from '../utils/deletePopup';
@@ -48,10 +48,10 @@ const iconPause = new LabIcon({
   name: 'launcher:pause-icon',
   svgstr: pauseIcon
 });
-const iconEditDag = new LabIcon({
-  name: 'launcher:edit-disable-icon',
-  svgstr: EditIconDisable
-});
+// const iconEditDag = new LabIcon({
+//   name: 'launcher:edit-disable-icon',
+//   svgstr: EditIconDisable
+// });
 const iconEditNotebook = new LabIcon({
   name: 'launcher:edit-notebook-icon',
   svgstr: EditNotebookIcon
@@ -100,15 +100,15 @@ function listNotebookScheduler({
   // setTimeZoneSelected,
   setEditMode,
   bucketName,
-  setBucketName,
-  // setIsLoadingKernelDetail
-}: {
+  setBucketName
+}: // setIsLoadingKernelDetail
+{
   app: JupyterFrontEnd;
   handleDagIdSelection: (composerName: string, dagId: string) => void;
   backButtonComposerName: string;
   composerSelectedFromCreate: string;
   setCreateCompleted?: (value: boolean) => void;
-  setEditPayload:(value:any)=>void
+  setEditPayload: (value: any) => void;
   // setJobNameSelected?: (value: string) => void;
   // setComposerSelected?: (value: string) => void;
   // setScheduleMode?: (value: scheduleMode) => void;
@@ -149,11 +149,10 @@ function listNotebookScheduler({
   const [selectedDagId, setSelectedDagId] = useState('');
   const [editDagLoading, setEditDagLoading] = useState('');
   const [inputNotebookFilePath, setInputNotebookFilePath] = useState('');
-  const [editNotebookLoading, setEditNotebookLoading] = useState('');
+  // const [editNotebookLoading, setEditNotebookLoading] = useState('');
   const [deletingNotebook, setDeletingNotebook] = useState(false);
   const [importErrorData, setImportErrorData] = useState<string[]>([]);
   const [importErrorEntries, setImportErrorEntries] = useState<number>(0);
-  // const [payload, setPayload]=useState<any>([])
   const columns = React.useMemo(
     () => [
       {
@@ -221,17 +220,17 @@ function listNotebookScheduler({
     setSelectedDagId(dag_id);
     setDeletePopupOpen(true);
   };
-  const handleEditNotebook = async (event: React.MouseEvent) => {
-    const jobid = event.currentTarget.getAttribute('data-jobid');
-    if (jobid !== null) {
-      await SchedulerService.editNotebookSchedulerService(
-        bucketName,
-        jobid,
-        setInputNotebookFilePath,
-        setEditNotebookLoading
-      );
-    }
-  };
+  // const handleEditNotebook = async (event: React.MouseEvent) => {
+  //   const jobid = event.currentTarget.getAttribute('data-jobid');
+  //   if (jobid !== null) {
+  //     await SchedulerService.editNotebookSchedulerService(
+  //       bucketName,
+  //       jobid,
+  //       setInputNotebookFilePath,
+  //       setEditNotebookLoading
+  //     );
+  //   }
+  // };
   const handleTriggerDag = async (event: React.MouseEvent) => {
     const jobid = event.currentTarget.getAttribute('data-jobid');
     if (jobid !== null) {
@@ -246,7 +245,7 @@ function listNotebookScheduler({
         jobid,
         composerSelectedList,
         setEditDagLoading,
-        setEditPayload,//new
+        setEditPayload, //new
         setCreateCompleted,
         // setJobNameSelected,
         // setComposerSelected,
@@ -271,7 +270,7 @@ function listNotebookScheduler({
         // setEmailList,
         // setStopCluster,
         // setTimeZoneSelected,
-        setEditMode,
+        setEditMode
         // setIsLoadingKernelDetail,
       );
       // setCreateCompleted(false)// temporary change
@@ -297,7 +296,7 @@ function listNotebookScheduler({
   };
 
   const handleDeleteImportError = async (dagId: string) => {
-    const fromPage = "importErrorPage";
+    const fromPage = 'importErrorPage';
     await SchedulerService.handleDeleteSchedulerAPIService(
       composerSelectedList,
       dagId,
@@ -421,7 +420,8 @@ function listNotebookScheduler({
             />
           </div>
         )}
-        {data.jobid === editNotebookLoading ? (
+        {/* commmented the edit notebook part 
+         {data.jobid === editNotebookLoading ? (
           <div className="icon-buttons-style">
             <CircularProgress
               size={18}
@@ -442,7 +442,7 @@ function listNotebookScheduler({
               className="icon-white logo-alignment-style"
             />
           </div>
-        )}
+        )} */}
         <div
           role="button"
           className="icon-buttons-style"

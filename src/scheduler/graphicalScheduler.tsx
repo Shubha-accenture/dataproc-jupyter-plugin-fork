@@ -51,6 +51,7 @@ interface IGraphicalSchedulerProps {
   setJobPayload: any;
   nodesFromEditPayload: any;
   edgesFromEditPayload: any;
+  editMode: boolean;
 }
 const nodeTypes = { composerNode: NotebookNode };
 
@@ -63,7 +64,8 @@ const GraphicalScheduler = ({
   jobPayload,
   setJobPayload,
   nodesFromEditPayload,
-  edgesFromEditPayload
+  edgesFromEditPayload,
+  editMode
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
@@ -385,7 +387,11 @@ const GraphicalScheduler = ({
         )}
         {!isTaskFormVisible && (
           <Grid item xs={4}>
-            <JobForm jobPayload={jobPayload} setJobPayload={setJobPayload} />
+            <JobForm
+              jobPayload={jobPayload}
+              setJobPayload={setJobPayload}
+              editMode={editMode}
+            />
           </Grid>
         )}
       </Grid>
@@ -405,6 +411,7 @@ export default (props: IGraphicalSchedulerProps) => (
       setJobPayload={props.setJobPayload}
       nodesFromEditPayload={props.nodesFromEditPayload}
       edgesFromEditPayload={props.edgesFromEditPayload}
+      editMode={props.editMode}
     />
   </ReactFlowProvider>
 );
