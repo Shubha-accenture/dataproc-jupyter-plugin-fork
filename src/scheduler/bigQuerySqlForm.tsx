@@ -36,7 +36,7 @@ function BigQuerySqlForm({ data }: any) {
   const [datasetId, setDatasetId] = useState('');
 
   const [autoRegionSelected, setAutoRegionSelected] = useState(true);
-  const [regionTypeSelected, setRegionTypeSelected] = useState('');
+  const [regionTypeSelected, setRegionTypeSelected] = useState('region');
   const [regionSelected, setRegionSelected] = useState('');
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
@@ -123,8 +123,8 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleTableIDChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.target.value.length > 0
-    ? setTableIdValidation(true)
-    : setTableIdValidation(false);
+      ? setTableIdValidation(true)
+      : setTableIdValidation(false);
     setTableID(event.target.value);
     data.tableId = event.target.value;
   };
@@ -162,8 +162,8 @@ function BigQuerySqlForm({ data }: any) {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRegionTypeSelected(event.target.value);
-    setKeyRingSelected('')
-    setKeySelected('')
+    setKeyRingSelected('');
+    setKeySelected('');
   };
 
   const fetchRegionList = async () => {
@@ -192,8 +192,8 @@ function BigQuerySqlForm({ data }: any) {
     setMultiRegionSelected(value?.label || '');
     data.location = value?.key || '';
     setRegionId(value?.key || '');
-    setKeyRingSelected('')
-    setKeySelected('')
+    setKeyRingSelected('');
+    setKeySelected('');
   };
 
   const handleRegionSelected = (
@@ -248,10 +248,11 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleKeyRingChange = (value: string | null) => {
     if (data !== null) {
+      console.log(value);
       setKeyRingSelected(value!.toString());
       listKeysAPI(value!.toString());
       data.keyRings = value;
-      setKeySelected('')
+      setKeySelected('');
     }
   };
 
@@ -259,6 +260,7 @@ function BigQuerySqlForm({ data }: any) {
     event: React.SyntheticEvent<Element, Event>,
     value: string | null
   ) => {
+    console.log(value);
     if (value) {
       setKeySelected(value);
       data.kmsKey = value;
@@ -334,15 +336,16 @@ function BigQuerySqlForm({ data }: any) {
           setRegionSelected(data.location);
         }
       }
-
+      //this is causing issue
       if (data.kmsKey) {
         setSelectedEncryptionRadio('customerManaged');
         let kmsKeyArray = data.kmsKey.split('/');
+        console.log('here', data.kmsKey);
         setKeyRingSelected(kmsKeyArray[5]);
         setKeySelected(kmsKeyArray[7]);
       }
     }
-  }, [data, serviceAccounts, keylist]);
+  }, [data, serviceAccounts]);
 
   useEffect(() => {
     if (data) {
@@ -350,7 +353,7 @@ function BigQuerySqlForm({ data }: any) {
       if (!inputFileSelectedLocal) {
         validData = false;
       }
-      if (isSaveQueryChecked) {
+      if (!isSaveQueryChecked) {
         if (datasetId === '') {
           validData = false;
         }
@@ -469,7 +472,7 @@ function BigQuerySqlForm({ data }: any) {
                       className="logo-alignment-style"
                     />
                     <div className="jobform-error-key-missing">
-                      Data ID is required
+                      Dataset ID is required
                     </div>
                   </div>
                 )}
@@ -481,7 +484,7 @@ function BigQuerySqlForm({ data }: any) {
                   placeholder=""
                   Label="Table Id*"
                 />
-                 {!tableIdValidation && (
+                {!tableIdValidation && (
                   <div className="jobform-error-key-parent">
                     <iconError.react
                       tag="div"
@@ -725,7 +728,7 @@ function BigQuerySqlForm({ data }: any) {
                           checked={selectedRadioValue === 'key'}
                           onChange={handlekeyRingRadio}
                         />
-                        <div className="create-scheduler-style-key">
+                        <div className="create-scheduler-style-encryption-key">
                           {isLoadingDetail && (
                             <CircularProgress
                               className="spin-loader-custom-style-keyRings"
@@ -786,15 +789,15 @@ function BigQuerySqlForm({ data }: any) {
                           )}
                         </div>
                       </div>
-                    <div className="create-scheduler-encrypt">
-                      <Radio
-                        size="small"
-                        className="scheduler-encrypt-manual-radio-type "
-                        value="mainClass"
-                        checked={selectedRadioValue === 'manually'}
-                        onChange={handlekeyManuallyRadio}
-                      />
-                      {/* <div className="create-scheduler-style-key"> */}
+                      <div className="create-scheduler-encrypt">
+                        <Radio
+                          size="small"
+                          className="scheduler-encrypt-manual-radio-type "
+                          value="mainClass"
+                          checked={selectedRadioValue === 'manually'}
+                          onChange={handlekeyManuallyRadio}
+                        />
+                        {/* <div className="create-scheduler-style-key"> */}
                         <Input
                           className={
                             selectedRadioValue === 'key'
@@ -808,7 +811,7 @@ function BigQuerySqlForm({ data }: any) {
                           Label="Enter key manually"
                         />
                       </div>
-                    {/* </div> */}
+                      {/* </div> */}
                     </div>
                     {!manualValidation && (
                       <div className="error-key-parent-manual">

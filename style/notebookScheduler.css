@@ -411,16 +411,24 @@
   display: flex;
   column-gap: 25px;
 }
+.create-scheduler-style-encryption-key {
+  width: 100%;
+  height: 36px;
+  background: var(--jp-layout-color0);
+  outline: none;
+  display: flex;
+  column-gap: 10px;
+}
 .disable-text-create-scheduler-style-key  {
   color: var(--jp-layout-color3);
-  width: 80%;
+  width: 90%;
   height: 36px;
   outline: none;
   display: flex;
   column-gap: 25px;
 }
 .create-scheduler-style-keys {
-  width: 45%;
+  width: 50%;
   height: 36px;
   background: var(--jp-layout-color0);
   outline: none;
@@ -428,7 +436,7 @@
 }
 
 .create-scheduler-style-key-rings {
-  width: 45%;
+  width: 50%;
   height: 36px;
   background: var(--jp-layout-color0);
   /* margin-top: 10px; */
