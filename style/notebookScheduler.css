@@ -34,6 +34,9 @@
   margin-top: 15px;
   width: 512px;
 }
+.job-form-element {
+  margin-top: 15px;
+}
 .multi-scheduler-form-element {
   margin-top: 15px;
   width: 512px;
@@ -405,7 +408,14 @@
   height: 36px;
   background: var(--jp-layout-color0);
   outline: none;
-  align-items: center;
+  display: flex;
+  column-gap: 25px;
+}
+.disable-text-create-scheduler-style-key  {
+  color: var(--jp-layout-color3);
+  width: 80%;
+  height: 36px;
+  outline: none;
   display: flex;
   column-gap: 25px;
 }
@@ -455,4 +465,19 @@
 }
 .select-scheduler-encrypt-radio-style {
   margin-right: 10px;
+}
+.scheduler-sub-message {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 15px;
+  padding-left: 39px;
+  color: var(--jp-ui-font-color2);
+  overflow: hidden;
+  word-wrap: break-word;
+  margin-top: -5px;
+  display: flex;
+}
+.scheduler-encrypt-manual-radio-type{
+padding-top: 15px !important;
 }

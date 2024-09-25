@@ -18,7 +18,7 @@ import {
 import { SchedulerService } from './schedulerServices';
 import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
-import { KEY_MESSAGE } from '../utils/const';
+import { KEY_MESSAGE, SECURITY_KEY } from '../utils/const';
 import SchedulerProperties from './schedulerProperties';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
@@ -68,6 +68,8 @@ function BigQuerySqlForm({ data }: any) {
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isLoadingKeyDetail, setIsLoadingKeyDetail] = useState(false);
   const [isLoadingDisposition, setIsLoadingDisposition] = useState(true);
+  const [dataIdValidation, setDataIdValidation] = useState(true);
+  const [tableIdValidation, setTableIdValidation] = useState(true);
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
     svgstr: errorIcon
@@ -120,6 +122,9 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   const handleTableIDChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.target.value.length > 0
+    ? setTableIdValidation(true)
+    : setTableIdValidation(false);
     setTableID(event.target.value);
     data.tableId = event.target.value;
   };
@@ -131,6 +136,9 @@ function BigQuerySqlForm({ data }: any) {
   const handleDatasetIdChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    event.target.value.length > 0
+      ? setDataIdValidation(true)
+      : setDataIdValidation(false);
     setDatasetId(event.target.value);
     data.datasetId = event.target.value;
   };
@@ -154,6 +162,8 @@ function BigQuerySqlForm({ data }: any) {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRegionTypeSelected(event.target.value);
+    setKeyRingSelected('')
+    setKeySelected('')
   };
 
   const fetchRegionList = async () => {
@@ -182,6 +192,8 @@ function BigQuerySqlForm({ data }: any) {
     setMultiRegionSelected(value?.label || '');
     data.location = value?.key || '';
     setRegionId(value?.key || '');
+    setKeyRingSelected('')
+    setKeySelected('')
   };
 
   const handleRegionSelected = (
@@ -239,6 +251,7 @@ function BigQuerySqlForm({ data }: any) {
       setKeyRingSelected(value!.toString());
       listKeysAPI(value!.toString());
       data.keyRings = value;
+      setKeySelected('')
     }
   };
 
@@ -363,11 +376,10 @@ function BigQuerySqlForm({ data }: any) {
 
   useEffect(() => {
     if (isSaveQueryChecked) {
-       if (data.writeDisposition !== undefined) {
-        setWriteDisposition(data.writeDisposition ||'WRITE_APPEND'); 
+      if (data.writeDisposition !== undefined) {
+        setWriteDisposition(data.writeDisposition || 'WRITE_APPEND');
         setIsLoadingDisposition(false);
-      }
-       else {
+      } else {
         setIsLoadingDisposition(true);
       }
     } else {
@@ -450,6 +462,17 @@ function BigQuerySqlForm({ data }: any) {
                   placeholder=""
                   Label="DataSet Id*"
                 />
+                {!dataIdValidation && (
+                  <div className="jobform-error-key-parent">
+                    <iconError.react
+                      tag="div"
+                      className="logo-alignment-style"
+                    />
+                    <div className="jobform-error-key-missing">
+                      Data ID is required
+                    </div>
+                  </div>
+                )}
                 <Input
                   className="create-scheduler-style-trigger"
                   value={tableID}
@@ -458,6 +481,17 @@ function BigQuerySqlForm({ data }: any) {
                   placeholder=""
                   Label="Table Id*"
                 />
+                 {!tableIdValidation && (
+                  <div className="jobform-error-key-parent">
+                    <iconError.react
+                      tag="div"
+                      className="logo-alignment-style"
+                    />
+                    <div className="jobform-error-key-missing">
+                      Table ID is required
+                    </div>
+                  </div>
+                )}
                 <Input
                   className="create-scheduler-style-trigger"
                   value={partitionField}
@@ -647,7 +681,7 @@ function BigQuerySqlForm({ data }: any) {
                     Google-managed encryption key
                   </div>
                 </div>
-                <div className="create-batch-sub-message">
+                <div className="scheduler-sub-message">
                   No configuration required
                 </div>
               </div>
@@ -666,16 +700,16 @@ function BigQuerySqlForm({ data }: any) {
                     Customer-managed encryption key (CMEK)
                   </div>
                 </div>
-                <div className="create-batch-sub-message">
+                <div className="scheduler-sub-message">
                   Manage via{' '}
                   <div
                     className="submit-job-learn-more"
-                    // onClick={() => {
-                    //   window.open(
-                    //     `${SECURITY_KEY}?project=${projectName}`,
-                    //     '_blank'
-                    //   );
-                    // }}
+                    onClick={() => {
+                      window.open(
+                        `${SECURITY_KEY}?project=dataproc-jupyter-extension-dev`,
+                        '_blank'
+                      );
+                    }}
                   >
                     Google Cloud Key Management Service
                   </div>
@@ -752,21 +786,20 @@ function BigQuerySqlForm({ data }: any) {
                           )}
                         </div>
                       </div>
-                    </div>
                     <div className="create-scheduler-encrypt">
                       <Radio
                         size="small"
-                        className="scheduler-encrypt-radio-style "
+                        className="scheduler-encrypt-manual-radio-type "
                         value="mainClass"
                         checked={selectedRadioValue === 'manually'}
                         onChange={handlekeyManuallyRadio}
                       />
-                      <div className="create-scheduler-style-key">
+                      {/* <div className="create-scheduler-style-key"> */}
                         <Input
                           className={
                             selectedRadioValue === 'key'
-                              ? 'disable-text create-batch-key manual-key'
-                              : 'create-batch-style manual-key'
+                              ? 'disable-text-create-scheduler-style-key'
+                              : 'create-scheduler-style-key'
                           }
                           value={manualKeySelected}
                           type="text"
@@ -775,6 +808,7 @@ function BigQuerySqlForm({ data }: any) {
                           Label="Enter key manually"
                         />
                       </div>
+                    {/* </div> */}
                     </div>
                     {!manualValidation && (
                       <div className="error-key-parent-manual">
