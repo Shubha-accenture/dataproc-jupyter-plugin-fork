@@ -221,19 +221,21 @@ class Client:
     async def edit_jobs(self, dag_id, bucket_name):
         try:
             payload = {
-    "job_name": "PayloadModifiedtest",
-    "composer_environment_name": "multinode-scheduler",
-    "email_failure": False,
+    "job_name": "editFlowTestAllNodes25sept",
+    "composer_environment_name": "test-am",
+    "email_failure": True,
     "email_delay": False,
     "email_success": False,
-    "email_ids": [],
+    "email_ids": [
+        "test01"
+    ],
     "nodes": [
         {
             "id": "1",
             "type": "composerNode",
             "position": {
-                "x": -60.99160589613848,
-                "y": -450.85951809498465
+                "x": -25.80264155433821,
+                "y": -458.29461037666783
             },
             "data": {
                 "nodeType": "Trigger",
@@ -256,21 +258,74 @@ class Client:
                 "isAutoRegion": True
             },
             "width": 232,
-            "height": 98
+            "height": 98,
+            "selected": False,
+            "positionAbsolute": {
+                "x": -25.80264155433821,
+                "y": -458.29461037666783
+            },
+            "dragging": False
         },
         {
             "id": "2",
             "type": "composerNode",
             "position": {
-                "x": -231.4928727243676,
-                "y": -251.4640478260099
+                "x": -318.5709729764698,
+                "y": -222.12298453016086
+            },
+            "data": {
+                "nodeType": "Cluster",
+                "inputFile": "test1.ipynb",
+                "retryCount": 1,
+                "retryDelay": 1,
+                "parameter": [
+                    "1:1"
+                ],
+                "stopCluster": True,
+                "clusterName": "cluster-dpms-test",
+                "serverless": "",
+                "scheduleValue": "",
+                "timeZone": "",
+                "datasetId": "",
+                "tableId": "",
+                "location": "",
+                "writeDisposition": "",
+                "serviceAccount": "",
+                "keyRings": "",
+                "kmsKey": "",
+                "isSaveQuery": False,
+                "isAutoRegion": True
+            },
+            "origin": [
+                0.5,
+                0
+            ],
+            "width": 232,
+            "height": 98,
+            "selected": False,
+            "dragging": False,
+            "positionAbsolute": {
+                "x": -318.5709729764698,
+                "y": -222.12298453016086
+            }
+        },
+        {
+            "id": "3",
+            "type": "composerNode",
+            "position": {
+                "x": -75.43069679136013,
+                "y": -155.6315620632125
             },
             "data": {
                 "nodeType": "Serverless",
-                "inputFile": "test1.ipynb",
-                "retryCount": 22,
-                "retryDelay": 22,
-                "parameter": [],
+                "inputFile": "test2.ipynb",
+                "retryCount": 2,
+                "retryDelay": 2,
+                "parameter": [
+                    "2:2"
+                ],
+                "stopCluster": "",
+                "clusterName": "",
                 "serverless": {
                     "name": "projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00000323d751",
                     "createTime": "2024-07-26T08:19:02.867092Z",
@@ -321,55 +376,156 @@ class Client:
                     "updateTime": "2024-07-26T08:19:02.867092Z",
                     "uuid": "f1453a7d-5179-48ce-8156-c01220bf17ea"
                 },
-                "serviceAccount": "",
-                "stopCluster": "",
-                "clusterName": "",
                 "scheduleValue": "",
                 "timeZone": "",
                 "datasetId": "",
                 "tableId": "",
                 "location": "",
                 "writeDisposition": "",
+                "serviceAccount": "411524708443-compute@developer.gserviceaccount.com",
                 "keyRings": "",
                 "kmsKey": "",
                 "isSaveQuery": False,
                 "isAutoRegion": True
             },
+            "origin": [
+                0.5,
+                0
+            ],
             "width": 232,
             "height": 98,
             "selected": False,
-            "dragging": False
+            "dragging": False,
+            "positionAbsolute": {
+                "x": -75.43069679136013,
+                "y": -155.6315620632125
+            }
         },
         {
-            "id": "3",
+            "id": "4",
             "type": "composerNode",
             "position": {
-                "x": -230.29695888326685,
-                "y": -74.46879934309815
+                "x": 184.58053733312448,
+                "y": -174.4873385836904
             },
             "data": {
-                "nodeType": "Cluster",
-                "inputFile": "test2.ipynb",
-                "retryCount": 44,
-                "retryDelay": 44,
-                "parameter": [],
+                "nodeType": "Bigquery-Serverless",
+                "inputFile": "test3.ipynb",
+                "retryCount": 3,
+                "retryDelay": 3,
+                "parameter": [
+                    "3:3"
+                ],
                 "stopCluster": "",
-                "clusterName": "cluster-dpms-test",
-                "serverless": "",
+                "clusterName": "",
+                "serverless": {
+                    "name": "projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-000011568b68",
+                    "createTime": "2024-06-26T10:19:57.656700Z",
+                    "jupyterSession": {
+                        "kernel": "PYTHON",
+                        "displayName": "26thJuneProFromLancherWOgpuTest"
+                    },
+                    "creator": "amatheen@google.com",
+                    "labels": {
+                        "client": "dataproc-jupyter-plugin"
+                    },
+                    "runtimeConfig": {
+                        "version": "2.2",
+                        "properties": {
+                            "spark.driver.cores": "4",
+                            "spark.driver.memory": "12200m",
+                            "spark.driver.memoryOverhead": "1220m",
+                            "spark.dataproc.driver.disk.size": "400g",
+                            "spark.dataproc.driver.disk.tier": "standard",
+                            "spark.executor.cores": "4",
+                            "spark.executor.memory": "12200m",
+                            "spark.executor.memoryOverhead": "1220m",
+                            "spark.dataproc.executor.disk.size": "400g",
+                            "spark.dataproc.executor.disk.tier": "standard",
+                            "spark.executor.instances": "2",
+                            "spark.dynamicAllocation.enabled": "true",
+                            "spark.dynamicAllocation.initialExecutors": "2",
+                            "spark.dynamicAllocation.minExecutors": "2",
+                            "spark.dynamicAllocation.maxExecutors": "1000",
+                            "spark.dynamicAllocation.executorAllocationRatio": "0.3",
+                            "spark.reducer.fetchMigratedShuffle.enabled": "false"
+                        }
+                    },
+                    "environmentConfig": {
+                        "executionConfig": {
+                            "subnetworkUri": "default"
+                        },
+                        "peripheralsConfig": {
+                            "metastoreService": "projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"
+                        }
+                    },
+                    "description": "26thJuneProFromLancherWOgpuTest",
+                    "updateTime": "2024-06-26T10:19:57.656700Z",
+                    "uuid": "33907303-587f-4d42-98f7-dd9f28c2bfaa"
+                },
                 "scheduleValue": "",
                 "timeZone": "",
                 "datasetId": "",
                 "tableId": "",
                 "location": "",
                 "writeDisposition": "",
-                "serviceAccount": "",
+                "serviceAccount": "accenture-eng-test@dataproc-jupyter-extension-dev.iam.gserviceaccount.com",
                 "keyRings": "",
                 "kmsKey": "",
                 "isSaveQuery": False,
                 "isAutoRegion": True
             },
+            "origin": [
+                0.5,
+                0
+            ],
             "width": 232,
-            "height": 98
+            "height": 98,
+            "selected": False,
+            "positionAbsolute": {
+                "x": 184.58053733312448,
+                "y": -174.4873385836904
+            },
+            "dragging": False
+        },
+        {
+            "id": "5",
+            "type": "composerNode",
+            "position": {
+                "x": 357.25975388908,
+                "y": -268.76622118607986
+            },
+            "data": {
+                "nodeType": "Bigquery-Sql",
+                "inputFile": "sqlfile.sql",
+                "retryCount": 4,
+                "retryDelay": 4,
+                "parameter": [
+                    "4:4:STRING"
+                ],
+                "stopCluster": "",
+                "clusterName": "",
+                "serverless": "",
+                "scheduleValue": "",
+                "timeZone": "",
+                "datasetId": "test1",
+                "tableId": "123",
+                "location": "europe",
+                "writeDisposition": "WRITE_TRUNCATE",
+                "serviceAccount": "accenture-eng-test@dataproc-jupyter-extension-dev.iam.gserviceaccount.com",
+                "keyRings": "keyRingEU",
+                "kmsKey": "projects/dataproc-jupyter-extension-dev/locations/europe/keyRings/keyRingEU/cryptoKeys/keyEU1",
+                "isSaveQuery": True,
+                "isAutoRegion": False
+            },
+            "origin": [
+                0.5,
+                0
+            ],
+            "width": 232,
+            "height": 98,
+            "selected": True,
+            "dragging": False
         }
     ],
     "edges": [
@@ -380,8 +536,18 @@ class Client:
         },
         {
             "id": "3",
-            "source": "2",
+            "source": "1",
             "target": "3"
+        },
+        {
+            "id": "4",
+            "source": "1",
+            "target": "4"
+        },
+        {
+            "id": "5",
+            "source": "1",
+            "target": "5"
         }
     ]
 }
