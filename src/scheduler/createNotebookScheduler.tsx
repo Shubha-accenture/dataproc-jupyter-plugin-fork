@@ -50,6 +50,7 @@ const CreateNotebookScheduler = ({
   const [editMode, setEditMode] = useState(false);
   const [nodeDataValidation, setNodeDataValidation] = useState(false);
   const [jobPayloadValidation, setJobPayloadValidation] = useState(false);
+  // const [editPayloadValidation, setEditPayloadValidation] = useState(false)
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [editPayload, setEditPayload] = useState<any>([]);
@@ -79,20 +80,51 @@ const CreateNotebookScheduler = ({
   }, [editMode]);
 
   const validateJobPayload = () => {
+    const isEmailChanged =
+      jobPayload.email_failure !== editPayload.email_failure ||
+      jobPayload.email_delay !== editPayload.email_delay ||
+      jobPayload.email_success !== editPayload.email_success ||
+      JSON.stringify(jobPayload.email_ids) !==
+        JSON.stringify(editPayload.email_ids);
     return (
       jobPayload.job_name === '' ||
       jobPayload.composer_environment_name === '' ||
       ((jobPayload.email_failure ||
         jobPayload.email_delay ||
         jobPayload.email_success) &&
-        jobPayload.email_ids.length === 0)
+        jobPayload.email_ids.length === 0) ||
+      !isEmailChanged // New condition: check if any email-related field has changed
     );
   };
+
   const bigQuerySqlValidation = () => {
     eventEmitter.on('saveQuery', (value: boolean) => {
       setNodeDataValidation(value);
     });
   };
+
+  //  const editFlowValidation=()=>{
+  //   console.log(nodes, editPayload.nodes)
+  //   if (nodes.length !== editPayload.nodes.length) {
+  //     return true; // If the number of nodes is different, return true (data changed)
+  //   }
+  //   const isNodeDataChanged = nodes.some((node:any, index) => {
+  //     console.log("inside")
+  //     const editNode = editPayload.nodes[index];
+  //     return (
+  //       node.data.inputFile !== editNode.data.inputFile ||
+  //       node.data.retryCount !== editNode.data.retryCount ||
+  //       node.data.nodeType !== editNode.data.nodeType ||
+  //       node.data.clusterName !== editNode.data.clusterName ||
+  //       node.data.serverless !== editNode.data.serverless
+  //       // Add other
+  //     );
+  //   });
+  //   console.log("is data changed", isNodeDataChanged)
+  //  // return isNodeDataChanged; // True if any node data is different, false otherwise
+  //   setEditPayloadValidation(isNodeDataChanged)
+  //   console.log(editPayloadValidation)
+  //  }
 
   const validateTaskPayload = () => {
     let allNodesHaveData = true;
@@ -131,6 +163,7 @@ const CreateNotebookScheduler = ({
       }
       setNodeDataValidation(allNodesHaveData);
       bigQuerySqlValidation(); //change this
+      // editFlowValidation() // need for comparison
     });
   };
   useEffect(() => {

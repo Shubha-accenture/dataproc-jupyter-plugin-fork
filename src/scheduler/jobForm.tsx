@@ -70,8 +70,6 @@ const JobForm = ({
   const listComposersAPI = async () => {
     await SchedulerService.listComposersAPIService(setComposerList);
   };
-
-  console.log('edit Mode', editMode);
   const handleComposerSelected = (data: string | null) => {
     if (data) {
       const selectedComposer = data.toString();
