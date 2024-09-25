@@ -182,7 +182,7 @@ function BigQuerySqlForm({ data }: any) {
     }
     if (!event.target.checked) {
       setRegionTypeSelected('region');
-    }
+    }// check and remove
   };
 
   const handleMultiRegionTypeSelected = (
@@ -226,8 +226,6 @@ function BigQuerySqlForm({ data }: any) {
   };
   const handlekeyManuallyRadio = () => {
     setSelectedRadioValue('manually');
-    setKeyRingSelected('');
-    setKeySelected('');
   };
 
   const handleManualKeySelected = (event: any) => {
@@ -463,7 +461,7 @@ function BigQuerySqlForm({ data }: any) {
                   onChange={e => handleDatasetIdChange(e)}
                   type="text"
                   placeholder=""
-                  Label="DataSet Id*"
+                  Label="Dataset Id*"
                 />
                 {!dataIdValidation && (
                   <div className="jobform-error-key-parent">
