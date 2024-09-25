@@ -211,7 +211,7 @@ const JobForm = ({
                 <TextField {...params} label="Environment*" />
               )}
             />
-            <div className="create-scheduler-form-element">
+            <div className="job-form-element">
               <FormGroup row={true}>
                 <FormControlLabel
                   control={

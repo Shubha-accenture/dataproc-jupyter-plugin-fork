@@ -18,7 +18,7 @@ import {
 import { SchedulerService } from './schedulerServices';
 import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
-import { KEY_MESSAGE } from '../utils/const';
+import { KEY_MESSAGE, SECURITY_KEY } from '../utils/const';
 import SchedulerProperties from './schedulerProperties';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
@@ -36,14 +36,11 @@ function BigQuerySqlForm({ data }: any) {
   const [datasetId, setDatasetId] = useState('');
 
   const [autoRegionSelected, setAutoRegionSelected] = useState(true);
-  const [regionTypeSelected, setRegionTypeSelected] = useState('');
+  const [regionTypeSelected, setRegionTypeSelected] = useState('region');
   const [regionSelected, setRegionSelected] = useState('');
   const [multiRegionSelected, setMultiRegionSelected] = useState('');
   const [regionList, setRegionList] = useState<string[]>([]);
-  const defaultwriteDisposition = isSaveQueryChecked ? 'WRITE_APPEND' : '';
-  const [writeDisposition, setWriteDisposition] = useState(
-    defaultwriteDisposition
-  );
+  const [writeDisposition, setWriteDisposition] = useState('');
   const multiRegionList = [
     { key: 'us', label: 'US' },
     { key: 'europe', label: 'EU' }
@@ -70,6 +67,9 @@ function BigQuerySqlForm({ data }: any) {
   const [regionId, setRegionId] = useState('us');
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isLoadingKeyDetail, setIsLoadingKeyDetail] = useState(false);
+  const [isLoadingDisposition, setIsLoadingDisposition] = useState(true);
+  const [dataIdValidation, setDataIdValidation] = useState(true);
+  const [tableIdValidation, setTableIdValidation] = useState(true);
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
     svgstr: errorIcon
@@ -122,6 +122,9 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   const handleTableIDChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.target.value.length > 0
+      ? setTableIdValidation(true)
+      : setTableIdValidation(false);
     setTableID(event.target.value);
     data.tableId = event.target.value;
   };
@@ -133,6 +136,9 @@ function BigQuerySqlForm({ data }: any) {
   const handleDatasetIdChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    event.target.value.length > 0
+      ? setDataIdValidation(true)
+      : setDataIdValidation(false);
     setDatasetId(event.target.value);
     data.datasetId = event.target.value;
   };
@@ -156,6 +162,8 @@ function BigQuerySqlForm({ data }: any) {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRegionTypeSelected(event.target.value);
+    setKeyRingSelected('');
+    setKeySelected('');
   };
 
   const fetchRegionList = async () => {
@@ -174,7 +182,7 @@ function BigQuerySqlForm({ data }: any) {
     }
     if (!event.target.checked) {
       setRegionTypeSelected('region');
-    }
+    }// check and remove
   };
 
   const handleMultiRegionTypeSelected = (
@@ -184,6 +192,8 @@ function BigQuerySqlForm({ data }: any) {
     setMultiRegionSelected(value?.label || '');
     data.location = value?.key || '';
     setRegionId(value?.key || '');
+    setKeyRingSelected('');
+    setKeySelected('');
   };
 
   const handleRegionSelected = (
@@ -216,8 +226,6 @@ function BigQuerySqlForm({ data }: any) {
   };
   const handlekeyManuallyRadio = () => {
     setSelectedRadioValue('manually');
-    setKeyRingSelected('');
-    setKeySelected('');
   };
 
   const handleManualKeySelected = (event: any) => {
@@ -238,9 +246,11 @@ function BigQuerySqlForm({ data }: any) {
 
   const handleKeyRingChange = (value: string | null) => {
     if (data !== null) {
+      console.log(value);
       setKeyRingSelected(value!.toString());
       listKeysAPI(value!.toString());
       data.keyRings = value;
+      setKeySelected('');
     }
   };
 
@@ -248,6 +258,7 @@ function BigQuerySqlForm({ data }: any) {
     event: React.SyntheticEvent<Element, Event>,
     value: string | null
   ) => {
+    console.log(value);
     if (value) {
       setKeySelected(value);
       data.kmsKey = value;
@@ -274,7 +285,7 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   useEffect(() => {
-    if (data && parameterDetailUpdated.length>0) {
+    if (data && parameterDetailUpdated.length > 0) {
       data.parameter = parameterDetailUpdated;
     }
   }, [parameterDetailUpdated]);
@@ -286,8 +297,7 @@ function BigQuerySqlForm({ data }: any) {
   }, []);
 
   useEffect(() => {
-    if(regionId)
-    listKeyRingsAPI();
+    if (regionId) listKeyRingsAPI();
   }, [regionId]);
 
   useEffect(() => {
@@ -296,14 +306,13 @@ function BigQuerySqlForm({ data }: any) {
       setRetryCount(data.retryCount);
       setRetryDelay(data.retryDelay);
       setServiceAccountSelected(data.serviceAccount);
-      setParameterDetailUpdated(data.parameter)
-      setParameterDetail(data.parameter)
+      setParameterDetailUpdated(data.parameter);
+      setParameterDetail(data.parameter);
 
       setIsSaveQueryChecked(data.isSaveQuery);
       setTableID(data.tableId);
       setDatasetId(data.datasetId);
-      setWriteDisposition(data.writeDisposition);
-
+      // setWriteDisposition(data.writeDisposition);
       const selectedServiceAccount = serviceAccounts.find(
         option => option.email === data.serviceAccount
       );
@@ -325,15 +334,16 @@ function BigQuerySqlForm({ data }: any) {
           setRegionSelected(data.location);
         }
       }
-
+      //this is causing issue
       if (data.kmsKey) {
         setSelectedEncryptionRadio('customerManaged');
         let kmsKeyArray = data.kmsKey.split('/');
+        console.log('here', data.kmsKey);
         setKeyRingSelected(kmsKeyArray[5]);
         setKeySelected(kmsKeyArray[7]);
       }
     }
-  }, [data, serviceAccounts, keylist]);
+  }, [data, serviceAccounts]);
 
   useEffect(() => {
     if (data) {
@@ -341,7 +351,7 @@ function BigQuerySqlForm({ data }: any) {
       if (!inputFileSelectedLocal) {
         validData = false;
       }
-      if (isSaveQueryChecked) {
+      if (!isSaveQueryChecked) {
         if (datasetId === '') {
           validData = false;
         }
@@ -367,9 +377,16 @@ function BigQuerySqlForm({ data }: any) {
 
   useEffect(() => {
     if (isSaveQueryChecked) {
-      setWriteDisposition('WRITE_APPEND');
+      if (data.writeDisposition !== undefined) {
+        setWriteDisposition(data.writeDisposition || 'WRITE_APPEND');
+        setIsLoadingDisposition(false);
+      } else {
+        setIsLoadingDisposition(true);
+      }
+    } else {
+      setIsLoadingDisposition(false);
     }
-  }, [isSaveQueryChecked]);
+  }, [data.writeDisposition, isSaveQueryChecked]);
 
   return (
     <>
@@ -444,8 +461,19 @@ function BigQuerySqlForm({ data }: any) {
                   onChange={e => handleDatasetIdChange(e)}
                   type="text"
                   placeholder=""
-                  Label="DataSet Id*"
+                  Label="Dataset Id*"
                 />
+                {!dataIdValidation && (
+                  <div className="jobform-error-key-parent">
+                    <iconError.react
+                      tag="div"
+                      className="logo-alignment-style"
+                    />
+                    <div className="jobform-error-key-missing">
+                      Dataset ID is required
+                    </div>
+                  </div>
+                )}
                 <Input
                   className="create-scheduler-style-trigger"
                   value={tableID}
@@ -454,6 +482,17 @@ function BigQuerySqlForm({ data }: any) {
                   placeholder=""
                   Label="Table Id*"
                 />
+                {!tableIdValidation && (
+                  <div className="jobform-error-key-parent">
+                    <iconError.react
+                      tag="div"
+                      className="logo-alignment-style"
+                    />
+                    <div className="jobform-error-key-missing">
+                      Table ID is required
+                    </div>
+                  </div>
+                )}
                 <Input
                   className="create-scheduler-style-trigger"
                   value={partitionField}
@@ -462,35 +501,48 @@ function BigQuerySqlForm({ data }: any) {
                   placeholder=""
                   Label="Partition field"
                 />
-                <FormControl className="trigger-form">
-                  <RadioGroup
-                    aria-labelledby="demo-controlled-radio-buttons-group"
-                    name="controlled-radio-buttons-group"
-                    value={writeDisposition}
-                    onChange={handleWriteDisposition}
-                  >
-                    <FormControlLabel
-                      value="WRITE_APPEND"
-                      className="create-scheduler-label-style"
-                      control={<Radio size="small" />}
-                      label={
-                        <Typography sx={{ fontSize: 13 }}>
-                          Append to table
-                        </Typography>
-                      }
+                {isLoadingDisposition && (
+                  <div className="create-scheduler-style-key">
+                    <CircularProgress
+                      className="spin-loader-custom-style"
+                      size={18}
+                      aria-label="Loading Spinner"
+                      data-testid="loader"
                     />
-                    <FormControlLabel
-                      value="WRITE_TRUNCATE"
-                      className="create-scheduler-label-style"
-                      control={<Radio size="small" />}
-                      label={
-                        <Typography sx={{ fontSize: 13 }}>
-                          Overwrite table
-                        </Typography>
-                      }
-                    />
-                  </RadioGroup>
-                </FormControl>
+                  </div>
+                )}
+
+                {!isLoadingDisposition && (
+                  <FormControl className="trigger-form">
+                    <RadioGroup
+                      aria-labelledby="demo-controlled-radio-buttons-group"
+                      name="controlled-radio-buttons-group"
+                      value={writeDisposition}
+                      onChange={handleWriteDisposition}
+                    >
+                      <FormControlLabel
+                        value="WRITE_APPEND"
+                        className="create-scheduler-label-style"
+                        control={<Radio size="small" />}
+                        label={
+                          <Typography sx={{ fontSize: 13 }}>
+                            Append to table
+                          </Typography>
+                        }
+                      />
+                      <FormControlLabel
+                        value="WRITE_TRUNCATE"
+                        className="create-scheduler-label-style"
+                        control={<Radio size="small" />}
+                        label={
+                          <Typography sx={{ fontSize: 13 }}>
+                            Overwrite table
+                          </Typography>
+                        }
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                )}
               </>
             )}
             <div className="configure-form-dropdown-element">
@@ -630,7 +682,7 @@ function BigQuerySqlForm({ data }: any) {
                     Google-managed encryption key
                   </div>
                 </div>
-                <div className="create-batch-sub-message">
+                <div className="scheduler-sub-message">
                   No configuration required
                 </div>
               </div>
@@ -649,16 +701,16 @@ function BigQuerySqlForm({ data }: any) {
                     Customer-managed encryption key (CMEK)
                   </div>
                 </div>
-                <div className="create-batch-sub-message">
+                <div className="scheduler-sub-message">
                   Manage via{' '}
                   <div
                     className="submit-job-learn-more"
-                    // onClick={() => {
-                    //   window.open(
-                    //     `${SECURITY_KEY}?project=${projectName}`,
-                    //     '_blank'
-                    //   );
-                    // }}
+                    onClick={() => {
+                      window.open(
+                        `${SECURITY_KEY}?project=dataproc-jupyter-extension-dev`,
+                        '_blank'
+                      );
+                    }}
                   >
                     Google Cloud Key Management Service
                   </div>
@@ -669,15 +721,15 @@ function BigQuerySqlForm({ data }: any) {
                       <div className="create-scheduler-encrypt">
                         <Radio
                           size="small"
-                          className="select-batch-encrypt-radio-style"
+                          className="select-scheduler-encrypt-radio-style"
                           value="mainClass"
                           checked={selectedRadioValue === 'key'}
                           onChange={handlekeyRingRadio}
                         />
-                        <div className="create-scheduler-style-key">
+                        <div className="create-scheduler-style-encryption-key">
                           {isLoadingDetail && (
                             <CircularProgress
-                              className="spin-loader-custom-style"
+                              className="spin-loader-custom-style-keyRings"
                               size={18}
                               aria-label="Loading Spinner"
                               data-testid="loader"
@@ -701,13 +753,13 @@ function BigQuerySqlForm({ data }: any) {
                           )}
                           {isLoadingKeyDetail && (
                             <CircularProgress
-                              className="spin-loader-custom-style"
+                              className="spin-loader-custom-style-keys"
                               size={18}
                               aria-label="Loading Spinner"
                               data-testid="loader"
                             />
                           )}
-                          {!isLoadingKeyDetail && (
+                          {!isLoadingDetail && !isLoadingKeyDetail && (
                             <Autocomplete
                               className="create-scheduler-style-keys"
                               disabled={
@@ -735,23 +787,21 @@ function BigQuerySqlForm({ data }: any) {
                           )}
                         </div>
                       </div>
-                    </div>
-                    <div className="create-scheduler-encrypt">
-                      <Radio
-                        size="small"
-                        className="select-batch-encrypt-radio-style "
-                        value="mainClass"
-                        checked={selectedRadioValue === 'manually'}
-                        onChange={handlekeyManuallyRadio}
-                      />
-                      <div className="create-scheduler-style-key">
+                      <div className="create-scheduler-encrypt">
+                        <Radio
+                          size="small"
+                          className="scheduler-encrypt-manual-radio-type "
+                          value="mainClass"
+                          checked={selectedRadioValue === 'manually'}
+                          onChange={handlekeyManuallyRadio}
+                        />
+                        {/* <div className="create-scheduler-style-key"> */}
                         <Input
-                          // className={
-                          //   selectedRadioValue === 'key'
-                          //     ? 'disable-text create-batch-key manual-key'
-                          //     : 'create-batch-style manual-key'
-                          // }
-                          className="create-scheduler-style-key"
+                          className={
+                            selectedRadioValue === 'key'
+                              ? 'disable-text-create-scheduler-style-key'
+                              : 'create-scheduler-style-key'
+                          }
                           value={manualKeySelected}
                           type="text"
                           disabled={selectedRadioValue === 'key'}
@@ -759,6 +809,7 @@ function BigQuerySqlForm({ data }: any) {
                           Label="Enter key manually"
                         />
                       </div>
+                      {/* </div> */}
                     </div>
                     {!manualValidation && (
                       <div className="error-key-parent-manual">
