@@ -26,7 +26,6 @@ import deleteIcon from '../../style/icons/scheduler_delete.svg';
 import { LabIcon } from '@jupyterlab/ui-components';
 import playIcon from '../../style/icons/scheduler_play.svg';
 import pauseIcon from '../../style/icons/scheduler_pause.svg';
-import EditIconDisable from '../../style/icons/scheduler_edit_dag.svg';
 import EditNotebookIcon from '../../style/icons/scheduler_edit_calendar.svg';
 import { SchedulerService } from './schedulerServices';
 import DeletePopup from '../utils/deletePopup';
@@ -47,10 +46,6 @@ const iconPlay = new LabIcon({
 const iconPause = new LabIcon({
   name: 'launcher:pause-icon',
   svgstr: pauseIcon
-});
-const iconEditDag = new LabIcon({
-  name: 'launcher:edit-disable-icon',
-  svgstr: EditIconDisable
 });
 const iconEditNotebook = new LabIcon({
   name: 'launcher:edit-notebook-icon',
@@ -147,7 +142,6 @@ function listNotebookScheduler({
   const [selectedDagId, setSelectedDagId] = useState('');
   const [editDagLoading, setEditDagLoading] = useState('');
   const [inputNotebookFilePath, setInputNotebookFilePath] = useState('');
-  const [editNotebookLoading, setEditNotebookLoading] = useState('');
   const [deletingNotebook, setDeletingNotebook] = useState(false);
   const [importErrorData, setImportErrorData] = useState<string[]>([]);
   const [importErrorEntries, setImportErrorEntries] = useState<number>(0);
@@ -217,17 +211,6 @@ function listNotebookScheduler({
   const handleDeletePopUp = (dag_id: string) => {
     setSelectedDagId(dag_id);
     setDeletePopupOpen(true);
-  };
-  const handleEditNotebook = async (event: React.MouseEvent) => {
-    const jobid = event.currentTarget.getAttribute('data-jobid');
-    if (jobid !== null) {
-      await SchedulerService.editNotebookSchedulerService(
-        bucketName,
-        jobid,
-        setInputNotebookFilePath,
-        setEditNotebookLoading
-      );
-    }
   };
   const handleTriggerDag = async (event: React.MouseEvent) => {
     const jobid = event.currentTarget.getAttribute('data-jobid');
@@ -410,28 +393,6 @@ function listNotebookScheduler({
             onClick={e => handleEditDags(e)}
           >
             <iconEditNotebook.react
-              tag="div"
-              className="icon-white logo-alignment-style"
-            />
-          </div>
-        )}
-        {data.jobid === editNotebookLoading ? (
-          <div className="icon-buttons-style">
-            <CircularProgress
-              size={18}
-              aria-label="Loading Spinner"
-              data-testid="loader"
-            />
-          </div>
-        ) : (
-          <div
-            role="button"
-            className="icon-buttons-style"
-            title="Edit Notebook"
-            data-jobid={data.jobid}
-            onClick={e => handleEditNotebook(e)}
-          >
-            <iconEditDag.react
               tag="div"
               className="icon-white logo-alignment-style"
             />
