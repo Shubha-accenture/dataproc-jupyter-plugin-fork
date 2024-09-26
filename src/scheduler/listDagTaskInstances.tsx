@@ -217,7 +217,7 @@ const ListDagTaskInstances = ({
                     taskInstance.taskId.startsWith('batch_create') || 
                     taskInstance.taskId.startsWith('run_query_task')
                   ) && (
-                    <div className="logo-row-container">
+                    <div className="logo-download-container">
                       <IconButton
                         onClick={e => handleDownloadOutput(e, taskInstance.taskId)}
                       >

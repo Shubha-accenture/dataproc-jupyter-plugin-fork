@@ -209,7 +209,10 @@
 .logo-row-container {
   display: flex;
 }
-
+.logo-download-container {
+  display: flex;
+  padding-left: 25px;
+}
 .logo-alignment-style-accordion {
   display: flex;
   align-items: center;
