@@ -26,7 +26,7 @@ import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
-import { eventEmitter } from '../utils/signalEmitter';
+// import { eventEmitter } from '../utils/signalEmitter';
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
   svgstr: LeftArrowIcon
@@ -76,11 +76,6 @@ const CreateNotebookScheduler = ({
         jobPayload.email_ids.length === 0)
     );
   };
-  const bigQuerySqlValidation = () => {
-    eventEmitter.on('saveQuery', (value: boolean) => {
-      setNodeDataValidation(value);
-    });
-  };
 
   const validateTaskPayload = () => {
     let allNodesHaveData = true;
@@ -112,13 +107,25 @@ const CreateNotebookScheduler = ({
         if (!serverless) {
           allNodesHaveData = false;
         }
-        // let serviceAccount=e.data.serviceAccount
-        // if (!serviceAccount) {
-        //   allNodesHaveData = false;
-        // }
+      }
+      else if(e.data.nodeType === 'Bigquery-Sql')
+      {
+        let inputFile = e.data.inputFile;
+        if (!inputFile || inputFile.trim() === '') {
+          allNodesHaveData = false;
+        }
+        let saveQuery = e.data.isSaveQuery ?? false; 
+          if (saveQuery) {
+            let datasetId = e.data.datasetId;
+            let tableId = e.data.tableId;
+          
+            // Check if either datasetId or tableId is missing or empty
+            if (!datasetId || datasetId.trim() === '' || !tableId || tableId.trim() === '') {
+              allNodesHaveData = false;
+            }
+          }
       }
       setNodeDataValidation(allNodesHaveData);
-      bigQuerySqlValidation(); //change this
     });
   };
   useEffect(() => {
