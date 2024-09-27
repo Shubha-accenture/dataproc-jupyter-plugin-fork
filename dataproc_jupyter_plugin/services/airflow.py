@@ -309,224 +309,225 @@ class Client:
                 "y": -222.12298453016086
             }
         },
-        {
-            "id": "3",
-            "type": "composerNode",
-            "position": {
-                "x": -75.43069679136013,
-                "y": -155.6315620632125
-            },
-            "data": {
-                "nodeType": "Serverless",
-                "inputFile": "test2.ipynb",
-                "retryCount": 2,
-                "retryDelay": 2,
-                "parameter": [
-                    "2:2"
-                ],
-                "stopCluster": "",
-                "clusterName": "",
-                "serverless": {
-                    "name": "projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00000323d751",
-                    "createTime": "2024-07-26T08:19:02.867092Z",
-                    "jupyterSession": {
-                        "kernel": "PYTHON",
-                        "displayName": "payload"
-                    },
-                    "creator": "aditeekatti@google.com",
-                    "labels": {
-                        "client": "dataproc-jupyter-plugin"
-                    },
-                    "runtimeConfig": {
-                        "version": "2.2",
-                        "properties": {
-                            "spark.driver.cores": "4",
-                            "spark.driver.memory": "12200m",
-                            "spark.driver.memoryOverhead": "1220m",
-                            "spark.dataproc.driver.disk.size": "400g",
-                            "spark.dataproc.driver.disk.tier": "standard",
-                            "spark.executor.cores": "12",
-                            "spark.executor.memory": "12200m",
-                            "spark.dataproc.executor.disk.tier": "premium",
-                            "spark.dataproc.executor.disk.size": "750g",
-                            "spark.executor.instances": "2",
-                            "spark.dynamicAllocation.enabled": "true",
-                            "spark.dynamicAllocation.initialExecutors": "2",
-                            "spark.dynamicAllocation.minExecutors": "2",
-                            "spark.dynamicAllocation.maxExecutors": "1000",
-                            "spark.dynamicAllocation.executorAllocationRatio": "0.3",
-                            "spark.reducer.fetchMigratedShuffle.enabled": "false",
-                            "spark.dataproc.driverEnv.LANG": "C.UTF-8",
-                            "spark.executorEnv.LANG": "C.UTF-8",
-                            "spark.dataproc.executor.compute.tier": "premium",
-                            "spark.dataproc.executor.resource.accelerator.type": "a100-40",
-                            "spark.plugins": "com.nvidia.spark.SQLPlugin",
-                            "spark.task.resource.gpu.amount": "0.25",
-                            "spark.shuffle.manager": "com.nvidia.spark.rapids.RapidsShuffleManager",
-                            "key": "value"
-                        }
-                    },
-                    "environmentConfig": {
-                        "executionConfig": {
-                            "subnetworkUri": "default"
-                        },
-                        "peripheralsConfig": {}
-                    },
-                    "description": "payload",
-                    "updateTime": "2024-07-26T08:19:02.867092Z",
-                    "uuid": "f1453a7d-5179-48ce-8156-c01220bf17ea"
-                },
-                "scheduleValue": "",
-                "timeZone": "",
-                "datasetId": "",
-                "tableId": "",
-                "location": "",
-                "writeDisposition": "",
-                "serviceAccount": "411524708443-compute@developer.gserviceaccount.com",
-                "keyRings": "",
-                "kmsKey": "",
-                "isSaveQuery": False,
-                "isAutoRegion": True
-            },
-            "origin": [
-                0.5,
-                0
-            ],
-            "width": 232,
-            "height": 98,
-            "selected": False,
-            "dragging": False,
-            "positionAbsolute": {
-                "x": -75.43069679136013,
-                "y": -155.6315620632125
-            }
-        },
-        {
-            "id": "4",
-            "type": "composerNode",
-            "position": {
-                "x": 184.58053733312448,
-                "y": -174.4873385836904
-            },
-            "data": {
-                "nodeType": "Bigquery-Serverless",
-                "inputFile": "test3.ipynb",
-                "retryCount": 3,
-                "retryDelay": 3,
-                "parameter": [
-                    "3:3"
-                ],
-                "stopCluster": "",
-                "clusterName": "",
-                "serverless": {
-                    "name": "projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-000011568b68",
-                    "createTime": "2024-06-26T10:19:57.656700Z",
-                    "jupyterSession": {
-                        "kernel": "PYTHON",
-                        "displayName": "26thJuneProFromLancherWOgpuTest"
-                    },
-                    "creator": "amatheen@google.com",
-                    "labels": {
-                        "client": "dataproc-jupyter-plugin"
-                    },
-                    "runtimeConfig": {
-                        "version": "2.2",
-                        "properties": {
-                            "spark.driver.cores": "4",
-                            "spark.driver.memory": "12200m",
-                            "spark.driver.memoryOverhead": "1220m",
-                            "spark.dataproc.driver.disk.size": "400g",
-                            "spark.dataproc.driver.disk.tier": "standard",
-                            "spark.executor.cores": "4",
-                            "spark.executor.memory": "12200m",
-                            "spark.executor.memoryOverhead": "1220m",
-                            "spark.dataproc.executor.disk.size": "400g",
-                            "spark.dataproc.executor.disk.tier": "standard",
-                            "spark.executor.instances": "2",
-                            "spark.dynamicAllocation.enabled": "true",
-                            "spark.dynamicAllocation.initialExecutors": "2",
-                            "spark.dynamicAllocation.minExecutors": "2",
-                            "spark.dynamicAllocation.maxExecutors": "1000",
-                            "spark.dynamicAllocation.executorAllocationRatio": "0.3",
-                            "spark.reducer.fetchMigratedShuffle.enabled": "false"
-                        }
-                    },
-                    "environmentConfig": {
-                        "executionConfig": {
-                            "subnetworkUri": "default"
-                        },
-                        "peripheralsConfig": {
-                            "metastoreService": "projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"
-                        }
-                    },
-                    "description": "26thJuneProFromLancherWOgpuTest",
-                    "updateTime": "2024-06-26T10:19:57.656700Z",
-                    "uuid": "33907303-587f-4d42-98f7-dd9f28c2bfaa"
-                },
-                "scheduleValue": "",
-                "timeZone": "",
-                "datasetId": "",
-                "tableId": "",
-                "location": "",
-                "writeDisposition": "",
-                "serviceAccount": "accenture-eng-test@dataproc-jupyter-extension-dev.iam.gserviceaccount.com",
-                "keyRings": "",
-                "kmsKey": "",
-                "isSaveQuery": False,
-                "isAutoRegion": True
-            },
-            "origin": [
-                0.5,
-                0
-            ],
-            "width": 232,
-            "height": 98,
-            "selected": False,
-            "positionAbsolute": {
-                "x": 184.58053733312448,
-                "y": -174.4873385836904
-            },
-            "dragging": False
-        },
-        {
-            "id": "5",
-            "type": "composerNode",
-            "position": {
-                "x": 357.25975388908,
-                "y": -268.76622118607986
-            },
-            "data": {
-                "nodeType": "Bigquery-Sql",
-                "inputFile": "sqlfile.sql",
-                "retryCount": 4,
-                "retryDelay": 4,
-                "parameter": [
-                    "4:4:STRING"
-                ],
-                "stopCluster": "",
-                "clusterName": "",
-                "serverless": "",
-                "scheduleValue": "",
-                "timeZone": "",
-                "datasetId": "test1",
-                "tableId": "123",
-                "location": "europe",
-                "writeDisposition": "WRITE_TRUNCATE",
-                "serviceAccount": "accenture-eng-test@dataproc-jupyter-extension-dev.iam.gserviceaccount.com",
-                "keyRings": "keyRingEU",
-                "kmsKey": "projects/dataproc-jupyter-extension-dev/locations/europe/keyRings/keyRingEU/cryptoKeys/keyEU1",
-                "isSaveQuery": True,
-                "isAutoRegion": False
-            },
-            "origin": [
-                0.5,
-                0
-            ],
-            "width": 232,
-            "height": 98,
-            "selected": True,
-            "dragging": False
-        }
+    #     {
+    #         "id": "3",
+    #         "type": "composerNode",
+    #         "position": {
+    #             "x": -75.43069679136013,
+    #             "y": -155.6315620632125
+    #         },
+    #         "data": {
+    #             "nodeType": "Serverless",
+    #             "inputFile": "test2.ipynb",
+    #             "retryCount": 2,
+    #             "retryDelay": 2,
+    #             "parameter": [
+    #                 "2:2"
+    #             ],
+    #             "stopCluster": "",
+    #             "clusterName": "",
+    #             "serverless": {
+    #                 "name": "projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-00000323d751",
+    #                 "createTime": "2024-07-26T08:19:02.867092Z",
+    #                 "jupyterSession": {
+    #                     "kernel": "PYTHON",
+    #                     "displayName": "payload"
+    #                 },
+    #                 "creator": "aditeekatti@google.com",
+    #                 "labels": {
+    #                     "client": "dataproc-jupyter-plugin"
+    #                 },
+    #                 "runtimeConfig": {
+    #                     "version": "2.2",
+    #                     "properties": {
+    #                         "spark.driver.cores": "4",
+    #                         "spark.driver.memory": "12200m",
+    #                         "spark.driver.memoryOverhead": "1220m",
+    #                         "spark.dataproc.driver.disk.size": "400g",
+    #                         "spark.dataproc.driver.disk.tier": "standard",
+    #                         "spark.executor.cores": "12",
+    #                         "spark.executor.memory": "12200m",
+    #                         "spark.dataproc.executor.disk.tier": "premium",
+    #                         "spark.dataproc.executor.disk.size": "750g",
+    #                         "spark.executor.instances": "2",
+    #                         "spark.dynamicAllocation.enabled": "true",
+    #                         "spark.dynamicAllocation.initialExecutors": "2",
+    #                         "spark.dynamicAllocation.minExecutors": "2",
+    #                         "spark.dynamicAllocation.maxExecutors": "1000",
+    #                         "spark.dynamicAllocation.executorAllocationRatio": "0.3",
+    #                         "spark.reducer.fetchMigratedShuffle.enabled": "false",
+    #                         "spark.dataproc.driverEnv.LANG": "C.UTF-8",
+    #                         "spark.executorEnv.LANG": "C.UTF-8",
+    #                         "spark.dataproc.executor.compute.tier": "premium",
+    #                         "spark.dataproc.executor.resource.accelerator.type": "a100-40",
+    #                         "spark.plugins": "com.nvidia.spark.SQLPlugin",
+    #                         "spark.task.resource.gpu.amount": "0.25",
+    #                         "spark.shuffle.manager": "com.nvidia.spark.rapids.RapidsShuffleManager",
+    #                         "key": "value"
+    #                     }
+    #                 },
+    #                 "environmentConfig": {
+    #                     "executionConfig": {
+    #                         "subnetworkUri": "default"
+    #                     },
+    #                     "peripheralsConfig": {}
+    #                 },
+    #                 "description": "payload",
+    #                 "updateTime": "2024-07-26T08:19:02.867092Z",
+    #                 "uuid": "f1453a7d-5179-48ce-8156-c01220bf17ea"
+    #             },
+    #             "scheduleValue": "",
+    #             "timeZone": "",
+    #             "datasetId": "",
+    #             "tableId": "",
+    #             "location": "",
+    #             "writeDisposition": "",
+    #             "serviceAccount": "411524708443-compute@developer.gserviceaccount.com",
+    #             "keyRings": "",
+    #             "kmsKey": "",
+    #             "isSaveQuery": False,
+    #             "isAutoRegion": True
+    #         },
+    #         "origin": [
+    #             0.5,
+    #             0
+    #         ],
+    #         "width": 232,
+    #         "height": 98,
+    #         "selected": False,
+    #         "dragging": False,
+    #         "positionAbsolute": {
+    #             "x": -75.43069679136013,
+    #             "y": -155.6315620632125
+    #         }
+    #     },
+    #     {
+    #         "id": "4",
+    #         "type": "composerNode",
+    #         "position": {
+    #             "x": 184.58053733312448,
+    #             "y": -174.4873385836904
+    #         },
+    #         "data": {
+    #             "nodeType": "Bigquery-Serverless",
+    #             "inputFile": "test3.ipynb",
+    #             "retryCount": 3,
+    #             "retryDelay": 3,
+    #             "parameter": [
+    #                 "3:3"
+    #             ],
+    #             "stopCluster": "",
+    #             "clusterName": "",
+    #             "serverless": {
+    #                 "name": "projects/dataproc-jupyter-extension-dev/locations/us-central1/sessionTemplates/runtime-000011568b68",
+    #                 "createTime": "2024-06-26T10:19:57.656700Z",
+    #                 "jupyterSession": {
+    #                     "kernel": "PYTHON",
+    #                     "displayName": "26thJuneProFromLancherWOgpuTest"
+    #                 },
+    #                 "creator": "amatheen@google.com",
+    #                 "labels": {
+    #                     "client": "dataproc-jupyter-plugin"
+    #                 },
+    #                 "runtimeConfig": {
+    #                     "version": "2.2",
+    #                     "properties": {
+    #                         "spark.driver.cores": "4",
+    #                         "spark.driver.memory": "12200m",
+    #                         "spark.driver.memoryOverhead": "1220m",
+    #                         "spark.dataproc.driver.disk.size": "400g",
+    #                         "spark.dataproc.driver.disk.tier": "standard",
+    #                         "spark.executor.cores": "4",
+    #                         "spark.executor.memory": "12200m",
+    #                         "spark.executor.memoryOverhead": "1220m",
+    #                         "spark.dataproc.executor.disk.size": "400g",
+    #                         "spark.dataproc.executor.disk.tier": "standard",
+    #                         "spark.executor.instances": "2",
+    #                         "spark.dynamicAllocation.enabled": "true",
+    #                         "spark.dynamicAllocation.initialExecutors": "2",
+    #                         "spark.dynamicAllocation.minExecutors": "2",
+    #                         "spark.dynamicAllocation.maxExecutors": "1000",
+    #                         "spark.dynamicAllocation.executorAllocationRatio": "0.3",
+    #                         "spark.reducer.fetchMigratedShuffle.enabled": "false"
+    #                     }
+    #                 },
+    #                 "environmentConfig": {
+    #                     "executionConfig": {
+    #                         "subnetworkUri": "default"
+    #                     },
+    #                     "peripheralsConfig": {
+    #                         "metastoreService": "projects/dataproc-jupyter-extension-dev/locations/us-central1/services/service-meta1"
+    #                     }
+    #                 },
+    #                 "description": "26thJuneProFromLancherWOgpuTest",
+    #                 "updateTime": "2024-06-26T10:19:57.656700Z",
+    #                 "uuid": "33907303-587f-4d42-98f7-dd9f28c2bfaa"
+    #             },
+    #             "scheduleValue": "",
+    #             "timeZone": "",
+    #             "datasetId": "",
+    #             "tableId": "",
+    #             "location": "",
+    #             "writeDisposition": "",
+    #             "serviceAccount": "accenture-eng-test@dataproc-jupyter-extension-dev.iam.gserviceaccount.com",
+    #             "keyRings": "",
+    #             "kmsKey": "",
+    #             "isSaveQuery": False,
+    #             "isAutoRegion": True
+    #         },
+    #         "origin": [
+    #             0.5,
+    #             0
+    #         ],
+    #         "width": 232,
+    #         "height": 98,
+    #         "selected": False,
+    #         "positionAbsolute": {
+    #             "x": 184.58053733312448,
+    #             "y": -174.4873385836904
+    #         },
+    #         "dragging": False
+    #     },
+    #     {
+    #         "id": "5",
+    #         "type": "composerNode",
+    #         "position": {
+    #             "x": 357.25975388908,
+    #             "y": -268.76622118607986
+    #         },
+    #         "data": {
+    #             "nodeType": "Bigquery-Sql",
+    #             "inputFile": "sqlfile.sql",
+    #             "retryCount": 4,
+    #             "retryDelay": 4,
+    #             "parameter": [
+    #                 "4:4:STRING"
+    #             ],
+    #             "stopCluster": "",
+    #             "clusterName": "",
+    #             "serverless": "",
+    #             "scheduleValue": "",
+    #             "timeZone": "",
+    #             "datasetId": "test1",
+    #             "tableId": "123",
+    #             "location": "europe",
+    #             "writeDisposition": "WRITE_TRUNCATE",
+    #             "serviceAccount": "accenture-eng-test@dataproc-jupyter-extension-dev.iam.gserviceaccount.com",
+    #             "keyRings": "keyRingEU",
+    #             "kmsKey": "projects/dataproc-jupyter-extension-dev/locations/europe/keyRings/keyRingEU/cryptoKeys/keyEU1",
+    #             "isSaveQuery": True,
+    #             "isAutoRegion": False
+    #         },
+    #         "origin": [
+    #             0.5,
+    #             0
+    #         ],
+    #         "width": 232,
+    #         "height": 98,
+    #         "selected": True,
+    #         "dragging": False
+    #     }
+    # 
     ],
     "edges": [
         {
@@ -534,21 +535,21 @@ class Client:
             "source": "1",
             "target": "2"
         },
-        {
-            "id": "3",
-            "source": "1",
-            "target": "3"
-        },
-        {
-            "id": "4",
-            "source": "1",
-            "target": "4"
-        },
-        {
-            "id": "5",
-            "source": "1",
-            "target": "5"
-        }
+        # {
+        #     "id": "3",
+        #     "source": "1",
+        #     "target": "3"
+        # },
+        # {
+        #     "id": "4",
+        #     "source": "1",
+        #     "target": "4"
+        # },
+        # {
+        #     "id": "5",
+        #     "source": "1",
+        #     "target": "5"
+        # }
     ]
 }
             return payload

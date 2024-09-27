@@ -54,6 +54,10 @@ const CreateNotebookScheduler = ({
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [editPayload, setEditPayload] = useState<any>([]);
+  const [editPayloadFixed, setEditPayloadFixed]= useState<any>([]);
+
+  console.log("editPayload fixed ",editPayloadFixed)
+  console.log("nodes", nodes)
 
   const initialPayload = {
     job_name: '',
@@ -211,11 +215,12 @@ const CreateNotebookScheduler = ({
       {createCompleted ? (
         <NotebookJobComponent
           app={app}
-          themeManager={themeManager}
+          // themeManager={themeManager}
           composerSelectedFromCreate={composerSelected}
           setCreateCompleted={setCreateCompleted}
           setEditMode={setEditMode}
           setEditPayload={setEditPayload}
+          setEditPayloadFixed={setEditPayloadFixed}
         />
       ) : (
         <>
@@ -276,7 +281,7 @@ const CreateNotebookScheduler = ({
               factory={factory}
               jobPayload={jobPayload}
               setJobPayload={setJobPayload}
-              nodesFromEditPayload={editMode ? editPayload.nodes : ''}
+              nodesFromEditPayload={editMode ? [...editPayload.nodes] : ''}
               edgesFromEditPayload={editMode ? editPayload.edges : ''}
               editMode={editMode}
             />

@@ -75,33 +75,11 @@ function listNotebookScheduler({
   composerSelectedFromCreate,
   setCreateCompleted,
   setEditPayload,
-  // setJobNameSelected,
-  // setComposerSelected,
-  // setScheduleMode,
-  // setScheduleValue,
-
-  // setInputFileSelected,
-  // setParameterDetail,
-  // setParameterDetailUpdated,
-  // setSelectedMode,
-  // setClusterSelected,
-  // setServerlessSelected,
-  // setServerlessDataSelected,
-  // serverlessDataList,
-  // setServerlessDataList,
-  // setServerlessList,
-  // setRetryCount,
-  // setRetryDelay,
-  // setEmailOnFailure,
-  // setEmailonRetry,
-  // setEmailOnSuccess,
-  // setEmailList,
-  // setStopCluster,
-  // setTimeZoneSelected,
+  setEditPayloadFixed,
   setEditMode,
   bucketName,
   setBucketName
-}: // setIsLoadingKernelDetail
+}:
 {
   app: JupyterFrontEnd;
   handleDagIdSelection: (composerName: string, dagId: string) => void;
@@ -109,31 +87,8 @@ function listNotebookScheduler({
   composerSelectedFromCreate: string;
   setCreateCompleted?: (value: boolean) => void;
   setEditPayload: (value: any) => void;
-  // setJobNameSelected?: (value: string) => void;
-  // setComposerSelected?: (value: string) => void;
-  // setScheduleMode?: (value: scheduleMode) => void;
-  // setScheduleValue?: (value: string) => void;
-
-  // setInputFileSelected?: (value: string) => void;
-  // setParameterDetail?: (value: string[]) => void;
-  // setParameterDetailUpdated?: (value: string[]) => void;
-  // setSelectedMode?: (value: string) => void;
-  // setClusterSelected?: (value: string) => void;
-  // setServerlessSelected?: (value: string) => void;
-  // setServerlessDataSelected?: (value: {}) => void;
-  // serverlessDataList?: string[];
-  // setServerlessDataList?: (value: string[]) => void;
-  // setServerlessList?: (value: string[]) => void;
-  // setRetryCount?: (value: number) => void;
-  // setRetryDelay?: (value: number) => void;
-  // setEmailOnFailure?: (value: boolean) => void;
-  // setEmailonRetry?: (value: boolean) => void;
-  // setEmailOnSuccess?: (value: boolean) => void;
-  // setEmailList?: (value: string[]) => void;
-  // setStopCluster?: (value: boolean) => void;
-  // setTimeZoneSelected?: (value: string) => void;
+  setEditPayloadFixed:(value: any) => void;
   setEditMode?: (value: boolean) => void;
-  // setIsLoadingKernelDetail?: (value: boolean) => void;
   bucketName: string;
   setBucketName: (value: string) => void;
 }) {
@@ -243,35 +198,11 @@ function listNotebookScheduler({
       await SchedulerService.editJobSchedulerService(
         bucketName,
         jobid,
-        composerSelectedList,
         setEditDagLoading,
         setEditPayload, //new
+        setEditPayloadFixed,
         setCreateCompleted,
-        // setJobNameSelected,
-        // setComposerSelected,
-        // setScheduleMode,
-        // setScheduleValue,
-
-        // setInputFileSelected,
-        // setParameterDetail,
-        // setParameterDetailUpdated,
-        // setSelectedMode,
-        // setClusterSelected,
-        // setServerlessSelected,
-        // setServerlessDataSelected,
-        // serverlessDataList,
-        // setServerlessDataList,
-        // setServerlessList,
-        // setRetryCount,
-        // setRetryDelay,
-        // setEmailOnFailure,
-        // setEmailonRetry,
-        // setEmailOnSuccess,
-        // setEmailList,
-        // setStopCluster,
-        // setTimeZoneSelected,
         setEditMode
-        // setIsLoadingKernelDetail,
       );
       // setCreateCompleted(false)// temporary change
       // console.log("in list comp", payload)

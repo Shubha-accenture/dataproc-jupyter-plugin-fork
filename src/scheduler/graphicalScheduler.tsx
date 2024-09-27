@@ -103,7 +103,7 @@ const GraphicalScheduler = ({
     : initialNode.length + 1;
   const getNodeId = () => `${nodeId++}`;
   const [nodes, setNodes, onNodesChange] = useNodesState(
-    nodesFromEditPayload ? nodesFromEditPayload : initialNode
+    nodesFromEditPayload ? [...nodesFromEditPayload] : initialNode
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(
     edgesFromEditPayload ? edgesFromEditPayload : []
@@ -244,10 +244,6 @@ const GraphicalScheduler = ({
     }
   });
 
-  // useEffect(() => {
-  //   NodesChange(transformedNodes);
-  // }, [nodes]);
-
   useEffect(() => {
     if (clickedNodeId) {
       const clickedNode = nodes.find(node => node.id === clickedNodeId);
@@ -261,94 +257,13 @@ const GraphicalScheduler = ({
   EdgesChange(edges);
   NodesChange(nodes);
 
-  // const transformNodeData = (nodes: any) => {
-  //   return nodes.map((node: any) => {
-  //     if (node.data.nodeType === 'Trigger') {
-  //       return {
-  //         ...node,
-  //         data: {
-  //           nodeType: node.data.nodeType,
-  //           scheduleValue: node.data.scheduleValue,
-  //           timeZone: node.data.timeZone
-  //         }
-  //       };
-  //     } else if (node.data.nodeType === 'Cluster') {
-  //       return {
-  //         ...node,
-  //         data: {
-  //           nodeType: node.data.nodeType,
-  //           inputFile: node.data.inputFile,
-  //           retryCount: node.data.retryCount,
-  //           retryDelay: node.data.retryDelay,
-  //           parameter: node.data.parameter,
-  //           stopCluster: node.data.stopCluster,
-  //           clusterName: node.data.clusterName
-  //         }
-  //       };
-  //     } else if (node.data.nodeType === 'Serverless') {
-  //       return {
-  //         ...node,
-  //         data: {
-  //           nodeType: node.data.nodeType,
-  //           inputFile: node.data.inputFile,
-  //           retryCount: node.data.retryCount,
-  //           retryDelay: node.data.retryDelay,
-  //           parameter: node.data.parameter,
-  //           serverless: node.data.serverless,
-  //           serviceAccount: node.data.serviceAccount
-  //         }
-  //       };
-  //     } else if (node.data.nodeType === 'Bigquery-Serverless') {
-  //       return {
-  //         ...node,
-  //         data: {
-  //           nodeType: node.data.nodeType,
-  //           inputFile: node.data.inputFile,
-  //           retryCount: node.data.retryCount,
-  //           retryDelay: node.data.retryDelay,
-  //           parameter: node.data.parameter,
-  //           serverless: node.data.serverless,
-  //           serviceAccount: node.data.serviceAccount
-  //         }
-  //       };
-  //     } else if (node.data.nodeType === 'Bigquery-Sql') {
-  //       return {
-  //         ...node,
-  //         data: {
-  //           nodeType: node.data.nodeType,
-  //           inputFile: node.data.inputFile,
-  //           retryCount: node.data.retryCount,
-  //           retryDelay: node.data.retryDelay,
-  //           parameter: node.data.parameter,
-  //           tableId: node.data.tableId,
-  //           datasetId: node.data.datasetId,
-  //           location: node.data.location,
-  //           writeDisposition: node.data.writeDisposition,
-  //           serviceAccount: node.data.serviceAccount,
-  //           kmsKey: node.data.kmsKey
-  //         }
-  //       };
-  //     }
-  //     return node;
-  //   });
-  // };
-
-  // const transformedNodes = transformNodeData(nodes);
-
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>
         <Grid item xs={8}>
-          {/* <div className="wrapper" ref={reactFlowWrapper} > */}
           <div
             className="wrapper"
             ref={reactFlowWrapper}
-            // style={{
-            //   overflowX: 'auto',
-            //   height: '100%', // Maintain full height
-            //   position: 'relative'
-            // }}
-            // style={{ overflowX: 'auto', whiteSpace: 'nowrap' }}
             style={{
               width: '100%',
               height: '100%',
@@ -365,7 +280,6 @@ const GraphicalScheduler = ({
               onConnectStart={onConnectStart}
               onConnectEnd={onConnectEnd}
               fitView
-              // fitViewOptions={{ padding: 2, minZoom: 0.5, maxZoom: 1.5 }}
               zoomOnScroll={true}
               nodeOrigin={[0.5, 0]} //change this
               nodeTypes={nodeTypes}
