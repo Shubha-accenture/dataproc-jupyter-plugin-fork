@@ -33,11 +33,17 @@ import { LabIcon } from '@jupyterlab/ui-components';
 import errorIcon from '../../style/icons/error_icon.svg';
 import Button from '@mui/material/Button';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+// import EditIconDisable from '../../style/icons/scheduler_edit_dag.svg';
 
 const iconError = new LabIcon({
   name: 'launcher:error-icon',
   svgstr: errorIcon
 });
+
+// const iconEditDag = new LabIcon({
+//   name: 'launcher:edit-disable-icon',
+//   svgstr: EditIconDisable
+// });
 
 function ClusterServerlessForm({ data, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
@@ -60,6 +66,7 @@ function ClusterServerlessForm({ data, mode }: any) {
     { displayName: string; email: string }[]
   >([]);
   const [serviceAccountSelected, setServiceAccountSelected] = useState('');
+  const [editNotebookLoading, setEditNotebookLoading] = useState('');
 
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
@@ -157,6 +164,20 @@ function ClusterServerlessForm({ data, mode }: any) {
     );
   };
 
+  const handleEditNotebook = async (event: React.MouseEvent) => {
+    //hardcoded for a while
+    // const jobid = event.currentTarget.getAttribute('data-jobid');
+    // console.log(jobid)
+    // if (jobid !== null) {
+    await SchedulerService.editNotebookSchedulerService(
+      'us-central1-composer3-e9f34418-bucket&1727703271077', //bucketName,
+      'auto-4-14-47job', //jobid,
+      setInputFileSelectedLocal,
+      setEditNotebookLoading
+    );
+    // }
+  };
+
   useEffect(() => {
     if (data && parameterDetailUpdated.length > 0) {
       data.parameter = parameterDetailUpdated;
@@ -222,7 +243,31 @@ function ClusterServerlessForm({ data, mode }: any) {
                   accept=".ipynb"
                 />
               </Button>
-              {inputFileSelectedLocal}
+              {inputFileSelectedLocal &&
+                (editNotebookLoading ? (
+                  <div className="loader-container">
+                    <CircularProgress
+                      size={18}
+                      aria-label="Loading Spinner"
+                      data-testid="loader"
+                    />
+                    {inputFileSelectedLocal}
+                  </div>
+                ) : (
+                  <div className="input-file-wrapper">
+                    <a
+                      href="#"
+                      onClick={e => {
+                        e.preventDefault();
+                        handleEditNotebook(e);
+                      }}
+                      className="input-file-link"
+                      style={{ textDecoration: 'underline', color: 'blue' }}
+                    >
+                      {inputFileSelectedLocal}
+                    </a>
+                  </div>
+                ))}
             </div>
             {inputFileValidation && (
               <div className="jobform-error-key-parent">

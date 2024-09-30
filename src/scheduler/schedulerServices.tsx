@@ -280,7 +280,7 @@ export class SchedulerService {
       );
     }
   };
-
+  
   static editNotebookSchedulerService = async (
     bucketName: string,
     dagId: string,
@@ -290,6 +290,7 @@ export class SchedulerService {
     setEditNotebookLoading(dagId);
     try {
       const serviceURL = `editJobScheduler?&dag_id=${dagId}&bucket_name=${bucketName}`;
+      console.log(serviceURL)
       const formattedResponse: any = await requestAPI(serviceURL, {
         method: 'POST'
       });
@@ -303,6 +304,7 @@ export class SchedulerService {
       );
     }
   };
+  
   static editJobSchedulerService = async (
     bucketName: string,
     dagId: string,
