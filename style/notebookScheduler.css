@@ -342,6 +342,8 @@
   display: flex;
   column-gap: 25px;
   padding-top: 5px;
+  padding-top: 5px;
+  align-items: center;
 }
 .trigger-form {
   padding: 0px 10px;

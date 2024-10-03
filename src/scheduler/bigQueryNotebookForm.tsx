@@ -38,6 +38,7 @@ function BigQueryNotebookForm({ data, mode }: any) {
     { displayName: string; email: string }[]
   >([]);
   const [serviceAccountSelected, setServiceAccountSelected] = useState('');
+  const [editNotebookLoading, setEditNotebookLoading] = useState(false);
 
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
@@ -114,6 +115,19 @@ function BigQueryNotebookForm({ data, mode }: any) {
     );
   };
 
+  const handleEditNotebook = async (event: React.MouseEvent) => {
+    setEditNotebookLoading(true)
+    eventEmitter.emit(`editfile-bqserverless`, event, inputFileSelectedLocal);
+  };
+
+  eventEmitter.on(`openNotebook`, (openNotebookFile:boolean) => {
+    setEditNotebookLoading(!openNotebookFile)
+  });
+
+  const extractFilename = (fullPath:string) => {
+    return fullPath ? fullPath.split('/').pop() : '';
+  };
+
   useEffect(() => {
     if (data && parameterDetailUpdated.length > 0) {
       data.parameter = parameterDetailUpdated;
@@ -173,7 +187,31 @@ function BigQueryNotebookForm({ data, mode }: any) {
                   accept=".ipynb"
                 />
               </Button>
-              {inputFileSelectedLocal}
+              {inputFileSelectedLocal &&
+                (editNotebookLoading ? (
+                  <div className="loader-container">
+                    <CircularProgress
+                      size={18}
+                      aria-label="Loading Spinner"
+                      data-testid="loader"
+                    />
+                    {extractFilename(inputFileSelectedLocal)}
+                  </div>
+                ) : (
+                  <div className="input-file-wrapper">
+                    <a
+                      href="#"
+                      onClick={e => {
+                        e.preventDefault();
+                        handleEditNotebook(e);
+                      }}
+                      className="input-file-link"
+                      style={{ textDecoration: 'underline', color: 'blue' }}
+                    >
+                      {extractFilename(inputFileSelectedLocal)}
+                    </a>
+                  </div>
+                ))}
             </div>
             {inputFileValidation && (
               <div className="jobform-error-key-parent">

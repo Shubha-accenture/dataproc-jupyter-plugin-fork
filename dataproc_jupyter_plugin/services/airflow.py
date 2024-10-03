@@ -274,15 +274,15 @@ class Client:
                 "y": -222.12298453016086
             },
             "data": {
-                "nodeType": "Cluster",
-                "inputFile": "gs:us-central1-composer3-e9f34418-bucket/dataproc-notebooks/auto-4-14-47job/input_notebooks/Untitled53.ipynb",
+                "nodeType": "Serverless",
+                "inputFile": "gs://us-central1-composer3-e9f34418-bucket/dataproc-notebooks/auto-4-14-47job/input_notebooks/Untitled53.ipynb",
                 "retryCount": 1,
                 "retryDelay": 1,
                 "parameter": [
                     "1:1"
                 ],
-                "stopCluster": True,
-                "clusterName": "cluster-dpms-test",
+                "stopCluster": False,
+                "clusterName": "",
                 "serverless": "",
                 "scheduleValue": "",
                 "timeZone": "",

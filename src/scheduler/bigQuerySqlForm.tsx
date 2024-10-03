@@ -70,6 +70,7 @@ function BigQuerySqlForm({ data }: any) {
   const [isLoadingDisposition, setIsLoadingDisposition] = useState(true);
   const [dataIdValidation, setDataIdValidation] = useState(true);
   const [tableIdValidation, setTableIdValidation] = useState(true);
+  const [editNotebookLoading, setEditNotebookLoading] = useState(false);
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
     svgstr: errorIcon
@@ -284,6 +285,19 @@ function BigQuerySqlForm({ data }: any) {
     );
   };
 
+  const handleEditNotebook = async (event: React.MouseEvent) => {
+    setEditNotebookLoading(true)
+    eventEmitter.emit(`editfile-bqsql`, event, inputFileSelectedLocal);
+  };
+
+  eventEmitter.on(`openNotebook`, (openNotebookFile:boolean) => {
+    setEditNotebookLoading(!openNotebookFile)
+  });
+
+  const extractFilename = (fullPath:string) => {
+    return fullPath ? fullPath.split('/').pop() : '';
+  };
+
   useEffect(() => {
     if (data && parameterDetailUpdated.length > 0) {
       data.parameter = parameterDetailUpdated;
@@ -418,7 +432,31 @@ function BigQuerySqlForm({ data }: any) {
                   accept=".sql"
                 />
               </Button>
-              <div className="input-file-name">{inputFileSelectedLocal}</div>
+              {inputFileSelectedLocal &&
+                (editNotebookLoading ? (
+                  <div className="loader-container">
+                    <CircularProgress
+                      size={18}
+                      aria-label="Loading Spinner"
+                      data-testid="loader"
+                    />
+                    {extractFilename(inputFileSelectedLocal)}
+                  </div>
+                ) : (
+                  <div className="input-file-wrapper">
+                    <a
+                      href="#"
+                      onClick={e => {
+                        e.preventDefault();
+                        handleEditNotebook(e);
+                      }}
+                      className="input-file-link"
+                      style={{ textDecoration: 'underline', color: 'blue' }}
+                    >
+                      {extractFilename(inputFileSelectedLocal)}
+                    </a>
+                  </div>
+                ))}
             </div>
             {inputFileValidation && (
               <div className="jobform-error-key-parent">

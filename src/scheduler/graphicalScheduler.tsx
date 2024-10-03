@@ -193,22 +193,16 @@ const GraphicalScheduler = ({
     handleFileUpload(event, data);
   });
 
-  eventEmitter.on('editfile', (event: any, inputFilePath: any) => {
+  eventEmitter.on('editfile-cluster', (event: any, inputFilePath: any) => {
     console.log("event emitter catch", inputFilePath)
     openEditNotebookFile(inputFilePath)
-    // if (inputFilePath !== '') {
-    // console.log("inside if")
-    //   // let filePath = inputFilepath.replace('gs://', 'gs:');
-    //   // console.log("file path",filePath)
-    //   app.commands.execute('docmanager:open', {
-    //     path: inputFilePath
-    //   });
-    //   setInputNotebookFilePath('');
-    //   //loading stop event need to add
-    //   eventEmitter.emit('editLoader',)
+  });
 
-    // }
-    
+  eventEmitter.on('editfile-bqserverless', (event: any, inputFilePath: any) => {
+    openEditNotebookFile(inputFilePath)   
+  });
+  eventEmitter.on('editfile-bqsql', (event: any, inputFilePath: any) => {
+    openEditNotebookFile(inputFilePath)   
   });
 
   const openEditNotebookFile = async(inputNotebookFilePath:string)=>{
@@ -293,7 +287,7 @@ const GraphicalScheduler = ({
       });
       setInputNotebookFilePath('');
     }
-  }, [inputNotebookFilePath]);
+  }, [inputNotebookFilePath]);//check in code review
 
   EdgesChange(edges);
   NodesChange(nodes);

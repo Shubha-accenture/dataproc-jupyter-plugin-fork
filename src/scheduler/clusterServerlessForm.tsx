@@ -166,7 +166,7 @@ function ClusterServerlessForm({ data, mode }: any) {
 
   const handleEditNotebook = async (event: React.MouseEvent) => {
     setEditNotebookLoading(true)
-    eventEmitter.emit(`editfile`, event, inputFileSelectedLocal);
+    eventEmitter.emit(`editfile-cluster`, event, inputFileSelectedLocal);
   };
 
   eventEmitter.on(`openNotebook`, (openNotebookFile:boolean) => {
