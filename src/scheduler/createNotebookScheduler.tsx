@@ -27,6 +27,7 @@ import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import { eventEmitter } from '../utils/signalEmitter';
+import SavePopup from '../utils/savePopup';
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
   svgstr: LeftArrowIcon
@@ -54,10 +55,12 @@ const CreateNotebookScheduler = ({
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [editPayload, setEditPayload] = useState<any>([]);
-  const [editPayloadFixed, setEditPayloadFixed]= useState<any>([]);
+  const [editPayloadFixed, setEditPayloadFixed] = useState<any>([]);
+  const [savePopupOpen, setSavePopupOpen] = useState(false);
+  const [savingNotebook, setSavingNotebook] = useState(false);
 
-  console.log("editPayload fixed ",editPayloadFixed)
-  console.log("nodes", nodes)
+  console.log('editPayload fixed ', editPayloadFixed);
+  console.log('nodes', nodes);
 
   const initialPayload = {
     job_name: '',
@@ -187,7 +190,15 @@ const CreateNotebookScheduler = ({
     setEdges(updatedEdges);
   };
 
+  const handleSavePopUp = () => {
+    setSavePopupOpen(true);
+  };
+  const handleCancelSave = () => {
+    setSavePopupOpen(false);
+  };
+
   const handleCreateJobScheduler = async () => {
+    setSavingNotebook(true);
     const payload = {
       ...jobPayload,
       nodes: nodes,
@@ -202,12 +213,14 @@ const CreateNotebookScheduler = ({
     );
     setEditMode(false);
     setJobPayload(initialPayload); //after save
+    setSavingNotebook(false);
   };
 
   const handleCancel = async () => {
     setCreateCompleted(true);
     setJobPayload(initialPayload);
     setEditMode(false);
+    setSavePopupOpen(false);
   };
 
   return (
@@ -257,8 +270,17 @@ const CreateNotebookScheduler = ({
                   creatingScheduler
                 }
                 aria-label="Save scheduler"
-                onClick={handleCreateJobScheduler}
+                onClick={editMode ? handleSavePopUp : handleCreateJobScheduler}
               >
+                {savePopupOpen && (
+                  <SavePopup
+                    onCancel={() => handleCancelSave()}
+                    onSave={() => handleCreateJobScheduler()}
+                    savePopupOpen={savePopupOpen}
+                    saveMsg={`Do you want to save the changes ?`}
+                    savingNotebook={savingNotebook}
+                  />
+                )}
                 <div>{creatingScheduler ? 'SAVING...' : 'SAVE'}</div>
               </Button>
               <Button
