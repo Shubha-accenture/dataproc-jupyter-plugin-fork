@@ -93,6 +93,12 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
       ) {
         setStatus('incomplete');
       }
+      else if (
+        !data.isAutoRegion &&
+       (!data.location)
+     ) {
+       setStatus('incomplete');
+     }
       else {
         setStatus('complete');
       }

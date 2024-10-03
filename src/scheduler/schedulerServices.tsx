@@ -704,7 +704,7 @@ export class SchedulerService {
           return {
             tryNumber: dagRunTask.try_number,
             taskId: dagRunTask.task_id,
-            startTime:dagRunTask.start_date.split('T')[1].split('.')[0],
+            startTime:dagRunTask.start_date ? dagRunTask.start_date.split('T')[1].split('.')[0]:'',
             duration: dagRunTask.duration,
             state: dagRunTask.state,
             date: new Date(dagRunTask.start_date).toDateString(),

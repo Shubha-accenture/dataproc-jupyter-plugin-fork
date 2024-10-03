@@ -163,8 +163,12 @@ function BigQuerySqlForm({ data }: any) {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRegionTypeSelected(event.target.value);
+    setRegionSelected('')
+    setMultiRegionSelected('')
     setKeyRingSelected('');
     setKeySelected('');
+    setKeylist([]);
+    data.kmsKey=''
   };
 
   const fetchRegionList = async () => {
@@ -181,9 +185,6 @@ function BigQuerySqlForm({ data }: any) {
     if (event.target.checked) {
       setRegionId('us');
     }
-    if (!event.target.checked) {
-      setRegionTypeSelected('region');
-    }// check and remove
   };
 
   const handleMultiRegionTypeSelected = (
@@ -193,8 +194,11 @@ function BigQuerySqlForm({ data }: any) {
     setMultiRegionSelected(value?.label || '');
     data.location = value?.key || '';
     setRegionId(value?.key || '');
+
+    data.kmsKey=''
     setKeyRingSelected('');
     setKeySelected('');
+    setKeylist([]);
   };
 
   const handleRegionSelected = (
@@ -204,6 +208,11 @@ function BigQuerySqlForm({ data }: any) {
     setRegionSelected(value || '');
     data.location = value;
     setRegionId(value || '');
+
+    data.kmsKey=''
+    setKeyRingSelected('');
+    setKeySelected('');
+    setKeylist([]);
   };
 
   const handleWriteDisposition = (
@@ -215,7 +224,7 @@ function BigQuerySqlForm({ data }: any) {
 
   const handlekeyRingRadio = () => {
     setSelectedRadioValue('key');
-    setManualKeySelected('');
+    // setManualKeySelected('');//removed
     setManualValidation(true);
   };
 
@@ -242,12 +251,12 @@ function BigQuerySqlForm({ data }: any) {
     }
 
     setManualKeySelected(inputValue);
+    data.manualKey = true;
     data.kmsKey = inputValue;
   };
 
   const handleKeyRingChange = (value: string | null) => {
     if (data !== null) {
-      console.log(value);
       setKeyRingSelected(value!.toString());
       listKeysAPI(value!.toString());
       data.keyRings = value;
@@ -259,10 +268,10 @@ function BigQuerySqlForm({ data }: any) {
     event: React.SyntheticEvent<Element, Event>,
     value: string | null
   ) => {
-    console.log(value);
     if (value) {
       setKeySelected(value);
       data.kmsKey = value;
+      data.manualKey=false
     } else {
       setKeySelected('');
       data.kmsKey = '';
@@ -307,12 +316,13 @@ function BigQuerySqlForm({ data }: any) {
   useEffect(() => {
     fetchRegionList();
     fetchServiceAccounts();
-    listKeyRingsAPI();
+   // listKeyRingsAPI();
   }, []);
 
   useEffect(() => {
-    if (regionId) listKeyRingsAPI();
-  }, [regionId]);
+    if (regionId) 
+      listKeyRingsAPI();
+  }, [regionId,selectedRadioValue]);
 
   useEffect(() => {
     if (data) {
@@ -339,56 +349,31 @@ function BigQuerySqlForm({ data }: any) {
         const selectedRegion = multiRegionList.find(
           region => region.key === data.location
         );
-
         if (selectedRegion) {
           setRegionTypeSelected('multiRegion');
           setMultiRegionSelected(selectedRegion.label);
+          setRegionId(selectedRegion.key)
         } else {
           setRegionTypeSelected('region');
           setRegionSelected(data.location);
+          setRegionId(data.location)
         }
       }
-      //this is causing issue
       if (data.kmsKey) {
         setSelectedEncryptionRadio('customerManaged');
-        let kmsKeyArray = data.kmsKey.split('/');
-        console.log('here', data.kmsKey);
-        setKeyRingSelected(kmsKeyArray[5]);
-        setKeySelected(kmsKeyArray[7]);
+        if (data.manualKey) {
+          setSelectedRadioValue('manually');
+          setManualKeySelected(data.kmsKey);
+        } else {
+          setSelectedRadioValue('key');
+          let kmsKeyArray = data.kmsKey.split('/');
+          setKeyRingSelected(kmsKeyArray[5]);
+          setKeySelected(kmsKeyArray[7]);
+        }
       }
     }
   }, [data, serviceAccounts]);
-
-  useEffect(() => {
-    if (data) {
-      let validData = true;
-      if (!inputFileSelectedLocal) {
-        validData = false;
-      }
-      if (!isSaveQueryChecked) {
-        if (datasetId === '') {
-          validData = false;
-        }
-        if (tableID === '') {
-          validData = false;
-        }
-        if (writeDisposition === '') {
-          validData = false;
-        }
-        if (!serviceAccountSelected) {
-          validData = false;
-        }
-      }
-      eventEmitter.emit(`saveQuery`, validData);
-    }
-  }, [
-    isSaveQueryChecked,
-    inputFileSelectedLocal,
-    tableID,
-    datasetId,
-    writeDisposition
-  ]);
-
+  
   useEffect(() => {
     if (isSaveQueryChecked) {
       if (data.writeDisposition !== undefined) {
@@ -494,7 +479,7 @@ function BigQuerySqlForm({ data }: any) {
             {isSaveQueryChecked && (
               <>
                 <Input
-                  className="create-scheduler-style-trigger"
+                  className="create-scheduler-style-sql"
                   value={datasetId}
                   onChange={e => handleDatasetIdChange(e)}
                   type="text"
@@ -513,7 +498,7 @@ function BigQuerySqlForm({ data }: any) {
                   </div>
                 )}
                 <Input
-                  className="create-scheduler-style-trigger"
+                  className="create-scheduler-style-sql"
                   value={tableID}
                   onChange={e => handleTableIDChange(e)}
                   type="text"
@@ -532,7 +517,7 @@ function BigQuerySqlForm({ data }: any) {
                   </div>
                 )}
                 <Input
-                  className="create-scheduler-style-trigger"
+                  className="create-scheduler-style-sql"
                   value={partitionField}
                   onChange={e => handlePartitionFieldChange(e)}
                   type="text"

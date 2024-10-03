@@ -90,10 +90,10 @@ const GraphicalScheduler = ({
         location: '',
         writeDisposition: '',
         serviceAccount: '',
-        keyRings: '',
-        kmsKey: '',
-        isSaveQuery: false,
-        isAutoRegion: true
+        kmsKey:'',
+        isSaveQuery:false,
+        isAutoRegion:true,
+        manualKey:false
       }
     }
   ];
@@ -163,10 +163,10 @@ const GraphicalScheduler = ({
               location: '',
               writeDisposition: '',
               serviceAccount: '',
-              keyRings: '',
-              kmsKey: '',
-              isSaveQuery: false,
-              isAutoRegion: true
+              kmsKey:'',   
+              isSaveQuery:false,  
+              isAutoRegion:true, 
+              manualKey:false
             },
             origin: [0.5, 0.0]
           };
@@ -290,7 +290,8 @@ const GraphicalScheduler = ({
   }, [inputNotebookFilePath]);//check in code review
 
   EdgesChange(edges);
-  NodesChange(nodes);
+  NodesChange(nodes)
+
 
   return (
     <>

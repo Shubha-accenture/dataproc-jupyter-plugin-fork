@@ -209,7 +209,10 @@
 .logo-row-container {
   display: flex;
 }
-
+.logo-download-container {
+  display: flex;
+  padding-left: 25px;
+}
 .logo-alignment-style-accordion {
   display: flex;
   align-items: center;
@@ -360,8 +363,16 @@
   background: var(--jp-layout-color0);
   margin-top: 10px;
   outline: none;
-  /* padding: 0px 10px; */
 }
+
+.create-scheduler-style-sql {
+  width: 100%;
+  height: 36px;
+  background: var(--jp-layout-color0);
+  margin-top: 10px;
+  outline: none;
+}
+
 .scheduler-dropdown-form-element {
   margin-top: 15px;
   width: 105%;
@@ -406,7 +417,7 @@
   margin-top: 10px;
 }
 .create-scheduler-style-key {
-  width: 90%;
+  width: 95%;
   height: 36px;
   background: var(--jp-layout-color0);
   outline: none;
@@ -421,9 +432,9 @@
   display: flex;
   column-gap: 10px;
 }
-.disable-text-create-scheduler-style-key  {
+.disable-text-create-scheduler-style-key {
   color: var(--jp-layout-color3);
-  width: 90%;
+  width: 95%;
   height: 36px;
   outline: none;
   display: flex;
@@ -488,6 +499,6 @@
   margin-top: -5px;
   display: flex;
 }
-.scheduler-encrypt-manual-radio-type{
-padding-top: 15px !important;
+.scheduler-encrypt-manual-radio-type {
+  padding-top: 15px !important;
 }
