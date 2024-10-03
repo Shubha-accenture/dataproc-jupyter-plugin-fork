@@ -26,7 +26,6 @@ import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
-import { eventEmitter } from '../utils/signalEmitter';
 import SavePopup from '../utils/savePopup';
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
@@ -51,7 +50,7 @@ const CreateNotebookScheduler = ({
   const [editMode, setEditMode] = useState(false);
   const [nodeDataValidation, setNodeDataValidation] = useState(false);
   const [jobPayloadValidation, setJobPayloadValidation] = useState(false);
-  // const [editPayloadValidation, setEditPayloadValidation] = useState(false)
+  // const [editPayloadValidation, setEditPayloadValidation] = useState(false)// need for future use
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [editPayload, setEditPayload] = useState<any>([]);
@@ -60,7 +59,6 @@ const CreateNotebookScheduler = ({
   const [savingNotebook, setSavingNotebook] = useState(false);
 
   console.log('editPayload fixed ', editPayloadFixed);
-  console.log('nodes', nodes);
 
   const initialPayload = {
     job_name: '',
@@ -92,7 +90,7 @@ const CreateNotebookScheduler = ({
     //   jobPayload.email_delay !== editPayload.email_delay ||
     //   jobPayload.email_success !== editPayload.email_success ||
     //   JSON.stringify(jobPayload.email_ids) !==
-    //     JSON.stringify(editPayload.email_ids); //commented for now
+    //     JSON.stringify(editPayload.email_ids); //commented for now needed for save button logic
     return (
       jobPayload.job_name === '' ||
       jobPayload.composer_environment_name === '' ||
@@ -104,13 +102,7 @@ const CreateNotebookScheduler = ({
       //!isEmailChanged // New condition: check if any email-related field has changed
     );
   };
-
-  const bigQuerySqlValidation = () => {
-    eventEmitter.on('saveQuery', (value: boolean) => {
-      setNodeDataValidation(value);
-    });
-  };
-
+// need for svae button 
   //  const editFlowValidation=()=>{
   //   console.log(nodes, editPayload.nodes)
   //   if (nodes.length !== editPayload.nodes.length) {
