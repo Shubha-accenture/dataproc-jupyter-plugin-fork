@@ -70,6 +70,8 @@ function BigQuerySqlForm({ data }: any) {
   const [isLoadingDisposition, setIsLoadingDisposition] = useState(true);
   const [dataIdValidation, setDataIdValidation] = useState(true);
   const [tableIdValidation, setTableIdValidation] = useState(true);
+  const [regionValidation, setRegionValidation] = useState(true);
+  const [multiRegionValidation, seMultiRegionValidation] = useState(true);
   const [editNotebookLoading, setEditNotebookLoading] = useState(false);
   const iconError = new LabIcon({
     name: 'launcher:error-icon',
@@ -163,12 +165,12 @@ function BigQuerySqlForm({ data }: any) {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRegionTypeSelected(event.target.value);
-    setRegionSelected('')
-    setMultiRegionSelected('')
+    setRegionSelected('');
+    setMultiRegionSelected('');
     setKeyRingSelected('');
     setKeySelected('');
     setKeylist([]);
-    data.kmsKey=''
+    data.kmsKey = '';
   };
 
   const fetchRegionList = async () => {
@@ -191,11 +193,13 @@ function BigQuerySqlForm({ data }: any) {
     event: React.ChangeEvent<{}>,
     value: { key: string; label: string } | null
   ) => {
+    const selectedValue = value?.key?? ''; 
     setMultiRegionSelected(value?.label || '');
     data.location = value?.key || '';
     setRegionId(value?.key || '');
+    seMultiRegionValidation(selectedValue.length >0)
 
-    data.kmsKey=''
+    data.kmsKey = '';
     setKeyRingSelected('');
     setKeySelected('');
     setKeylist([]);
@@ -205,11 +209,13 @@ function BigQuerySqlForm({ data }: any) {
     event: React.ChangeEvent<{}>,
     value: string | null
   ) => {
+    const selectedValue = value ?? ''; 
     setRegionSelected(value || '');
     data.location = value;
     setRegionId(value || '');
+    setRegionValidation(selectedValue.length>0)// validation check
 
-    data.kmsKey=''
+    data.kmsKey = '';
     setKeyRingSelected('');
     setKeySelected('');
     setKeylist([]);
@@ -271,7 +277,7 @@ function BigQuerySqlForm({ data }: any) {
     if (value) {
       setKeySelected(value);
       data.kmsKey = value;
-      data.manualKey=false
+      data.manualKey = false;
     } else {
       setKeySelected('');
       data.kmsKey = '';
@@ -295,15 +301,15 @@ function BigQuerySqlForm({ data }: any) {
   };
 
   const handleEditNotebook = async (event: React.MouseEvent) => {
-    setEditNotebookLoading(true)
+    setEditNotebookLoading(true);
     eventEmitter.emit(`editfile-bqsql`, event, inputFileSelectedLocal);
   };
 
-  eventEmitter.on(`openNotebook`, (openNotebookFile:boolean) => {
-    setEditNotebookLoading(!openNotebookFile)
+  eventEmitter.on(`openNotebook`, (openNotebookFile: boolean) => {
+    setEditNotebookLoading(!openNotebookFile);
   });
 
-  const extractFilename = (fullPath:string) => {
+  const extractFilename = (fullPath: string) => {
     return fullPath ? fullPath.split('/').pop() : '';
   };
 
@@ -316,13 +322,12 @@ function BigQuerySqlForm({ data }: any) {
   useEffect(() => {
     fetchRegionList();
     fetchServiceAccounts();
-   // listKeyRingsAPI();
+    // listKeyRingsAPI();
   }, []);
 
   useEffect(() => {
-    if (regionId) 
-      listKeyRingsAPI();
-  }, [regionId,selectedRadioValue]);
+    if (regionId) listKeyRingsAPI();
+  }, [regionId, selectedRadioValue]);
 
   useEffect(() => {
     if (data) {
@@ -352,11 +357,11 @@ function BigQuerySqlForm({ data }: any) {
         if (selectedRegion) {
           setRegionTypeSelected('multiRegion');
           setMultiRegionSelected(selectedRegion.label);
-          setRegionId(selectedRegion.key)
+          setRegionId(selectedRegion.key);
         } else {
           setRegionTypeSelected('region');
           setRegionSelected(data.location);
-          setRegionId(data.location)
+          setRegionId(data.location);
         }
       }
       if (data.kmsKey) {
@@ -373,7 +378,7 @@ function BigQuerySqlForm({ data }: any) {
       }
     }
   }, [data, serviceAccounts]);
-  
+
   useEffect(() => {
     if (isSaveQueryChecked) {
       if (data.writeDisposition !== undefined) {
@@ -619,6 +624,7 @@ function BigQuerySqlForm({ data }: any) {
                 </FormControl>
               )}
               {!autoRegionSelected && regionTypeSelected === 'region' ? (
+                <div>
                 <Autocomplete
                   className="create-scheduler-style-trigger"
                   options={regionList}
@@ -632,9 +638,22 @@ function BigQuerySqlForm({ data }: any) {
                     <TextField {...params} label="Region*" />
                   )}
                 />
+                  {!regionValidation && (
+                    <div className="jobform-error-key-parent">
+                      <iconError.react
+                        tag="div"
+                        className="logo-alignment-style"
+                      />
+                      <div className="jobform-error-key-missing">
+                        Region is required
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 !autoRegionSelected &&
                 regionTypeSelected === 'multiRegion' && (
+                  <div>
                   <Autocomplete
                     className="create-scheduler-style-trigger"
                     options={multiRegionList}
@@ -650,6 +669,18 @@ function BigQuerySqlForm({ data }: any) {
                       <TextField {...params} label="MultiRegion*" />
                     )}
                   />
+                   {!multiRegionValidation && (
+                    <div className="jobform-error-key-parent">
+                      <iconError.react
+                        tag="div"
+                        className="logo-alignment-style"
+                      />
+                      <div className="jobform-error-key-missing">
+                        MultiRegion is required
+                      </div>
+                    </div>
+                  )}
+                  </div>
                 )
               )}
               <div className="scheduler-retry-parent">

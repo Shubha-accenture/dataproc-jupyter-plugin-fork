@@ -106,7 +106,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
     else {
       setStatus('complete');
     }
-  }, [data.nodeType, data.inputFile, data.clusterName, data.serverless, data.isSaveQuery,data.datasetId,data.tableId]);
+  }, [data.nodeType, data.inputFile, data.clusterName, data.serverless, data.isSaveQuery,data.datasetId,data.tableId, data.isAutoRegion, data.location]);
 
   return (
     <>
