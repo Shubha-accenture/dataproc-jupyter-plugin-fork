@@ -26,7 +26,6 @@ import deleteIcon from '../../style/icons/scheduler_delete.svg';
 import { LabIcon } from '@jupyterlab/ui-components';
 import playIcon from '../../style/icons/scheduler_play.svg';
 import pauseIcon from '../../style/icons/scheduler_pause.svg';
-// import EditIconDisable from '../../style/icons/scheduler_edit_dag.svg';
 import EditNotebookIcon from '../../style/icons/scheduler_edit_calendar.svg';
 import { SchedulerService } from './schedulerServices';
 import DeletePopup from '../utils/deletePopup';
@@ -34,7 +33,6 @@ import PollingTimer from '../utils/pollingTimer';
 import PollingImportErrorTimer from '../utils/pollingImportErrorTimer';
 import ImportErrorPopup from '../utils/importErrorPopup';
 import triggerIcon from '../../style/icons/scheduler_trigger.svg';
-// import { scheduleMode } from '../utils/const';
 
 const iconDelete = new LabIcon({
   name: 'launcher:delete-icon',
@@ -61,6 +59,7 @@ const iconTrigger = new LabIcon({
   name: 'launcher:trigger-icon',
   svgstr: triggerIcon
 });
+
 interface IDagList {
   jobid: string;
   notebookname: string;
@@ -104,7 +103,6 @@ function listNotebookScheduler({
   const [selectedDagId, setSelectedDagId] = useState('');
   const [editDagLoading, setEditDagLoading] = useState('');
   const [inputNotebookFilePath, setInputNotebookFilePath] = useState('');
-  // const [editNotebookLoading, setEditNotebookLoading] = useState('');
   const [deletingNotebook, setDeletingNotebook] = useState(false);
   const [importErrorData, setImportErrorData] = useState<string[]>([]);
   const [importErrorEntries, setImportErrorEntries] = useState<number>(0);

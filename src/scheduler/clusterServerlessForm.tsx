@@ -66,7 +66,7 @@ function ClusterServerlessForm({ data, mode }: any) {
     { displayName: string; email: string }[]
   >([]);
   const [serviceAccountSelected, setServiceAccountSelected] = useState('');
-  const [editNotebookLoading, setEditNotebookLoading] = useState('');
+  const [editNotebookLoading, setEditNotebookLoading] = useState(false);
 
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
@@ -165,17 +165,16 @@ function ClusterServerlessForm({ data, mode }: any) {
   };
 
   const handleEditNotebook = async (event: React.MouseEvent) => {
-    //hardcoded for a while
-    // const jobid = event.currentTarget.getAttribute('data-jobid');
-    // console.log(jobid)
-    // if (jobid !== null) {
-    await SchedulerService.editNotebookSchedulerService(
-      'us-central1-composer3-e9f34418-bucket&1727703271077', //bucketName,
-      'auto-4-14-47job', //jobid,
-      setInputFileSelectedLocal,
-      setEditNotebookLoading
-    );
-    // }
+    setEditNotebookLoading(true)
+    eventEmitter.emit(`editfile`, event, inputFileSelectedLocal);
+  };
+
+  eventEmitter.on(`openNotebook`, (openNotebookFile:boolean) => {
+    setEditNotebookLoading(!openNotebookFile)
+  });
+
+  const extractFilename = (fullPath:string) => {
+    return fullPath ? fullPath.split('/').pop() : '';
   };
 
   useEffect(() => {
@@ -214,6 +213,8 @@ function ClusterServerlessForm({ data, mode }: any) {
     }
   }, [mode]);
 
+
+
   return (
     <>
       <div>
@@ -251,7 +252,7 @@ function ClusterServerlessForm({ data, mode }: any) {
                       aria-label="Loading Spinner"
                       data-testid="loader"
                     />
-                    {inputFileSelectedLocal}
+                    {extractFilename(inputFileSelectedLocal)}
                   </div>
                 ) : (
                   <div className="input-file-wrapper">
@@ -264,7 +265,7 @@ function ClusterServerlessForm({ data, mode }: any) {
                       className="input-file-link"
                       style={{ textDecoration: 'underline', color: 'blue' }}
                     >
-                      {inputFileSelectedLocal}
+                      {extractFilename(inputFileSelectedLocal)}
                     </a>
                   </div>
                 ))}

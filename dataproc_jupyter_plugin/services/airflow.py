@@ -275,7 +275,7 @@ class Client:
             },
             "data": {
                 "nodeType": "Cluster",
-                "inputFile": "test1.ipynb",
+                "inputFile": "gs:us-central1-composer3-e9f34418-bucket/dataproc-notebooks/auto-4-14-47job/input_notebooks/Untitled53.ipynb",
                 "retryCount": 1,
                 "retryDelay": 1,
                 "parameter": [

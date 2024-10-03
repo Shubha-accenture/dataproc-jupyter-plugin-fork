@@ -112,6 +112,7 @@ const GraphicalScheduler = ({
   const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
   const { screenToFlowPosition } = useReactFlow();
+  const [inputNotebookFilePath, setInputNotebookFilePath] = useState('');
 
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections
@@ -192,6 +193,35 @@ const GraphicalScheduler = ({
     handleFileUpload(event, data);
   });
 
+  eventEmitter.on('editfile', (event: any, inputFilePath: any) => {
+    console.log("event emitter catch", inputFilePath)
+    openEditNotebookFile(inputFilePath)
+    // if (inputFilePath !== '') {
+    // console.log("inside if")
+    //   // let filePath = inputFilepath.replace('gs://', 'gs:');
+    //   // console.log("file path",filePath)
+    //   app.commands.execute('docmanager:open', {
+    //     path: inputFilePath
+    //   });
+    //   setInputNotebookFilePath('');
+    //   //loading stop event need to add
+    //   eventEmitter.emit('editLoader',)
+
+    // }
+    
+  });
+
+  const openEditNotebookFile = async(inputNotebookFilePath:string)=>{
+    let filePath = inputNotebookFilePath.replace('gs://', 'gs:');
+    const openNotebookFile:any = await app.commands.execute('docmanager:open', {
+      path: filePath
+    });
+    setInputNotebookFilePath('');
+    if(openNotebookFile){
+      eventEmitter.emit(`openNotebook`,true)
+    }
+  }
+
   const handleFileUpload = async (event: any, data: any) => {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files || []);
@@ -253,6 +283,17 @@ const GraphicalScheduler = ({
       setIsTaskFormVisible(false);
     }
   }, [clickedNodeId, nodes]);
+
+  
+  useEffect(() => {
+    if (inputNotebookFilePath !== '') {
+      let filePath = inputNotebookFilePath.replace('gs://', 'gs:');
+      app.commands.execute('docmanager:open', {
+        path: filePath
+      });
+      setInputNotebookFilePath('');
+    }
+  }, [inputNotebookFilePath]);
 
   EdgesChange(edges);
   NodesChange(nodes);

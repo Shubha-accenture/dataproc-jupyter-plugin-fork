@@ -295,7 +295,7 @@ export class SchedulerService {
         method: 'POST'
       });
       setInputNotebookFilePath(formattedResponse.input_filename);
-      setEditNotebookLoading('');
+      // setEditNotebookLoading('');
     } catch (reason) {
       setEditNotebookLoading('');
       toast.error(
