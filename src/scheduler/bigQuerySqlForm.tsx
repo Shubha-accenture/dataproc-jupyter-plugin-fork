@@ -162,8 +162,12 @@ function BigQuerySqlForm({ data }: any) {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRegionTypeSelected(event.target.value);
+    setRegionSelected('')
+    setMultiRegionSelected('')
     setKeyRingSelected('');
     setKeySelected('');
+    setKeylist([]);
+    data.kmsKey=''
   };
 
   const fetchRegionList = async () => {
@@ -180,9 +184,6 @@ function BigQuerySqlForm({ data }: any) {
     if (event.target.checked) {
       setRegionId('us');
     }
-    // if (!event.target.checked) {
-    //   setRegionTypeSelected('region');
-    // } // check and remove
   };
 
   const handleMultiRegionTypeSelected = (
@@ -196,6 +197,7 @@ function BigQuerySqlForm({ data }: any) {
     data.kmsKey=''
     setKeyRingSelected('');
     setKeySelected('');
+    setKeylist([]);
   };
 
   const handleRegionSelected = (
@@ -209,6 +211,7 @@ function BigQuerySqlForm({ data }: any) {
     data.kmsKey=''
     setKeyRingSelected('');
     setKeySelected('');
+    setKeylist([]);
   };
 
   const handleWriteDisposition = (
@@ -299,7 +302,7 @@ function BigQuerySqlForm({ data }: any) {
   useEffect(() => {
     fetchRegionList();
     fetchServiceAccounts();
-    listKeyRingsAPI();
+   // listKeyRingsAPI();
   }, []);
 
   useEffect(() => {
@@ -356,6 +359,7 @@ function BigQuerySqlForm({ data }: any) {
       }
     }
   }, [data, serviceAccounts]);
+  
   useEffect(() => {
     if (isSaveQueryChecked) {
       if (data.writeDisposition !== undefined) {
