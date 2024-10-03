@@ -192,6 +192,8 @@ function BigQuerySqlForm({ data }: any) {
     setMultiRegionSelected(value?.label || '');
     data.location = value?.key || '';
     setRegionId(value?.key || '');
+
+    data.kmsKey=''
     setKeyRingSelected('');
     setKeySelected('');
   };
@@ -203,6 +205,10 @@ function BigQuerySqlForm({ data }: any) {
     setRegionSelected(value || '');
     data.location = value;
     setRegionId(value || '');
+
+    data.kmsKey=''
+    setKeyRingSelected('');
+    setKeySelected('');
   };
 
   const handleWriteDisposition = (

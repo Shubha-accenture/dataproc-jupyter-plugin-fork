@@ -124,6 +124,13 @@ const CreateNotebookScheduler = ({
               allNodesHaveData = false;
             }
           }
+        let autoRegion = e.data.isAutoRegion
+        if (!autoRegion) {
+          let location = e.data.location;  
+          if (!location || location.trim() === '') {
+            allNodesHaveData = false;
+          }
+        }
       }
       setNodeDataValidation(allNodesHaveData);
     });
