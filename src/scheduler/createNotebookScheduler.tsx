@@ -87,20 +87,21 @@ const CreateNotebookScheduler = ({
   }, [editMode]);
 
   const validateJobPayload = () => {
-    const isEmailChanged =
-      jobPayload.email_failure !== editPayload.email_failure ||
-      jobPayload.email_delay !== editPayload.email_delay ||
-      jobPayload.email_success !== editPayload.email_success ||
-      JSON.stringify(jobPayload.email_ids) !==
-        JSON.stringify(editPayload.email_ids);
+    // const isEmailChanged =
+    //   jobPayload.email_failure !== editPayload.email_failure ||
+    //   jobPayload.email_delay !== editPayload.email_delay ||
+    //   jobPayload.email_success !== editPayload.email_success ||
+    //   JSON.stringify(jobPayload.email_ids) !==
+    //     JSON.stringify(editPayload.email_ids); //commented for now
     return (
       jobPayload.job_name === '' ||
       jobPayload.composer_environment_name === '' ||
       ((jobPayload.email_failure ||
         jobPayload.email_delay ||
         jobPayload.email_success) &&
-        jobPayload.email_ids.length === 0) ||
-      !isEmailChanged // New condition: check if any email-related field has changed
+        jobPayload.email_ids.length === 0)
+        // ||
+      //!isEmailChanged // New condition: check if any email-related field has changed
     );
   };
 
@@ -190,10 +191,10 @@ const CreateNotebookScheduler = ({
     setEdges(updatedEdges);
   };
 
-  const handleSavePopUp = () => {
+  const handleSavePopUp= async () => {
     setSavePopupOpen(true);
   };
-  const handleCancelSave = () => {
+  const handleCancelSavePopup= async () => {
     setSavePopupOpen(false);
   };
 
@@ -220,7 +221,7 @@ const CreateNotebookScheduler = ({
     setCreateCompleted(true);
     setJobPayload(initialPayload);
     setEditMode(false);
-    setSavePopupOpen(false);
+    // setSavePopupOpen(false);
   };
 
   return (
@@ -272,17 +273,17 @@ const CreateNotebookScheduler = ({
                 aria-label="Save scheduler"
                 onClick={editMode ? handleSavePopUp : handleCreateJobScheduler}
               >
-                {savePopupOpen && (
+                <div>{creatingScheduler ? 'SAVING...' : 'SAVE'}</div>
+              </Button>
+              {savePopupOpen && (
                   <SavePopup
-                    onCancel={() => handleCancelSave()}
+                    onCancel={() => handleCancelSavePopup()}
                     onSave={() => handleCreateJobScheduler()}
                     savePopupOpen={savePopupOpen}
                     saveMsg={`Do you want to save the changes ?`}
                     savingNotebook={savingNotebook}
                   />
                 )}
-                <div>{creatingScheduler ? 'SAVING...' : 'SAVE'}</div>
-              </Button>
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"
