@@ -211,12 +211,12 @@ const ListDagTaskInstances = ({
                     {taskInstance.duration}
                   </div>
                   <div className="accordion-row-data">
-                  {(
-                    taskInstance.taskId.startsWith('submit_pyspark_job') || 
-                    taskInstance.taskId.startsWith('batch_create') || 
-                    taskInstance.taskId.startsWith('run_query_task')
+                  {
+                  taskInstance.state === 'success'&& (
+                    taskInstance.taskId.startsWith('submit_pyspark_job') || //cluster
+                    taskInstance.taskId.startsWith('batch_create')// serverless
                   ) && (
-                    <div className="logo-row-container">
+                    <div className="logo-download-container">
                       <IconButton
                         onClick={e => handleDownloadOutput(e, taskInstance.taskId)}
                       >

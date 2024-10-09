@@ -63,7 +63,6 @@ const GraphicalScheduler = ({
 }: IGraphicalSchedulerProps) => {
   const reactFlowWrapper = useRef(null);
   const connectingNodeId = useRef<string | null>(null);
-
   const initialNode = [
     {
       id: '1',
@@ -85,10 +84,10 @@ const GraphicalScheduler = ({
         location: '',
         writeDisposition: '',
         serviceAccount: '',
-        keyRings:'',
         kmsKey:'',
         isSaveQuery:false,
-        isAutoRegion:true
+        isAutoRegion:true,
+        manualKey:false
       }
     }
   ];
@@ -151,10 +150,10 @@ const GraphicalScheduler = ({
               location: '',
               writeDisposition: '',
               serviceAccount: '',
-              keyRings:'',
               kmsKey:'',   
               isSaveQuery:false,  
-              isAutoRegion:true
+              isAutoRegion:true, 
+              manualKey:false
             },
             origin: [0.5, 0.0]
           };
@@ -234,10 +233,6 @@ const GraphicalScheduler = ({
   });
 
   useEffect(() => {
-    NodesChange(transformedNodes);
-  }, [nodes]);
-
-  useEffect(() => {
     if (clickedNodeId) {
       const clickedNode = nodes.find(node => node.id === clickedNodeId);
       setClickedNodeData(clickedNode?.data);
@@ -248,79 +243,8 @@ const GraphicalScheduler = ({
   }, [clickedNodeId, nodes]);
 
   EdgesChange(edges);
-  const transformNodeData = (nodes: any) => {
-    return nodes.map((node: any) => {
-      if (node.data.nodeType === 'Trigger') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            scheduleValue: node.data.scheduleValue,
-            timeZone: node.data.timeZone
-          }
-        };
-      } else if (node.data.nodeType === 'Cluster') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            inputFile: node.data.inputFile,
-            retryCount: node.data.retryCount,
-            retryDelay: node.data.retryDelay,
-            parameter: node.data.parameter,
-            stopCluster: node.data.stopCluster,
-            clusterName: node.data.clusterName
-          }
-        };
-      } else if (node.data.nodeType === 'Serverless') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            inputFile: node.data.inputFile,
-            retryCount: node.data.retryCount,
-            retryDelay: node.data.retryDelay,
-            parameter: node.data.parameter,
-            serverless: node.data.serverless,
-            serviceAccount: node.data.serviceAccount
-          }
-        };
-      } else if (node.data.nodeType === 'Bigquery-Serverless') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            inputFile: node.data.inputFile,
-            retryCount: node.data.retryCount,
-            retryDelay: node.data.retryDelay,
-            parameter: node.data.parameter,
-            serverless: node.data.serverless,
-            serviceAccount: node.data.serviceAccount
-          }
-        };
-      } else if (node.data.nodeType === 'Bigquery-Sql') {
-        return {
-          ...node,
-          data: {
-            nodeType: node.data.nodeType,
-            inputFile: node.data.inputFile,
-            retryCount: node.data.retryCount,
-            retryDelay: node.data.retryDelay,
-            parameter: node.data.parameter,
-            tableId: node.data.tableId,
-            datasetId: node.data.datasetId,
-            location: node.data.location,
-            writeDisposition: node.data.writeDisposition,
-            serviceAccount: node.data.serviceAccount,
-            kmsKey:node.data.kmsKey
-          }
-        };
-      }
-      return node;
-    });
-  };
+  NodesChange(nodes)
 
-  const transformedNodes = transformNodeData(nodes);
 
   return (
     <>
