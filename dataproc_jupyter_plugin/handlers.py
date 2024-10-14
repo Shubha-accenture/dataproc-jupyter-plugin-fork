@@ -199,6 +199,7 @@ def setup_handlers(web_app):
         "dagDelete": airflow.DagDeleteController,
         "dagUpdate": airflow.DagUpdateController,
         "editJobScheduler": airflow.EditDagController,
+        "saveEditJobScheduler": executor.SaveEditController,
         "importErrorsList": airflow.ImportErrorController,
         "triggerDag": airflow.TriggerDagController,
         "regionList": airflow.Regioncontroller,

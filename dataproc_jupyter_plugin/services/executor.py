@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from collections import defaultdict, deque
+import json
 import os
 import shutil
 import subprocess
@@ -107,7 +108,9 @@ class Client:
             self.log.exception(f"Error checking file: {error}")
             raise IOError(f"Error creating dag: {error}")
 
-    async def upload_to_gcs(self,gcs_dag_bucket, file_path=None, template_name=None, destination_dir=None):
+    async def upload_to_gcs(
+        self, gcs_dag_bucket, file_path=None, template_name=None, destination_dir=None
+    ):
         try:
             storage_client = storage.Client()
             bucket = storage_client.bucket(gcs_dag_bucket)
@@ -117,83 +120,122 @@ class Client:
                     autoescape=select_autoescape(["py"]),
                 )
                 file_path = env.get_template(template_name).filename
-            
+
             if not file_path:
                 raise ValueError("No file path or template name provided for upload.")
             if destination_dir:
                 blob_name = f"{destination_dir}/{file_path.split('/')[-1]}"
             else:
                 blob_name = f"{file_path.split('/')[-1]}"
-            
+
             blob = bucket.blob(blob_name)
             blob.upload_from_filename(file_path)
             self.log.info(f"File {file_path} uploaded to gcs successfully")
-            
+
         except Exception as error:
             self.log.exception(f"Error uploading file to GCS: {str(error)}")
             raise IOError(str(error))
-        
-    async def get_execution_order(self,job,edges,cluster_stop_dict):
-         #creating execution order based on the tasks  
+
+    async def get_execution_order(self, job, edges, cluster_stop_dict):
+        # creating execution order based on the tasks
         dependencies = defaultdict(list)
         node_without_dependencies = []
         order_of_execution = []
         for u, v in edges:
             dependencies[u].append(v)
-            if u == '1':
-                 node_without_dependencies.append(v)
-                 
+            if u == "1":
+                node_without_dependencies.append(v)
+
         node_exec_list = []
         for nodes in node_without_dependencies:
             if dependencies[nodes]:
-                  continue
+                continue
             else:
-                node_data = next((n for n in job.nodes if n.get('id',{}) == nodes), None)
-                node_types = node_data and node_data.get('data', {}).get('nodeType')
-                if node_types == 'Serverless' or  node_types == 'Bigquery-Serverless':
-                    node_exec_list.append(f"write_output_task_{nodes} >> create_batch_{nodes}")
-                elif node_types == 'Cluster':
-                    node_exec_list.append(f"start_cluster_{nodes} >> write_output_task_{nodes} >> submit_pyspark_job_{nodes}")
-                elif node_types == 'Bigquery-Sql':
-                    node_exec_list.append(f"read_sql_query_task_{nodes} >>prepare_config_task_{nodes} >> run_query_task_{nodes}")
+                node_data = next(
+                    (n for n in job.nodes if n.get("id", {}) == nodes), None
+                )
+                node_types = node_data and node_data.get("data", {}).get("nodeType")
+                if node_types == "Serverless" or node_types == "Bigquery-Serverless":
+                    node_exec_list.append(
+                        f"write_output_task_{nodes} >> create_batch_{nodes}"
+                    )
+                elif node_types == "Cluster":
+                    node_exec_list.append(
+                        f"start_cluster_{nodes} >> write_output_task_{nodes} >> submit_pyspark_job_{nodes}"
+                    )
+                elif node_types == "Bigquery-Sql":
+                    node_exec_list.append(
+                        f"read_sql_query_task_{nodes} >>prepare_config_task_{nodes} >> run_query_task_{nodes}"
+                    )
         if node_exec_list:
             order_of_execution.append(f"[{', '.join(node_exec_list)}]")
         for node, deps in dependencies.items():
             dep_str_list = []
-            node_type = next((n for n in job.nodes if n.get('id',{}) == node), {}).get('data', {}).get('nodeType')
+            node_type = (
+                next((n for n in job.nodes if n.get("id", {}) == node), {})
+                .get("data", {})
+                .get("nodeType")
+            )
             for dep in deps:
-                node_data = next((n for n in job.nodes if n.get('id',{}) == dep), None)
-                if node_data and node_data.get('data', {}).get('nodeType') == 'Serverless' or node_data and node_data.get('data', {}).get('nodeType') == 'Bigquery-Serverless':
-                    dep_str_list.append(f"write_output_task_{dep} >> create_batch_{dep}")
-                elif node_data and node_data.get('data', {}).get('nodeType') == 'Cluster':
-                    dep_str_list.append(f"start_cluster_{dep} >> write_output_task_{dep} >> submit_pyspark_job_{dep}")
-                elif node_data and node_data.get('data', {}).get('nodeType') == 'Bigquery-Sql':
-                    dep_str_list.append(f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep}")
+                node_data = next((n for n in job.nodes if n.get("id", {}) == dep), None)
+                if (
+                    node_data
+                    and node_data.get("data", {}).get("nodeType") == "Serverless"
+                    or node_data
+                    and node_data.get("data", {}).get("nodeType")
+                    == "Bigquery-Serverless"
+                ):
+                    dep_str_list.append(
+                        f"write_output_task_{dep} >> create_batch_{dep}"
+                    )
+                elif (
+                    node_data and node_data.get("data", {}).get("nodeType") == "Cluster"
+                ):
+                    dep_str_list.append(
+                        f"start_cluster_{dep} >> write_output_task_{dep} >> submit_pyspark_job_{dep}"
+                    )
+                elif (
+                    node_data
+                    and node_data.get("data", {}).get("nodeType") == "Bigquery-Sql"
+                ):
+                    dep_str_list.append(
+                        f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep}"
+                    )
 
             if len(dep_str_list) > 1:
-                dep_str = ', '.join(dep_str_list)
-                if node_type == 'Serverless' or node_type == 'Bigquery-Serverless':
-                    order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> [{dep_str}]")
-                elif node_type == 'Cluster':
-                    order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> [{dep_str}]")
-                elif node_type == 'Bigquery-Sql':
-                    order_of_execution.append(f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep} >> [{dep_str}]")
+                dep_str = ", ".join(dep_str_list)
+                if node_type == "Serverless" or node_type == "Bigquery-Serverless":
+                    order_of_execution.append(
+                        f"write_output_task_{node} >> create_batch_{node} >> [{dep_str}]"
+                    )
+                elif node_type == "Cluster":
+                    order_of_execution.append(
+                        f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> [{dep_str}]"
+                    )
+                elif node_type == "Bigquery-Sql":
+                    order_of_execution.append(
+                        f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep} >> [{dep_str}]"
+                    )
             else:
                 if dep_str_list:
                     dep_str = dep_str_list[0]
-                    if node_type == 'Serverless' or node_type == 'Bigquery-Serverless':
-                        order_of_execution.append(f"write_output_task_{node} >> create_batch_{node} >> {dep_str}")
-                    elif node_type == 'Cluster':
-                        order_of_execution.append(f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> {dep_str}")
-                    elif node_type == 'Bigquery-Sql':
-                        order_of_execution.append(f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep} >> [{dep_str}]")
-                
-   
-        final_order = '\n'.join(order_of_execution)
-        if len(cluster_stop_dict) > 0:
-            final_order += ' >> stop_cluster'
-        return final_order
+                    if node_type == "Serverless" or node_type == "Bigquery-Serverless":
+                        order_of_execution.append(
+                            f"write_output_task_{node} >> create_batch_{node} >> {dep_str}"
+                        )
+                    elif node_type == "Cluster":
+                        order_of_execution.append(
+                            f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> {dep_str}"
+                        )
+                    elif node_type == "Bigquery-Sql":
+                        order_of_execution.append(
+                            f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep} >> [{dep_str}]"
+                        )
 
+        final_order = "\n".join(order_of_execution)
+        if len(cluster_stop_dict) > 0:
+            final_order += " >> stop_cluster"
+        return final_order
 
     async def prepare_dag(self, job, gcs_dag_bucket, dag_file, execution_order, edges):
         self.log.info("Generating dag file")
@@ -206,24 +248,30 @@ class Client:
             loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH)
         )
         environment_serverless = Environment(
-            loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_SERVERLESS)
+            loader=PackageLoader(
+                "dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_SERVERLESS
+            )
         )
         environment_cluster = Environment(
-            loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_CLUSTER)
+            loader=PackageLoader(
+                "dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_CLUSTER
+            )
         )
         environment_bq = Environment(
-            loader=PackageLoader("dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_DATAPROC)
+            loader=PackageLoader(
+                "dataproc_jupyter_plugin", TEMPLATES_FOLDER_PATH_DATAPROC
+            )
         )
-        #getting the common values needed for dag generation
+        # getting the common values needed for dag generation
         gcp_project_id = self.project_id
         gcp_region_id = self.region_id
         user = gcp_account()
-        owner = user.split("@")[0]  
-        if job.nodes[0]['data']['scheduleValue'] == "":
+        owner = user.split("@")[0]
+        if job.nodes[0]["data"]["scheduleValue"] == "":
             schedule_interval = "@once"
         else:
-            schedule_interval = job.nodes[0]['data']['scheduleValue']
-        if job.nodes[0]['data']['timeZone'] == "":
+            schedule_interval = job.nodes[0]["data"]["scheduleValue"]
+        if job.nodes[0]["data"]["timeZone"] == "":
             yesterday = datetime.combine(
                 datetime.today() - timedelta(1), datetime.min.time()
             )
@@ -231,95 +279,112 @@ class Client:
             time_zone = ""
         else:
             yesterday = pendulum.now().subtract(days=1)
-            desired_timezone = job.nodes[0]['data']['timeZone']
+            desired_timezone = job.nodes[0]["data"]["timeZone"]
             dag_timezone = pendulum.timezone(desired_timezone)
             start_date = yesterday.replace(tzinfo=dag_timezone)
-            time_zone = job.nodes[0]['data']['timeZone']
+            time_zone = job.nodes[0]["data"]["timeZone"]
         current_year = datetime.now().year
 
-        node_type_dict = {
-        'cluster': 0,
-        'serverless': 0,
-        'bq-sql': 0
-            }
-    
-        for node in job.nodes:
-            node_type = node.get('data', {}).get('nodeType')
-            
-            if node_type == 'Cluster':
-                node_type_dict['cluster'] = 1
-            elif node_type in ['Serverless', 'Bigquery-Serverless']:
-                node_type_dict['serverless'] = 1
-            elif node_type == 'Bigquery-Sql':
-                node_type_dict['bq-sql'] = 1
-        #checking if the taks has cluster and adds stop cluster state to stop the cluster at the end
-        cluster_stop_dict = {}
-        service_account = ''
-        for node in job.nodes:
-            if node.get('data', {}).get('nodeType') == 'Cluster':
-                cluster_name = node.get('data', {}).get('clusterName')
-                stop_cluster = node.get('data', {}).get('stopCluster')
-                cluster_stop_dict[cluster_name] = stop_cluster
-            elif node.get('data', {}).get('nodeType') == 'Bigquery-Sql':
-                if service_account == '':
-                    service_account =  node.get('data', {}).get('serviceAccount', {})
+        node_type_dict = {"cluster": 0, "serverless": 0, "bq-sql": 0}
 
-        #generate dag file with common values
+        for node in job.nodes:
+            node_type = node.get("data", {}).get("nodeType")
+
+            if node_type == "Cluster":
+                node_type_dict["cluster"] = 1
+            elif node_type in ["Serverless", "Bigquery-Serverless"]:
+                node_type_dict["serverless"] = 1
+            elif node_type == "Bigquery-Sql":
+                node_type_dict["bq-sql"] = 1
+        # checking if the taks has cluster and adds stop cluster state to stop the cluster at the end
+        cluster_stop_dict = {}
+        service_account = ""
+        for node in job.nodes:
+            if node.get("data", {}).get("nodeType") == "Cluster":
+                cluster_name = node.get("data", {}).get("clusterName")
+                stop_cluster = node.get("data", {}).get("stopCluster")
+                cluster_stop_dict[cluster_name] = stop_cluster
+            elif node.get("data", {}).get("nodeType") == "Bigquery-Sql":
+                if service_account == "":
+                    service_account = node.get("data", {}).get("serviceAccount", {})
+
+        # generate dag file with common values
         LOCAL_DAG_FILE_LOCATION = f"./scheduled-jobs/{job.job_name}"
         file_path = os.path.join(LOCAL_DAG_FILE_LOCATION, dag_file)
         os.makedirs(LOCAL_DAG_FILE_LOCATION, exist_ok=True)
         common_template = environment.get_template(DAG_TEMPLATE_JOB_V1)
-        contents = common_template.render(job,
-        owner=owner,scheduleInterval=schedule_interval,timeZone=time_zone, startDate=start_date,year= current_year,gcpProjectId=gcp_project_id,
-                    gcpRegion=gcp_region_id,clusterStop =  cluster_stop_dict, serviceAccount = service_account,cluster = node_type_dict['cluster'], serverless = node_type_dict['serverless'], bqSql=node_type_dict['bq-sql'])
+        contents = common_template.render(
+            job,
+            owner=owner,
+            scheduleInterval=schedule_interval,
+            timeZone=time_zone,
+            startDate=start_date,
+            year=current_year,
+            gcpProjectId=gcp_project_id,
+            gcpRegion=gcp_region_id,
+            clusterStop=cluster_stop_dict,
+            serviceAccount=service_account,
+            cluster=node_type_dict["cluster"],
+            serverless=node_type_dict["serverless"],
+            bqSql=node_type_dict["bq-sql"],
+        )
         with open(file_path, mode="w", encoding="utf-8") as message:
             message.write(contents)
-   
-        #iterate and generate dag tasks for each node based on node type
-        serverless_template = environment_serverless.get_template(DAG_TEMPLATE_SERVERLESS_V3)
+
+        # iterate and generate dag tasks for each node based on node type
+        serverless_template = environment_serverless.get_template(
+            DAG_TEMPLATE_SERVERLESS_V3
+        )
         for node in job.nodes:
-            node_type = node.get('data', {}).get('nodeType')
-            id = node.get('id',{})
-            if node_type != 'Trigger':
-                input_file = node.get('data', {}).get('inputFile', '')
+            node_type = node.get("data", {}).get("nodeType")
+            id = node.get("id", {})
+            if node_type != "Trigger":
+                input_file = node.get("data", {}).get("inputFile", "")
                 if not input_file.startswith(GCS):
-                    await self.upload_to_gcs(gcs_dag_bucket, file_path=f"./{input_file}", destination_dir=f"dataproc-notebooks/{job_name}/input_notebooks")
-                
-                if node_type == 'Serverless' or node_type == 'Bigquery-Serverless':
-                    serverless_config = node.get('data', {}).get('serverless', {})
-                    print(node.get('data', {}).get('retryCount', {}))
+                    await self.upload_to_gcs(
+                        gcs_dag_bucket,
+                        file_path=f"./{input_file}",
+                        destination_dir=f"dataproc-notebooks/{job_name}/input_notebooks",
+                    )
+
+                if node_type == "Serverless" or node_type == "Bigquery-Serverless":
+                    serverless_config = node.get("data", {}).get("serverless", {})
+                    print(node.get("data", {}).get("retryCount", {}))
                     phs_path = (
                         serverless_config.get("environmentConfig", {})
                         .get("peripheralsConfig", {})
                         .get("sparkHistoryServerConfig", {})
                         .get("dataprocCluster", "")
                     )
-                    serverless_name = (
-                        serverless_config.get("jupyterSession", {})
-                        .get("displayName", "")
+                    serverless_name = serverless_config.get("jupyterSession", {}).get(
+                        "displayName", ""
                     )
-                    custom_container = (
-                        serverless_config.get("runtimeConfig", {})
-                        .get("containerImage", "")
+                    custom_container = serverless_config.get("runtimeConfig", {}).get(
+                        "containerImage", ""
                     )
                     metastore_service = (
                         serverless_config.get("environmentConfig", {})
                         .get("peripheralsConfig", {})
                         .get("metastoreService", "")
                     )
-                    version = (
-                        serverless_config.get("runtimeConfig", {})
-                        .get("version", "")
+                    version = serverless_config.get("runtimeConfig", {}).get(
+                        "version", ""
                     )
-                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
+                    file_name = (
+                        input_file.split("/")[-1] if "/" in input_file else input_file
+                    )
                     input_notebook = (
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{file_name}"
-                        if not input_file.startswith("gs://") else file_name
+                        if not input_file.startswith("gs://")
+                        else file_name
                     )
-                    parameters = [item.replace(":", ": ") for item in node.get('data', {}).get('parameter', [])]
+                    parameters = [
+                        item.replace(":", ": ")
+                        for item in node.get("data", {}).get("parameter", [])
+                    ]
                     content = serverless_template.render(
                         job,
-                        id = id,
+                        id=id,
                         inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
                         inputFile=input_file,
                         gcpProjectId=gcp_project_id,
@@ -333,93 +398,108 @@ class Client:
                         customContainer=custom_container,
                         metastoreService=metastore_service,
                         version=version,
-                        retries = node.get('data', {}).get('retryCount', {}),
-                        serviceAccount = node.get('data', {}).get('serviceAccount', {})
+                        retries=node.get("data", {}).get("retryCount", {}),
+                        serviceAccount=node.get("data", {}).get("serviceAccount", {}),
                     )
                     serverless_file = f"dag_{file_name}"
                     with open(serverless_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
-                    with open(serverless_file, 'r', encoding='utf-8') as file:
+                    with open(serverless_file, "r", encoding="utf-8") as file:
                         lines = file.readlines()
                         if len(lines) > 16:
-                            serverless_contents = ''.join(lines[16:])
+                            serverless_contents = "".join(lines[16:])
                         else:
-                            serverless_contents = ''.join(lines)
+                            serverless_contents = "".join(lines)
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(serverless_contents)
                     os.remove(serverless_file)
-                elif node_type == 'Cluster':
-                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
+                elif node_type == "Cluster":
+                    file_name = (
+                        input_file.split("/")[-1] if "/" in input_file else input_file
+                    )
                     input_notebook = (
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{file_name}"
-                        if not input_file.startswith("gs://") else file_name
+                        if not input_file.startswith("gs://")
+                        else file_name
                     )
-                    parameters = [item.replace(":", ": ") for item in node.get('data', {}).get('parameter', [])]
+                    parameters = [
+                        item.replace(":", ": ")
+                        for item in node.get("data", {}).get("parameter", [])
+                    ]
 
-                    cluster_template = environment_cluster.get_template(DAG_TEMPLATE_CLUSTER_V3)
+                    cluster_template = environment_cluster.get_template(
+                        DAG_TEMPLATE_CLUSTER_V3
+                    )
                     content = cluster_template.render(
-                    job,
-                    id = id,
-                    inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
-                    gcpProjectId=gcp_project_id,
-                    gcpRegion=gcp_region_id,
-                    inputNotebook=input_notebook,
-                    outputNotebook=f"gs://{gcs_dag_bucket}/dataproc-output/{job.job_name}/output-notebooks/{job.job_name}_",
-                    parameters=parameters,
-                    retries = node.get('data', {}).get('retryCount', {}),
-                    clusterName =node.get('data',{}).get('clusterName',{}),
-                    stopStatus =node.get('data',{}).get('stopCluster',{})
+                        job,
+                        id=id,
+                        inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
+                        gcpProjectId=gcp_project_id,
+                        gcpRegion=gcp_region_id,
+                        inputNotebook=input_notebook,
+                        outputNotebook=f"gs://{gcs_dag_bucket}/dataproc-output/{job.job_name}/output-notebooks/{job.job_name}_",
+                        parameters=parameters,
+                        retries=node.get("data", {}).get("retryCount", {}),
+                        clusterName=node.get("data", {}).get("clusterName", {}),
+                        stopStatus=node.get("data", {}).get("stopCluster", {}),
                     )
                     cluster_file = f"dag_{file_name}"
                     with open(cluster_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
-                    with open(cluster_file, 'r', encoding='utf-8') as file:
+                    with open(cluster_file, "r", encoding="utf-8") as file:
                         lines = file.readlines()
                         if len(lines) > 16:
-                            cluster_contents = ''.join(lines[15:])
+                            cluster_contents = "".join(lines[15:])
                         else:
-                            cluster_contents = ''.join(lines)
+                            cluster_contents = "".join(lines)
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(cluster_contents)
                     os.remove(cluster_file)
-                elif node_type == 'Bigquery-Sql':
-                    file_name = input_file.split('/')[-1] if '/' in input_file else input_file
+                elif node_type == "Bigquery-Sql":
+                    file_name = (
+                        input_file.split("/")[-1] if "/" in input_file else input_file
+                    )
                     input_notebook = (
                         f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{file_name}"
-                        if not input_file.startswith("gs://") else file_name
+                        if not input_file.startswith("gs://")
+                        else file_name
                     )
-                    parameters = ",".join(item for item in node.get('data', {}).get('parameter', []))
+                    parameters = ",".join(
+                        item for item in node.get("data", {}).get("parameter", [])
+                    )
                     bq_template = environment_bq.get_template(DAG_TEMPLATE_BIGQUERY_V3)
                     content = bq_template.render(
-                    job,
-                    id = id,
-                    inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
-                    inputNotebook=input_notebook,
-                    gcpProjectId=gcp_project_id,
-                    bqRegion=node.get('data',{}).get('location',{}),
-                    parameters=parameters,
-                    retries = node.get('data', {}).get('retryCount', {}),
-                    datasetId  =node.get('data',{}).get('datasetId',{}),
-                    tableId =node.get('data',{}).get('tableId',{}),
-                    serviceAccount = node.get('data',{}).get('serviceAccount',{}),
-                    writeDisposition =node.get('data',{}).get('writeDisposition',{}),
-                    kmsKey = node.get('data',{}).get('kmsKey',{})
+                        job,
+                        id=id,
+                        inputFilePath=f"gs://{gcs_dag_bucket}/dataproc-notebooks/wrapper_papermill.py",
+                        inputNotebook=input_notebook,
+                        gcpProjectId=gcp_project_id,
+                        bqRegion=node.get("data", {}).get("location", {}),
+                        parameters=parameters,
+                        retries=node.get("data", {}).get("retryCount", {}),
+                        datasetId=node.get("data", {}).get("datasetId", {}),
+                        tableId=node.get("data", {}).get("tableId", {}),
+                        serviceAccount=node.get("data", {}).get("serviceAccount", {}),
+                        writeDisposition=node.get("data", {}).get(
+                            "writeDisposition", {}
+                        ),
+                        kmsKey=node.get("data", {}).get("kmsKey", {}),
                     )
                     bq_file = f"dag_{file_name}"
                     with open(bq_file, mode="w", encoding="utf-8") as message:
                         message.write(content)
-                    with open(bq_file, 'r', encoding='utf-8') as file:
+                    with open(bq_file, "r", encoding="utf-8") as file:
                         lines = file.readlines()
                         if len(lines) > 16:
-                            bq_contents = ''.join(lines[15:])
+                            bq_contents = "".join(lines[15:])
                         else:
-                            bq_contents = ''.join(lines)
+                            bq_contents = "".join(lines)
                     with open(file_path, mode="a", encoding="utf-8") as message:
                         message.write(bq_contents)
                     os.remove(bq_file)
 
-        final_order = await self.get_execution_order(job,edges, cluster_stop_dict)
-        #creating a folder 'scheduled-jobs' and place the papermill file and dag file
+        final_order = await self.get_execution_order(job, edges, cluster_stop_dict)
+        # creating a folder 'scheduled-jobs' and place the papermill file and dag file
         with open(file_path, mode="a", encoding="utf-8") as message:
             message.write(final_order)
         env = Environment(
@@ -430,8 +510,8 @@ class Client:
         shutil.copy2(wrapper_papermill_path, LOCAL_DAG_FILE_LOCATION)
         return file_path
 
-    async def get_topological_order(self,nodes,edges):
-    # Create a graph as an adjacency list and a dictionary for in-degrees
+    async def get_topological_order(self, nodes, edges):
+        # Create a graph as an adjacency list and a dictionary for in-degrees
         graph = defaultdict(list)
         in_degree = {node: 0 for node in nodes}
         # Build the graph and in-degree dictionary
@@ -460,7 +540,9 @@ class Client:
         if len(topological_order) == len(nodes):
             return topological_order, levels
         else:
-            raise ValueError("The graph has at least one cycle, topological sorting is not possible.")
+            raise ValueError(
+                "The graph has at least one cycle, topological sorting is not possible."
+            )
 
     async def execute(self, input):
         try:
@@ -471,12 +553,14 @@ class Client:
             dag_file = f"dag_{job_name}.py"
             gcs_dag_bucket = await self.get_bucket(job.composer_environment_name)
             wrapper_pappermill_file_path = WRAPPER_PAPPERMILL_FILE
-            nodes = [node['id'] for node in input['nodes']]
+            nodes = [node["id"] for node in input["nodes"]]
 
             # Extract edges
-            edges = [(edge["source"], edge["target"]) for edge in input['edges']]
+            edges = [(edge["source"], edge["target"]) for edge in input["edges"]]
             order, execution_order = await self.get_topological_order(nodes, edges)
-            file_path = await self.prepare_dag(job, gcs_dag_bucket, dag_file, execution_order, edges)
+            file_path = await self.prepare_dag(
+                job, gcs_dag_bucket, dag_file, execution_order, edges
+            )
 
             if await self.check_file_exists(
                 gcs_dag_bucket, wrapper_pappermill_file_path
@@ -485,11 +569,38 @@ class Client:
                     f"The file gs://{gcs_dag_bucket}/{wrapper_pappermill_file_path} exists."
                 )
             else:
-                await self.upload_to_gcs(gcs_dag_bucket, template_name=WRAPPER_PAPPERMILL_FILE, destination_dir="dataproc-notebooks")
+                await self.upload_to_gcs(
+                    gcs_dag_bucket,
+                    template_name=WRAPPER_PAPPERMILL_FILE,
+                    destination_dir="dataproc-notebooks",
+                )
                 print(
                     f"The file gs://{gcs_dag_bucket}/{wrapper_pappermill_file_path} does not exist."
                 )
-            await self.upload_to_gcs(gcs_dag_bucket, file_path=file_path, destination_dir="dags")    
+            modified_payload = input.copy()
+            for node in modified_payload["nodes"]:
+                if node["data"]["nodeType"] != "Trigger" and node["data"].get(
+                    "inputFile"
+                ):
+                    input_file = node["data"]["inputFile"]
+                    # Update the inputFile path
+                    node["data"][
+                        "inputFile"
+                    ] = f"gs://{gcs_dag_bucket}/dataproc-notebooks/{job_name}/input_notebooks/{input_file}"
+            json_file_path = f"{job_name}_payload.json"
+            with open(json_file_path, "w") as json_file:
+                json.dump(modified_payload, json_file)
+
+            await self.upload_to_gcs(
+                gcs_dag_bucket,
+                file_path=json_file_path,
+                destination_dir="input-payload",
+            )
+            await self.upload_to_gcs(
+                gcs_dag_bucket, file_path=file_path, destination_dir="dags"
+            )
+            if os.path.exists(json_file_path):
+                os.remove(json_file_path)
             return {"status": 0}
         except Exception as e:
             return {"error": str(e)}
@@ -503,19 +614,21 @@ class Client:
             )
         except Exception as ex:
             return {"error": f"Invalid DAG run ID {dag_run_id}"}
-        
+
         try:
             credentials = oauth2.Credentials(self._access_token)
             storage_client = storage.Client(credentials=credentials)
             blob_name = f"dataproc-output/{dag_id}/output-notebooks/{dag_id}_{dag_run_id}-{output_task_id}.ipynb"
             bucket = storage_client.bucket(bucket_name)
             blob = bucket.blob(blob_name)
-            original_file_name = os.path.basename(blob_name) 
+            original_file_name = os.path.basename(blob_name)
             destination_file_name = os.path.join(".", original_file_name)
             async with aiofiles.open(destination_file_name, "wb") as f:
-                file_data = blob.download_as_bytes() 
-                await f.write(file_data) 
-            self.log.info(f"Output notebook file '{original_file_name}' downloaded successfully")
+                file_data = blob.download_as_bytes()
+                await f.write(file_data)
+            self.log.info(
+                f"Output notebook file '{original_file_name}' downloaded successfully"
+            )
             return 0
         except Exception as error:
             self.log.exception(f"Error downloading output notebook file: {str(error)}")

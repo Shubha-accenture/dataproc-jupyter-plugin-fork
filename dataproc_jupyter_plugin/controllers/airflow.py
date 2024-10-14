@@ -209,36 +209,40 @@ class TriggerDagController(AirflowHandler):
 
     async def _handle_post(self, client):
         return await client.dag_trigger(self.dag_id, self.composer_environment)
-    
+
+
 class Regioncontroller(AirflowHandler):
     def description(self):
         return "Region"
-    
+
     async def _handle_get(self, client):
         project_id = self.get_argument("project_id")
         return await client.list_regions(project_id)
 
+
 class ServiceAccountcontroller(AirflowHandler):
     def description(self):
         return "Region"
-    
+
     async def _handle_get(self, client):
         project_id = self.get_argument("project_id")
         return await client.list_service_accounts(project_id)
-    
+
+
 class KeyRingscontroller(AirflowHandler):
     def description(self):
         return "Key rings"
-    
+
     async def _handle_get(self, client):
         region_id = self.get_argument("region_id")
         return await client.list_key_rings(region_id)
-    
+
+
 class Keyscontroller(AirflowHandler):
     def description(self):
         return "Keys"
-    
+
     async def _handle_get(self, client):
         region_id = self.get_argument("region_id")
         key_ring_id = self.get_argument("key_ring_id")
-        return await client.list_keys(region_id,key_ring_id)
+        return await client.list_keys(region_id, key_ring_id)

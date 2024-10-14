@@ -47,6 +47,29 @@ class ExecutorController(APIHandler):
             self.finish({"error": str(e)})
 
 
+class SaveEditController(APIHandler):
+    @tornado.web.authenticated
+    async def put(self):
+        try:
+            input_data = self.get_json_body()
+            if not re.fullmatch(
+                constants.COMPOSER_ENVIRONMENT_REGEXP,
+                input_data["composer_environment_name"],
+            ):
+                raise ValueError(f"Invalid environment name: {input_data}")
+            if not re.fullmatch(constants.AIRFLOW_JOB_REGEXP, input_data["job_name"]):
+                raise ValueError(f"Invalid job name: {input_data}")
+            async with aiohttp.ClientSession() as client_session:
+                client = executor.Client(
+                    await credentials.get_cached(), self.log, client_session
+                )
+                result = await client.execute(input_data)
+                self.finish(json.dumps(result))
+        except Exception as e:
+            self.log.exception(f"Error editing dag schedule: {str(e)}")
+            self.finish({"error": str(e)})
+
+
 class DownloadOutputController(APIHandler):
     @tornado.web.authenticated
     async def get(self):
@@ -71,7 +94,7 @@ class DownloadOutputController(APIHandler):
                     await credentials.get_cached(), self.log, client_session
                 )
                 download_status = await client.download_dag_output(
-                   composer_name, bucket_name, dag_id, dag_run_id,output_task_id
+                    composer_name, bucket_name, dag_id, dag_run_id, output_task_id
                 )
                 self.finish(json.dumps({"status": download_status}))
         except Exception as e:
