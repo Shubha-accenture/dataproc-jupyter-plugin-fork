@@ -217,7 +217,6 @@ const CreateNotebookScheduler = ({
     };
     await SchedulerService.createJobSchedulerService(
       payload,
-      app,
       setCreateCompleted,
       setCreatingScheduler,
       editMode
@@ -226,6 +225,24 @@ const CreateNotebookScheduler = ({
     setJobPayload(initialPayload); //after save
     setSavingNotebook(false);
   };
+
+  const handleEditJobScheduler = async () => {
+    setSavingNotebook(true);
+    const payload = {
+      ...jobPayload,
+      nodes: nodes,
+      edges: edges
+    };
+    await SchedulerService.saveEditJobSchedulerService(
+      payload,
+      setCreateCompleted,
+      setCreatingScheduler,
+    );
+    setEditMode(false);
+    setJobPayload(initialPayload); //after save
+    setSavingNotebook(false);
+  };
+
 
   const handleCancel = async () => {
     setCreateCompleted(true);
@@ -288,7 +305,7 @@ const CreateNotebookScheduler = ({
               {savePopupOpen && (
                   <SavePopup
                     onCancel={() => handleCancelSavePopup()}
-                    onSave={() => handleCreateJobScheduler()}
+                    onSave={() => handleEditJobScheduler()}
                     savePopupOpen={savePopupOpen}
                     saveMsg={`Do you want to save the changes ?`}
                     savingNotebook={savingNotebook}

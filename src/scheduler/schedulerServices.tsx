@@ -19,7 +19,7 @@ import { toast } from 'react-toastify';
 import { requestAPI } from '../handler/handler';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import { toastifyCustomStyle } from '../utils/utils';
-import { JupyterLab } from '@jupyterlab/application';
+// import { JupyterLab } from '@jupyterlab/application';
 // import { scheduleMode } from '../utils/const';
 
 interface IPayload {}
@@ -241,9 +241,39 @@ export class SchedulerService {
       );
     }
   };
+  static saveEditJobSchedulerService = async (
+    payload: IPayload,
+    setCreateCompleted: (value: boolean) => void,
+    setCreatingScheduler: (value: boolean) => void,
+  ) => {
+    setCreatingScheduler(true);
+    try {
+      const data: any = await requestAPI('saveEditJobScheduler', {
+        body: JSON.stringify(payload),
+        method: 'PUT'
+      });
+      if (data.error) {
+        toast.error(data.error, toastifyCustomStyle);
+        setCreatingScheduler(false);
+      } else {
+          toast.success(
+            `Job scheduler successfully updated`,
+            toastifyCustomStyle
+          );
+        setCreatingScheduler(false);
+        setCreateCompleted(true);
+      }
+    } catch (reason) {
+      setCreatingScheduler(false);
+      toast.error(
+        `Error on POST {dataToSend}.\n${reason}`,
+        toastifyCustomStyle
+      );
+    }
+  };
+
   static createJobSchedulerService = async (
     payload: IPayload,
-    app: JupyterLab,
     setCreateCompleted: (value: boolean) => void,
     setCreatingScheduler: (value: boolean) => void,
     editMode: boolean
