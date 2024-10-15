@@ -136,7 +136,7 @@ class DagUpdateController(AirflowHandler):
     def description(self):
         return "status"
 
-    async def _handle_post(self, client):
+    async def patch(self, client):
         status = self.get_argument("status")
         update_response = await client.update_job(
             self.composer_environment, self.dag_id, status
@@ -191,7 +191,7 @@ class EditDagController(AirflowHandler):
     def description(self):
         return "job"
 
-    async def _handle_post(self, client):
+    async def _handle_get(self, client):
         return await client.edit_jobs(self.dag_id, self.bucket_name)
 
 

@@ -348,7 +348,7 @@ export class SchedulerService {
     try {
       const serviceURL = `editJobScheduler?&dag_id=${dagId}&bucket_name=${bucketName}`;
       const formattedResponse: any = await requestAPI(serviceURL, {
-        method: 'POST'
+        method: 'GET'
       });
       setEditPayload(formattedResponse)
       setEditPayloadFixed(formattedResponse)
@@ -691,7 +691,7 @@ export class SchedulerService {
       const serviceURL = `dagUpdate?composer=${composerSelected}&dag_id=${dag_id}&status=${is_status_paused}`;
       const formattedResponse: IUpdateSchedulerAPIResponse = await requestAPI(
         serviceURL,
-        { method: 'POST' }
+        { method: 'PATCH' }
       );
       if (formattedResponse && formattedResponse.status === 0) {
         toast.success(
