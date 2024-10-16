@@ -31,8 +31,11 @@ import { scheduleMode } from '../utils/const';
 
 const TriggerJobForm = ({ data }: { data: any }) => {
   const defaultMode = data.timeZone ? 'runSchedule' : 'runNow';
+  const defaultScheduleValue = data.scheduleValue
+    ? data.scheduleValue
+    : scheduleValueExpression;
   const [scheduleMode, setScheduleMode] = useState<scheduleMode>(defaultMode);
-  const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
+  const [scheduleValue, setScheduleValue] = useState(defaultScheduleValue);
   const [timeZoneSelected, setTimeZoneSelected] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
@@ -71,7 +74,7 @@ const TriggerJobForm = ({ data }: { data: any }) => {
       setScheduleValue(data.scheduleValue);
       setTimeZoneSelected(data.timeZone);
     }
-  }, [data, scheduleMode]);
+  }, [data]);
 
   return (
     <>
@@ -107,7 +110,13 @@ const TriggerJobForm = ({ data }: { data: any }) => {
           {scheduleMode === 'runSchedule' && (
             <>
               <div className="create-scheduler-form-element-trigger">
-                <Cron value={scheduleValue} setValue={setScheduleValue} />
+                <Cron
+                  value={scheduleValue}
+                  setValue={(val: any) => {
+                    setScheduleValue(val);
+                    data.scheduleValue = val;
+                  }}
+                />
               </div>
               <div className="create-scheduler-form-element-trigger">
                 <Autocomplete
