@@ -98,11 +98,11 @@ const CreateNotebookScheduler = ({
         jobPayload.email_delay ||
         jobPayload.email_success) &&
         jobPayload.email_ids.length === 0)
-        // ||
+      // ||
       //!isEmailChanged // New condition: check if any email-related field has changed
     );
   };
-// need for svae button 
+  // need for save button disable logic
   //  const editFlowValidation=()=>{
   //   console.log(nodes, editPayload.nodes)
   //   if (nodes.length !== editPayload.nodes.length) {
@@ -156,26 +156,29 @@ const CreateNotebookScheduler = ({
         if (!serverless) {
           allNodesHaveData = false;
         }
-      }
-      else if(e.data.nodeType === 'Bigquery-Sql')
-      {
+      } else if (e.data.nodeType === 'Bigquery-Sql') {
         let inputFile = e.data.inputFile;
         if (!inputFile || inputFile.trim() === '') {
           allNodesHaveData = false;
         }
-        let saveQuery = e.data.isSaveQuery ?? false; 
-          if (saveQuery) {
-            let datasetId = e.data.datasetId;
-            let tableId = e.data.tableId;
-          
-            // Check if either datasetId or tableId is missing or empty
-            if (!datasetId || datasetId.trim() === '' || !tableId || tableId.trim() === '') {
-              allNodesHaveData = false;
-            }
+        let saveQuery = e.data.isSaveQuery ?? false;
+        if (saveQuery) {
+          let datasetId = e.data.datasetId;
+          let tableId = e.data.tableId;
+
+          // Check if either datasetId or tableId is missing or empty
+          if (
+            !datasetId ||
+            datasetId.trim() === '' ||
+            !tableId ||
+            tableId.trim() === ''
+          ) {
+            allNodesHaveData = false;
           }
-        let autoRegion = e.data.isAutoRegion
+        }
+        let autoRegion = e.data.isAutoRegion;
         if (!autoRegion) {
-          let location = e.data.location;  
+          let location = e.data.location;
           if (!location || location.trim() === '') {
             allNodesHaveData = false;
           }
@@ -201,10 +204,10 @@ const CreateNotebookScheduler = ({
     setEdges(updatedEdges);
   };
 
-  const handleSavePopUp= async () => {
+  const handleSavePopUp = async () => {
     setSavePopupOpen(true);
   };
-  const handleCancelSavePopup= async () => {
+  const handleCancelSavePopup = async () => {
     setSavePopupOpen(false);
   };
 
@@ -236,19 +239,19 @@ const CreateNotebookScheduler = ({
     await SchedulerService.saveEditJobSchedulerService(
       payload,
       setCreateCompleted,
-      setCreatingScheduler,
+      setCreatingScheduler
     );
     setEditMode(false);
     setJobPayload(initialPayload); //after save
     setSavingNotebook(false);
+    setSavePopupOpen(false);
   };
-
 
   const handleCancel = async () => {
     setCreateCompleted(true);
     setJobPayload(initialPayload);
     setEditMode(false);
-    // setSavePopupOpen(false);
+    setSavePopupOpen(false);
   };
 
   return (
@@ -303,14 +306,14 @@ const CreateNotebookScheduler = ({
                 <div>{creatingScheduler ? 'SAVING...' : 'SAVE'}</div>
               </Button>
               {savePopupOpen && (
-                  <SavePopup
-                    onCancel={() => handleCancelSavePopup()}
-                    onSave={() => handleEditJobScheduler()}
-                    savePopupOpen={savePopupOpen}
-                    saveMsg={`Do you want to save the changes ?`}
-                    savingNotebook={savingNotebook}
-                  />
-                )}
+                <SavePopup
+                  onCancel={() => handleCancelSavePopup()}
+                  onSave={() => handleEditJobScheduler()}
+                  savePopupOpen={savePopupOpen}
+                  saveMsg={`Do you want to save the changes ?`}
+                  savingNotebook={savingNotebook}
+                />
+              )}
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"

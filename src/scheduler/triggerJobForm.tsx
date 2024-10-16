@@ -30,7 +30,8 @@ import { scheduleValueExpression } from '../utils/const';
 import { scheduleMode } from '../utils/const';
 
 const TriggerJobForm = ({ data }: { data: any }) => {
-  const [scheduleMode, setScheduleMode] = useState<scheduleMode>('runNow');
+  const defaultMode = data.timeZone ? 'runSchedule' : 'runNow';
+  const [scheduleMode, setScheduleMode] = useState<scheduleMode>(defaultMode);
   const [scheduleValue, setScheduleValue] = useState(scheduleValueExpression);
   const [timeZoneSelected, setTimeZoneSelected] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -65,12 +66,12 @@ const TriggerJobForm = ({ data }: { data: any }) => {
   }, [scheduleMode]);
 
   useEffect(() => {
-    if (data.timeZone) {
+    if (data.timeZone || data.scheduleValue) {
       setScheduleMode('runSchedule');
       setScheduleValue(data.scheduleValue);
       setTimeZoneSelected(data.timeZone);
     }
-  }, [data]);
+  }, [data, scheduleMode]);
 
   return (
     <>
