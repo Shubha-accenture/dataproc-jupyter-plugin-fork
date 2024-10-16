@@ -19,8 +19,10 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import aiohttp
 import pytest
+from google.cloud import storage
 
-from dataproc_jupyter_plugin.commons import commands
+
+from dataproc_jupyter_plugin import credentials
 from dataproc_jupyter_plugin.services import airflow
 from dataproc_jupyter_plugin.services import executor
 from dataproc_jupyter_plugin.tests.test_airflow import MockClientSession
@@ -96,30 +98,28 @@ class TestExecuteMethod(unittest.TestCase):
 @pytest.mark.parametrize("returncode, expected_result", [(0, 0)])
 async def test_download_dag_output(monkeypatch, returncode, expected_result, jp_fetch):
 
-    async def mock_async_command_executor(cmd):
-        if cmd is None:
-            raise ValueError("Received None for cmd parameter")
-        if returncode == 0:
-            return b"output", b""
-        else:
-            raise subprocess.CalledProcessError(
-                returncode, cmd, output=b"output", stderr=b"error in executing command"
-            )
-
     async def mock_list_dag_run_task(*args, **kwargs):
         return None
 
     monkeypatch.setattr(airflow.Client, "list_dag_run_task", mock_list_dag_run_task)
-    monkeypatch.setattr(
-        executor, "async_run_gsutil_subcommand", mock_async_command_executor
-    )
     monkeypatch.setattr(aiohttp, "ClientSession", MockClientSession)
+    mock_blob = MagicMock()
+    mock_blob.download_as_bytes.return_value = b"mock file content"
+
+    mock_bucket = MagicMock()
+    mock_bucket.blob.return_value = mock_blob
+
+    mock_storage_client = MagicMock()
+    mock_storage_client.bucket.return_value = mock_bucket
+    monkeypatch.setattr(credentials, "get_cached", mock_credentials)
+    monkeypatch.setattr(storage, "Client", lambda credentials=None: mock_storage_client)
 
     mock_composer_name = "mock-composer"
     mock_bucket_name = "mock_bucket"
     mock_dag_id = "mock-dag-id"
     mock_dag_run_id = "258"
-    command = f"gsutil cp 'gs://{mock_bucket_name}/dataproc-output/{mock_dag_id}/output-notebooks/{mock_dag_id}_{mock_dag_run_id}.ipynb' ./"
+    mock_output_task_id = "generate_output_file_2"
+
     response = await jp_fetch(
         "dataproc-plugin",
         "downloadOutput",
@@ -128,18 +128,20 @@ async def test_download_dag_output(monkeypatch, returncode, expected_result, jp_
             "bucket_name": mock_bucket_name,
             "dag_id": mock_dag_id,
             "dag_run_id": mock_dag_run_id,
+            "output_task_id": mock_output_task_id
         },
     )
     assert response.code == 200
     payload = json.loads(response.body)
+    print('ssssss',payload)
     assert payload["status"] == 0
-
 
 async def test_invalid_composer_name(monkeypatch, jp_fetch):
     mock_composer_name = "mock_composer"
     mock_bucket_name = "mock-bucket"
     mock_dag_id = "mock-dag-id"
     mock_dag_run_id = "258"
+    mock_output_task_id = "generate_output_task_2"
     response = await jp_fetch(
         "dataproc-plugin",
         "downloadOutput",
@@ -148,6 +150,7 @@ async def test_invalid_composer_name(monkeypatch, jp_fetch):
             "bucket_name": mock_bucket_name,
             "dag_id": mock_dag_id,
             "dag_run_id": mock_dag_run_id,
+            "output_task_id": mock_output_task_id
         },
     )
     assert response.code == 200
@@ -162,6 +165,7 @@ async def test_invalid_bucket_name(monkeypatch, jp_fetch):
     mock_bucket_name = "mock/bucket"
     mock_dag_id = "mock-dag-id"
     mock_dag_run_id = "258"
+    mock_output_task_id = "generate_output_task_2"
     response = await jp_fetch(
         "dataproc-plugin",
         "downloadOutput",
@@ -170,6 +174,7 @@ async def test_invalid_bucket_name(monkeypatch, jp_fetch):
             "bucket_name": mock_bucket_name,
             "dag_id": mock_dag_id,
             "dag_run_id": mock_dag_run_id,
+            "output_task_id": mock_output_task_id
         },
     )
     assert response.code == 200
@@ -184,6 +189,7 @@ async def test_invalid_dag_id(monkeypatch, jp_fetch):
     mock_bucket_name = "mock-bucket"
     mock_dag_id = "mock/dag/id"
     mock_dag_run_id = "258"
+    mock_output_task_id = "generate_output_task_2"
     response = await jp_fetch(
         "dataproc-plugin",
         "downloadOutput",
@@ -192,6 +198,7 @@ async def test_invalid_dag_id(monkeypatch, jp_fetch):
             "bucket_name": mock_bucket_name,
             "dag_id": mock_dag_id,
             "dag_run_id": mock_dag_run_id,
+            "output_task_id": mock_output_task_id
         },
     )
     assert response.code == 200
@@ -206,6 +213,7 @@ async def test_invalid_dag_run_id(monkeypatch, jp_fetch):
     mock_bucket_name = "mock-bucket"
     mock_dag_id = "mock-dag-id"
     mock_dag_run_id = "a/b/c/d"
+    mock_output_task_id = "generate_output_task_2"
     response = await jp_fetch(
         "dataproc-plugin",
         "downloadOutput",
@@ -214,6 +222,7 @@ async def test_invalid_dag_run_id(monkeypatch, jp_fetch):
             "bucket_name": mock_bucket_name,
             "dag_id": mock_dag_id,
             "dag_run_id": mock_dag_run_id,
+            "output_task_id": mock_output_task_id
         },
     )
     assert response.code == 200
@@ -221,3 +230,98 @@ async def test_invalid_dag_run_id(monkeypatch, jp_fetch):
     assert "status" not in payload
     assert "error" in payload
     assert "Invalid DAG Run ID" in payload["error"]
+
+# @pytest.mark.asyncio
+# async def test_download_dag_output_success(monkeypatch, jp_fetch):
+#     # Mock airflow client
+#     mock_list_dag_run_task = AsyncMock()
+#     monkeypatch.setattr("airflow.Client.list_dag_run_task", mock_list_dag_run_task)
+
+#     # Mock GCS client and blob
+#     mock_blob = MagicMock()
+#     mock_blob.download_as_bytes.return_value = b"notebook content"
+#     mock_bucket = MagicMock()
+#     mock_bucket.blob.return_value = mock_blob
+#     mock_storage_client = MagicMock()
+#     mock_storage_client.bucket.return_value = mock_bucket
+#     monkeypatch.setattr("downloadOutput.storage.Client", lambda credentials: mock_storage_client)
+
+#     # Mock oauth2 credentials
+#     mock_credentials = MagicMock()
+#     monkeypatch.setattr("downloadOutput.oauth2.Credentials", lambda token: mock_credentials)
+
+#     # Mock aiofiles
+#     mock_aiofiles = AsyncMock()
+#     monkeypatch.setattr("downloadOutput.aiofiles.open", mock_aiofiles)
+
+#     response = await jp_fetch(
+#         "dataproc-plugin",
+#         "downloadOutput",
+#         params={
+#             "composer": "mock-composer",
+#             "bucket_name": "mock-bucket",
+#             "dag_id": "mock-dag-id",
+#             "dag_run_id": "258",
+#             "output_task_id": "task1"
+#         },
+#     )
+
+#     assert response.code == 200
+#     payload = json.loads(response.body)
+#     assert payload["status"] == 0
+
+#     mock_list_dag_run_task.assert_called_once()
+#     mock_storage_client.bucket.assert_called_once_with("mock-bucket")
+#     mock_bucket.blob.assert_called_once_with("dataproc-output/mock-dag-id/output-notebooks/mock-dag-id_258-task1.ipynb")
+#     mock_blob.download_as_bytes.assert_called_once()
+#     mock_aiofiles.assert_called_once()
+
+# @pytest.mark.asyncio
+# async def test_invalid_dag_run_id(monkeypatch, jp_fetch):
+#     mock_list_dag_run_task = AsyncMock(side_effect=Exception("Invalid DAG run ID"))
+#     monkeypatch.setattr("airflow.Client.list_dag_run_task", mock_list_dag_run_task)
+
+#     response = await jp_fetch(
+#         "dataproc-plugin",
+#         "downloadOutput",
+#         params={
+#             "composer": "mock-composer",
+#             "bucket_name": "mock-bucket",
+#             "dag_id": "mock-dag-id",
+#             "dag_run_id": "invalid-id",
+#             "output_task_id": "task1"
+#         },
+#     )
+
+#     assert response.code == 200
+#     payload = json.loads(response.body)
+#     assert "error" in payload
+#     assert "Invalid DAG run ID" in payload["error"]
+
+# @pytest.mark.asyncio
+# async def test_gcs_error(monkeypatch, jp_fetch):
+#     mock_list_dag_run_task = AsyncMock()
+#     monkeypatch.setattr("airflow.Client.list_dag_run_task", mock_list_dag_run_task)
+
+#     mock_storage_client = MagicMock()
+#     mock_storage_client.bucket.side_effect = Exception("GCS Error")
+#     monkeypatch.setattr("downloadOutput.storage.Client", lambda credentials: mock_storage_client)
+
+#     monkeypatch.setattr("downloadOutput.oauth2.Credentials", lambda token: MagicMock())
+
+#     response = await jp_fetch(
+#         "dataproc-plugin",
+#         "downloadOutput",
+#         params={
+#             "composer": "mock-composer",
+#             "bucket_name": "mock-bucket",
+#             "dag_id": "mock-dag-id",
+#             "dag_run_id": "258",
+#             "output_task_id": "task1"
+#         },
+#     )
+
+#     assert response.code == 200
+#     payload = json.loads(response.body)
+#     assert "error" in payload
+#     assert "GCS Error" in payload["error"]
