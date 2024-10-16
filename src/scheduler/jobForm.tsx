@@ -67,6 +67,7 @@ const JobForm = ({
   const [jobNameUniqueValidation, setJobNameUniqueValidation] = useState(true);
   const [dagList, setDagList] = useState<IDagList[]>([]);
   const [emailVailidation, setEmailValidation] = useState(true);
+  const [invalidEmails, setInvalidEmails] = useState<string[]>([]);
   const listComposersAPI = async () => {
     await SchedulerService.listComposersAPIService(setComposerList);
   };
@@ -119,14 +120,25 @@ const JobForm = ({
     }));
   };
 
-  const handleEmailList = (data: string[]) => {
-    setJobPayload((prev: any) => ({
-      ...prev,
-      email_ids: data
-    }));
-    data.length > 0 ? setEmailValidation(true) : setEmailValidation(false);
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
+  const handleEmailList = (data: string[]) => {
+    const invalidEmails = data.filter(email => !validateEmail(email));
+    setInvalidEmails(invalidEmails);
+
+    if (invalidEmails.length === 0) {
+      setEmailValidation(true);
+      setJobPayload((prev: any) => ({
+        ...prev,
+        email_ids: data
+      }));
+    } else {
+      setEmailValidation(false);
+    }
+  };
   const handleJobNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.target.value.length > 0
       ? setJobNameValidation(true)
@@ -260,7 +272,6 @@ const JobForm = ({
                 />
               </FormGroup>
             </div>
-
             {(initialJobPayload.email_failure ||
               initialJobPayload.email_delay ||
               initialJobPayload.email_success) && (
@@ -273,21 +284,29 @@ const JobForm = ({
                   inputProps={{ placeholder: '' }}
                   label="Email recipients*"
                 />
+                {(initialJobPayload.email_failure ||
+                  initialJobPayload.email_delay ||
+                  initialJobPayload.email_success) &&
+                  !initialJobPayload.email_ids.length &&
+                  !emailVailidation && (
+                    <div className="jobform-error-key-parent">
+                      <iconError.react
+                        tag="div"
+                        className="logo-alignment-style"
+                      />
+                      <div className="jobform-error-key-missing">
+                        {invalidEmails.length > 0 ? (
+                          <div>
+                            Invalid email(s): {invalidEmails.join(', ')}
+                          </div>
+                        ) : (
+                          'Email recipients is a required field'
+                        )}
+                      </div>
+                    </div>
+                  )}
               </div>
             )}
-
-            {(initialJobPayload.email_failure ||
-              initialJobPayload.email_delay ||
-              initialJobPayload.email_success) &&
-              !initialJobPayload.email_ids.length &&
-              !emailVailidation && (
-                <div className="jobform-error-key-parent">
-                  <iconError.react tag="div" className="logo-alignment-style" />
-                  <div className="jobform-error-key-missing">
-                    Email recipients is required field
-                  </div>
-                </div>
-              )}
           </div>
         </div>
       </div>
