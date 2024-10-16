@@ -136,8 +136,7 @@ class Client:
             self.log.exception(f"Error uploading file to GCS: {str(error)}")
             raise IOError(str(error))
 
-    async def get_execution_order(self, job, edges, cluster_stop_dict):
-        # creating execution order based on the tasks
+    async def get_execution_order(job, edges,cluster_stop_dict):
         dependencies = defaultdict(list)
         node_without_dependencies = []
         order_of_execution = []
@@ -146,91 +145,35 @@ class Client:
             if u == "1":
                 node_without_dependencies.append(v)
 
-        node_exec_list = []
-        for nodes in node_without_dependencies:
-            if dependencies[nodes]:
-                continue
+        def get_node_type(node_id):
+            node_data = next((n for n in job.nodes if n.get("id") == node_id), None)
+            return node_data.get("data", {}).get("nodeType") if node_data else None
+
+        def get_node_execution_string(node_id):
+            node_type = get_node_type(node_id)
+            if node_type in ["Serverless", "Bigquery-Serverless"]:
+                return f"write_output_task_{node_id} >> create_batch_{node_id}"
+            elif node_type == "Cluster":
+                return f"start_cluster_{node_id} >> write_output_task_{node_id} >> submit_pyspark_job_{node_id}"
+            elif node_type == "Bigquery-Sql":
+                return f"read_sql_query_task_{node_id} >> prepare_config_task_{node_id} >> run_query_task_{node_id}"
             else:
-                node_data = next(
-                    (n for n in job.nodes if n.get("id", {}) == nodes), None
-                )
-                node_types = node_data and node_data.get("data", {}).get("nodeType")
-                if node_types == "Serverless" or node_types == "Bigquery-Serverless":
-                    node_exec_list.append(
-                        f"write_output_task_{nodes} >> create_batch_{nodes}"
-                    )
-                elif node_types == "Cluster":
-                    node_exec_list.append(
-                        f"start_cluster_{nodes} >> write_output_task_{nodes} >> submit_pyspark_job_{nodes}"
-                    )
-                elif node_types == "Bigquery-Sql":
-                    node_exec_list.append(
-                        f"read_sql_query_task_{nodes} >>prepare_config_task_{nodes} >> run_query_task_{nodes}"
-                    )
+                return f"unknown_task_{node_id}"
+
+        node_exec_list = [get_node_execution_string(node) for node in node_without_dependencies if not dependencies[node]]
         if node_exec_list:
             order_of_execution.append(f"[{', '.join(node_exec_list)}]")
+
         for node, deps in dependencies.items():
-            dep_str_list = []
-            node_type = (
-                next((n for n in job.nodes if n.get("id", {}) == node), {})
-                .get("data", {})
-                .get("nodeType")
-            )
-            for dep in deps:
-                node_data = next((n for n in job.nodes if n.get("id", {}) == dep), None)
-                if (
-                    node_data
-                    and node_data.get("data", {}).get("nodeType") == "Serverless"
-                    or node_data
-                    and node_data.get("data", {}).get("nodeType")
-                    == "Bigquery-Serverless"
-                ):
-                    dep_str_list.append(
-                        f"write_output_task_{dep} >> create_batch_{dep}"
-                    )
-                elif (
-                    node_data and node_data.get("data", {}).get("nodeType") == "Cluster"
-                ):
-                    dep_str_list.append(
-                        f"start_cluster_{dep} >> write_output_task_{dep} >> submit_pyspark_job_{dep}"
-                    )
-                elif (
-                    node_data
-                    and node_data.get("data", {}).get("nodeType") == "Bigquery-Sql"
-                ):
-                    dep_str_list.append(
-                        f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep}"
-                    )
+            dep_str_list = [get_node_execution_string(dep) for dep in deps]
+            node_exec_string = get_node_execution_string(node)
 
             if len(dep_str_list) > 1:
                 dep_str = ", ".join(dep_str_list)
-                if node_type == "Serverless" or node_type == "Bigquery-Serverless":
-                    order_of_execution.append(
-                        f"write_output_task_{node} >> create_batch_{node} >> [{dep_str}]"
-                    )
-                elif node_type == "Cluster":
-                    order_of_execution.append(
-                        f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> [{dep_str}]"
-                    )
-                elif node_type == "Bigquery-Sql":
-                    order_of_execution.append(
-                        f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep} >> [{dep_str}]"
-                    )
-            else:
-                if dep_str_list:
-                    dep_str = dep_str_list[0]
-                    if node_type == "Serverless" or node_type == "Bigquery-Serverless":
-                        order_of_execution.append(
-                            f"write_output_task_{node} >> create_batch_{node} >> {dep_str}"
-                        )
-                    elif node_type == "Cluster":
-                        order_of_execution.append(
-                            f"start_cluster_{node} >> write_output_task_{node} >> submit_pyspark_job_{node} >> {dep_str}"
-                        )
-                    elif node_type == "Bigquery-Sql":
-                        order_of_execution.append(
-                            f"read_sql_query_task_{dep} >>prepare_config_task_{dep} >> run_query_task_{dep} >> [{dep_str}]"
-                        )
+                order_of_execution.append(f"{node_exec_string} >> [{dep_str}]")
+            elif dep_str_list:
+                dep_str = dep_str_list[0]
+                order_of_execution.append(f"{node_exec_string} >> {dep_str}")
 
         final_order = "\n".join(order_of_execution)
         if len(cluster_stop_dict) > 0:
