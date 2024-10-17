@@ -151,7 +151,6 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
               <div className="node-column empty-column"></div>
             </div>
           </div>
-
           <Handle
             type="source"
             position={Position.Bottom}

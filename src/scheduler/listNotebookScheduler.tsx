@@ -74,7 +74,7 @@ function listNotebookScheduler({
   composerSelectedFromCreate,
   setCreateCompleted,
   setEditPayload,
-  setEditPayloadFixed,
+  // setEditPayloadFixed,
   setEditMode,
   bucketName,
   setBucketName
@@ -86,7 +86,7 @@ function listNotebookScheduler({
   composerSelectedFromCreate: string;
   setCreateCompleted?: (value: boolean) => void;
   setEditPayload: (value: any) => void;
-  setEditPayloadFixed:(value: any) => void;
+  // setEditPayloadFixed:(value: any) => void;
   setEditMode?: (value: boolean) => void;
   bucketName: string;
   setBucketName: (value: string) => void;
@@ -198,7 +198,7 @@ function listNotebookScheduler({
         jobid,
         setEditDagLoading,
         setEditPayload, //new
-        setEditPayloadFixed,
+        // setEditPayloadFixed,
         setCreateCompleted,
         setEditMode
       );

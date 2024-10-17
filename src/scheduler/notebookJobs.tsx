@@ -38,7 +38,7 @@ const NotebookJobComponent = ({
   composerSelectedFromCreate,
   setCreateCompleted,
   setEditPayload,
-  setEditPayloadFixed,
+  // setEditPayloadFixed,
   setEditMode,
 }: {
   app: JupyterLab;
@@ -46,7 +46,7 @@ const NotebookJobComponent = ({
   composerSelectedFromCreate: string;
   setCreateCompleted?: (value: boolean) => void;
   setEditPayload:(value:any)=>void;
-  setEditPayloadFixed:(value:any)=>void;
+  // setEditPayloadFixed:(value:any)=>void;
   setEditMode?: (value: boolean) => void;
 }): React.JSX.Element => {
   const [showExecutionHistory, setShowExecutionHistory] = useState(false);
@@ -95,7 +95,7 @@ const NotebookJobComponent = ({
               composerSelectedFromCreate={composerSelectedFromCreate}
               setCreateCompleted={setCreateCompleted}
               setEditPayload={setEditPayload}
-              setEditPayloadFixed={setEditPayloadFixed}
+              // setEditPayloadFixed={setEditPayloadFixed}
               setEditMode={setEditMode}
               bucketName={bucketName}
               setBucketName={setBucketName}
@@ -113,7 +113,7 @@ export class NotebookJobs extends DataprocWidget {
   context: DocumentRegistry.IContext<INotebookModel> | string;
   factory: IFileBrowserFactory;
   setEditPayload!: (value: any) => void;
-  setEditPayloadFixed!: (value: any) => void;
+  // setEditPayloadFixed!: (value: any) => void;
 
   constructor(
     app: JupyterLab,
@@ -135,7 +135,7 @@ export class NotebookJobs extends DataprocWidget {
         // themeManager={this.themeManager}
         composerSelectedFromCreate={this.composerSelectedFromCreate}
         setEditPayload={this.setEditPayload}//check
-        setEditPayloadFixed={this.setEditPayloadFixed}
+        // setEditPayloadFixed={this.setEditPayloadFixed}
       />
     );
   }

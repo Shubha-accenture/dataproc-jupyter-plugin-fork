@@ -54,11 +54,11 @@ const CreateNotebookScheduler = ({
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [editPayload, setEditPayload] = useState<any>([]);
-  const [editPayloadFixed, setEditPayloadFixed] = useState<any>([]);
+  // const [editPayloadFixed, setEditPayloadFixed] = useState<any>([]);
   const [savePopupOpen, setSavePopupOpen] = useState(false);
   const [savingNotebook, setSavingNotebook] = useState(false);
 
-  console.log('editPayload fixed ', editPayloadFixed);
+  // console.log('editPayload fixed ', editPayloadFixed);
 
   const initialPayload = {
     job_name: '',
@@ -264,7 +264,7 @@ const CreateNotebookScheduler = ({
           setCreateCompleted={setCreateCompleted}
           setEditMode={setEditMode}
           setEditPayload={setEditPayload}
-          setEditPayloadFixed={setEditPayloadFixed}
+          // setEditPayloadFixed={setEditPayloadFixed}
         />
       ) : (
         <>

@@ -205,12 +205,13 @@ const GraphicalScheduler = ({
     openEditNotebookFile(inputFilePath)   
   });
 
-  const openEditNotebookFile = async(inputNotebookFilePath:string)=>{
-    let filePath = inputNotebookFilePath.replace('gs://', 'gs:');
+  const openEditNotebookFile = async(inputNotebookPath:string)=>{
+    let filePath = inputNotebookPath.replace('gs://', 'gs:');
     const openNotebookFile:any = await app.commands.execute('docmanager:open', {
       path: filePath
     });
     setInputNotebookFilePath('');
+    console.log(inputNotebookFilePath)
     if(openNotebookFile){
       eventEmitter.emit(`openNotebook`,true)
     }
@@ -279,20 +280,20 @@ const GraphicalScheduler = ({
   }, [clickedNodeId, nodes]);
 
   
-  useEffect(() => {
-    if (inputNotebookFilePath !== '') {
-      let filePath = inputNotebookFilePath.replace('gs://', 'gs:');
-      app.commands.execute('docmanager:open', {
-        path: filePath
-      });
-      setInputNotebookFilePath('');
-    }
-  }, [inputNotebookFilePath]);//check in code review
+  // useEffect(() => {
+  //   if (inputNotebookFilePath !== '') {
+  //     let filePath = inputNotebookFilePath.replace('gs://', 'gs:');
+  //     app.commands.execute('docmanager:open', {
+  //       path: filePath
+  //     });
+  //     setInputNotebookFilePath('');
+  //   }
+  // }, [inputNotebookFilePath]);//check in code review
 
   EdgesChange(edges);
   NodesChange(nodes)
 
-
+  console.log(edges, nodes)
   return (
     <>
       <Grid container spacing={0} style={{ height: '100vh' }}>

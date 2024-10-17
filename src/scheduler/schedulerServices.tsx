@@ -340,7 +340,7 @@ export class SchedulerService {
     dagId: string,
     setEditDagLoading: (value: string) => void,
     setEditPayload:(value:any)=>void,//new
-    setEditPayloadFixed:(value:any)=>void,
+    // setEditPayloadFixed:(value:any)=>void,
     setCreateCompleted?: (value: boolean) => void,
     setEditMode?: (value: boolean) => void,
   ) => {
@@ -351,7 +351,7 @@ export class SchedulerService {
         method: 'GET'
       });
       setEditPayload(formattedResponse)
-      setEditPayloadFixed(formattedResponse)
+      // setEditPayloadFixed(formattedResponse)
       console.log("from service file",formattedResponse)
       if (
         setCreateCompleted &&
