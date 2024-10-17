@@ -12,7 +12,20 @@
 
 .react-flow .react-flow__handle-top {
   left: 50%;
-  top: 5px;
+  transform: translate(-50%, 0);
+  position: absolute;
+  pointer-events: none;
+  min-width: 5px;
+  min-height: 5px;
+  width: 6px;
+  height: 6px;
+  background: grey; /* get exact color*/
+  border: 1px solid transparent;
+  border-radius: 100%;
+}
+
+.react-flow .react-flow__handle-top-trigger {
+  left: 50%;
   transform: translate(-50%, 0);
   position: absolute;
   pointer-events: none;

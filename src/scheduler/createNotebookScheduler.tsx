@@ -57,6 +57,7 @@ const CreateNotebookScheduler = ({
   // const [editPayloadFixed, setEditPayloadFixed] = useState<any>([]);
   const [savePopupOpen, setSavePopupOpen] = useState(false);
   const [savingNotebook, setSavingNotebook] = useState(false);
+  const [edgesValidation, setEdgesValidation] = useState(false);
 
   // console.log('editPayload fixed ', editPayloadFixed);
 
@@ -196,6 +197,15 @@ const CreateNotebookScheduler = ({
     validateTaskPayload();
   }, [nodes]); //calling this multiple times // handle it using data only
 
+  useEffect(() => {
+    // Update edges validation based on the condition
+    if (edges.length === nodes.length - 1) {
+      setEdgesValidation(true);
+    } else {
+      setEdgesValidation(false);
+    }
+  }, [edges, nodes]);
+
   const handleNodesChange = (updatedNodes: []) => {
     setNodes(updatedNodes);
   };
@@ -225,7 +235,7 @@ const CreateNotebookScheduler = ({
       editMode
     );
     setEditMode(false);
-    setJobPayload(initialPayload); //after save
+    setJobPayload(initialPayload);
     setSavingNotebook(false);
   };
 
@@ -298,6 +308,7 @@ const CreateNotebookScheduler = ({
                 disabled={
                   !nodeDataValidation ||
                   !jobPayloadValidation ||
+                  !edgesValidation ||
                   creatingScheduler
                 }
                 aria-label="Save scheduler"

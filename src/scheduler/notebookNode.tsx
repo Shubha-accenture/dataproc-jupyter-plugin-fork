@@ -71,42 +71,41 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
     if (!data.nodeType) {
       setStatus('');
       return;
-    }
-    else if (data.nodeType === 'Cluster' && (!data.inputFile || !data.clusterName)) {
+    } else if (
+      data.nodeType === 'Cluster' &&
+      (!data.inputFile || !data.clusterName)
+    ) {
       setStatus('incomplete');
-    }
-    else if (
+    } else if (
       (data.nodeType === 'Serverless' ||
         data.nodeType === 'Bigquery-Serverless') &&
       (!data.inputFile || !data.serverless)
     ) {
       setStatus('incomplete');
-    }
-   else if (data.nodeType === 'Bigquery-Sql')
-    {
-        if(!data.inputFile){
-          setStatus('incomplete');
-        }
-       else if (
-         data.isSaveQuery &&
-        (!data.datasetId || !data.tableId)
-      ) {
+    } else if (data.nodeType === 'Bigquery-Sql') {
+      if (!data.inputFile) {
         setStatus('incomplete');
-      }
-      else if (
-        !data.isAutoRegion &&
-       (!data.location)
-     ) {
-       setStatus('incomplete');
-     }
-      else {
+      } else if (data.isSaveQuery && (!data.datasetId || !data.tableId)) {
+        setStatus('incomplete');
+      } else if (!data.isAutoRegion && !data.location) {
+        setStatus('incomplete');
+      } else {
         setStatus('complete');
       }
-    } 
-    else {
+    } else {
       setStatus('complete');
     }
-  }, [data.nodeType, data.inputFile, data.clusterName, data.serverless, data.isSaveQuery,data.datasetId,data.tableId, data.isAutoRegion, data.location]);
+  }, [
+    data.nodeType,
+    data.inputFile,
+    data.clusterName,
+    data.serverless,
+    data.isSaveQuery,
+    data.datasetId,
+    data.tableId,
+    data.isAutoRegion,
+    data.location
+  ]);
 
   return (
     <>
@@ -121,7 +120,16 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
                 : 'black'
             }`}
           />
-          <Handle type="target" position={Position.Top} isConnectable={false} />
+          <Handle
+            type="target"
+            position={Position.Top}
+            isConnectable={isConnectable}
+            className={
+              id === '1'
+                ? 'react-flow__handle-top-trigger'
+                : 'react-flow__handle-top'
+            }
+          />
           <div className="node-content">
             <div className="node-parent">
               <div className="node-column logo-column">
