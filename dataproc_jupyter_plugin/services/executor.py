@@ -136,7 +136,7 @@ class Client:
             self.log.exception(f"Error uploading file to GCS: {str(error)}")
             raise IOError(str(error))
 
-    async def get_execution_order(job, edges,cluster_stop_dict):
+    async def get_execution_order(self, job, edges,cluster_stop_dict):
         dependencies = defaultdict(list)
         node_without_dependencies = []
         order_of_execution = []
