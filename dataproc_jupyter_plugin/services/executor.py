@@ -157,8 +157,6 @@ class Client:
                 return f"start_cluster_{node_id} >> write_output_task_{node_id} >> submit_pyspark_job_{node_id}"
             elif node_type == "Bigquery-Sql":
                 return f"read_sql_query_task_{node_id} >> prepare_config_task_{node_id} >> run_query_task_{node_id}"
-            else:
-                return f"unknown_task_{node_id}"
 
         node_exec_list = [get_node_execution_string(node) for node in node_without_dependencies if not dependencies[node]]
         if node_exec_list:
