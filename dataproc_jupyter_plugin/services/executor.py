@@ -159,13 +159,16 @@ class Client:
                 return f"read_sql_query_task_{node_id} >> prepare_config_task_{node_id} >> run_query_task_{node_id}"
 
         node_exec_list = [get_node_execution_string(node) for node in node_without_dependencies if not dependencies[node]]
+        node_exec_list = [x for x in node_exec_list if x is not None]
         if node_exec_list:
             order_of_execution.append(f"[{', '.join(node_exec_list)}]")
 
         for node, deps in dependencies.items():
-            dep_str_list = [get_node_execution_string(dep) for dep in deps]
+            if node == "1":  # Skip the trigger node
+                continue
+            dep_str_list = [get_node_execution_string(dep) for dep in deps if dep != "1"]
+            dep_str_list = [x for x in dep_str_list if x is not None]
             node_exec_string = get_node_execution_string(node)
-
             if len(dep_str_list) > 1:
                 dep_str = ", ".join(dep_str_list)
                 order_of_execution.append(f"{node_exec_string} >> [{dep_str}]")
