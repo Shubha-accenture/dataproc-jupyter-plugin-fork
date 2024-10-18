@@ -280,15 +280,15 @@ const GraphicalScheduler = ({
   }, [clickedNodeId, nodes]);
 
   
-  // useEffect(() => {
-  //   if (inputNotebookFilePath !== '') {
-  //     let filePath = inputNotebookFilePath.replace('gs://', 'gs:');
-  //     app.commands.execute('docmanager:open', {
-  //       path: filePath
-  //     });
-  //     setInputNotebookFilePath('');
-  //   }
-  // }, [inputNotebookFilePath]);//check in code review
+  useEffect(() => {
+    if (inputNotebookFilePath !== '') {
+      let filePath = inputNotebookFilePath.replace('gs://', 'gs:');
+      app.commands.execute('docmanager:open', {
+        path: filePath
+      });
+      setInputNotebookFilePath('');
+    }
+  }, [inputNotebookFilePath]);//check in code review
 
   EdgesChange(edges);
   NodesChange(nodes)

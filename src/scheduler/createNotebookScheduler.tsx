@@ -22,7 +22,7 @@ import { SchedulerService } from './schedulerServices';
 import NotebookJobComponent from './notebookJobs';
 import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
 import { LabIcon } from '@jupyterlab/ui-components';
-import { Button } from '@mui/material';
+import { Button, CircularProgress } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import GraphicalScheduler from './graphicalScheduler';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
@@ -302,6 +302,15 @@ const CreateNotebookScheduler = ({
               )}
             </div>
             <div className="scheduler-button-parent">
+              <div>
+                {creatingScheduler && (
+                  <CircularProgress
+                    size={18}
+                    aria-label="Loading Spinner"
+                    data-testid="loader"
+                  />
+                )}
+              </div>
               <Button
                 sx={{ width: '100px' }}
                 variant="outlined"
