@@ -29,7 +29,7 @@ const iconSearchClear = new LabIcon({
   svgstr: searchClearIcon
 });
 
-function ConfigureForm({ id, data, nodes, setTaskFormVisible }: any) {
+function ConfigureForm({ id, data,selected, nodes, setTaskFormVisible }: any) {
   const nodeTypes = [
     { key: 'Serverless', label: 'Run a notebook on Dataproc Serverless' },
     { key: 'Cluster', label: 'Run a notebook on Dataproc Cluster' },
@@ -120,7 +120,7 @@ function ConfigureForm({ id, data, nodes, setTaskFormVisible }: any) {
             <ClusterServerlessForm data={clickedNodeData} mode={'serverless'} />
           )}
           {nodeTypeSelected === 'Cluster' && clickedNodeData !== null && (
-            <ClusterServerlessForm data={clickedNodeData} mode={'cluster'} />
+            <ClusterServerlessForm id={id} data={clickedNodeData} selected={selected} mode={'cluster'} />
           )}
           {nodeTypeSelected === 'Bigquery-Serverless' &&
             clickedNodeData !== null && (

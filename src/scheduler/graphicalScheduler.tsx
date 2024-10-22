@@ -40,6 +40,7 @@ import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import Grid from '@mui/material/Grid';
 import ConfigureForm from './configureForms';
 import JobForm from './jobForm';
+// import { useNodesData } from '@xyflow/react'
 
 interface IGraphicalSchedulerProps {
   inputFileSelected: string;
@@ -113,6 +114,7 @@ const GraphicalScheduler = ({
   const [clickedNodeData, setClickedNodeData] = useState<any>(null);
   const { screenToFlowPosition } = useReactFlow();
   const [inputNotebookFilePath, setInputNotebookFilePath] = useState('');
+  // const nodeData = useNodesData(initialNode)
 
   const onConnect = useCallback((params: Connection) => {
     // reset the start node on connections

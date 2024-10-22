@@ -45,7 +45,7 @@ const iconError = new LabIcon({
 //   svgstr: EditIconDisable
 // });
 
-function ClusterServerlessForm({ data, mode }: any) {
+function ClusterServerlessForm({ id,data,selected, mode }: any) {
   const [inputFileSelectedLocal, setInputFileSelectedLocal] = useState('');
   const [inputFileValidation, setInputFileValidation] = useState(false);
   const [retryCount, setRetryCount] = useState<number | undefined>(2);
@@ -67,6 +67,8 @@ function ClusterServerlessForm({ data, mode }: any) {
   >([]);
   const [serviceAccountSelected, setServiceAccountSelected] = useState('');
   const [editNotebookLoading, setEditNotebookLoading] = useState(false);
+  const [isNodeClicked, setIsNodeClicked] = useState(false);
+  const [isSelected, setIsSelected] = useState(selected);
 
   const onInputFileNameChange = (evt: any) => {
     const file = evt.target.files && evt.target.files[0];
@@ -125,11 +127,23 @@ function ClusterServerlessForm({ data, mode }: any) {
       setIsLoadingKernelDetail
     );
   };
+  const handleNodeClick = () => {
+    setIsNodeClicked(true);
+    setIsSelected(true); //select node logic
+    eventEmitter.emit(`nodeClick`, id, isNodeClicked);
+  };
+
+  eventEmitter.on('unselectNode', (isCancel: boolean) => {
+    setIsSelected(isCancel);
+  });
+
   const handleClusterSelected = (value: any) => {
     if (value) {
       const selectedCluster = value.toString();
       data.clusterName = selectedCluster;
       setClusterSelected(selectedCluster);
+      console.log(isSelected)
+      handleNodeClick();
     }
   };
 
