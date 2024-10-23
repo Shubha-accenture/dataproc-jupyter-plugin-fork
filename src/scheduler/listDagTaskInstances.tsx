@@ -123,23 +123,24 @@ const ListDagTaskInstances = ({
     } else {
       setExpanded(`${index}`);
       listDagTaskLogList(index, iconIndex);
+      // console.log(listDagTaskLogList)
     }
   };
 
-
-   const handleDownloadOutput = async (event: React.MouseEvent, taskId:string) => {
-    console.log("trying to download with",taskId)
-
+  const handleDownloadOutput = async (
+    event: React.MouseEvent,
+    taskId: string
+  ) => {
     const taskNumber = taskId.split('_').pop();
-    let outputTaskId = "generate_output_file_" + taskNumber;
-    
+    let outputTaskId = 'generate_output_file_' + taskNumber;
+
     // const dagRunId = event.currentTarget.getAttribute('data-dag-run-id')!;
     await SchedulerService.handleDownloadOutputNotebookAPIService(
       composerName,
       dagRunId,
       bucketName,
       dagId,
-     outputTaskId
+      outputTaskId
       // setDownloadOutputDagRunId
     );
   };
@@ -154,7 +155,27 @@ const ListDagTaskInstances = ({
       setLogList,
       setIsLoadingLogs
     );
+    console.log(loglist);
   };
+
+  const getHighlightedLogs = (text: string) => {
+    const highlightPattern = /Starting attempt \d+ of \d+/g;
+
+    const parts = text.split(highlightPattern); // Split by pattern
+    const matches = text.match(highlightPattern); // Get the matched parts
+
+    return parts.map((part, index) => (
+      <React.Fragment key={index}>
+        {part}
+        {matches && matches[index] && (
+          <span style={{ backgroundColor: 'yellow'}}>
+            {matches[index]}
+          </span>
+        )}
+      </React.Fragment>
+    ));
+  };
+
   return (
     <div>
       {dagTaskInstancesList.length > 0 ? (
@@ -211,19 +232,19 @@ const ListDagTaskInstances = ({
                     {taskInstance.duration}
                   </div>
                   <div className="accordion-row-data">
-                  {
-                  taskInstance.state === 'success'&& (
-                    taskInstance.taskId.startsWith('submit_pyspark_job') || //cluster
-                    taskInstance.taskId.startsWith('batch_create')// serverless
-                  ) && (
-                    <div className="logo-download-container">
-                      <IconButton
-                        onClick={e => handleDownloadOutput(e, taskInstance.taskId)}
-                      >
-                        <iconDownload.react tag="div" />
-                      </IconButton>
-                    </div>
-                  )}
+                    {taskInstance.state === 'success' &&
+                      (taskInstance.taskId.startsWith('submit_pyspark_job') || //cluster
+                        taskInstance.taskId.startsWith('batch_create')) && ( // serverless
+                        <div className="logo-download-container">
+                          <IconButton
+                            onClick={e =>
+                              handleDownloadOutput(e, taskInstance.taskId)
+                            }
+                          >
+                            <iconDownload.react tag="div" />
+                          </IconButton>
+                        </div>
+                      )}
                   </div>
                   {taskInstance.tryNumber !== 0 ? (
                     <div
@@ -266,14 +287,16 @@ const ListDagTaskInstances = ({
                   expanded === `${index}` && (
                     <div>
                       {' '}
-                      <Typography>
-                        <pre
-                          className="logs-content-style"
-                          style={{ maxHeight: height }}
-                        >
-                          {loglist}
-                        </pre>
-                      </Typography>{' '}
+                      <div>
+                        <Typography>
+                          <pre
+                            className="logs-content-style"
+                            style={{ maxHeight: height }}
+                          >
+                            {getHighlightedLogs(loglist)}
+                          </pre>
+                        </Typography>
+                      </div>{' '}
                     </div>
                   )
                 )}
