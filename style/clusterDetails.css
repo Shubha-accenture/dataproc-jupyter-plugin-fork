@@ -163,3 +163,8 @@
   align-items: center;
   text-align: center;
 }
+
+.scheduler-loader
+{
+  margin-top: 5px;
+}

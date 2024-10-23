@@ -302,7 +302,7 @@ const CreateNotebookScheduler = ({
               )}
             </div>
             <div className="scheduler-button-parent">
-              <div>
+              <div className="scheduler-loader">
                 {creatingScheduler && (
                   <CircularProgress
                     size={18}

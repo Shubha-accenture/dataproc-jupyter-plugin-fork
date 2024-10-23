@@ -45,11 +45,11 @@ function SavePopup({
         <DialogContentText>{saveMsg}</DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancel}>Cancel</Button>
+        <Button onClick={onCancel} disabled={savingNotebook}>Cancel</Button>
         {savingNotebook ? (
-          <div className="submit-button-disable-style">SAVING...</div>
+          <div>SAVING...</div>
         ) : (
-          <Button onClick={onSave}>Save</Button>
+          <Button onClick={onSave} disabled={savingNotebook}>Save</Button>
         )}
       </DialogActions>
     </Dialog>

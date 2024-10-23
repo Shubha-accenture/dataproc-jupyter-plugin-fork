@@ -36,7 +36,7 @@ function NotebookNode({ id, data, selected, isConnectable }: NodeProps) {
   const [isNodeClicked, setIsNodeClicked] = useState(false);
 
   const [isSelected, setIsSelected] = useState(selected);
-
+//  console.log("notebooknode data", data)
   useEffect(() => {
     setIsSelected(selected);
   }, [selected]);

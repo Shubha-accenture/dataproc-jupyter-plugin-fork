@@ -281,7 +281,11 @@ const GraphicalScheduler = ({
     }
   }, [clickedNodeId, nodes]);
 
-  
+  // useEffect(()=>{
+  //   nodeTypes
+  //   console.log("nodeTypes")
+  // }, [nodes])
+
   useEffect(() => {
     if (inputNotebookFilePath !== '') {
       let filePath = inputNotebookFilePath.replace('gs://', 'gs:');
