@@ -72,6 +72,7 @@ const ListDagTaskInstances = ({
   const [loglist, setLogList] = useState('');
 
   const [height, setHeight] = useState(window.innerHeight - 320);
+  const [selectedAttempt, setSelectedAttempt] = useState(1);
 
   function handleUpdateHeight() {
     let updateHeight = window.innerHeight - 320;
@@ -118,12 +119,13 @@ const ListDagTaskInstances = ({
     iconIndex: number,
     fromClick: string
   ) => {
+    console.log(iconIndex)
     if (`${index}` === expanded && fromClick === 'expandClick') {
       setExpanded(false);
     } else {
       setExpanded(`${index}`);
       listDagTaskLogList(index, iconIndex);
-      // console.log(listDagTaskLogList)
+      setSelectedAttempt(iconIndex)
     }
   };
 
@@ -155,25 +157,6 @@ const ListDagTaskInstances = ({
       setLogList,
       setIsLoadingLogs
     );
-    console.log(loglist);
-  };
-
-  const getHighlightedLogs = (text: string) => {
-    const highlightPattern = /Starting attempt \d+ of \d+/g;
-
-    const parts = text.split(highlightPattern); // Split by pattern
-    const matches = text.match(highlightPattern); // Get the matched parts
-
-    return parts.map((part, index) => (
-      <React.Fragment key={index}>
-        {part}
-        {matches && matches[index] && (
-          <span style={{ backgroundColor: 'yellow'}}>
-            {matches[index]}
-          </span>
-        )}
-      </React.Fragment>
-    ));
   };
 
   return (
@@ -209,15 +192,32 @@ const ListDagTaskInstances = ({
                               onClick={() =>
                                 handleChange(index, i + 1, 'attemptsClick')
                               }
+                              className={
+                                expanded === `${index}` && selectedAttempt === i + 1
+                                  ? 'highlight-attempt'
+                                  : ''
+                              }
                             >
                               {i === taskInstance.tryNumber - 1 ? (
                                 taskInstance.state === 'failed' ? (
-                                  <iconDagTaskFailed.react tag="div" />
+                                  <iconDagTaskFailed.react tag="div"  className={
+                                    expanded === `${index}` && selectedAttempt === i + 1
+                                      ? 'highlight-attempt'
+                                      : ''
+                                  } />
                                 ) : (
-                                  <iconDagTaskSuccess.react tag="div" />
+                                  <iconDagTaskSuccess.react tag="div"  className={
+                                    expanded === `${index}` && selectedAttempt === i + 1
+                                      ? 'highlight-attempt'
+                                      : ''
+                                  }/>
                                 )
                               ) : (
-                                <iconDagTaskFailed.react tag="div" />
+                                <iconDagTaskFailed.react tag="div"  className={
+                                  expanded === `${index}` && selectedAttempt === i + 1
+                                    ? 'highlight-attempt'
+                                    : ''
+                                }/>
                               )}
                             </IconButton>
                           )
@@ -287,16 +287,14 @@ const ListDagTaskInstances = ({
                   expanded === `${index}` && (
                     <div>
                       {' '}
-                      <div>
-                        <Typography>
-                          <pre
-                            className="logs-content-style"
-                            style={{ maxHeight: height }}
-                          >
-                            {getHighlightedLogs(loglist)}
-                          </pre>
-                        </Typography>
-                      </div>{' '}
+                      <Typography>
+                        <pre
+                          className="logs-content-style"
+                          style={{ maxHeight: height }}
+                        >
+                          {loglist}
+                        </pre>
+                      </Typography>{' '}
                     </div>
                   )
                 )}

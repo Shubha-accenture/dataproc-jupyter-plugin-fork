@@ -502,3 +502,9 @@
 .scheduler-encrypt-manual-radio-type {
   padding-top: 15px !important;
 }
+.highlight-attempt {
+  /* border: 1px solid black; */
+  background-color: #bbdefb;
+  border-radius: 50%;
+}
+
