@@ -16,7 +16,8 @@
  */
 
 import { requestAPI } from '../handler/handler';
-export const VERSION_DETAIL = '0.1.78';
+const { version } = require('../../package.json');
+export const VERSION_DETAIL = version;
 export const CREATE_CLUSTER_URL =
   'https://console.cloud.google.com/dataproc/clusters';
 export const CREATE_BATCH_URL =
@@ -170,7 +171,7 @@ export const DCU_HOURS = 3600000;
 export const GB_MONTHS = 2592000;
 export const TITLE_LAUNCHER_CATEGORY = 'Google Cloud Resources';
 export const SPARK_HISTORY_SERVER = 'Spark History Server';
-export const DEFAULT_LABEL_DETAIL = 'client:dataproc-jupyter-plugin';
+export const DEFAULT_LABEL_DETAIL = 'client:bigquery-jupyter-plugin';
 export const JOB_FIELDS_EXCLUDED = ['queryList', 'properties', 'args'];
 export const BATCH_FIELDS_EXCLUDED = ['queryList', 'properties'];
 export const KEY_MESSAGE =
@@ -184,7 +185,7 @@ export const NETWORK_TAG_MESSAGE =
 export const LOGIN_ERROR_MESSAGE =
   'Please navigate to Settings -> Google BigQuery Settings to login and continue';
 export const NOTEBOOK_TEMPLATES_LIST_URL =
-  'https://api.github.com/repos/GoogleCloudPlatform/dataproc-ml-quickstart-notebooks/contents/.ci/index.json';
+  'https://api.github.com/repos/GoogleCloudPlatform/ai-ml-recipes/contents/.ci/index.json';
 export type scheduleMode = 'runNow' | 'runSchedule';
 export const scheduleValueExpression = '30 17 * * 1-5'; //Expression for schedule Value in Scheduler Jobs
 export const PLUGIN_ID = 'dataproc_jupyter_plugin:plugin';
