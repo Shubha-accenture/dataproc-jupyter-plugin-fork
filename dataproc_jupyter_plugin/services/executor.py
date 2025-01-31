@@ -335,7 +335,7 @@ class Client:
             install_packages = await self.install_to_composer_environment(
                 job.local_kernel, job.composer_environment_name
             )
-            if install_packages["error"]:
+            if install_packages and install_packages["error"]:
                 raise Exception(install_packages)
 
             if await self.check_file_exists(
