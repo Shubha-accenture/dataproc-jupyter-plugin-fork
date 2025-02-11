@@ -1388,17 +1388,6 @@ function CreateRunTime({
                   />
                   <div className="create-batch-message">User Account</div>
                 </div>
-                <div className="create-custom-messagelist">
-                  If not provided, the default GCE service account will be used.
-                  <div
-                    className="submit-job-learn-more"
-                    onClick={() => {
-                      window.open(`${SERVICE_ACCOUNT}`, '_blank');
-                    }}
-                  >
-                    Learn more
-                  </div>
-                </div>
                 {selectedAccountRadio === 'serviceAccount' && (
                   <>
                     <div className="create-custom-messagelist">
