@@ -32,7 +32,6 @@ import clusterIcon from '../style/icons/cluster_icon.svg';
 import addRuntimeIcon from '../style/icons/add_runtime_template.svg';
 import serverlessIcon from '../style/icons/serverless_icon.svg';
 import notebookTemplateIcon from '../style/icons/notebook_template_icon.svg';
-import scheduledNotebooksIcon from '../style/icons/scheduled_notebooks_icon.svg';
 import storageIcon from '../style/icons/storage_icon.svg';
 import { Panel, Title, Widget } from '@lumino/widgets';
 import { AuthLogin } from './login/authLogin';
@@ -57,7 +56,6 @@ import { IDocumentManager } from '@jupyterlab/docmanager';
 import { GCSDrive } from './gcs/gcsDrive';
 import { GcsBrowserWidget } from './gcs/gcsBrowserWidget';
 import { DataprocLoggingService, LOG_LEVEL } from './utils/loggingService';
-import { NotebookScheduler } from './scheduler/notebookScheduler';
 import pythonLogo from '../third_party/icons/python_logo.svg';
 import NotebookTemplateService from './notebookTemplates/notebookTemplatesService';
 import * as path from 'path';
@@ -121,10 +119,6 @@ const extension: JupyterFrontEndPlugin<void> = {
     const iconServerless = new LabIcon({
       name: 'launcher:serverless-icon',
       svgstr: serverlessIcon
-    });
-    const iconScheduledNotebooks = new LabIcon({
-      name: 'launcher:scheduled-notebooks-icon',
-      svgstr: scheduledNotebooksIcon
     });
     const iconNotebookTemplate = new LabIcon({
       name: 'launcher:notebook-template-icon',
@@ -488,8 +482,7 @@ const extension: JupyterFrontEndPlugin<void> = {
             newValue.title.label === 'Serverless' ||
             newValue.title.label === 'Settings' ||
             newValue.title.label === 'Notebook Templates' ||
-            newValue.title.label === 'Scheduled Jobs' ||
-            newValue.title.label === 'Job Scheduler') &&
+            newValue.title.label === 'Scheduled Jobs' ) &&
           lastClusterName !== ''
         ) {
           localStorage.setItem('oldNotebookValue', lastClusterName || '');
@@ -506,8 +499,7 @@ const extension: JupyterFrontEndPlugin<void> = {
             newValue.title.label !== 'Runtime template' &&
             newValue.title.label !== 'Settings' &&
             newValue.title.label !== 'Notebook Templates' &&
-            newValue.title.label !== 'Scheduled Jobs' &&
-            newValue.title.label !== 'Job Scheduler'
+            newValue.title.label !== 'Scheduled Jobs' 
           ) {
             let oldNotebook = localStorage.getItem('oldNotebookValue');
             localStorage.setItem('notebookValue', oldNotebook || '');
@@ -639,24 +631,6 @@ const extension: JupyterFrontEndPlugin<void> = {
         const widget = new MainAreaWidget<Batches>({ content });
         widget.title.label = 'Serverless';
         widget.title.icon = iconServerless;
-        app.shell.add(widget, 'main');
-      }
-    });
-    const createNotebookJobsComponentCommand = 'create-notebook-jobs-component';
-    commands.addCommand(createNotebookJobsComponentCommand, {
-      caption: 'Scheduled Jobs',
-      label: 'Scheduled Jobs',
-      icon: iconScheduledNotebooks,
-      execute: () => {
-        const content = new NotebookScheduler(
-          app as JupyterLab,
-          themeManager,
-          settingRegistry as ISettingRegistry,
-          ''
-        );
-        const widget = new MainAreaWidget<NotebookScheduler>({ content });
-        widget.title.label = 'Scheduled Jobs';
-        widget.title.icon = iconScheduledNotebooks;
         app.shell.add(widget, 'main');
       }
     });
@@ -809,11 +783,7 @@ const extension: JupyterFrontEndPlugin<void> = {
         category: TITLE_LAUNCHER_CATEGORY,
         rank: 3
       });
-      launcher.add({
-        command: createNotebookJobsComponentCommand,
-        category: TITLE_LAUNCHER_CATEGORY,
-        rank: 4
-      });
+
     }
 
     // the plugin depends on having a toast container, and Jupyter labs lazy
