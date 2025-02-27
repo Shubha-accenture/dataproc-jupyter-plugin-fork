@@ -34,9 +34,7 @@ from traitlets.config import SingletonConfigurable
 from dataproc_jupyter_plugin import credentials, urls
 from dataproc_jupyter_plugin.commons import constants
 from dataproc_jupyter_plugin.controllers import (
-    bigquery,
-    composer,
-    dataproc,
+    bigquery
 )
 
 _region_not_set_error = """GCP region not set in gcloud.
