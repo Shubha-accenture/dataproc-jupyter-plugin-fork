@@ -364,7 +364,6 @@ const extension: JupyterFrontEndPlugin<void> = {
       'Notebook',
       new NotebookButtonExtension(
         app as JupyterLab,
-        settingRegistry as ISettingRegistry,
         launcher,
         themeManager
       )
