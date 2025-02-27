@@ -207,8 +207,6 @@ def setup_handlers(web_app):
         "configuration": ConfigHandler,
         "getGcpServiceUrls": UrlHandler,
         "log": LogHandler,
-        "clusterList": dataproc.ClusterListController,
-        "runtimeList": dataproc.RuntimeController,
         "bigQueryDataset": bigquery.DatasetController,
         "bigQueryTable": bigquery.TableController,
         "bigQueryDatasetInfo": bigquery.DatasetInfoController,
