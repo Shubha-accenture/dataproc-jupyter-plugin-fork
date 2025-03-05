@@ -278,6 +278,7 @@ class Client:
     ):
         packages = ["apache-airflow-providers-papermill", "ipykernel"]
         try:
+            installing_packages = "false"
             if local_kernel:
                 cmd = f"gcloud beta composer environments list-packages {composer_environment_name} --location {self.region_id}"
                 process = subprocess.Popen(
@@ -295,6 +296,7 @@ class Client:
                     for package in packages:
                         if package.lower() not in installed_packages:
                             self.log.info(f"{package} is not installed. Installing...")
+                            installing_packages = "true"
                             install_cmd = f"gcloud composer environments update {composer_environment_name} --location {self.region_id} --update-pypi-package {package}"
                             install_process = subprocess.Popen(
                                 install_cmd,
@@ -317,6 +319,7 @@ class Client:
                                 )
                         else:
                             self.log.info(f"{package} is already installed.")
+            return {"installing_packages": str(installing_packages)}
         except Exception as e:
             self.log.exception(f"error installing {package}: {install_stderr}")
             return {"error": str(e)}
@@ -335,7 +338,7 @@ class Client:
             install_packages = await self.install_to_composer_environment(
                 job.local_kernel, job.composer_environment_name
             )
-            if install_packages and install_packages["error"]:
+            if install_packages and install_packages.get("error"):
                 raise Exception(install_packages)
 
             if await self.check_file_exists(
@@ -363,7 +366,10 @@ class Client:
             await self.upload_to_gcs(
                 gcs_dag_bucket, file_path=file_path, destination_dir="dags"
             )
-            return {"status": 0}
+            if install_packages.get("installing_packages") == "true":
+                return {"status": 0, "response": "installed python packages"}
+            else:
+                return {"status": 0}
         except Exception as e:
             return {"error": str(e)}
 
