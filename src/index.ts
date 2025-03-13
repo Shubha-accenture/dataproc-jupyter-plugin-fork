@@ -160,8 +160,9 @@ const extension: JupyterFrontEndPlugin<void> = {
     await checkResourceManager();
 
     // Capture the signal
-    eventEmitter.on('dataprocConfigChange', (message: string) => {
+    eventEmitter.on('dataprocConfigChange', async (message: string) => {
       checkAllApisEnabled();
+      await checkResourceManager();
       if (bqFeature.enable_bigquery_integration) {
         loadBigQueryWidget('');
       }
