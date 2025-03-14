@@ -1090,11 +1090,12 @@ function CreateRunTime({
               autoTimeSelected && {
                 ttl: autoTimeSelected + 's'
               }),
-            ...(selectedAccountRadio === 'userAccount' && {
-              authentication_config: {
-                user_workload_authentication_type: 'END_USER_CREDENTIALS'
-              }
-            })
+            ...(serviceAccountSelected !== '' &&
+              selectedAccountRadio === 'userAccount' && {
+                authentication_config: {
+                  user_workload_authentication_type: 'END_USER_CREDENTIALS'
+                }
+              })
           },
           peripheralsConfig: {
             ...(servicesSelected !== 'None' && {
@@ -1371,9 +1372,7 @@ function CreateRunTime({
               <div className="submit-job-label-header">
                 Execution Configuration
               </div>
-              <div className="runtime-message">
-              Execute notebooks with:
-              </div>
+              <div className="runtime-message">Execute notebooks with:</div>
               <div>
                 <div className="create-runtime-radio">
                   <Radio
