@@ -178,7 +178,7 @@ const extension: JupyterFrontEndPlugin<void> = {
       const credentials = await authApi(false);
       if (credentials?.project_id) {
         bigqueryDatasetsResponse =
-          await BigQueryService.listBigQueryDatasetsAPIService(
+          await BigQueryService.checkBigQueryDatasetsAPIService(
             credentials.project_id
           );
       }
