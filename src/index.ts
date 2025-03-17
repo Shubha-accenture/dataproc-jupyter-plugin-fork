@@ -65,7 +65,6 @@ import { BigQueryWidget } from './bigQuery/bigQueryWidget';
 import { RunTimeSerive } from './runtime/runtimeService';
 import { Notification } from '@jupyterlab/apputils';
 import { BigQueryService } from './bigQuery/bigQueryService';
-import { error } from 'console';
 import { toast } from 'react-toastify';
 
 const iconDpms = new LabIcon({
