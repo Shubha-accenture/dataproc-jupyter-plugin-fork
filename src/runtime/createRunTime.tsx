@@ -27,7 +27,6 @@ import {
   CUSTOM_CONTAINERS,
   CUSTOM_CONTAINER_MESSAGE,
   CUSTOM_CONTAINER_MESSAGE_PART,
-  LOGIN_ERROR_MESSAGE,
   LOGIN_STATE,
   SHARED_VPC,
   SERVICE_ACCOUNT,
@@ -1215,7 +1214,7 @@ function CreateRunTime({
         </div>
       )}
 
-      {loggedIn && !configError ? (
+      {loggedIn && !configError && (
         <>
           <div className="cluster-details-header">
             <div className="back-arrow-icon" onClick={handleCancelButton}>
@@ -1888,19 +1887,8 @@ function CreateRunTime({
             </form>
           </div>
         </>
-      ) : (
-        loginError && (
-          <div role="alert" className="login-error">
-            {LOGIN_ERROR_MESSAGE}
-          </div>
-        )
       )}
-
-      {configError && (
-        <div role="alert" className="login-error">
-          Please configure gcloud with account, project-id and region
-        </div>
-      )}
+      {(loginError || configError) && <div className="component-level"></div>}
     </div>
   );
 }

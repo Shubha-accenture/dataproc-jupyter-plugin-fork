@@ -172,7 +172,7 @@ const extension: JupyterFrontEndPlugin<void> = {
         await RunTimeSerive.listClustersDataprocAPIService();
 
       let bigqueryDatasetsResponse;
-      const credentials = await authApi();
+      const credentials = await authApi(false);
       if (credentials?.project_id) {
         bigqueryDatasetsResponse =
           await BigQueryService.listBigQueryDatasetsAPIService(

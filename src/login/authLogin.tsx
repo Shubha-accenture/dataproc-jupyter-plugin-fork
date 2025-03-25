@@ -16,11 +16,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { LabIcon } from '@jupyterlab/ui-components';
-import signinGoogleIcon from '../../style/icons/signin_google_icon.svg';
-import { requestAPI } from '../handler/handler';
 import ConfigSelection from './configSelection';
-import { LOGIN_STATE, STATUS_SUCCESS } from '../utils/const';
+import { LOGIN_STATE } from '../utils/const';
 import { checkConfig } from '../utils/utils';
 import { DataprocWidget } from '../controls/DataprocWidget';
 import { IThemeManager } from '@jupyterlab/apputils';
@@ -28,12 +25,6 @@ import { ILauncher } from '@jupyterlab/launcher';
 import { JupyterLab } from '@jupyterlab/application';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { CircularProgress } from '@mui/material';
-
-// Create the LabIcon instance outside of the component
-const IconsigninGoogle = new LabIcon({
-  name: 'launcher:signin_google_icon',
-  svgstr: signinGoogleIcon
-});
 
 const AuthLoginComponent = ({
   app,
@@ -47,28 +38,9 @@ const AuthLoginComponent = ({
   themeManager: IThemeManager;
 }): React.JSX.Element => {
   const [loginState, setLoginState] = useState(false);
-  const [isloginDisabled, setIsloginDisabled] = useState(false);
   const [configError, setConfigError] = useState(false);
   const [loginError, setLoginError] = useState(false);
   const [configLoading, setConfigLoading] = useState(true);
-
-  const login = async () => {
-    setIsloginDisabled(true);
-    const data = await requestAPI('login', {
-      method: 'POST'
-    });;
-    if (typeof data === 'object' && data !== null) {
-      const loginStatus = (data as { login: string }).login;
-      if (loginStatus === STATUS_SUCCESS) {
-        setLoginState(true);
-        setLoginError(false);
-        localStorage.setItem('loginState', LOGIN_STATE);
-      } else {
-        setLoginState(false);
-        localStorage.removeItem('loginState');
-      }
-    }
-  };
 
   useEffect(() => {
     checkConfig(setLoginState, setConfigError, setLoginError);
@@ -77,6 +49,7 @@ const AuthLoginComponent = ({
     if (loginState) {
       setConfigLoading(false);
     }
+    console.log('loginState', loginState, configError, loginError);
   }, []);
 
   return (
@@ -84,7 +57,7 @@ const AuthLoginComponent = ({
       {configLoading && !loginState && !configError && !loginError && (
         <div className="spin-loader-main">
           <CircularProgress
-            className = "spin-loader-custom-style"
+            className="spin-loader-custom-style"
             size={18}
             aria-label="Loading Spinner"
             data-testid="loader"
@@ -101,32 +74,7 @@ const AuthLoginComponent = ({
           settingRegistry={settingRegistry}
         />
       )}
-      {loginError && (
-        <>
-          <div className="login-error">Please login to continue</div>
-          <div style={{ alignItems: 'center' }}>
-            <div
-              role="button"
-              className={
-                isloginDisabled
-                  ? 'signin-google-icon disabled'
-                  : 'signin-google-icon'
-              }
-              onClick={isloginDisabled ? undefined : login}
-            >
-              <IconsigninGoogle.react
-                tag="div"
-                className="logo-alignment-style"
-              />
-            </div>
-          </div>
-        </>
-      )}
-      {configError && (
-        <div className="login-error">
-          Please configure gcloud with account, project-id and region
-        </div>
-      )}
+      {(loginError || configError) && <div className="component-level"></div>}
     </div>
   );
 };

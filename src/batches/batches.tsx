@@ -19,7 +19,7 @@ import React, { useEffect, useState } from 'react';
 import ListBatches from './listBatches';
 import ListSessions from '../sessions/listSessions';
 import { DataprocWidget } from '../controls/DataprocWidget';
-import { LOGIN_ERROR_MESSAGE, LOGIN_STATE } from '../utils/const';
+import { LOGIN_STATE } from '../utils/const';
 import { checkConfig } from '../utils/utils';
 import { CircularProgress } from '@mui/material';
 
@@ -57,7 +57,7 @@ const BatchesComponent = (): React.JSX.Element => {
       {configLoading && !loggedIn && !configError && !loginError && (
         <div className="spin-loader-main">
           <CircularProgress
-            className = "spin-loader-custom-style"
+            className="spin-loader-custom-style"
             size={18}
             aria-label="Loading Spinner"
             data-testid="loader"
@@ -65,16 +65,7 @@ const BatchesComponent = (): React.JSX.Element => {
           Loading Batches
         </div>
       )}
-      {loginError && (
-        <div role="alert" className="login-error">
-          {LOGIN_ERROR_MESSAGE}
-        </div>
-      )}
-      {configError && (
-        <div role="alert" className="login-error">
-          Please configure gcloud with account, project-id and region
-        </div>
-      )}
+
       {loggedIn && !configError && !loginError && (
         <div className="clusters-list-component" role="tablist">
           {
@@ -104,6 +95,7 @@ const BatchesComponent = (): React.JSX.Element => {
           </div>
         </div>
       )}
+      {loginError || (configError && <div className="component-level"></div>)}
     </div>
   );
 };

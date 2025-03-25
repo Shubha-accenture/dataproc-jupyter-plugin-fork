@@ -45,6 +45,7 @@ import {
 import { ToastOptions, toast } from 'react-toastify';
 import { KernelSpecAPI } from '@jupyterlab/services';
 import { DataprocLoggingService } from './loggingService';
+import { showLoginDialog } from './loginPopup';
 export interface IAuthCredentials {
   access_token?: string;
   project_id?: string;
@@ -53,7 +54,9 @@ export interface IAuthCredentials {
   login_error?: number;
 }
 
-export const authApi = async (): Promise<IAuthCredentials | undefined> => {
+export const authApi = async (
+  checkApiEnabled: boolean = true
+): Promise<IAuthCredentials | undefined> => {
   try {
     const data = await requestAPI('credentials');
     if (typeof data === 'object' && data !== null) {
@@ -64,9 +67,27 @@ export const authApi = async (): Promise<IAuthCredentials | undefined> => {
         config_error: (data as { config_error: number }).config_error,
         login_error: (data as { login_error: number }).login_error
       };
-      return credentials;
-    } else {
-      console.error('Invalid data format.');
+      if (checkApiEnabled) {
+        if (credentials.login_error || credentials.config_error) {
+          try {
+            const dialogResult = await showLoginDialog({
+              loginError: credentials.login_error === 1,
+              configError: credentials.config_error === 1
+            });
+            if (dialogResult) {
+              return await authApi();
+            } else {
+              console.log('cance', dialogResult);
+              return credentials;
+            }
+          } catch (dialogError) {
+            console.error('Dialog was cancelled or failed:', dialogError);
+            return credentials;
+          }
+        } else {
+          console.error('Invalid data format.');
+        }
+      }
     }
   } catch (reason) {
     console.error(`Error on GET credentials.\n${reason}`);
@@ -90,7 +111,7 @@ export const authenticatedFetch = async (config: {
   queryParams?: URLSearchParams;
 }) => {
   const { baseUrl, uri, method, regionIdentifier, queryParams } = config;
-  const credentials = await authApi();
+  const credentials = await authApi(false);
   // If there is an issue with getting credentials, there is no point continuing the request.
   if (!credentials) {
     throw new Error('Error during authentication');
@@ -286,6 +307,9 @@ export const checkConfig = async (
       if (credentials.login_error === 1) {
         setLoginError(true);
       }
+    }
+    if (credentials.config_error === 1) {
+      setConfigError(true);
     } else {
       setLoginState(true);
     }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DataprocWidget } from '../controls/DataprocWidget';
-import { LOGIN_ERROR_MESSAGE, LOGIN_STATE } from '../utils/const';
+import { LOGIN_STATE } from '../utils/const';
 import { checkConfig } from '../utils/utils';
 import ListNotebookTemplates from './listNotebookTemplates';
 import { JupyterLab } from '@jupyterlab/application';
@@ -36,22 +36,12 @@ const NotebookTemplatesComponent = ({
       {configLoading && !loggedIn && !configError && !loginError && (
         <div className="spin-loader-main">
           <CircularProgress
-            className = "spin-loader-custom-style"
+            className="spin-loader-custom-style"
             size={18}
             aria-label="Loading Spinner"
             data-testid="loader"
           />
           Loading Templates
-        </div>
-      )}
-      {loginError && (
-        <div role="alert" className="login-error">
-          {LOGIN_ERROR_MESSAGE}
-        </div>
-      )}
-      {configError && (
-        <div role="alert" className="login-error">
-          Please configure gcloud with account, project-id and region
         </div>
       )}
       {loggedIn && !configError && !loginError && (
@@ -65,6 +55,7 @@ const NotebookTemplatesComponent = ({
           </div>
         </div>
       )}
+      {(loginError || configError) && <div className="component-level"></div>}
     </div>
   );
 };

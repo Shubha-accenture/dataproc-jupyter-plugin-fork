@@ -17,7 +17,7 @@
 
 import React, { useEffect, useState } from 'react';
 import JobComponent from '../jobs/jobs';
-import { LOGIN_ERROR_MESSAGE, LOGIN_STATE } from '../utils/const';
+import { LOGIN_STATE } from '../utils/const';
 import { checkConfig } from '../utils/utils';
 import ClusterDetails from './clusterDetails';
 import ListCluster from './listCluster';
@@ -64,7 +64,7 @@ const ClusterComponent = (): React.JSX.Element => {
       {configLoading && !loggedIn && !configError && !loginError && (
         <div className="spin-loader-main">
           <CircularProgress
-            className = "spin-loader-custom-style"
+            className="spin-loader-custom-style"
             size={18}
             aria-label="Loading Spinner"
             data-testid="loader"
@@ -72,7 +72,7 @@ const ClusterComponent = (): React.JSX.Element => {
           Loading Clusters
         </div>
       )}
-      {loggedIn && !loginError && !configError ? (
+      {loggedIn && !loginError && !configError && (
         <>
           {detailedView && (
             <ClusterDetails
@@ -130,14 +130,8 @@ const ClusterComponent = (): React.JSX.Element => {
             </div>
           )}
         </>
-      ) : (
-        loginError && <div className="login-error"> {LOGIN_ERROR_MESSAGE}</div>
       )}
-      {configError && (
-        <div className="login-error">
-          Please configure gcloud with account, project-id and region
-        </div>
-      )}
+      {(loginError || configError) && <div className="component-level"></div>}
     </div>
   );
 };
