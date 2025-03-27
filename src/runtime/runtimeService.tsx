@@ -451,14 +451,15 @@ export class RunTimeSerive {
       );
     }
   };
-  static listClustersDataprocAPIService = async () => {
+  static listClustersDataprocAPIService = async (checkApiEnabled?:boolean) => {
     try {
       const queryParams = new URLSearchParams({ pageSize: '100' });
       const response = await authenticatedFetch({
         uri: 'clusters',
         method: HTTP_METHOD.GET,
         regionIdentifier: 'regions',
-        queryParams: queryParams
+        queryParams: queryParams,
+        checkApiEnabled: checkApiEnabled
       });
       const formattedResponse = await response.json();
       return formattedResponse;

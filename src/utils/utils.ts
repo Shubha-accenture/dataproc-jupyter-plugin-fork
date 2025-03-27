@@ -77,7 +77,6 @@ export const authApi = async (
             if (dialogResult) {
               return await authApi();
             } else {
-              console.log('cance', dialogResult);
               return credentials;
             }
           } catch (dialogError) {
@@ -85,7 +84,7 @@ export const authApi = async (
             return credentials;
           }
         } else {
-          console.error('Invalid data format.');
+          return credentials;
         }
       }
     }
@@ -109,9 +108,17 @@ export const authenticatedFetch = async (config: {
   method: HTTP_METHOD;
   regionIdentifier?: 'regions' | 'locations' | 'global';
   queryParams?: URLSearchParams;
+  checkApiEnabled?: boolean;
 }) => {
-  const { baseUrl, uri, method, regionIdentifier, queryParams } = config;
-  const credentials = await authApi(false);
+  const {
+    baseUrl,
+    uri,
+    method,
+    regionIdentifier,
+    queryParams,
+    checkApiEnabled
+  } = config;
+  const credentials = await authApi(checkApiEnabled);
   // If there is an issue with getting credentials, there is no point continuing the request.
   if (!credentials) {
     throw new Error('Error during authentication');

@@ -169,7 +169,7 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     const checkAllApisEnabled = async () => {
       const dataprocClusterResponse =
-        await RunTimeSerive.listClustersDataprocAPIService();
+        await RunTimeSerive.listClustersDataprocAPIService(false);
 
       let bigqueryDatasetsResponse;
       const credentials = await authApi(false);
@@ -334,10 +334,7 @@ const extension: JupyterFrontEndPlugin<void> = {
         panelDpms.addWidget(new dpmsWidget(app as JupyterLab, themeManager));
         onThemeChanged();
         app.shell.add(panelDpms, 'left', { rank: 1001 });
-        DataprocLoggingService.log(
-          'Metastore is enabled',
-          LOG_LEVEL.INFO
-        );
+        DataprocLoggingService.log('Metastore is enabled', LOG_LEVEL.INFO);
       }
 
       if (enableCloudStorage) {
@@ -352,21 +349,14 @@ const extension: JupyterFrontEndPlugin<void> = {
         );
         onThemeChanged();
         app.shell.add(panelGcs, 'left', { rank: 1002 });
-        DataprocLoggingService.log(
-          'Cloud storage is enabled',
-          LOG_LEVEL.INFO
-        );
+        DataprocLoggingService.log('Cloud storage is enabled', LOG_LEVEL.INFO);
       }
     };
     onSidePanelEnabled();
 
     app.docRegistry.addWidgetExtension(
       'Notebook',
-      new NotebookButtonExtension(
-        app as JupyterLab,
-        launcher,
-        themeManager
-      )
+      new NotebookButtonExtension(app as JupyterLab, launcher, themeManager)
     );
 
     const loadDpmsWidget = (value: string) => {
@@ -481,7 +471,7 @@ const extension: JupyterFrontEndPlugin<void> = {
             newValue.title.label === 'Serverless' ||
             newValue.title.label === 'Settings' ||
             newValue.title.label === 'Notebook Templates' ||
-            newValue.title.label === 'Scheduled Jobs' ) &&
+            newValue.title.label === 'Scheduled Jobs') &&
           lastClusterName !== ''
         ) {
           localStorage.setItem('oldNotebookValue', lastClusterName || '');
@@ -498,7 +488,7 @@ const extension: JupyterFrontEndPlugin<void> = {
             newValue.title.label !== 'Runtime template' &&
             newValue.title.label !== 'Settings' &&
             newValue.title.label !== 'Notebook Templates' &&
-            newValue.title.label !== 'Scheduled Jobs' 
+            newValue.title.label !== 'Scheduled Jobs'
           ) {
             let oldNotebook = localStorage.getItem('oldNotebookValue');
             localStorage.setItem('notebookValue', oldNotebook || '');
@@ -782,7 +772,6 @@ const extension: JupyterFrontEndPlugin<void> = {
         category: TITLE_LAUNCHER_CATEGORY,
         rank: 3
       });
-
     }
 
     // the plugin depends on having a toast container, and Jupyter labs lazy
