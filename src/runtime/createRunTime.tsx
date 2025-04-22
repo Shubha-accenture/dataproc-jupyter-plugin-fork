@@ -35,7 +35,9 @@ import {
   SPARK_AUTOSCALING_INFO_URL,
   RESOURCE_ALLOCATION_DEFAULT,
   AUTO_SCALING_DEFAULT,
-  GPU_DEFAULT
+  GPU_DEFAULT,
+  SECURITY_KEY,
+  KEY_MESSAGE
 } from '../utils/const';
 import LabelProperties from '../jobs/labelProperties';
 import {
@@ -199,6 +201,20 @@ function CreateRunTime({
   const [sharedvpcSelected, setSharedvpcSelected] = useState('');
   const [gpuDetailChangeDone, setGpuDetailChangeDone] = useState(false);
 
+  let keyType = '';
+  let keyRing = '';
+  let keys = '';
+  const selectedKeyType = keyType ? 'customerManaged' : 'googleManaged';
+  const [selectedEncryptionRadio, setSelectedEncryptionRadio] =
+    useState(selectedKeyType);
+  const [selectedRadioValue, setSelectedRadioValue] = useState('key');
+  const [keyRingSelected, setKeyRingSelected] = useState(keyRing);
+  const [keySelected, setKeySelected] = useState(keys);
+  const [manualKeySelected, setManualKeySelected] = useState('');
+  const [manualValidation, setManualValidation] = useState(true);
+  const [keyRinglist, setKeyRinglist] = useState<string[]>([]);
+  const [keylist, setKeylist] = useState<string[]>([]);
+
   useEffect(() => {
     checkConfig(setLoggedIn, setConfigError, setLoginError);
     const localstorageGetInformation = localStorage.getItem('loginState');
@@ -216,6 +232,7 @@ function CreateRunTime({
     updateLogic();
     listClustersAPI();
     listNetworksAPI();
+    listKeyRingsAPI();
     runtimeSharedProject();
   }, []);
 
@@ -350,6 +367,31 @@ function CreateRunTime({
       modifyResourceAllocation();
     }
   }, [gpuDetailUpdated, gpuDetailChangeDone]);
+
+  const handlekeyRingRadio = () => {
+    setSelectedRadioValue('key');
+    setManualKeySelected('');
+    setManualValidation(true);
+  };
+
+  const handleGoogleManagedRadio = () => {
+    setSelectedEncryptionRadio('googleManaged');
+    setKeyRingSelected('');
+    setKeySelected('');
+    setManualKeySelected('');
+  };
+
+  const handlekeyManuallyRadio = () => {
+    setSelectedRadioValue('manually');
+    setKeyRingSelected('');
+    setKeySelected('');
+  };
+
+  useEffect(() => {
+    if (keyRingSelected !== '') {
+      listKeysAPI(keyRingSelected);
+    }
+  }, [keyRingSelected]);
 
   const displayUserInfo = async () => {
     await RunTimeSerive.displayUserInfoService(setUserInfo);
@@ -637,6 +679,14 @@ function CreateRunTime({
       setIsLoadingService,
       setServicesList
     );
+  };
+
+  const listKeyRingsAPI = async () => {
+    await RunTimeSerive.listKeyRingsAPIService(setKeyRinglist);
+  };
+
+  const listKeysAPI = async (keyRing: string) => {
+    await RunTimeSerive.listKeysAPIService(keyRing, setKeylist, setKeySelected);
   };
 
   const generateRandomHex = () => {
@@ -1224,6 +1274,32 @@ function CreateRunTime({
     }
   };
 
+  const handleManualKeySelected = (event: ChangeEvent<HTMLInputElement>) => {
+    const inputValue = event.target.value;
+    const numericRegex =
+      /^projects\/[^/]+\/locations\/[^/]+\/keyRings\/[^/]+\/cryptoKeys\/[^/]+$/;
+
+    if (numericRegex.test(inputValue) || inputValue === '') {
+      setManualValidation(true);
+    } else {
+      setManualValidation(false);
+    }
+
+    setManualKeySelected(inputValue);
+  };
+
+  const handleKeyRingChange = (data: string | null) => {
+    if (data !== null) {
+      setKeyRingSelected(data!.toString());
+      listKeysAPI(data!.toString());
+    }
+  };
+  const handlekeyChange = (data: string | null) => {
+    if (data !== null) {
+      setKeySelected(data!.toString());
+    }
+  };
+
   return (
     <div>
       {configLoading && !loggedIn && !configError && !loginError && (
@@ -1307,7 +1383,9 @@ function CreateRunTime({
                   </div>
                 </div>
               )}
-
+              <div className="submit-job-label-header">
+                Execution Configuration
+              </div>
               <div className="select-text-overlay">
                 <Input
                   className="create-runtime-style "
@@ -1368,12 +1446,9 @@ function CreateRunTime({
                   Learn more
                 </div>
               </div>
-              <div className="submit-job-label-header">
-                Execution Configuration
-              </div>
-              <div className="runtime-message">Execute notebooks with:</div>
               <div>
                 <div className="create-runtime-radio">
+                <div className="runtime-message">Execute notebooks with:  </div>
                   <Radio
                     className="select-runtime-radio-style"
                     value={serviceAccountSelected}
@@ -1419,6 +1494,150 @@ function CreateRunTime({
                     </div>
                   </>
                 )}
+              </div>
+              <div className="select-text-overlay">
+                <Input
+                  className="create-runtime-style "
+                  value={pythonRepositorySelected}
+                  onChange={e => setPythonRepositorySelected(e.target.value)}
+                  type="text"
+                  Label="Python packages repository"
+                />
+              </div>
+              <div className="create-messagelist">
+                Enter the URI for the repository to install Python packages. By
+                default packages are installed to PyPI pull-through cache on
+                GCP.
+              </div>
+              <div>
+                <div>
+                <div className="submit-job-label-header">Encryption</div>
+                  <div className="create-batch-radio">
+                    <Radio
+                      size="small"
+                      className="select-batch-radio-style"
+                      value="googleManaged"
+                      checked={selectedEncryptionRadio === 'googleManaged'}
+                      onChange={handleGoogleManagedRadio}
+                    />
+                    <div className="create-batch-message">
+                      Google-managed encryption key
+                    </div>
+                  </div>
+                  <div className="create-batch-sub-message">
+                    No configuration required
+                  </div>
+                </div>
+                <div>
+                  <div className="create-batch-radio">
+                    <Radio
+                      size="small"
+                      className="select-batch-radio-style"
+                      value="googleManaged"
+                      checked={selectedEncryptionRadio === 'customerManaged'}
+                      onChange={() =>
+                        setSelectedEncryptionRadio('customerManaged')
+                      }
+                    />
+                    <div className="create-batch-message">
+                      Customer-managed encryption key (CMEK)
+                    </div>
+                  </div>
+                  <div className="create-batch-sub-message">
+                    Manage via{' '}
+                    <div
+                      className="submit-job-learn-more"
+                      onClick={() => {
+                        window.open(
+                          `${SECURITY_KEY}?
+                          `,
+                          '_blank'
+                        );
+                      }}
+                    >
+                      Google Cloud Key Management Service
+                    </div>
+                  </div>
+                  {selectedEncryptionRadio === 'customerManaged' && (
+                    <>
+                      <div>
+                        <div className="create-batch-encrypt">
+                          <Radio
+                            size="small"
+                            className="select-batch-encrypt-radio-style"
+                            value="mainClass"
+                            checked={selectedRadioValue === 'key'}
+                            onChange={handlekeyRingRadio}
+                          />
+                          <div className="select-text-overlay">
+                            <Autocomplete
+                              disabled={
+                                selectedRadioValue === 'manually' ? true : false
+                              }
+                              options={keyRinglist}
+                              value={keyRingSelected}
+                              onChange={(_event, val) =>
+                                handleKeyRingChange(val)
+                              }
+                              renderInput={params => (
+                                <TextField {...params} label="Key rings" />
+                              )}
+                            />
+                          </div>
+                          <div className="select-text-overlay subnetwork-style">
+                            <Autocomplete
+                              disabled={
+                                selectedRadioValue === 'manually' ? true : false
+                              }
+                              options={keylist}
+                              value={keySelected}
+                              onChange={(_event, val) => handlekeyChange(val)}
+                              renderInput={params => (
+                                <TextField {...params} label="Keys" />
+                              )}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="manual-input">
+                        <div className="encrypt">
+                          <Radio
+                            size="small"
+                            className="select-batch-encrypt-radio-style "
+                            value="mainClass"
+                            checked={selectedRadioValue === 'manually'}
+                            onChange={handlekeyManuallyRadio}
+                          />
+                          <div className="select-text-overlay">
+                            <Input
+                              className={
+                                selectedRadioValue === 'key'
+                                  ? 'disable-text create-batch-key manual-key'
+                                  : 'create-batch-style manual-key'
+                              }
+                              value={manualKeySelected}
+                              type="text"
+                              disabled={selectedRadioValue === 'key'}
+                              onChange={handleManualKeySelected}
+                              Label="Enter key manually"
+                            />
+                          </div>
+                        </div>
+                        {!manualValidation && (
+                          <div className="error-key-parent-manual">
+                            <iconError.react
+                              tag="div"
+                              className="logo-alignment-style"
+                            />
+                            <div className="error-key-missing">
+                              {KEY_MESSAGE}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="submit-job-label-header">
                 Network Configuration
@@ -1466,7 +1685,6 @@ function CreateRunTime({
                   </div>
                 </div>
               </div>
-
               <div>
                 {selectedNetworkRadio === 'projectNetwork' && (
                   <div className="create-batch-network">
@@ -1576,56 +1794,15 @@ function CreateRunTime({
                   </div>
                 </div>
               )}
-
               {!duplicateValidation && (
                 <div className="create-messagelist">
                   Network tags are text attributes you can add to make firewall
                   rules and routes applicable to specific VM instances.
                 </div>
               )}
-
-              <div className="submit-job-label-header">Metastore</div>
-
-              <div className="select-text-overlay">
-                <DynamicDropdown
-                  value={projectId}
-                  onChange={(_, projectId) =>
-                    handleProjectIdChange(projectId, networkSelected)
-                  }
-                  fetchFunc={projectListAPI}
-                  label="Project ID"
-                  // Always show the clear indicator and hide the dropdown arrow
-                  // make it very clear that this is an autocomplete.
-                  sx={{
-                    '& .MuiAutocomplete-clearIndicator': {
-                      visibility: 'hidden'
-                    }
-                  }}
-                  popupIcon={null}
-                />
+              <div className="submit-job-label-header">
+                Session Configuration
               </div>
-
-              <div className="select-text-overlay">
-                {isLoadingService ? (
-                  <div className="metastore-loader">
-                    <CircularProgress
-                      size={25}
-                      aria-label="Loading Spinner"
-                      data-testid="loader"
-                    />
-                  </div>
-                ) : (
-                  <Autocomplete
-                    options={servicesList}
-                    value={servicesSelected}
-                    onChange={(_event, val) => handleServiceSelected(val)}
-                    renderInput={params => (
-                      <TextField {...params} label="Metastore services" />
-                    )}
-                  />
-                )}
-              </div>
-
               <div className="single-line">
                 <div className="select-text-overlay">
                   <Input
@@ -1692,21 +1869,47 @@ function CreateRunTime({
                 </div>
               )}
 
+              <div className="submit-job-label-header">Metastore</div>
+
               <div className="select-text-overlay">
-                <Input
-                  className="create-runtime-style "
-                  value={pythonRepositorySelected}
-                  onChange={e => setPythonRepositorySelected(e.target.value)}
-                  type="text"
-                  Label="Python packages repository"
+                <DynamicDropdown
+                  value={projectId}
+                  onChange={(_, projectId) =>
+                    handleProjectIdChange(projectId, networkSelected)
+                  }
+                  fetchFunc={projectListAPI}
+                  label="Project ID"
+                  // Always show the clear indicator and hide the dropdown arrow
+                  // make it very clear that this is an autocomplete.
+                  sx={{
+                    '& .MuiAutocomplete-clearIndicator': {
+                      visibility: 'hidden'
+                    }
+                  }}
+                  popupIcon={null}
                 />
               </div>
-              <div className="create-messagelist">
-                Enter the URI for the repository to install Python packages. By
-                default packages are installed to PyPI pull-through cache on
-                GCP.
-              </div>
 
+              <div className="select-text-overlay">
+                {isLoadingService ? (
+                  <div className="metastore-loader">
+                    <CircularProgress
+                      size={25}
+                      aria-label="Loading Spinner"
+                      data-testid="loader"
+                    />
+                  </div>
+                ) : (
+                  <Autocomplete
+                    options={servicesList}
+                    value={servicesSelected}
+                    onChange={(_event, val) => handleServiceSelected(val)}
+                    renderInput={params => (
+                      <TextField {...params} label="Metastore services" />
+                    )}
+                  />
+                )}
+              </div>
               <div className="submit-job-label-header">
                 Persistent Spark History Server
               </div>
