@@ -63,16 +63,17 @@ async def get_cached():
         credentials["config_error"] = 0
         credentials["access_token"] = await _gcp_credentials()
         credentials["project_number"] = await _gcp_project_number()
+        print("access_token", credentials["access_token"])
     except Exception as ex:
-        credentials["config_error"] = 1
+            credentials["login_error"] = 1
 
-    if not credentials["access_token"] or not credentials["project_number"]:
+    if not credentials["project_number"] or not credentials['region_id']:
         # These will only be set if the user is logged in to gcloud with
         # an account that has the appropriate permissions on the configured
         # project.
         #
         # As such, we treat them being missing as a signal that there is
         # a problem with how the user is logged in to gcloud.
-        credentials["login_error"] = 1
+        credentials["config_error"] = 1
 
     return credentials
