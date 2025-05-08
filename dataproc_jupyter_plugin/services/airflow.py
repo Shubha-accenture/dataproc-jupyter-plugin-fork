@@ -81,7 +81,7 @@ class Client:
                     return resp, bucket
                 else:
                     raise Exception(
-                        f"Error lsiting scheduled jobs: {response.reason} {await response.text()}"
+                        f"Error listing scheduled jobs: {response.reason} {await response.text()}"
                     )
         except Exception as e:
             self.log.exception(f"Error getting dag list: {str(e)}")
