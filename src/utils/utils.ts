@@ -85,6 +85,7 @@ export const authApi = async (
             return credentials;
           }
         } else {
+          return credentials;
           console.error('Invalid data format.');
         }
       }
@@ -111,6 +112,7 @@ export const authenticatedFetch = async (config: {
   queryParams?: URLSearchParams;
   checkApiEnabled?: boolean;
 }) => {
+
   const { baseUrl, uri, method, regionIdentifier, queryParams } = config;
   const credentials = await authApi(false);
   // If there is an issue with getting credentials, there is no point continuing the request.
