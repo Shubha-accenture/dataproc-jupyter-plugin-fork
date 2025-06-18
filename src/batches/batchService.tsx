@@ -712,7 +712,6 @@ export class BatchService {
         });
     }
   };
-
   static listSubNetworksAPIService = async (
     subnetwork: string,
     setSubNetworklist: (value: string[]) => void,
@@ -941,7 +940,6 @@ export class BatchService {
         });
     }
   };
-
   static creatBatchSubmitService = async (
     credentials: IAuthCredentials,
     payload: any,
@@ -983,21 +981,36 @@ export class BatchService {
           );
         } else {
           const errorResponse = await response.json();
-          Notification.emit(
-            `Failed to submit the Batch : ${errorResponse?.error?.message}`,
-            'error',
-            {
-              autoClose: 5000
-            }
-          );
-          setError({ isOpen: true, message: errorResponse.error.message });
-          console.log(error);
+          const errorMessage = errorResponse?.error?.message || 'Unknown error';
+
+          let clickableMessage = errorMessage;
+          const urlMatch = errorMessage.match(/https?:\/\/[^\s]+/);
+
+          if (urlMatch && urlMatch[0]) {
+            const url = urlMatch[0];
+            clickableMessage = errorMessage.replace(
+              url,
+              `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">${url}</a>`
+            );
+          }
+
+          setError({
+            isOpen: true,
+            message: clickableMessage,
+            isHtml: true
+          });
+
+          console.log('Error:', errorMessage);
         }
       })
       .catch((err: Error) => {
-        Notification.emit(`Failed to submit the Batch : ${err}`, 'error', {
-          autoClose: 5000
-        });
+        Notification.emit(
+          `Failed to submit the Batch: ${err.message}`,
+          'error',
+          {
+            autoClose: 5000
+          }
+        );
         DataprocLoggingService.log('Error submitting Batch', LOG_LEVEL.ERROR);
       });
   };
