@@ -274,6 +274,9 @@ export const TIER_SELECT_OPTIONS = [
   { key: 'standard', value: 'standard', text: 'standard' },
   { key: 'premium', value: 'premium', text: 'premium' }
 ];
+export const LIGHTNING_ENGINE_OPTIONS = [
+  { key: 'spark.dataproc.engine', value: 'default', text: 'default' }
+];
 export const CLOUD_COMPOSER_API =
   'https://console.developers.google.com/apis/api/composer.googleapis.com';
 export const DATAPROC_SERVICE_NAME = 'dataproc.googleapis.com';

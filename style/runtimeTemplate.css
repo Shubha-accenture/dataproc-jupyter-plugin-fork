@@ -201,3 +201,6 @@
 .input-error .MuiOutlinedInput-notchedOutline {
   border-color: red !important;
 }
+.lightning-label-style {
+  font-size: 14px !important;
+}

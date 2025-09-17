@@ -105,7 +105,7 @@ const iconHelp = new LabIcon({
 const iconHelpDark = new LabIcon({
   name: 'launcher:help-spark-dark-icon',
   svgstr: helpIconDark
-})
+});
 
 let networkUris: string[] = [];
 let key: string[] | (() => string[]) = [];
@@ -216,14 +216,16 @@ function CreateRunTime({
   const [metastoreType, setMetastoreType] = useState('none');
   const [dataWarehouseDir, setDataWarehouseDir] = useState('');
   const [metastoreDetail, setMetastoreDetail] = useState(META_STORE_DEFAULT);
-  const [metastoreDetailUpdated, setMetastoreDetailUpdated] = useState(META_STORE_DEFAULT);
+  const [metastoreDetailUpdated, setMetastoreDetailUpdated] =
+    useState(META_STORE_DEFAULT);
   const gcsUrlRegex = /^gs:\/\/([a-z0-9][a-z0-9_.-]{1,61}[a-z0-9])\/.*[^\/]$/;
   const [isValidDataWareHouseUrl, setIsValidDataWareHouseUrl] = useState(false);
   const [expandMetastore, setExpandMetastore] = useState(false);
 
   useEffect(() => {
     if (metastoreType === 'biglake') {
-      const metaStorePropertiesList = metastoreDetail.length > 0 ? metastoreDetail : META_STORE_DEFAULT;
+      const metaStorePropertiesList =
+        metastoreDetail.length > 0 ? metastoreDetail : META_STORE_DEFAULT;
       const warehouseProperty = 'spark.sql.catalog.iceberg_catalog.warehouse:';
       const metaStoreProperties = metaStorePropertiesList.map(property => {
         if (property.startsWith(warehouseProperty)) {
@@ -258,6 +260,8 @@ function CreateRunTime({
   const [stagingBucket, setStagingBucket] = useState('');
   const [apiDialogOpen, setApiDialogOpen] = useState(false);
   const [enableLink, setEnableLink] = useState('');
+  const [lightningEngineEnabled, setLightningEngineEnabled] = useState(true);
+
   const runtimeOptions = [
     {
       value: '2.3',
@@ -277,6 +281,23 @@ function CreateRunTime({
     }
   ];
 
+useEffect(() => {
+  const lightningProperty = lightningEngineEnabled
+   ? 'spark.dataproc.engine:lightning'
+   : 'spark.dataproc.engine:default';
+  
+  // Always remove any existing spark.dataproc.engine property first
+  const filteredProperties = propertyDetail.filter(
+    property => !property.startsWith('spark.dataproc.engine:')
+  );
+  
+  // Always add the property with the correct value (lightning or default)
+  const updatedProperties = [...filteredProperties, lightningProperty];
+  console.log('Updated Properties:', updatedProperties);
+  setPropertyDetail(updatedProperties);
+  setPropertyDetailUpdated(updatedProperties);
+  
+}, [lightningEngineEnabled]);
   useEffect(() => {
     const initializeRuntime = async () => {
       try {
@@ -469,7 +490,7 @@ function CreateRunTime({
     const dynamicAllocationState = autoScalingDetailUpdated.find(prop =>
       prop.startsWith('spark.dynamicAllocation.enabled:')
     );
-    
+
     if (dynamicAllocationState) {
       const isEnabled = dynamicAllocationState.endsWith('true');
       let updatedProperties;
@@ -479,8 +500,8 @@ function CreateRunTime({
       } else {
         let filteredProperties = [dynamicAllocationState];
 
-        const shuffleEnabledState = autoScalingDetailUpdated.find(
-          (prop) => prop.startsWith('spark.reducer.fetchMigratedShuffle.enabled:')
+        const shuffleEnabledState = autoScalingDetailUpdated.find(prop =>
+          prop.startsWith('spark.reducer.fetchMigratedShuffle.enabled:')
         );
 
         if (shuffleEnabledState) {
@@ -488,8 +509,11 @@ function CreateRunTime({
         }
         updatedProperties = filteredProperties;
       }
-      
-      if (JSON.stringify(autoScalingDetailUpdated) !== JSON.stringify(updatedProperties)) {
+
+      if (
+        JSON.stringify(autoScalingDetailUpdated) !==
+        JSON.stringify(updatedProperties)
+      ) {
         setAutoScalingDetail(updatedProperties);
         setAutoScalingDetailUpdated(updatedProperties);
       }
@@ -630,11 +654,15 @@ function CreateRunTime({
             if (metaStoreDetailList.length > 0) {
               setMetastoreType('biglake');
               const warehouseProperty = metaStoreDetailList.find(property =>
-                property.startsWith('spark.sql.catalog.iceberg_catalog.warehouse:')
+                property.startsWith(
+                  'spark.sql.catalog.iceberg_catalog.warehouse:'
+                )
               );
               if (warehouseProperty) {
                 const firstColonIndex = warehouseProperty.indexOf(':');
-                const warehouseUrl = warehouseProperty.substring(firstColonIndex + 1);
+                const warehouseUrl = warehouseProperty.substring(
+                  firstColonIndex + 1
+                );
                 setDataWarehouseDir(warehouseUrl);
                 setIsValidDataWareHouseUrl(gcsUrlRegex.test(warehouseUrl));
               }
@@ -974,19 +1002,9 @@ function CreateRunTime({
 
   const renderHelpIcon = (themeManager: IThemeManager) => {
     if (themeManager.theme && themeManager.isLight(themeManager.theme)) {
-      return (
-        <iconHelp.react
-          tag="div"
-          className="logo-alignment-style"
-        />
-      );
+      return <iconHelp.react tag="div" className="logo-alignment-style" />;
     }
-    return (
-      <iconHelpDark.react
-        tag="div"
-        className="logo-alignment-style"
-      />
-    );
+    return <iconHelpDark.react tag="div" className="logo-alignment-style" />;
   };
 
   const handleClusterSelected = (data: string | null) => {
@@ -1041,7 +1059,8 @@ function CreateRunTime({
       (selectedNetworkRadio === 'projectNetwork' &&
         networkList.length !== 0 &&
         subNetworkList.length === 0) ||
-      (metastoreType === 'biglake' && ( dataWarehouseDir === '' || !isValidDataWareHouseUrl))
+      (metastoreType === 'biglake' &&
+        (dataWarehouseDir === '' || !isValidDataWareHouseUrl))
     );
   }
   const createRuntimeApi = async (payload: any) => {
@@ -1242,18 +1261,25 @@ function CreateRunTime({
           propertyObject[key] = value;
         });
         metastoreType === 'biglake' &&
-        metastoreDetailUpdated.forEach((label: string) => {
-          const firstColonIndex = label.indexOf(':');
-          const key = label.substring(0, firstColonIndex);
-          const value = label.substring(firstColonIndex + 1);
-          propertyObject[key] = value;
-        });
+          metastoreDetailUpdated.forEach((label: string) => {
+            const firstColonIndex = label.indexOf(':');
+            const key = label.substring(0, firstColonIndex);
+            const value = label.substring(firstColonIndex + 1);
+            propertyObject[key] = value;
+          });
         propertyDetailUpdated.forEach((label: string) => {
           const labelSplit = label.split(/:(.+)/);
           const key = labelSplit[0];
           const value = labelSplit[1];
           propertyObject[key] = value;
+                    if(key === 'spark.dataproc.engine' && value === 'default' ){
+            setLightningEngineEnabled(false);
+          }
+         
         });
+        if (!lightningEngineEnabled) {
+          propertyObject['spark.dataproc.engine'] = 'default';
+        }
         const inputValueHour = Number(idleTimeSelected) * 3600;
         const inputValueMin = Number(idleTimeSelected) * 60;
         const inputValueHourAuto = Number(autoTimeSelected) * 3600;
@@ -1684,6 +1710,38 @@ function CreateRunTime({
                   renderInput={params => (
                     <TextField {...params} label="Runtime version*" />
                   )}
+                />
+              </div>
+              <div className="lightning-label-style">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={lightningEngineEnabled}
+                      onChange={event =>
+                        setLightningEngineEnabled(event.target.checked)
+                      }
+                      name="lightningEngine"
+                    />
+                  }
+                  label={
+                    <span>
+                      Enable LIGHTNING ENGINE to accelerate performance{' '}
+                      <a
+                        href="https://cloud.google.com/blog/products/data-analytics/introducing-lightning-engine-for-apache-spark?e=48754805"
+                        onClick={e => {
+                          e.preventDefault();
+                          window.open(
+                            'https://cloud.google.com/blog/products/data-analytics/introducing-lightning-engine-for-apache-spark?e=48754805',
+                            '_blank'
+                          );
+                        }}
+                        className="submit-job-learn-more"
+                      >
+                        Learn more
+                      </a>
+                    </span>
+                  }
                 />
               </div>
               <div className="select-text-overlay">
@@ -2119,7 +2177,11 @@ function CreateRunTime({
                 <Autocomplete
                   className="create-runtime-style"
                   options={META_STORE_TYPES}
-                  value={META_STORE_TYPES.find(option => option.value === metastoreType) || null}
+                  value={
+                    META_STORE_TYPES.find(
+                      option => option.value === metastoreType
+                    ) || null
+                  }
                   getOptionLabel={option => option.label}
                   onChange={(event, newValue) => {
                     setMetastoreType(newValue?.value || '');
@@ -2178,9 +2240,15 @@ function CreateRunTime({
                 <>
                   <div className="select-text-overlay">
                     <Input
-                      className={`create-runtime-style ${!isValidDataWareHouseUrl && dataWarehouseDir ? 'input-error' : ''}`}
+                      className={`create-runtime-style ${
+                        !isValidDataWareHouseUrl && dataWarehouseDir
+                          ? 'input-error'
+                          : ''
+                      }`}
                       value={dataWarehouseDir}
-                      onChange={e => handleDataWareHouseUrlChange(e.target.value)}
+                      onChange={e =>
+                        handleDataWareHouseUrlChange(e.target.value)
+                      }
                       type="text"
                       Label="Data warehousing directory*"
                       placeholder="e.g, gs://bucket-name>/path/to/directory"
@@ -2188,8 +2256,14 @@ function CreateRunTime({
                   </div>
                   {!isValidDataWareHouseUrl && (
                     <div className="error-key-parent">
-                      <iconError.react tag="div" className="logo-alignment-style" />
-                      <div className="error-key-missing">Input does not match pattern : gs://bucket-name/path/to/directory</div>
+                      <iconError.react
+                        tag="div"
+                        className="logo-alignment-style"
+                      />
+                      <div className="error-key-missing">
+                        Input does not match pattern :
+                        gs://bucket-name/path/to/directory
+                      </div>
                     </div>
                   )}
                 </>
@@ -2358,14 +2432,16 @@ function CreateRunTime({
                 <>
                   <div className="spark-properties-sub-header-parent">
                     <div className="spark-properties-title">
-                      <div className="spark-properties-sub-header">Metastore</div>
+                      <div className="spark-properties-sub-header">
+                        Metastore
+                      </div>
                       <div
                         className="expand-icon"
                         onClick={() =>
                           window.open(`${SPARK_META_STORE_INFO_URL}`, '_blank')
                         }
-                        >
-                          {renderHelpIcon(themeManager)}
+                      >
+                        {renderHelpIcon(themeManager)}
                       </div>
                     </div>
                     <div
@@ -2414,6 +2490,8 @@ function CreateRunTime({
                 duplicateKeyError={duplicateKeyError}
                 setDuplicateKeyError={setDuplicateKeyError}
                 selectedRuntimeClone={selectedRuntimeClone ? true : false}
+                lightningEngineEnabled={lightningEngineEnabled}
+                readOnlyProperties={['spark.dataproc.engine']}
               />
               <div className="submit-job-label-header">Labels</div>
               <LabelProperties

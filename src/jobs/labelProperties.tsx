@@ -58,7 +58,9 @@ function LabelProperties({
   selectedRuntimeClone,
   batchInfoResponse,
   createBatch,
-  fromPage
+  fromPage,
+  lightningEngineEnabled = false,
+  readOnlyProperties = []
 }: any) {
   /*
   labelDetail used to store the permanent label details when onblur
@@ -92,6 +94,9 @@ function LabelProperties({
   };
 
   const handleDeleteLabel = (index: number, value: string) => {
+    if (isReadOnlyProperty(value)) {
+      return;
+    }
     const labelDelete = [...labelDetail];
     labelDelete.splice(index, 1);
     setLabelDetailUpdated(labelDelete);
@@ -108,7 +113,11 @@ function LabelProperties({
   };
   const handleEditLabel = (value: string, index: number, keyValue: string) => {
     const labelEdit = [...labelDetail];
+    const currentKey = labelEdit[index].split(':')[0];
 
+    if (isReadOnlyProperty(currentKey)) {
+      return;
+    }
     labelEdit.forEach((data, dataNumber: number) => {
       if (index === dataNumber) {
         /*
@@ -159,6 +168,9 @@ function LabelProperties({
     });
     setLabelDetailUpdated(labelEdit);
   };
+  const isReadOnlyProperty = (key: string) => {
+    return readOnlyProperties.includes(key);
+  };
 
   const styleAddLabelButton = (buttonText: string, labelDetail: string) => {
     if (
@@ -196,7 +208,7 @@ function LabelProperties({
                       Example: "{client:dataProc_plugin}"
                   */
             const labelSplit = label.split(':');
-
+            const isReadOnly = isReadOnlyProperty(labelSplit[0]);
             return (
               <div key={label}>
                 <div className="job-label-edit-row">
@@ -207,19 +219,23 @@ function LabelProperties({
                         className={`edit-input-style ${
                           labelSplit[0] === '' ||
                           buttonText !== 'ADD LABEL' ||
-                          duplicateKeyError !== -1
+                          duplicateKeyError !== -1 ||
+                          isReadOnly
                             ? ''
                             : ' disable-text'
                         }`}
                         disabled={
-                          labelSplit[0] === '' ||
-                          buttonText !== 'ADD LABEL' ||
-                          duplicateKeyError !== -1
+                          isReadOnly
+                            ? true
+                            : labelSplit[0] === '' ||
+                              buttonText !== 'ADD LABEL' ||
+                              duplicateKeyError !== -1
                             ? false
                             : true
                         }
-                        onBlur={() => handleEditLabelSwitch()}
+                        onBlur={() => !isReadOnly && handleEditLabelSwitch()}
                         onChange={e =>
+                          !isReadOnly &&
                           handleEditLabel(e.target.value, index, 'key')
                         }
                         defaultValue={labelSplit[0]}
@@ -227,9 +243,11 @@ function LabelProperties({
                       />
                     </div>
 
+                    {/* Error messages (existing code) */}
                     {labelDetailUpdated[index].split(':')[0] === '' &&
                     labelDetailUpdated[index] !== '' &&
-                    duplicateKeyError !== index ? (
+                    duplicateKeyError !== index &&
+                    !isReadOnly ? (
                       <div role="alert" className="error-key-parent">
                         <iconError.react
                           tag="div"
@@ -239,7 +257,8 @@ function LabelProperties({
                       </div>
                     ) : (
                       keyValidation === index &&
-                      buttonText === 'ADD LABEL' && (
+                      buttonText === 'ADD LABEL' &&
+                      !isReadOnly && (
                         <div className="error-key-parent">
                           <iconError.react
                             tag="div"
@@ -255,7 +274,8 @@ function LabelProperties({
                       )
                     )}
                     {duplicateKeyError === index &&
-                      buttonText === 'ADD LABEL' && (
+                      buttonText === 'ADD LABEL' &&
+                      !isReadOnly && (
                         <div className="error-key-parent">
                           <iconError.react
                             tag="div"
@@ -267,6 +287,7 @@ function LabelProperties({
                         </div>
                       )}
                   </div>
+
                   <div className="key-message-wrapper">
                     <div className="select-text-overlay-label">
                       <Input
@@ -276,14 +297,17 @@ function LabelProperties({
                           buttonText === 'ADD LABEL'
                             ? ' disable-text'
                             : ''
-                        }`}
-                        onBlur={() => handleEditLabelSwitch()}
+                        } ${isReadOnly ? ' read-only-input' : ''}`}
+                        onBlur={() => !isReadOnly && handleEditLabelSwitch()}
                         onChange={e =>
+                          !isReadOnly &&
                           handleEditLabel(e.target.value, index, 'value')
                         }
                         disabled={
-                          label === DEFAULT_LABEL_DETAIL &&
-                          buttonText === 'ADD LABEL'
+                          isReadOnly
+                            ? true
+                            : label === DEFAULT_LABEL_DETAIL &&
+                              buttonText === 'ADD LABEL'
                         }
                         defaultValue={
                           labelSplit.length > 2
@@ -293,7 +317,7 @@ function LabelProperties({
                         Label={`Value ${index + 1}`}
                       />
                     </div>
-                    {valueValidation === index && (
+                    {valueValidation === index && !isReadOnly && (
                       <div className="error-key-parent">
                         <iconError.react
                           tag="div"
@@ -311,16 +335,18 @@ function LabelProperties({
                   <div
                     role="button"
                     className={
-                      label === DEFAULT_LABEL_DETAIL &&
-                      buttonText === 'ADD LABEL'
+                      (label === DEFAULT_LABEL_DETAIL &&
+                        buttonText === 'ADD LABEL') ||
+                      isReadOnly
                         ? 'labels-delete-icon-hide'
                         : 'labels-delete-icon'
                     }
                     onClick={() => {
                       if (
                         !(
-                          label === DEFAULT_LABEL_DETAIL &&
-                          buttonText === 'ADD LABEL'
+                          (label === DEFAULT_LABEL_DETAIL &&
+                            buttonText === 'ADD LABEL') ||
+                          isReadOnly
                         )
                       ) {
                         handleDeleteLabel(index, labelSplit[0]);
@@ -332,30 +358,36 @@ function LabelProperties({
                       className="logo-alignment-style"
                     />
                   </div>
-                  <></>
                 </div>
               </div>
             );
           })}
         <button
           className={styleAddLabelButton(buttonText, labelDetail)}
+   
           onClick={e => {
-            const buttonClasses = e.currentTarget.className;
-            const isDisabled =
-              buttonClasses.includes('job-add-label-button-disabled') ||
-              buttonClasses.includes('job-add-property-button-disabled');
+  const buttonClasses = e.currentTarget.className;
+  const isDisabled =
+    buttonClasses.includes('job-add-label-button-disabled') ||
 
-            if (!isDisabled) {
-              if (
-                labelDetail.length === 0 ||
-                labelDetail[labelDetail.length - 1].split(':')[0].length > 0
-              ) {
-                handleAddLabel(e);
-              }
-            } else {
-              e.preventDefault();
-            }
-          }}
+    buttonClasses.includes('job-add-property-button-disabled');
+
+  if (!isDisabled) {
+    // Filter out read-only properties when checking if last item has a key
+    const editableProperties = labelDetail.filter((property: string) =>
+      !readOnlyProperties.some((readOnlyKey: string) => property.startsWith(readOnlyKey + ':'))
+    );
+    
+    if (
+      editableProperties.length === 0 ||
+      editableProperties[editableProperties.length - 1].split(':')[0].length > 0
+    ) {
+      handleAddLabel(e);
+    }
+  } else {
+    e.preventDefault();
+  }
+}}
         >
           {labelDetail.length === 0 ||
           labelDetail[labelDetail.length - 1].split(':')[0].length > 0 ? (
