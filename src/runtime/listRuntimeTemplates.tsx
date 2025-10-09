@@ -127,6 +127,10 @@ function ListRuntimeTemplates({
         accessor: 'description'
       },
       {
+        Header: 'Engine',
+        accessor: 'engine'
+      },
+      {
         Header: 'Authentication',
         accessor: 'authentication'
       },
