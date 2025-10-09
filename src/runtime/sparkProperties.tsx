@@ -91,8 +91,15 @@ function SparkProperties({
     setSparkValueValidation(newErrorIndexes);
   };
 
-  const handleEditLabel = (value: string, index: number, keyValue: string) => {
-    const labelEdit = [...labelDetail];
+  const handleEditLabel = (
+    section: string,
+    value: string,
+    index: number,
+    keyValue: string
+  ) => {
+    const DISALLOWED_CHARS_REGEX = /[^a-z0-9_.]/g;
+    value = value.replace(DISALLOWED_CHARS_REGEX, '');
+    const labelEdit = [...labelDetailUpdated];
 
     labelEdit.forEach((data, dataNumber: number) => {
       if (index === dataNumber) {
@@ -166,6 +173,7 @@ function SparkProperties({
           'spark.dynamicAllocation.executorAllocationRatio'
         ) {
           if (
+            value.length === 0 ||
             Number.isNaN(Number(value)) ||
             Number(value) < 0 ||
             Number(value) > 1
@@ -212,7 +220,12 @@ function SparkProperties({
                         disabled={true}
                         onBlur={() => handleEditLabelSwitch()}
                         onChange={e =>
-                          handleEditLabel(e.target.value, index, 'key')
+                          handleEditLabel(
+                            sparkSection,
+                            e.target.value,
+                            index,
+                            'key'
+                          )
                         }
                         defaultValue={labelSplit[0]}
                         Label={`Key ${index + 1}*`}
@@ -243,13 +256,25 @@ function SparkProperties({
                           className={`edit-input-style`}
                           onBlur={() => handleEditLabelSwitch()}
                           onChange={e =>
-                            handleEditLabel(e.target.value, index, 'value')
+                            handleEditLabel(
+                              sparkSection,
+                              e.target.value,
+                              index,
+                              'value'
+                            )
                           }
                           disabled={
-                            labelSplit[0] === 'spark.dataproc.executor.compute.tier' ||
-                            labelSplit[0] === 'spark.sql.catalog.iceberg_catalog.warehouse'
+                            labelSplit[0] ===
+                              'spark.dataproc.executor.compute.tier' ||
+                            (sparkSection === 'metastore' && index === 2)
                           }
-                          value={labelDetailUpdated[index] ? labelDetailUpdated[index].substring(labelDetailUpdated[index].indexOf(':') + 1) : ''}
+                          value={
+                            labelDetailUpdated[index]
+                              ? labelDetailUpdated[index].substring(
+                                  labelDetailUpdated[index].indexOf(':') + 1
+                                )
+                              : ''
+                          }
                           Label={`Value ${index + 1}`}
                         />
                       )}
