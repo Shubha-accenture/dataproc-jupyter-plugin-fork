@@ -260,7 +260,7 @@ function CreateRunTime({
   const [stagingBucket, setStagingBucket] = useState('');
   const [apiDialogOpen, setApiDialogOpen] = useState(false);
   const [enableLink, setEnableLink] = useState('');
-  const [lightningEngineEnabled, setLightningEngineEnabled] = useState(true);
+  const [lightningEngineEnabled, setLightningEngineEnabled] = useState(false);
 
   const runtimeOptions = [
     {
@@ -283,7 +283,7 @@ function CreateRunTime({
 
 useEffect(() => {
   const lightningProperty = lightningEngineEnabled
-   ? 'spark.dataproc.engine:lightning'
+   ? 'spark.dataproc.engine:lightningEngine'
    : 'spark.dataproc.engine:default';
   
   // Always remove any existing spark.dataproc.engine property first
@@ -641,7 +641,11 @@ useEffect(() => {
               ) {
                 metaStoreDetailList.push(property);
               } else {
-                otherDetailList.push(property);
+                if(property.startsWith('spark.dataproc.engine:lightningEngine')){
+                  otherDetailList.push(property);
+                  setLightningEngineEnabled(true);
+                  console.log('lightning engine enabled',otherDetailList);
+                }
               }
             });
 
@@ -704,6 +708,7 @@ useEffect(() => {
                 return [...prevPropertyDetailUpdated, ...otherDetailList];
               }
             });
+            console.log('otherDetailList', otherDetailList);
           }
         }
       }

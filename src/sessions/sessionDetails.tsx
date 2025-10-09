@@ -104,7 +104,7 @@ function SessionDetails({
     createTime: '',
     stateTime: '',
     stateHistory: [{ stateStartTime: '' }],
-    runtimeConfig: { properties: [] },
+    runtimeConfig: { properties: {} as { [key: string]: string } },
     stateMessage: '',
     environmentConfig: {
       executionConfig: {
@@ -272,6 +272,28 @@ function SessionDetails({
                     {sessionInfo.uuid}
                   </div>
                 </div>
+                           <div className="row-details">
+                  <div className="cluster-details-label">UUID</div>
+                  <div className="session-details-value">
+                    {sessionInfo.uuid}
+                  </div>
+                </div>
+                <div className="row-details">
+                  <div className="cluster-details-label">Engine</div>
+                  <div className="cluster-details-value">
+                    {sessionInfo.runtimeConfig.properties?.[
+                      'spark.dataproc.engine'
+                    ] || 'default'}
+                  </div>
+                </div>
+                {Object.entries(sessionInfo.runtimeConfig.properties || {})
+                  .filter(([key]) => key !== 'spark.dataproc.engine')
+                  .map(([key, value]) => (
+                    <div className="row-details" key={key}>
+                      <div className="session-details-label">{key}</div>
+                      <div className="session-details-value">{value}</div>
+                    </div>
+                  ))}
                 <div className="row-details">
                   <div className="cluster-details-label">Status</div>
                   <div className="session-detail-status-parent">
@@ -531,7 +553,7 @@ function SessionDetails({
           {isLoading && (
             <div className="spin-loader-main">
               <CircularProgress
-                className = "spin-loader-custom-style"
+                className="spin-loader-custom-style"
                 size={18}
                 aria-label="Loading Spinner"
                 data-testid="loader"
