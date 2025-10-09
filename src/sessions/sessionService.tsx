@@ -258,9 +258,11 @@ export class SessionService {
               sessionID: data.name.split('/')[5],
               status: data.state,
               location: data.name.split('/')[3],
-              engine: data.runtimeConfig?.properties
-                ? data.runtimeConfig?.properties['spark.dataproc.engine']
-                : 'default',
+              engine:
+                data.runtimeConfig?.properties?.['spark.dataproc.engine'] ===
+                'lightningEngnine'
+                  ? 'Lightning Engine'
+                  : 'Default',
               creator: data.creator,
               creationTime: startTimeDisplay,
               elapsedTime: elapsedTimeString,
@@ -281,7 +283,8 @@ export class SessionService {
           setApiDialogOpen,
           setEnableLink,
           setPollingDisable,
-          'sessions');
+          'sessions'
+        );
       }
     } catch (error) {
       setIsLoading(false);
