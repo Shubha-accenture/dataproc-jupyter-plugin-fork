@@ -91,7 +91,8 @@ function ListRuntimeTemplates({
         }
       },
       description: '',
-      updateTime: ''
+      updateTime: '',
+      id: ''
     }
   ]);
   const [apiDialogOpen, setApiDialogOpen] = useState(false);

@@ -16,6 +16,10 @@ export interface ISessionTemplate {
   environmentConfig?: IEnvironmentConfig;
   description: string;
   updateTime: string;
+  runtimeConfig?: {
+    properties?: { [key: string]: string };
+  };
+  id: string;
 }
 
 export interface IJupyterSession {

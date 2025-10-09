@@ -272,12 +272,6 @@ function SessionDetails({
                     {sessionInfo.uuid}
                   </div>
                 </div>
-                           <div className="row-details">
-                  <div className="cluster-details-label">UUID</div>
-                  <div className="session-details-value">
-                    {sessionInfo.uuid}
-                  </div>
-                </div>
                 <div className="row-details">
                   <div className="cluster-details-label">Engine</div>
                   <div className="cluster-details-value">

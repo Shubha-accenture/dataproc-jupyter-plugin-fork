@@ -213,6 +213,9 @@ export class RunTimeSerive {
               name: displayName,
               owner: data.creator,
               description: data.description,
+              engine: data.runtimeConfig?.properties
+                ? data.runtimeConfig?.properties['spark.dataproc.engine']
+                : 'default',
               authentication: authentication,
               lastModified: startTimeDisplay,
               actions: renderActions(data),
