@@ -258,6 +258,9 @@ export class SessionService {
               sessionID: data.name.split('/')[5],
               status: data.state,
               location: data.name.split('/')[3],
+              engine: data.runtimeConfig?.properties
+                ? data.runtimeConfig?.properties['spark.dataproc.engine']
+                : 'default',
               creator: data.creator,
               creationTime: startTimeDisplay,
               elapsedTime: elapsedTimeString,

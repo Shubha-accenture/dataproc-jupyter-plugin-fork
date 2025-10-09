@@ -112,6 +112,10 @@ function ListSessions() {
         Header: 'Location',
         accessor: 'location'
       },
+            {
+        Header: 'Engine',
+        accessor: 'engine'
+      },
       {
         Header: 'Creator',
         accessor: 'creator'
