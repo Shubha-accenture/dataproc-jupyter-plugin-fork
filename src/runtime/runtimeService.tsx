@@ -213,7 +213,7 @@ export class RunTimeSerive {
               name: displayName,
               owner: data.creator,
               description: data.description,
-              ngine:
+              engine:
                 data.runtimeConfig?.properties?.['spark.dataproc.engine'] ===
                 'lightningEngnine'
                   ? 'Lightning Engine'
