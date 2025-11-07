@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-import React, { SyntheticEvent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { LabIcon } from '@jupyterlab/ui-components';
 import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
-import LabelProperties from './labelProperties';
+import LabelPropertiesRHF from './labelPropertiesRHF';
 import { authApi } from '../utils/utils';
-
 import {
   ARCHIVE_FILES_MESSAGE,
   ARGUMENTS_MESSAGE,
@@ -34,10 +35,10 @@ import {
 } from '../utils/const';
 import errorIcon from '../../style/icons/error_icon.svg';
 import { Input } from '../controls/MuiWrappedInput';
-import { DropdownProps } from 'semantic-ui-react';
 import { Autocomplete, TextField } from '@mui/material';
 import { MuiChipsInput } from 'mui-chips-input';
 import { JobService } from './jobServices';
+import { jobSchema, JobFormValues } from './schema';
 
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
@@ -50,7 +51,6 @@ const iconError = new LabIcon({
 
 function jobKey(selectedJobClone: any) {
   const jobKeys: string[] = [];
-
   for (const key in selectedJobClone) {
     if (key.endsWith('Job')) {
       jobKeys.push(key);
@@ -58,52 +58,29 @@ function jobKey(selectedJobClone: any) {
   }
   return jobKeys;
 }
+
 function jobTypeFunction(jobKey: string) {
-  let jobType = 'Spark';
   switch (jobKey) {
     case 'sparkRJob':
-      jobType = 'SparkR';
-      return jobType;
+      return 'SparkR';
     case 'pysparkJob':
-      jobType = 'PySpark';
-      return jobType;
+      return 'PySpark';
     case 'sparkSqlJob':
-      jobType = 'SparkSql';
-      return jobType;
+      return 'SparkSql';
     default:
-      return jobType;
+      return 'Spark';
   }
 }
+
 const handleOptionalFields = (selectedJobClone: any, jobTypeKey: string) => {
-  let args: string[] = [];
-  let jarFileUris: string[] = [];
-  let archiveUris: string[] = [];
-  let fileUris: string[] = [];
-  let maxFailuresPerHour = '';
-  let pythonFileUris: string[] = [];
-  if (selectedJobClone[jobTypeKey].hasOwnProperty('fileUris')) {
-    fileUris = selectedJobClone[jobTypeKey].fileUris;
-  }
+  const args = selectedJobClone[jobTypeKey]?.args || [];
+  const jarFileUris = selectedJobClone[jobTypeKey]?.jarFileUris || [];
+  const archiveUris = selectedJobClone[jobTypeKey]?.archiveUris || [];
+  const fileUris = selectedJobClone[jobTypeKey]?.fileUris || [];
+  const pythonFileUris = selectedJobClone[jobTypeKey]?.pythonFileUris || [];
+  const maxFailuresPerHour =
+    selectedJobClone.scheduling?.maxFailuresPerHour || '';
 
-  if (selectedJobClone[jobTypeKey].hasOwnProperty('jarFileUris')) {
-    jarFileUris = selectedJobClone[jobTypeKey].jarFileUris;
-  }
-
-  if (selectedJobClone[jobTypeKey].hasOwnProperty('args')) {
-    args = selectedJobClone[jobTypeKey].args;
-  }
-
-  if (selectedJobClone[jobTypeKey].hasOwnProperty('archiveUris')) {
-    archiveUris = selectedJobClone[jobTypeKey].archiveUris;
-  }
-
-  if (selectedJobClone[jobTypeKey].hasOwnProperty('pythonFileUris')) {
-    pythonFileUris = selectedJobClone[jobTypeKey].pythonFileUris;
-  }
-
-  if (selectedJobClone.hasOwnProperty('scheduling')) {
-    maxFailuresPerHour = selectedJobClone.scheduling.maxFailuresPerHour;
-  }
   return {
     fileUris,
     jarFileUris,
@@ -113,611 +90,258 @@ const handleOptionalFields = (selectedJobClone: any, jobTypeKey: string) => {
     maxFailuresPerHour
   };
 };
+
 function SubmitJob({
   setSubmitJobView,
   selectedJobClone,
   clusterResponse
 }: any) {
   const [clusterList, setClusterList] = useState([{}]);
-  const [jobTypeList, setJobTypeList] = useState([{}]);
-  const [querySourceTypeList, setQuerySourceTypeList] = useState([{}]);
 
-  const [jobIdSelected, setJobIdSelected] = useState('');
-  const [propertyDetail, setPropertyDetail] = useState(['']);
-  const [propertyDetailUpdated, setPropertyDetailUpdated] = useState(['']);
-  const [parameterDetail, setParameterDetail] = useState(['']);
-  const [parameterDetailUpdated, setParameterDetailUpdated] = useState(['']);
-  const [hexNumber, setHexNumber] = useState('');
-  const [submitDisabled, setSubmitDisabled] = useState(true);
-  let mainJarFileUri = '';
-  let args: string[] = [];
-  let jarFileUris: string[] = [];
-  let archiveUris: string[] = [];
-  let fileUris: string[] = [];
-  let pythonFileUris: string[] = [];
-  let maxFailuresPerHour = '';
-  let mainRFileUri = '';
-  let jobType = 'Spark';
-  let mainPythonFileUri = '';
-  let queryFileUri = '';
-  let queryType = '';
-  let queryList = '';
-  let mainClass = '';
-  let clusterSelectedValue = '';
-  let key: string[] | (() => string[]) = [];
-  let value: string[] | (() => string[]) = [];
-  let jobKeys: string[] = [];
-  if (Object.keys(selectedJobClone).length !== 0) {
-    jobKeys = jobKey(selectedJobClone);
+  const generateRandomHex = () => {
+    const crypto = window.crypto || (window as any).Crypto;
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const hex = array[0].toString(16);
+    return 'job-' + hex.padStart(8, '0');
+  };
+
+  const getInitialValues = (): JobFormValues => {
+    if (Object.keys(selectedJobClone).length === 0) {
+      return {
+        cluster: '',
+        jobId: generateRandomHex(),
+        jobType: 'Spark',
+        maxRestarts: '',
+        properties: [],
+        labels: [],
+        mainClass: ''
+      } as JobFormValues;
+    }
+
+    const jobKeys = jobKey(selectedJobClone);
     const jobTypeKey = jobKeys[0];
-    jobType = jobTypeFunction(jobKeys[0]);
+    const jobType = jobTypeFunction(jobTypeKey);
 
-    if (selectedJobClone[jobTypeKey].hasOwnProperty('queryFileUri')) {
-      queryFileUri = selectedJobClone[jobTypeKey].queryFileUri;
-      queryType = 'Query file';
-    }
-    if (selectedJobClone[jobTypeKey].hasOwnProperty('queryList')) {
-      queryList = selectedJobClone[jobTypeKey].queryList.queries[0];
-      queryType = 'Query text';
-    }
-    mainJarFileUri = selectedJobClone[jobKeys[0]].mainJarFileUri;
-    mainClass = selectedJobClone[jobKeys[0]].mainClass;
-    mainRFileUri = selectedJobClone[jobKeys[0]].mainRFileUri;
-    clusterSelectedValue = selectedJobClone.placement.clusterName;
-
-    mainPythonFileUri = selectedJobClone[jobKeys[0]].mainPythonFileUri;
-    ({
+    const {
       fileUris,
       jarFileUris,
       args,
       archiveUris,
       pythonFileUris,
       maxFailuresPerHour
-    } = handleOptionalFields(selectedJobClone, jobTypeKey));
-  }
-  const initialMainClassSelected =
-    mainJarFileUri && mainJarFileUri !== '' ? mainJarFileUri : mainClass;
-  const [mainClassSelected, setMainClassSelected] = useState(
-    initialMainClassSelected
-  );
-  const [clusterSelected, setClusterSelected] = useState(clusterSelectedValue);
-  const [mainRSelected, setMainRSelected] = useState(mainRFileUri);
-  const [mainPythonSelected, setMainPythonSelected] =
-    useState(mainPythonFileUri);
-  const [jarFileSelected, setJarFileSelected] = useState([...jarFileUris]);
-  const [fileSelected, setFileSelected] = useState([...fileUris]);
-  const [archieveFileSelected, setArchieveFileSelected] = useState([
-    ...archiveUris
-  ]);
-  const [argumentSelected, setArgumentSelected] = useState([...args]);
-  const [maxRestartSelected, setMaxRestartSelected] =
-    useState(maxFailuresPerHour);
-  const [jobTypeSelected, setJobTypeSelected] = useState(jobType);
-  const [additionalPythonFileSelected, setAdditionalPythonFileSelected] =
-    useState([...pythonFileUris]);
-  const [queryFileSelected, setQueryFileSelected] = useState(queryFileUri);
-  const [querySourceSelected, setQuerySourceSelected] = useState(queryType);
-  const [queryTextSelected, setQueryTextSelected] = useState(queryList);
-  const [labelDetail, setLabelDetail] = useState(key);
-  const [labelDetailUpdated, setLabelDetailUpdated] = useState(value);
+    } = handleOptionalFields(selectedJobClone, jobTypeKey);
 
-  const [additionalPythonFileValidation, setAdditionalPythonFileValidation] =
-    useState(true);
-  const [jarFileValidation, setJarFileValidation] = useState(true);
-  const [fileValidation, setFileValidation] = useState(true);
-  const [archieveFileValidation, setArchieveFileValidation] = useState(true);
-  const [mainPythonValidation, setMainPythonValidation] = useState(true);
-  const [queryFileValidation, setQueryFileValidation] = useState(true);
-  const [mainRValidation, setMainRValidation] = useState(true);
-  const [mainClassValidation, setMainClassValidation] = useState(true);
-  const [generationCompleted, setGenerationCompleted] = useState(false);
-  const [keyValidation, setKeyValidation] = useState(-1);
-  const [valueValidation, setValueValidation] = useState(-1);
-  const [jobIdValidation, setjobIdValidation] = useState(true);
-  const [jobIdSpecialValidation, setjobIdSpecialValidation] = useState(false);
-  const [duplicateKeyError, setDuplicateKeyError] = useState(-1);
-  const [mainClassActive, setMainClassActive] = useState(false);
-  const [
-    additionalPythonFileDuplicateValidation,
-    setAdditionalPythonFileDuplicateValidation
-  ] = useState(false);
-  const [jarFileDuplicateValidation, setJarFileDuplicateValidation] =
-    useState(false);
-  const [fileDuplicateValidation, setFileDuplicateValidation] = useState(false);
-  const [archiveDuplicateValidation, setArchiveDuplicateValidation] =
-    useState(false);
-  const [argumentsDuplicateValidation, setArgumentsDuplicateValidation] =
-    useState(false);
+    const baseValues = {
+      cluster: selectedJobClone.placement?.clusterName || '',
+      jobId: generateRandomHex(),
+      jobType: jobType as any,
+      maxRestarts: maxFailuresPerHour,
+      properties: selectedJobClone[jobTypeKey]?.properties
+        ? Object.entries(selectedJobClone[jobTypeKey].properties).map(
+            ([k, v]) => ({
+              key: k,
+              value: v as string
+            })
+          )
+        : [],
+      labels: selectedJobClone.labels
+        ? Object.entries(selectedJobClone.labels).map(([k, v]) => ({
+            key: k,
+            value: v as string
+          }))
+        : []
+    };
+
+    if (jobType === 'Spark') {
+      const mainJarFileUri = selectedJobClone[jobTypeKey]?.mainJarFileUri || '';
+      const mainClass = selectedJobClone[jobTypeKey]?.mainClass || '';
+      return {
+        ...baseValues,
+        mainClass: mainJarFileUri || mainClass,
+        jarFiles: jarFileUris,
+        files: fileUris,
+        archives: archiveUris,
+        args: args
+      } as JobFormValues;
+    } else if (jobType === 'SparkR') {
+      return {
+        ...baseValues,
+        mainRFile: selectedJobClone[jobTypeKey]?.mainRFileUri || '',
+        files: fileUris,
+        args: args
+      } as JobFormValues;
+    } else if (jobType === 'PySpark') {
+      return {
+        ...baseValues,
+        mainPythonFile: selectedJobClone[jobTypeKey]?.mainPythonFileUri || '',
+        pythonFiles: pythonFileUris,
+        jarFiles: jarFileUris,
+        files: fileUris,
+        archives: archiveUris,
+        args: args
+      } as JobFormValues;
+    } else if (jobType === 'SparkSql') {
+      const hasQueryFile = selectedJobClone[jobTypeKey]?.queryFileUri;
+      const hasQueryList = selectedJobClone[jobTypeKey]?.queryList;
+      return {
+        ...baseValues,
+        querySource: hasQueryFile ? 'Query file' : 'Query text',
+        queryFile: hasQueryFile || '',
+        queryText: hasQueryList?.queries?.[0] || '',
+        jarFiles: jarFileUris,
+        parameters: []
+      } as JobFormValues;
+    }
+
+    return baseValues as JobFormValues;
+  };
+
+  const {
+    control, // Manages all component state
+    handleSubmit, // Wraps your submit function
+    watch, // Lets you "watch" a field to conditionally render
+    setValue, // We need this to set the initial Job ID
+    formState: { errors, isValid } // Gives you all errors and valid status
+  } = useForm<JobFormValues>({
+    resolver: zodResolver(jobSchema),
+    mode: 'onChange', // Validates as the user types
+    defaultValues: getInitialValues()
+  });
+
+  // Watch the 'jobType' field so we can conditionally render the UI
+  const jobTypeSelected = watch('jobType');
+  const querySourceSelected = watch('querySource');
+
+  useEffect(() => {
+    const transformClusterListData = clusterResponse
+      .filter((data: any) => data.status === STATUS_RUNNING)
+      .map((obj: { clusterName: string }) => obj.clusterName);
+    setClusterList(transformClusterListData);
+  }, [clusterResponse]);
+
+  // Reset fields when job type changes
+  useEffect(() => {
+    if (jobTypeSelected === 'Spark') {
+      setValue('files', []);
+      setValue('jarFiles', []);
+      setValue('archives', []);
+      setValue('args', []);
+    } else if (jobTypeSelected === 'SparkR') {
+      setValue('files', []);
+      setValue('args', []);
+    } else if (jobTypeSelected === 'PySpark') {
+      setValue('pythonFiles', []);
+      setValue('jarFiles', []);
+      setValue('files', []);
+      setValue('archives', []);
+      setValue('args', []);
+    } else if (jobTypeSelected === 'SparkSql') {
+      setValue('jarFiles', []);
+      setValue('querySource', 'Query file');
+    }
+  }, [jobTypeSelected, setValue]);
+
   const handleCancelJobButton = () => {
     setSubmitJobView(false);
-  };
-  const handleSubmitJobView = () => {
-    if (!submitDisabled) {
-      submitJob();
-      setSubmitJobView(false);
-    }
   };
 
   const handleSubmitJobBackView = () => {
     setSubmitJobView(false);
   };
 
-  const handleClusterSelected = (data: DropdownProps | null) => {
-    if (data !== null) {
-      setClusterSelected(data!.toString());
-    }
-  };
+  const onSubmit = async (data: JobFormValues) => {
+    console.log('Data', data);
+    const credentials = await authApi();
+    if (!credentials) return;
 
-  const handleJobTypeSelected = (data: DropdownProps | null) => {
-    if (data !== null) {
-      setJobTypeSelected(data!.toString());
-    }
-    setFileSelected([]);
-    setJarFileSelected([]);
-    setAdditionalPythonFileSelected([]);
-    setArchieveFileSelected([]);
-    setArgumentSelected([]);
-    setMainPythonSelected('');
-    setMainRSelected('');
-    setQueryTextSelected('');
-    setQueryFileSelected('');
-    setMainClassSelected('');
-  };
-
-  const handleQuerySourceTypeSelected = (
-    event: SyntheticEvent<Element, Event>,
-    data: DropdownProps | null
-  ) => {
-    if (data !== null) {
-      setQuerySourceSelected(data!.toString());
-    }
-  };
-  interface IClusterData {
-    clusterName: string;
-    status: string;
-  }
-
-  useEffect(() => {
-    let transformClusterListData = [];
-    transformClusterListData = clusterResponse.filter((data: IClusterData) => {
-      if (data.status === STATUS_RUNNING) {
-        return data.clusterName;
-      }
+    const labelObject: { [key: string]: string } = {};
+    data.labels?.forEach(({ key, value }) => {
+      labelObject[key] = value;
     });
 
-    const keyLabelStructure = transformClusterListData.map(
-      (obj: { clusterName: string }) => obj.clusterName
-    );
-    setClusterList(keyLabelStructure);
-    const jobTypeData = ['Spark', 'SparkR', 'SparkSql', 'PySpark'];
+    const propertyObject: { [key: string]: string } = {};
+    data.properties?.forEach(({ key, value }) => {
+      propertyObject[key] = value;
+    });
 
-    setJobTypeList(jobTypeData);
-    const querySourceData = ['Query file', 'Query text'];
-    setQuerySourceTypeList(querySourceData);
-  }, []);
-  useEffect(() => {
-    disableSubmitButtonIfInvalid();
-    generateRandomHex();
-  }, [
-    clusterSelected,
-    jobIdSelected,
-    mainClassSelected,
-    mainRSelected,
-    mainPythonSelected,
-    queryFileSelected,
-    queryTextSelected,
-    mainClassValidation,
-    jarFileValidation,
-    archieveFileValidation,
-    mainRValidation,
-    fileValidation,
-    mainPythonValidation,
-    queryFileValidation,
-    keyValidation,
-    valueValidation,
-    jobIdValidation,
-    jobIdSpecialValidation,
-    duplicateKeyError,
-    jarFileDuplicateValidation,
-    additionalPythonFileDuplicateValidation,
-    fileDuplicateValidation,
-    argumentsDuplicateValidation,
-    archiveDuplicateValidation
-  ]);
-  const disableSubmitButtonIfInvalid = () => {
-    const isSparkJob = jobTypeSelected === 'Spark';
-    const isSparkRJob = jobTypeSelected === 'SparkR';
-    const isPySparkJob = jobTypeSelected === 'PySpark';
-    const isSparkSqlJob = jobTypeSelected === 'SparkSql';
-    if (
-      clusterSelected !== '' &&
-      jobIdSelected !== '' &&
-      ((isSparkJob &&
-        mainClassSelected.length !== 0 &&
-        jarFileValidation &&
-        fileValidation &&
-        archieveFileValidation &&
-        keyValidation === -1 &&
-        valueValidation === -1 &&
-        jobIdValidation &&
-        !jobIdSpecialValidation &&
-        duplicateKeyError === -1 &&
-        !fileDuplicateValidation &&
-        !archiveDuplicateValidation &&
-        !argumentsDuplicateValidation &&
-        !jarFileDuplicateValidation) ||
-        (isSparkRJob &&
-          mainRSelected !== '' &&
-          mainRValidation &&
-          fileValidation &&
-          keyValidation === -1 &&
-          valueValidation === -1 &&
-          jobIdValidation &&
-          !jobIdSpecialValidation &&
-          duplicateKeyError === -1! &&
-          !fileDuplicateValidation &&
-          !argumentsDuplicateValidation) ||
-        (isPySparkJob &&
-          mainPythonSelected !== '' &&
-          mainPythonValidation &&
-          additionalPythonFileValidation &&
-          jarFileValidation &&
-          fileValidation &&
-          archieveFileValidation &&
-          keyValidation === -1 &&
-          valueValidation === -1 &&
-          jobIdValidation &&
-          !jobIdSpecialValidation &&
-          duplicateKeyError === -1 &&
-          !additionalPythonFileDuplicateValidation &&
-          !fileDuplicateValidation &&
-          !archiveDuplicateValidation &&
-          !argumentsDuplicateValidation &&
-          !jarFileDuplicateValidation) ||
-        (isSparkSqlJob &&
-          queryFileSelected !== '' &&
-          querySourceSelected === 'Query file' &&
-          queryFileValidation &&
-          jarFileValidation &&
-          keyValidation === -1 &&
-          valueValidation === -1 &&
-          jobIdValidation &&
-          !jobIdSpecialValidation &&
-          duplicateKeyError === -1 &&
-          !jarFileDuplicateValidation) ||
-        (isSparkSqlJob &&
-          queryTextSelected !== '' &&
-          querySourceSelected === 'Query text' &&
-          jarFileValidation &&
-          keyValidation === -1 &&
-          valueValidation === -1 &&
-          jobIdValidation &&
-          !jobIdSpecialValidation &&
-          duplicateKeyError === -1 &&
-          !jarFileDuplicateValidation))
-    ) {
-      setSubmitDisabled(false);
-    } else {
-      setSubmitDisabled(true);
-    }
-  };
+    let jobPayload: any = {};
 
-  useEffect(() => {
-    let jobKeys: string[] = [];
-    if (Object.keys(selectedJobClone).length !== 0) {
-      if (selectedJobClone.hasOwnProperty('labels')) {
-        const updatedLabelDetail = Object.entries(selectedJobClone.labels).map(
-          ([k, v]) => `${k}:${v}`
-        );
-        setLabelDetail(prevLabelDetail => [
-          ...prevLabelDetail,
-          ...updatedLabelDetail
-        ]);
-        setLabelDetailUpdated(prevLabelDetailUpdated => [
-          ...prevLabelDetailUpdated,
-          ...updatedLabelDetail
-        ]);
-        for (const key in selectedJobClone) {
-          if (key.endsWith('Job')) {
-            jobKeys.push(key);
-          }
-        }
-        jobKeys = jobKey(selectedJobClone);
-        if (selectedJobClone[jobKeys[0]].hasOwnProperty('properties')) {
-          const updatedPropertyDetail = Object.entries(
-            selectedJobClone[jobKeys[0]].properties
-          ).map(([k, v]) => `${k}:${v}`);
-          setPropertyDetail(prevPropertyDetail => [
-            ...prevPropertyDetail,
-            ...updatedPropertyDetail
-          ]);
-          setPropertyDetailUpdated(prevPropertyDetailUpdated => [
-            ...prevPropertyDetailUpdated,
-            ...updatedPropertyDetail
-          ]);
-        }
-      }
-    }
-  }, []);
-
-  const generateRandomHex = () => {
-    if (!generationCompleted) {
-      const crypto = window.crypto || window.Crypto;
-      const array = new Uint32Array(1);
-      crypto.getRandomValues(array);
-      const hex = array[0].toString(16);
-      const paddedHex = hex.padStart(8, '0');
-      setHexNumber('job-' + paddedHex);
-      setJobIdSelected('job-' + paddedHex);
-      setGenerationCompleted(true);
-    }
-  };
-
-  const createPySparkPayload = (
-    mainPythonSelected: string,
-    propertyObject: { [key: string]: string },
-    jarFileSelected: string[] | string,
-    fileSelected: string[] | string,
-    archieveFileSelected: string[] | string,
-    argumentSelected: string[] | string,
-    additionalPythonFileSelected: string[] | string
-  ) => {
-    return {
-      pysparkJob: {
-        mainPythonFileUri: mainPythonSelected,
-        ...(propertyObject && {
-          properties: propertyObject
-        }),
-        ...(jarFileSelected !== '' && {
-          jarFileUris: jarFileSelected
-        }),
-        ...(fileSelected !== '' && {
-          fileUris: fileSelected
-        }),
-        ...(archieveFileSelected !== '' && {
-          archiveUris: archieveFileSelected
-        }),
-        ...(argumentSelected !== '' && {
-          args: argumentSelected
-        }),
-        ...(additionalPythonFileSelected !== '' && {
-          pythonFileUris: [additionalPythonFileSelected]
-        })
-      }
-    };
-  };
-
-  const createSparkPayload = (
-    mainClassSelected: string,
-    propertyObject: { [key: string]: string },
-    archieveFileSelected: string[] | string,
-    fileSelected: string[] | string,
-    jarFileSelected: string[] | string,
-    argumentSelected: string[] | string
-  ) => {
-    const isJar = mainClassSelected.includes('.jar');
-    return {
-      sparkJob: {
-        ...(isJar ? { mainJarFileUri: mainClassSelected } : { mainClass: mainClassSelected }),
-        ...(propertyObject && {
-          properties: propertyObject
-        }),
-        ...(archieveFileSelected !== '' && {
-          archiveUris: archieveFileSelected
-        }),
-        ...(fileSelected !== '' && {
-          fileUris: [fileSelected]
-        }),
-        ...(jarFileSelected !== '' && {
-          jarFileUris: jarFileSelected
-        }),
-        ...(argumentSelected !== '' && {
-          args: argumentSelected
-        })
-      }
-    };
-  };
-
-  const createSparkRPayload = (
-    mainRSelected: string,
-    propertyObject: { [key: string]: string },
-    fileSelected: string[] | string,
-    argumentSelected: string[] | string
-  ) => {
-    return {
-      sparkRJob: {
-        mainRFileUri: mainRSelected,
-        ...(propertyObject && {
-          properties: propertyObject
-        }),
-        ...(fileSelected !== '' && {
-          fileUris: [fileSelected]
-        }),
-        ...(argumentSelected !== '' && {
-          args: argumentSelected
-        })
-      }
-    };
-  };
-
-  const createSparkSqlPayload = (
-    propertyObject: { [key: string]: string },
-    jarFileSelected: string[] | string,
-    querySourceSelected: string,
-    queryFileSelected: string,
-    queryTextSelected: string
-  ) => {
-    return {
-      sparkSqlJob: {
-        ...(propertyObject && {
-          properties: propertyObject
-        }),
-        ...(jarFileSelected !== '' && {
-          jarFileUris: [jarFileSelected]
-        }),
-        scriptVariables: {},
-        ...(querySourceSelected === 'Query file' && {
-          queryFileUri: queryFileSelected
-        }),
-        ...(querySourceSelected === 'Query text' && {
-          queryList: { queries: [queryTextSelected] }
-        })
-      }
-    };
-  };
-
-  const submitJob = async () => {
-    const credentials = await authApi();
-    if (credentials) {
-      const labelObject: { [key: string]: string } = {};
-      labelDetailUpdated.forEach((label: string) => {
-        const key = label.split(':')[0];
-        const value = label.split(':')[1];
-        labelObject[key] = value;
-      });
-      const propertyObject: { [key: string]: string } = {};
-      propertyDetailUpdated.forEach((label: string) => {
-        const key = label.split(':')[0];
-        const value = label.split(':')[1];
-        propertyObject[key] = value;
-      });
-      const parameterObject: { [key: string]: string } = {};
-      parameterDetailUpdated.forEach((label: string) => {
-        const key = label.split(':')[0];
-        const value = label.split(':')[1];
-        parameterObject[key] = value;
-      });
-      const payload = {
-        projectId: credentials.project_id,
-        region: credentials.region_id,
-        job: {
-          placement: { clusterName: clusterSelected },
-          statusHistory: [],
-          reference: { jobId: jobIdSelected, projectId: '' },
-          ...(maxRestartSelected !== '' && {
-            scheduling: { maxFailuresPerHour: maxRestartSelected }
-          }),
-          ...(labelObject && {
-            labels: labelObject
-          }),
-          ...(jobTypeSelected === 'PySpark' &&
-            createPySparkPayload(
-              mainPythonSelected,
-              propertyObject,
-              jarFileSelected,
-              fileSelected,
-              archieveFileSelected,
-              argumentSelected,
-              additionalPythonFileSelected
-            )),
-          ...(jobTypeSelected === 'Spark' &&
-            createSparkPayload(
-              mainClassSelected,
-              propertyObject,
-              archieveFileSelected,
-              fileSelected,
-              jarFileSelected,
-              argumentSelected
-            )),
-          ...(jobTypeSelected === 'SparkR' &&
-            createSparkRPayload(
-              mainRSelected,
-              propertyObject,
-              fileSelected,
-              argumentSelected
-            )),
-          ...(jobTypeSelected === 'SparkSql' &&
-            createSparkSqlPayload(
-              propertyObject,
-              jarFileSelected,
-              querySourceSelected,
-              queryFileSelected,
-              queryTextSelected
-            ))
+    if (data.jobType === 'Spark') {
+      const isJar = data.mainClass.includes('.jar');
+      jobPayload = {
+        sparkJob: {
+          ...(isJar
+            ? { mainJarFileUri: data.mainClass }
+            : { mainClass: data.mainClass }),
+          ...(propertyObject && { properties: propertyObject }),
+          ...(data.archives?.length && { archiveUris: data.archives }),
+          ...(data.files?.length && { fileUris: data.files }),
+          ...(data.jarFiles?.length && { jarFileUris: data.jarFiles }),
+          ...(data.args?.length && { args: data.args })
         }
       };
-      await JobService.submitJobService(payload, jobIdSelected, credentials);
-    }
-  };
-  const handleJobIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.target.value.length > 0
-      ? setjobIdValidation(true)
-      : setjobIdValidation(false);
-
-    const regexp = /^[a-zA-Z0-9-_]+$/;
-    event.target.value.search(regexp)
-      ? setjobIdSpecialValidation(true)
-      : setjobIdSpecialValidation(false);
-    setHexNumber(event.target.value);
-    const newJobId = event.target.value;
-    setJobIdSelected(newJobId);
-  };
-
-  const handleValidationFiles = (
-    listOfFiles: string | string[],
-    setValuesPart: any,
-    setValidationPart: (value: boolean) => void,
-    setDuplicateValidation?: (value: boolean) => void
-  ) => {
-    if (typeof listOfFiles === 'string') {
-      if (
-        listOfFiles.startsWith('file://') ||
-        listOfFiles.startsWith('gs://') ||
-        listOfFiles.startsWith('hdfs://')
-      ) {
-        setValidationPart(true);
-      } else {
-        setValidationPart(false);
-      }
-      setValuesPart(listOfFiles);
-    } else {
-      if (listOfFiles.length === 0) {
-        setValidationPart(true);
-      } else {
-        listOfFiles.forEach((fileName: string) => {
-          if (
-            fileName.startsWith('file://') ||
-            fileName.startsWith('gs://') ||
-            fileName.startsWith('hdfs://')
-          ) {
-            setValidationPart(true);
-          } else {
-            setValidationPart(false);
-          }
-        });
-      }
-      handleDuplicateValidation(setDuplicateValidation, listOfFiles);
-      setValuesPart(listOfFiles);
-    }
-  };
-  const handleDuplicateValidation = (
-    setDuplicateValidation: ((value: boolean) => void) | undefined,
-    listOfFiles: string | string[]
-  ) => {
-    if (Array.isArray(listOfFiles)) {
-      const fileNames = listOfFiles.map((fileName: string) =>
-        fileName.toLowerCase()
-      );
-      const uniqueFileNames = new Set<string>();
-      const duplicateFileNames = fileNames.filter((fileName: string) => {
-        const isDuplicate = uniqueFileNames.has(fileName);
-        uniqueFileNames.add(fileName);
-        return isDuplicate;
+    } else if (data.jobType === 'SparkR') {
+      jobPayload = {
+        sparkRJob: {
+          mainRFileUri: data.mainRFile,
+          ...(propertyObject && { properties: propertyObject }),
+          ...(data.files?.length && { fileUris: data.files }),
+          ...(data.args?.length && { args: data.args })
+        }
+      };
+    } else if (data.jobType === 'PySpark') {
+      jobPayload = {
+        pysparkJob: {
+          mainPythonFileUri: data.mainPythonFile,
+          ...(propertyObject && { properties: propertyObject }),
+          ...(data.jarFiles?.length && { jarFileUris: data.jarFiles }),
+          ...(data.files?.length && { fileUris: data.files }),
+          ...(data.archives?.length && { archiveUris: data.archives }),
+          ...(data.args?.length && { args: data.args }),
+          ...(data.pythonFiles?.length && { pythonFileUris: data.pythonFiles })
+        }
+      };
+    } else if (data.jobType === 'SparkSql') {
+      const parameterObject: { [key: string]: string } = {};
+      data.parameters?.forEach(({ key, value }) => {
+        parameterObject[key] = value;
       });
-      if (duplicateFileNames.length > 0) {
-        setDuplicateValidation!(true);
-      } else {
-        setDuplicateValidation!(false);
-      }
+
+      jobPayload = {
+        sparkSqlJob: {
+          ...(propertyObject && { properties: propertyObject }),
+          ...(data.jarFiles?.length && { jarFileUris: data.jarFiles }),
+          scriptVariables: parameterObject,
+          ...(data.querySource === 'Query file' && {
+            queryFileUri: data.queryFile
+          }),
+          ...(data.querySource === 'Query text' && {
+            queryList: { queries: [data.queryText] }
+          })
+        }
+      };
     }
+
+    const payload = {
+      projectId: credentials.project_id,
+      region: credentials.region_id,
+      job: {
+        placement: { clusterName: data.cluster },
+        statusHistory: [],
+        reference: { jobId: data.jobId, projectId: '' },
+        ...(data.maxRestarts && {
+          scheduling: { maxFailuresPerHour: data.maxRestarts }
+        }),
+        ...(labelObject && { labels: labelObject }),
+        ...jobPayload
+      }
+    };
+
+    await JobService.submitJobService(payload, data.jobId, credentials);
+    setSubmitJobView(false);
   };
-  const handleArgumentsSelection = (
-    setDuplicateValidation: (value: boolean) => void,
-    listOfFiles: string[]
-  ) => {
-    setArgumentSelected(listOfFiles);
-    handleDuplicateValidation(setDuplicateValidation, listOfFiles);
-  };
+
   return (
     <div>
       <div className="cluster-details-header">
@@ -741,96 +365,114 @@ function SubmitJob({
           <Input className="input-style" value="No clusters running" readOnly />
         ) : (
           <div className="select-text-overlay">
-            <Autocomplete
-              options={clusterList}
-              value={clusterSelected}
-              onChange={(_event, val) => handleClusterSelected(val)}
-              renderInput={params => <TextField {...params} label="Cluster*" />}
-            />
+            <Controller
+              name="cluster"
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  {...field}
+                  options={clusterList}
+                  onChange={(_event, val) => field.onChange(val || '')}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      label="Cluster*"
+                      // Automatic error handling
+                      error={!!errors.cluster}
+                      helperText={errors.cluster?.message}
+                    />
+                  )}
+                />
+              )}
+            />{' '}
           </div>
         )}
         <div className="submit-job-label-header">Job</div>
         <div className="select-text-overlay">
-          <Input
-            className="submit-job-input-style"
-            onChange={e => handleJobIdChange(e)}
-            type="text"
-            value={hexNumber}
-            Label="Job ID*"
+          <Controller
+            name="jobId"
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                className="submit-job-input-style"
+                type="text"
+                Label="Job ID*"
+              />
+            )}
           />
         </div>
 
-        {!jobIdValidation && (
+        {errors.jobId && (
           <div className="error-key-parent">
             <iconError.react tag="div" className="logo-alignment-style" />
-            <div className="error-key-missing">ID is required</div>
-          </div>
-        )}
-        {jobIdSpecialValidation && jobIdValidation && (
-          <div className="error-key-parent">
-            <iconError.react tag="div" className="logo-alignment-style" />
-            <div className="error-key-missing">
-              ID must contain only letters, numbers, hyphens, and underscores
-            </div>
+            <div className="error-key-missing">{errors.jobId.message}</div>
           </div>
         )}
 
         <div className="select-text-overlay">
-          <Autocomplete
-            className="project-region-select"
-            onChange={(_event, val) => handleJobTypeSelected(val)}
-            options={jobTypeList}
-            value={jobTypeSelected}
-            renderInput={params => <TextField {...params} label=" Job type*" />}
+          <Controller
+            name="jobType"
+            control={control}
+            render={({ field }) => (
+              <Autocomplete
+                {...field}
+                className="project-region-select"
+                onChange={(_, val) => field.onChange(val || 'Spark')}
+                options={['Spark', 'SparkR', 'SparkSql', 'PySpark']}
+                renderInput={params => (
+                  <TextField {...params} label="Job type*" />
+                )}
+              />
+            )}
           />
         </div>
 
         {jobTypeSelected === 'SparkSql' && (
-          <>
-            <div className="select-text-overlay">
-              <Autocomplete
-                className="project-region-select"
-                onChange={(_event, val) =>
-                  handleQuerySourceTypeSelected(_event, val)
-                }
-                options={querySourceTypeList}
-                value={querySourceSelected}
-                renderInput={params => (
-                  <TextField {...params} label="Query source type*" />
-                )}
-              />
-            </div>
-          </>
+          <div className="select-text-overlay">
+            <Controller
+              name="querySource"
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  {...field}
+                  className="project-region-select"
+                  onChange={(_, val) => field.onChange(val || 'Query file')}
+                  options={['Query file', 'Query text']}
+                  renderInput={params => (
+                    <TextField {...params} label="Query source type*" />
+                  )}
+                />
+              )}
+            />
+          </div>
         )}
+
         {querySourceSelected === 'Query file' &&
           jobTypeSelected === 'SparkSql' && (
             <>
               <div className="select-text-overlay">
-                <Input
-                  className="submit-job-input-style"
-                  onChange={e =>
-                    handleValidationFiles(
-                      e.target.value,
-                      setQueryFileSelected,
-                      setQueryFileValidation
-                    )
-                  }
-                  addOnBlur={true}
-                  value={queryFileSelected}
-                  Label="Query file*"
+                <Controller
+                  name="queryFile"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      className="submit-job-input-style"
+                      Label="Query file*"
+                    />
+                  )}
                 />
               </div>
-
-              {!queryFileValidation && (
+              {(errors as any).queryFile?.message && (
                 <div className="error-key-parent">
                   <iconError.react tag="div" className="logo-alignment-style" />
                   <div className="error-key-missing">
-                    File must include a valid scheme prefix: 'file://', 'gs://',
-                    or 'hdfs://'
+                    {(errors as any).queryFile.message}
                   </div>
                 </div>
               )}
-              {queryFileValidation && (
+              {!(errors as any).queryFile && (
                 <div className="submit-job-message-input">
                   {QUERY_FILE_MESSAGE}
                 </div>
@@ -841,14 +483,26 @@ function SubmitJob({
           jobTypeSelected === 'SparkSql' && (
             <>
               <div className="select-text-overlay">
-                <Input
-                  className="submit-job-input-style"
-                  onChange={e => setQueryTextSelected(e.target.value)}
-                  value={queryTextSelected}
-                  Label=" Query text*"
+                <Controller
+                  name="queryText"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      className="submit-job-input-style"
+                      Label="Query text*"
+                    />
+                  )}
                 />
               </div>
-
+              {(errors as any).queryText && (
+                <div className="error-key-parent">
+                  <iconError.react tag="div" className="logo-alignment-style" />
+                  <div className="error-key-missing">
+                    {(errors as any).queryText.message}
+                  </div>
+                </div>
+              )}
               <div className="submit-job-message-input">
                 The query to execute
               </div>
@@ -857,31 +511,27 @@ function SubmitJob({
         {jobTypeSelected === 'Spark' && (
           <>
             <div className="select-text-overlay">
-              <Input
-                className="submit-job-input-style"
-                onChange={e =>
-                  handleValidationFiles(
-                    e.target.value,
-                    setMainClassSelected,
-                    setMainClassValidation
-                  )
-                }
-                onBlur={() => setMainClassActive(true)}
-                addOnBlur={true}
-                value={mainClassSelected}
-                Label="Main class or jar*"
+              <Controller
+                name="mainClass"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className="submit-job-input-style"
+                    Label="Main class or jar*"
+                  />
+                )}
               />
             </div>
-
-            {mainClassSelected === '' && mainClassActive && (
+            {(errors as any).mainClass && (
               <div className="error-key-parent">
                 <iconError.react tag="div" className="logo-alignment-style" />
                 <div className="error-key-missing">
-                  Main class or jar is required
+                  {(errors as any).mainClass.message}
                 </div>
               </div>
             )}
-            {(mainClassSelected !== '' || !mainClassActive) && (
+            {!(errors as any).mainClass && (
               <div className="submit-job-message-input">
                 {MAIN_CLASS_MESSAGE}
               </div>
@@ -891,31 +541,27 @@ function SubmitJob({
         {jobTypeSelected === 'SparkR' && (
           <>
             <div className="select-text-overlay">
-              <Input
-                className="submit-job-input-style"
-                onChange={e =>
-                  handleValidationFiles(
-                    e.target.value,
-                    setMainRSelected,
-                    setMainRValidation
-                  )
-                }
-                addOnBlur={true}
-                value={mainRSelected}
-                Label="Main R file*"
+              <Controller
+                name="mainRFile"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className="submit-job-input-style"
+                    Label="Main R file*"
+                  />
+                )}
               />
             </div>
-
-            {!mainRValidation && (
+            {(errors as any).mainRFile && (
               <div className="error-key-parent">
                 <iconError.react tag="div" className="logo-alignment-style" />
                 <div className="error-key-missing">
-                  File must include a valid scheme prefix: 'file://', 'gs://',
-                  or 'hdfs://'
+                  {(errors as any).mainRFile.message}
                 </div>
               </div>
             )}
-            {mainRValidation && (
+            {!(errors as any).mainRFile && (
               <div className="submit-job-message-input">
                 {QUERY_FILE_MESSAGE}
               </div>
@@ -925,112 +571,86 @@ function SubmitJob({
         {jobTypeSelected === 'PySpark' && (
           <>
             <div className="select-text-overlay">
-              <Input
-                className="submit-job-input-style"
-                onChange={e =>
-                  handleValidationFiles(
-                    e.target.value,
-                    setMainPythonSelected,
-                    setMainPythonValidation
-                  )
-                }
-                addOnBlur={true}
-                value={mainPythonSelected}
-                Label="Main Python file*"
+              <Controller
+                name="mainPythonFile"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className="submit-job-input-style"
+                    Label="Main Python file*"
+                  />
+                )}
               />
             </div>
-
-            {!mainPythonValidation && (
+            {(errors as any).mainPythonFile && (
               <div className="error-key-parent">
                 <iconError.react tag="div" className="logo-alignment-style" />
                 <div className="error-key-missing">
-                  File must include a valid scheme prefix: 'file://', 'gs://',
-                  or 'hdfs://'
+                  {(errors as any).mainPythonFile.message}
                 </div>
               </div>
             )}
-            {mainPythonValidation && (
+            {!(errors as any).mainPythonFile && (
               <div className="submit-job-message-input">
                 {QUERY_FILE_MESSAGE}
               </div>
             )}
-          </>
-        )}
-        {jobTypeSelected === 'PySpark' && (
-          <>
+
             <div className="select-text-overlay">
-              <MuiChipsInput
-                className="select-job-style"
-                onChange={e =>
-                  handleValidationFiles(
-                    e,
-                    setAdditionalPythonFileSelected,
-                    setAdditionalPythonFileValidation,
-                    setAdditionalPythonFileDuplicateValidation
-                  )
-                }
-                addOnBlur={true}
-                value={additionalPythonFileSelected}
-                inputProps={{ placeholder: '' }}
-                label="Additional python files"
+              <Controller
+                name="pythonFiles"
+                control={control}
+                render={({ field }) => (
+                  <MuiChipsInput
+                    {...field}
+                    className="select-job-style"
+                    value={field.value || []}
+                    onChange={chips => field.onChange(chips)}
+                    inputProps={{ placeholder: '' }}
+                    label="Additional python files"
+                  />
+                )}
               />
             </div>
-            {!additionalPythonFileValidation && (
+            {(errors as any).pythonFiles && (
               <div className="error-key-parent">
                 <iconError.react tag="div" className="logo-alignment-style" />
                 <div className="error-key-missing">
-                  All files must include a valid scheme prefix: 'file://',
-                  'gs://', or 'hdfs://'
-                </div>
-              </div>
-            )}
-            {additionalPythonFileDuplicateValidation && (
-              <div className="error-key-parent">
-                <iconError.react tag="div" className="logo-alignment-style" />
-                <div className="error-key-missing">
-                  Duplicate paths are not allowed
+                  {(errors as any).pythonFiles.message}
                 </div>
               </div>
             )}
           </>
         )}
+
         {jobTypeSelected !== 'SparkR' && (
           <>
             <div className="select-text-overlay">
-              <MuiChipsInput
-                className="select-job-style"
-                onChange={e =>
-                  handleValidationFiles(
-                    e,
-                    setJarFileSelected,
-                    setJarFileValidation,
-                    setJarFileDuplicateValidation
-                  )
-                }
-                addOnBlur={true}
-                value={jarFileSelected}
-                inputProps={{ placeholder: '' }}
-                label="Jar files"
+              <Controller
+                name="jarFiles"
+                control={control}
+                render={({ field }) => (
+                  <MuiChipsInput
+                    {...field}
+                    className="select-job-style"
+                    value={field.value || []}
+                    onChange={chips => field.onChange(chips)}
+                    inputProps={{ placeholder: '' }}
+                    label="Jar files"
+                  />
+                )}
               />
             </div>
-            {jarFileDuplicateValidation && (
+            {(errors as any).jarFiles && (
               <div className="error-key-parent">
                 <iconError.react tag="div" className="logo-alignment-style" />
                 <div className="error-key-missing">
-                  Duplicate paths are not allowed
+                  {(errors as any).jarFiles.message}
                 </div>
               </div>
             )}
-            {!jarFileValidation && (
-              <div className="error-key-parent">
-                <iconError.react tag="div" className="logo-alignment-style" />
-                <div className="error-key-missing">
-                  All files must include a valid scheme prefix: 'file://',
-                  'gs://', or 'hdfs://'
-                </div>
-              </div>
-            )}
-            {jarFileValidation && !jarFileDuplicateValidation && (
+            {!(errors as any).jarFiles && (
               <div className="submit-job-message">{JAR_FILE_MESSAGE}</div>
             )}
           </>
@@ -1038,81 +658,60 @@ function SubmitJob({
         {jobTypeSelected !== 'SparkSql' && (
           <>
             <div className="select-text-overlay">
-              <MuiChipsInput
-                className="select-job-style"
-                onChange={e =>
-                  handleValidationFiles(
-                    e,
-                    setFileSelected,
-                    setFileValidation,
-                    setFileDuplicateValidation
-                  )
-                }
-                addOnBlur={true}
-                value={fileSelected}
-                inputProps={{ placeholder: '' }}
-                label="Files"
+              <Controller
+                name="files"
+                control={control}
+                render={({ field }) => (
+                  <MuiChipsInput
+                    {...field}
+                    className="select-job-style"
+                    value={field.value || []}
+                    onChange={chips => field.onChange(chips)}
+                    inputProps={{ placeholder: '' }}
+                    label="Files"
+                  />
+                )}
               />
             </div>
-            {fileDuplicateValidation && (
+            {(errors as any).files && (
               <div className="error-key-parent">
                 <iconError.react tag="div" className="logo-alignment-style" />
-                <div className="error-key-missing">
-                  Duplicate paths are not allowed
-                </div>
+                <div className="error-key-missing">{(errors as any).files.message}</div>
               </div>
             )}
-            {!fileValidation && (
-              <div className="error-key-parent">
-                <iconError.react tag="div" className="logo-alignment-style" />
-                <div className="error-key-missing">
-                  All files must include a valid scheme prefix: 'file://',
-                  'gs://', or 'hdfs://'
-                </div>
-              </div>
-            )}
-            {fileValidation && !fileDuplicateValidation && (
+            {!(errors as any).files && (
               <div className="submit-job-message">{FILES_MESSAGE}</div>
             )}
           </>
         )}
+
         {(jobTypeSelected === 'Spark' || jobTypeSelected === 'PySpark') && (
           <>
             <div className="select-text-overlay">
-              <MuiChipsInput
-                className="select-job-style"
-                onChange={e =>
-                  handleValidationFiles(
-                    e,
-                    setArchieveFileSelected,
-                    setArchieveFileValidation,
-                    setArchiveDuplicateValidation
-                  )
-                }
-                addOnBlur={true}
-                value={archieveFileSelected}
-                inputProps={{ placeholder: '' }}
-                label="Archive files"
+              <Controller
+                name="archives"
+                control={control}
+                render={({ field }) => (
+                  <MuiChipsInput
+                    {...field}
+                    className="select-job-style"
+                    value={field.value || []}
+                    onChange={chips => field.onChange(chips)}
+                    inputProps={{ placeholder: '' }}
+                    label="Archive files"
+                  />
+                )}
               />
             </div>
-            {archiveDuplicateValidation && (
+            {(errors as any).archives && (
               <div className="error-key-parent">
                 <iconError.react tag="div" className="logo-alignment-style" />
                 <div className="error-key-missing">
-                  Duplicate paths are not allowed
+                  {(errors as any).archives.message}
                 </div>
               </div>
             )}
-            {!archieveFileValidation && (
-              <div className="error-key-parent">
-                <iconError.react tag="div" className="logo-alignment-style" />
-                <div className="error-key-missing">
-                  All files must include a valid scheme prefix: 'file://',
-                  'gs://', or 'hdfs://'
-                </div>
-              </div>
-            )}
-            {archieveFileValidation && !archiveDuplicateValidation && (
+            {!(errors as any).archives && (
               <div className="submit-job-message">{ARCHIVE_FILES_MESSAGE}</div>
             )}
           </>
@@ -1120,57 +719,64 @@ function SubmitJob({
         {jobTypeSelected !== 'SparkSql' && (
           <>
             <div className="select-text-overlay">
-              <MuiChipsInput
-                className="select-job-style"
-                onChange={e =>
-                  handleArgumentsSelection(setArgumentsDuplicateValidation, e)
-                }
-                value={argumentSelected}
-                addOnBlur={true}
-                inputProps={{ placeholder: '' }}
-                label="Arguments"
+              <Controller
+                name="args"
+                control={control}
+                render={({ field }) => (
+                  <MuiChipsInput
+                    {...field}
+                    className="select-job-style"
+                    value={field.value || []}
+                    onChange={chips => field.onChange(chips)}
+                    inputProps={{ placeholder: '' }}
+                    label="Arguments"
+                  />
+                )}
               />
             </div>
-            {argumentsDuplicateValidation && (
+            {(errors as any).args && (
               <div className="error-key-parent">
                 <iconError.react tag="div" className="logo-alignment-style" />
-                <div className="error-key-missing">
-                  Duplicate paths are not allowed
-                </div>
+                <div className="error-key-missing">{(errors as any).args.message}</div>
               </div>
             )}
-            {!argumentsDuplicateValidation && (
+            {!(errors as any).args && (
               <div className="submit-job-message">{ARGUMENTS_MESSAGE}</div>
             )}
           </>
         )}
+
         {querySourceSelected === 'Query file' &&
           jobTypeSelected === 'SparkSql' && (
             <>
               <div className="submit-job-label-header">Query parameters</div>
-              <LabelProperties
-                labelDetail={parameterDetail}
-                setLabelDetail={setParameterDetail}
-                labelDetailUpdated={parameterDetailUpdated}
-                setLabelDetailUpdated={setParameterDetailUpdated}
-                selectedJobClone={selectedJobClone ? true : false}
-                buttonText="ADD PARAMETER"
-                keyValidation={keyValidation}
-                setKeyValidation={setKeyValidation}
-                valueValidation={valueValidation}
-                setValueValidation={setValueValidation}
-                duplicateKeyError={duplicateKeyError}
-                setDuplicateKeyError={setDuplicateKeyError}
+              <Controller
+                name="parameters"
+                control={control}
+                render={({ field }) => (
+                  <LabelPropertiesRHF
+                    value={field.value || []}
+                    onChange={field.onChange}
+                    error={(errors as any).parameters?.message}
+                    buttonText="ADD PARAMETER"
+                    selectedJobClone={selectedJobClone}
+                  />
+                )}
               />
             </>
           )}
         <div className="select-text-overlay">
-          <Input
-            className="submit-job-input-style"
-            onChange={e => setMaxRestartSelected(e.target.value)}
-            value={maxRestartSelected}
-            Label="Max restarts per hour"
-          />
+          <Controller
+            name="maxRestarts"
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                className="submit-job-input-style"
+                Label="Max restarts per hour"
+              />
+            )}
+          />{' '}
         </div>
 
         <div className="submit-job-message-with-link">
@@ -1186,47 +792,46 @@ function SubmitJob({
         </div>
 
         <div className="submit-job-label-header">Properties</div>
-        <LabelProperties
-          labelDetail={propertyDetail}
-          setLabelDetail={setPropertyDetail}
-          labelDetailUpdated={propertyDetailUpdated}
-          setLabelDetailUpdated={setPropertyDetailUpdated}
-          selectedJobClone={selectedJobClone ? true : false}
-          buttonText="ADD PROPERTY"
-          keyValidation={keyValidation}
-          setKeyValidation={setKeyValidation}
-          valueValidation={valueValidation}
-          setValueValidation={setValueValidation}
-          duplicateKeyError={duplicateKeyError}
-          setDuplicateKeyError={setDuplicateKeyError}
+        <Controller
+          name="properties"
+          control={control}
+          render={({ field }) => (
+            <LabelPropertiesRHF
+              value={field.value || []}
+              onChange={field.onChange}
+              error={errors.properties?.message}
+              buttonText="ADD PROPERTY"
+              selectedJobClone={selectedJobClone}
+            />
+          )}
         />
+
         <div className="submit-job-label-header">Labels</div>
-        <LabelProperties
-          labelDetail={labelDetail}
-          setLabelDetail={setLabelDetail}
-          labelDetailUpdated={labelDetailUpdated}
-          setLabelDetailUpdated={setLabelDetailUpdated}
-          selectedJobClone={selectedJobClone ? true : false}
-          buttonText="ADD LABEL"
-          keyValidation={keyValidation}
-          setKeyValidation={setKeyValidation}
-          valueValidation={valueValidation}
-          setValueValidation={setValueValidation}
-          duplicateKeyError={duplicateKeyError}
-          setDuplicateKeyError={setDuplicateKeyError}
+        <Controller
+          name="labels"
+          control={control}
+          render={({ field }) => (
+            <LabelPropertiesRHF
+              value={field.value || []}
+              onChange={field.onChange}
+              error={errors.labels?.message}
+              buttonText="ADD LABEL"
+              selectedJobClone={selectedJobClone}
+            />
+          )}
         />
         <div className="job-button-style-parent">
           <div
             className={
-              submitDisabled
-                ? 'submit-button-disable-style'
-                : 'submit-button-style'
+              !isValid ? 'submit-button-disable-style' : 'submit-button-style'
             }
           >
             <div
               role="button"
-              onClick={() => {
-                handleSubmitJobView();
+              onClick={handleSubmit(onSubmit)}
+              style={{
+                opacity: !isValid ? 0.5 : 1,
+                pointerEvents: !isValid ? 'none' : 'auto'
               }}
             >
               SUBMIT
