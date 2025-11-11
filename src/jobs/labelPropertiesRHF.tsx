@@ -173,8 +173,9 @@ function LabelPropertiesRHF({
     if (buttonText === 'ADD LABEL') {
       if (hasValidLastKey && noDuplicates) {
         return 'job-add-label-button';
-      } else {
-        return 'job-add-label-button-disabled';
+      } 
+      else {
+        return 'job-add-property-button-disabled';
       }
     } else {
       if (hasValidLastKey) {
