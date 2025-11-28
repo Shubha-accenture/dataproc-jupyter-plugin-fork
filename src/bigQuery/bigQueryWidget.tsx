@@ -397,7 +397,7 @@ const BigQueryComponent = ({
     setIsSearchOpen(true);
     const content = new DataplexSearchWidget(
       app, // Added app
-      // settingRegistry, // Added settingRegistry
+      settingRegistry, // Added settingRegistry
       themeManager
     );
     const widget = new MainAreaWidget<DataplexSearchWidget>({ content });

@@ -854,7 +854,7 @@ const extension: JupyterFrontEndPlugin<void> = {
         execute: (args: any) => {
           const content = new DataplexSearchWidget(
             app as JupyterLab, // Passed here
-            // settingRegistry as ISettingRegistry, // Passed here
+            settingRegistry as ISettingRegistry, // Passed here
             themeManager
           );
 
