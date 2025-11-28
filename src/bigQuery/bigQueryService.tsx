@@ -429,6 +429,7 @@ export class BigQueryService {
         await BigQueryService.checkBigQueryDatasetsAPIService();
       if (result?.is_enabled) {
         const data: any = await requestAPI(`bigQueryProjectsList`);
+        console.log("project names ########",data)
         setProjectNameInfo(data);
         setApiError(false);
       } else {
@@ -460,6 +461,8 @@ export class BigQueryService {
           method: 'POST'
         }
       );
+
+      console.log("bq search data @@@@@@@@@", data)
       setSearchResponse(data);
     } catch (reason) {
       Notification.emit(
