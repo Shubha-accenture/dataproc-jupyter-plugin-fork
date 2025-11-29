@@ -25,7 +25,7 @@ import tableIcon from '../../style/icons/table_icon.svg';
 import columnsIcon from '../../style/icons/columns_icon.svg';
 import databaseWidgetIcon from '../../style/icons/database_widget_icon.svg';
 import datasetsIcon from '../../style/icons/datasets_icon.svg';
-import searchIcon from '../../style/icons/search_icon.svg';
+import searchIcon from '../../style/icons/search_icon_dark.svg';
 import rightArrowIcon from '../../style/icons/right_arrow_icon.svg';
 import downArrowIcon from '../../style/icons/down_arrow_icon.svg';
 import datasetExplorerIcon from '../../style/icons/dataset_explorer_icon.svg';

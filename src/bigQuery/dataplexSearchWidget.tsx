@@ -34,13 +34,14 @@ import {
 import { Search } from '@mui/icons-material';
 import { LabIcon } from '@jupyterlab/ui-components';
 
-import bigQueryProjectIcon from '../../style/icons/bigquery_project_icon.svg';
+import datasetIcon from '../../style/icons/dataset_icon.svg';
 import { BigQueryService } from './bigQueryService';
 
-const iconBigQueryProject = new LabIcon({
-  name: 'launcher:bigquery-project-icon',
-  svgstr: bigQueryProjectIcon
+const iconDataset = new LabIcon({
+  name: 'launcher:dataset-icon',
+  svgstr: datasetIcon
 });
+
 export interface INLSearchFilters {
   scope: string;
   systems: string;
@@ -74,6 +75,8 @@ interface IDataplexSearchComponentProps {
   onFiltersChanged: (filters: INLSearchFilters) => void;
 }
 
+const RESULTS_PER_PAGE = 50; // Page size set to 50
+
 const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   initialQuery,
   searchLoading,
@@ -84,10 +87,15 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   projectsList
 }) => {
   const [filters, setFilters] = useState<INLSearchFilters>(initialFilterState);
+  const [currentPage, setCurrentPage] = useState(1); // Pagination state
 
   useEffect(() => {
     onFiltersChanged(filters);
   }, [filters, onFiltersChanged]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [results]);
 
   const handleFilterChange = useCallback(
     (name: keyof INLSearchFilters, value: string) => {
@@ -140,42 +148,65 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 
   const showFlatResults = useMemo(() => !searchLoading, [searchLoading]);
 
+  // --- Pagination Logic ---
+  const totalResults = results.length;
+  const totalPages = Math.ceil(totalResults / RESULTS_PER_PAGE);
+
+  const paginatedResults = useMemo(() => {
+    const startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
+    const endIndex = startIndex + RESULTS_PER_PAGE;
+    return results.slice(startIndex, endIndex);
+  }, [results, currentPage]);
+
+  const handleNextPage = useCallback(() => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  }, [totalPages]);
+
+  const handlePrevPage = useCallback(() => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  }, []);
+
   const renderCard = (result: ISearchResult, index: number) => (
     <li
       key={index}
       className="search-result-item"
       style={{
-        padding: '12px 16px',
+        padding: '8px 16px',
         border: '1px solid var(--jp-border-color2)',
         borderRadius: '4px',
-        marginBottom: '10px',
-        backgroundColor: 'var(--jp-layout-color2)'
+        marginBottom: '8px',
+        backgroundColor: 'var(--jp-layout-color1)'
       }}
     >
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
+          gap: '8px',
           marginBottom: '4px'
         }}
       >
-        <div role="img" className="db-icon" style={{ marginRight: '8px' }}>
-          <iconBigQueryProject.react tag="div" />
+        <div role="img" className="db-icon">
+          <iconDataset.react tag="div" />
         </div>
+
         <div
           style={{
-            fontWeight: 600,
-            color: 'var(--jp-ui-font-color0)',
-            fontSize: 16
+            color: 'var(--jp-brand-color1)',
+            fontSize: 14,
+            fontWeight: 500,
+            textDecoration: 'underline',
+            cursor: 'pointer'
           }}
         >
           {result.name}
         </div>
       </div>
+
       <div
         style={{
           fontSize: 13,
-          color: 'var(--jp-ui-font-color2)',
+          color: 'var(--jp-ui-font-color3)',
           paddingLeft: '28px'
         }}
       >
@@ -193,6 +224,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
         width: '100%'
       }}
     >
+      {' '}
       <div
         style={{
           padding: '8px 12px 16px 12px',
@@ -251,7 +283,6 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           'Cloud Storage'
         ])}
         {renderDropdown('projects', 'Projects', projectsList)}{' '}
-        {/* Use dynamic projectsList */}
         {renderDropdown('type', 'Type', [
           'Table',
           'View',
@@ -269,20 +300,23 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           'PII'
         ])}
       </div>
-
       <div
         style={{
           flexGrow: 1,
           padding: '16px 32px 32px 32px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px',
-          height: '100%'
+          minHeight: 0
         }}
       >
         <div
           className="nl-query-bar"
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: '16px'
+          }}
         >
           <TextField
             fullWidth
@@ -306,10 +340,14 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             }}
           />
         </div>
-
         <div
-          className="nl-search-results-list"
-          style={{ flexGrow: 1, overflowY: 'auto' }}
+          className="nl-search-results-container"
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0
+          }}
         >
           <h2
             style={{
@@ -344,15 +382,64 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
                     margin: '0 0 12px 0'
                   }}
                 >
-                  Query: "{initialQuery}" ({results.length} found)
+                  Query: "{initialQuery}" ({totalResults} found)
                 </p>
               )}
-              {results.length > 0 ? (
-                <ul
-                  style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}
-                >
-                  {results.map(renderCard)}
-                </ul>
+              {totalResults > 0 ? (
+                <>
+                  <div
+                    className="nl-search-results-list"
+                    style={{ flexGrow: 1, overflowY: 'auto' }}
+                  >
+                    <ul
+                      style={{
+                        listStyleType: 'none',
+                        paddingLeft: 0,
+                        margin: 0
+                      }}
+                    >
+                      {paginatedResults.map(renderCard)}
+                    </ul>
+                  </div>
+                  {totalPages > 1 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        gap: '8px',
+                        paddingTop: '8px',
+                        borderTop: '1px solid var(--jp-border-color2)',
+                        flexShrink: 0
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 13,
+                          color: 'var(--jp-ui-font-color2)'
+                        }}
+                      >
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 1}
+                        size="small"
+                        variant="outlined"
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                        size="small"
+                        variant="outlined"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : initialQuery.trim() === '' ? (
                 <p style={{ color: 'var(--jp-ui-font-color2)' }}>
                   Enter a query in the search bar above to find Dataplex assets
@@ -371,14 +458,13 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     </div>
   );
 };
-
 class DataplexSearchPanelWrapper extends ReactWidget {
   public initialQuery: string = '';
   public searchResults: ISearchResult[] = [];
   public searchLoading: boolean = false;
 
   public projectsList: string[] = [];
-  public allSearchResults: any[] = [];
+  public allSearchResults: { [key: string]: any[] } | any[] = [];
 
   private _queryChanged = new Signal<this, string>(this);
   get queryChanged(): Signal<this, string> {
@@ -401,7 +487,7 @@ class DataplexSearchPanelWrapper extends ReactWidget {
     results: ISearchResult[],
     loading: boolean,
     projects: string[],
-    allResults: any[]
+    allResults: { [key: string]: any[] } | any[]
   ): void {
     this.initialQuery = query;
     this.searchResults = results;
@@ -453,8 +539,12 @@ export class DataplexSearchWidget extends Panel {
     this.searchWrapper.initialQuery = initialSearchTerm;
 
     this.addWidget(this.searchWrapper);
+
     this.node.style.height = '100%';
     this.node.style.minWidth = '800px';
+
+    this.searchWrapper.node.style.height = '100%';
+    this.searchWrapper.node.style.width = '100%';
 
     // this.searchWrapper.searchExecuted.connect(this._onSearchExecuted, this);
 
@@ -483,6 +573,7 @@ export class DataplexSearchWidget extends Panel {
       };
 
       const setProjectName = (name: string) => {
+        // N/A
       };
 
       await BigQueryService.getBigQueryProjectsListAPIService(
@@ -518,7 +609,20 @@ export class DataplexSearchWidget extends Panel {
   }
 
   private async fetchDatasetsForProjects(projectIds: string[]) {
+    const currentQuery = this.searchWrapper.initialQuery;
+    const currentProjects = this.searchWrapper.projectsList;
+
+    this.searchWrapper.updateState(
+      currentQuery,
+      this.searchWrapper.searchResults,
+      true,
+      currentProjects,
+      this.searchWrapper.allSearchResults
+    );
+
+    let allResults: ISearchResult[] = [];
     const allDatasetsByProject: { [key: string]: any[] } = {};
+
     try {
       const datasetPromises = projectIds.map(async projectId => {
         let projectDatasets: any[] = [];
@@ -547,6 +651,7 @@ export class DataplexSearchWidget extends Panel {
           projectId: string,
           token: string | null
         ) => {
+          /* N/A in this scope */
         };
 
         await BigQueryService.getBigQueryDatasetsAPIServiceNew(
@@ -564,6 +669,41 @@ export class DataplexSearchWidget extends Panel {
         );
 
         allDatasetsByProject[projectId] = projectDatasets;
+
+        projectDatasets.forEach(dataset => {
+          let name: string | undefined;
+          let description: string | undefined;
+
+          if (dataset.entrySource) {
+            const entrySource = dataset.entrySource;
+            const explicitDescription = entrySource.description;
+            const location = entrySource.location;
+
+            name = entrySource.displayName;
+
+            description = explicitDescription
+              ? explicitDescription
+              : location
+              ? `${projectId} > ${location}`
+              : `Project: ${projectId}`;
+          } else if (dataset.datasetReference) {
+            const datasetRef = dataset.datasetReference;
+            const location = dataset.location;
+
+            name = datasetRef.datasetId;
+
+            description = location
+              ? `${projectId} > ${location}`
+              : `Project: ${projectId}`;
+          }
+
+          if (name) {
+            allResults.push({
+              name: name,
+              description: description
+            });
+          }
+        });
       });
 
       await Promise.all(datasetPromises);
@@ -572,8 +712,23 @@ export class DataplexSearchWidget extends Panel {
         'DataplexSearch: All Datasets by Project ID:',
         allDatasetsByProject
       );
+
+      this.searchWrapper.updateState(
+        currentQuery,
+        allResults,
+        false,
+        currentProjects,
+        allDatasetsByProject
+      );
     } catch (error) {
       console.error('Error fetching datasets for projects:', error);
+      this.searchWrapper.updateState(
+        currentQuery,
+        [],
+        false,
+        currentProjects,
+        []
+      );
     }
   }
 }
