@@ -147,8 +147,6 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   );
 
   const showFlatResults = useMemo(() => !searchLoading, [searchLoading]);
-
-  // --- Pagination Logic ---
   const totalResults = results.length;
   const totalPages = Math.ceil(totalResults / RESULTS_PER_PAGE);
 
@@ -324,7 +322,10 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             size="small"
             placeholder="What dataset are you looking for?"
             value={initialQuery}
-            onChange={e => onQueryChanged(e.target.value)}
+            onChange={e => {
+              console.log('DataplexSearch: Query String Changed:', e.target.value);
+              onQueryChanged(e.target.value);
+            }}
             onKeyDown={e => {
               if (e.key === 'Enter') handleSearchClick();
             }}
@@ -465,11 +466,11 @@ class DataplexSearchPanelWrapper extends ReactWidget {
 
   public projectsList: string[] = [];
   public allSearchResults: { [key: string]: any[] } | any[] = [];
-
-  private _queryChanged = new Signal<this, string>(this);
-  get queryChanged(): Signal<this, string> {
-    return this._queryChanged;
+  private _queryUpdated = new Signal<this, string>(this);
+  get queryUpdated(): Signal<this, string> {
+    return this._queryUpdated;
   }
+  
   private _searchExecuted = new Signal<
     this,
     { query: string; projects: string[] }
@@ -504,7 +505,8 @@ class DataplexSearchPanelWrapper extends ReactWidget {
         results={this.searchResults}
         searchLoading={this.searchLoading}
         projectsList={this.projectsList}
-        onQueryChanged={q => this._queryChanged.emit(q)}
+        // Emit the new queryUpdated signal on change
+        onQueryChanged={q => this._queryUpdated.emit(q)}
         onSearchExecuted={(q, p) =>
           this._searchExecuted.emit({ query: q, projects: p })
         }
@@ -546,10 +548,16 @@ export class DataplexSearchWidget extends Panel {
     this.searchWrapper.node.style.height = '100%';
     this.searchWrapper.node.style.width = '100%';
 
-    // this.searchWrapper.searchExecuted.connect(this._onSearchExecuted, this);
+    this.searchWrapper.queryUpdated.connect(this._onQueryUpdated, this);
+    this.searchWrapper.searchExecuted.connect(this._onSearchExecuted, this);
 
     this.searchWrapper.update();
     this.fetchProjectsList();
+  }
+  
+  private _onQueryUpdated(sender: DataplexSearchPanelWrapper, query: string): void {
+      this.searchWrapper.initialQuery = query;
+      this.searchWrapper.update();
   }
 
   private async fetchProjectsList() {
@@ -594,7 +602,7 @@ export class DataplexSearchWidget extends Panel {
       );
 
       if (projectNames.length > 0) {
-        await this.fetchDatasetsForProjects(projectNames);
+        await this.fetchDatasetsForProjects(projectNames); 
       }
     } catch (error) {
       console.error('Error fetching BigQuery projects list:', error);
@@ -731,4 +739,121 @@ export class DataplexSearchWidget extends Panel {
       );
     }
   }
+  
+  /**
+   * Transforms raw search results from the BigQuery Search API into the flat ISearchResult[] format.
+   * @param combinedRawResults Array of raw results, grouped by project.
+   * @returns A flat array of ISearchResult objects suitable for the UI.
+   */
+  private processSearchResults(
+    combinedRawResults: { project: string; result: any }[]
+  ): ISearchResult[] {
+    const flatResults: ISearchResult[] = [];
+
+    combinedRawResults.forEach(projectResult => {
+      const results = projectResult.result?.results || [];
+
+      results.forEach((searchData: any) => {
+        const dataplexEntry = searchData.dataplexEntry;
+        
+        if (dataplexEntry && dataplexEntry.fullyQualifiedName) {
+          const fqn = dataplexEntry.fullyQualifiedName;
+          const fqnParts = fqn.split(':'); 
+          const tableParts = fqnParts.length > 1 ? fqnParts[1].split('.') : [];
+          
+          if (tableParts.length < 2) return;
+
+          const projectId = tableParts[0];
+          const datasetId = tableParts[1];
+          const tableId = tableParts.length > 2 ? tableParts[2] : null;
+
+          const name = dataplexEntry.displayName || tableId || datasetId;
+
+          let description = dataplexEntry.description;
+          if (!description) {
+              description = tableId 
+                  ? `Table in ${datasetId} (Project: ${projectId})`
+                  : `Dataset (Project: ${projectId})`;
+          }
+
+          flatResults.push({
+            name: name,
+            description: description
+          });
+        }
+      });
+    });
+
+    return flatResults;
+  }
+
+
+private async _onSearchExecuted(
+    sender: DataplexSearchPanelWrapper,
+    args: { query: string, projects: string[] }
+) {
+    const { query, projects } = args;
+
+    if (query.length < 3) {
+        console.warn('DataplexSearch: Search term must be at least 3 characters.');
+        this.searchWrapper.updateState(query, [], false, projects, []); 
+        return;
+    }
+
+    this.searchWrapper.updateState(query, [], true, projects, []);
+    
+    console.log(`DataplexSearch: Initiating search for query: "${query}" across projects:`, projects);
+
+    try {
+        const searchPromises = projects.map(async (projectName) => {
+            console.log(`DataplexSearch: Starting BigQuery Search for project: ${projectName}`);
+
+            let searchResult: any = null;
+            const setSearchLoading = (value: boolean) => { /* handled by global state */ };
+            const setSearchResponse = (data: any) => { searchResult = data; };
+
+            await BigQueryService.getBigQuerySearchAPIService(
+                query,
+                setSearchLoading,
+                setSearchResponse
+            );
+
+            if (searchResult) {
+                console.log(`DataplexSearch: Received result from project ${projectName}`, searchResult);
+                return { project: projectName, result: searchResult };
+            }
+            return null;
+        });
+
+        const combinedRawResults = (await Promise.all(searchPromises)).filter(
+            (result): result is { project: string; result: any } =>
+              result !== null
+        );
+
+        console.log("DataplexSearch: Combined Search Results for all projects (RAW):", combinedRawResults);
+        
+        const flatResults = this.processSearchResults(combinedRawResults);
+        
+        console.log("DataplexSearch: Final Processed Flat Results:", flatResults);
+
+        this.searchWrapper.updateState(
+            query,
+            flatResults, // Pass the processed flat results
+            false,
+            projects,
+            combinedRawResults
+        );
+
+    } catch (error) {
+        console.error('DataplexSearch: Error during BigQuery search:', error);
+        this.searchWrapper.updateState(
+            query,
+            [],
+            false,
+            projects,
+            []
+        );
+    }
+}
+
 }
