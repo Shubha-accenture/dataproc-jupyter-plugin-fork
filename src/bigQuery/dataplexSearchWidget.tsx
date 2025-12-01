@@ -17,7 +17,11 @@
 
 import { Panel } from '@lumino/widgets';
 import { JupyterLab } from '@jupyterlab/application';
-import { IThemeManager, ReactWidget, MainAreaWidget } from '@jupyterlab/apputils';
+import {
+  IThemeManager,
+  ReactWidget,
+  MainAreaWidget
+} from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { Signal } from '@lumino/signaling';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -30,7 +34,7 @@ import {
   TextField,
   IconButton,
   CircularProgress,
-  Menu,
+  Menu
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { LabIcon } from '@jupyterlab/ui-components';
@@ -38,7 +42,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { auto } from '@popperjs/core';
 import { Tree, NodeRendererProps, NodeApi } from 'react-arborist';
 
-import datasetIcon from '../../style/icons/dataset_icon.svg';
 import bigQueryProjectIcon from '../../style/icons/bigquery_project_icon.svg';
 import tableIcon from '../../style/icons/table_icon.svg';
 import columnsIcon from '../../style/icons/columns_icon.svg';
@@ -57,12 +60,6 @@ import LoginErrorComponent from '../utils/loginErrorComponent';
 import { BIGQUERY_API_URL } from '../utils/const';
 import { BigQueryDatasetWrapper } from './bigQueryDatasetInfoWrapper';
 import { BigQueryTableWrapper } from './bigQueryTableInfoWrapper';
-
-
-const iconDataset = new LabIcon({
-  name: 'launcher:dataset-icon',
-  svgstr: datasetIcon
-});
 const iconDatasets = new LabIcon({
   name: 'launcher:datasets-icon',
   svgstr: datasetsIcon
@@ -100,7 +97,6 @@ const iconSearch = new LabIcon({
   svgstr: searchIcon
 });
 
-
 export interface INLSearchFilters {
   scope: string;
   systems: string;
@@ -113,6 +109,7 @@ export interface INLSearchFilters {
 export interface ISearchResult {
   name: string;
   description?: string;
+  label?: 'Bigquery / Dataset' | 'Bigquery / Table';
 }
 const initialFilterState: INLSearchFilters = {
   scope: '',
@@ -135,8 +132,7 @@ interface IDataplexSearchComponentProps {
   onResultClicked: (result: ISearchResult) => void;
 }
 
-const RESULTS_PER_PAGE = 50; 
-
+const RESULTS_PER_PAGE = 50;
 
 const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   initialQuery,
@@ -149,7 +145,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   onResultClicked
 }) => {
   const [filters, setFilters] = useState<INLSearchFilters>(initialFilterState);
-  const [currentPage, setCurrentPage] = useState(1); 
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     onFiltersChanged(filters);
@@ -247,9 +243,15 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           marginBottom: '4px'
         }}
       >
-        <div role="img" className="db-icon">
-          <iconDataset.react tag="div" />
-        </div>
+        {result.label === 'Bigquery / Dataset' ? (
+          <div role="img" className="db-icon">
+            <iconDatasets.react tag="div" />
+          </div>
+        ) : (
+          <div role="img" className="db-icon">
+            <iconTable.react tag="div" />
+          </div>
+        )}
 
         <div
           style={{
@@ -263,8 +265,35 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
         >
           {result.name}
         </div>
-      </div>
 
+        {result.label && (
+          <div
+            style={{
+              alignSelf: 'stretch',
+              justifyContent: 'center',
+              alignItems: 'center',
+              display: 'flex'
+            }}
+          >
+            <div
+              style={{
+                justifyContent: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                color: 'var(--jp-ui-font-color3)',
+                fontSize: 11,
+                fontFamily: 'Google Sans Text',
+                fontWeight: 500,
+                lineHeight: '16px',
+                letterSpacing: 0.1,
+                wordWrap: 'break-word'
+              }}
+            >
+              {result.label}
+            </div>
+          </div>
+        )}
+      </div>
       <div
         style={{
           fontSize: 13,
@@ -387,7 +416,10 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             placeholder="What dataset are you looking for?"
             value={initialQuery}
             onChange={e => {
-              console.log('DataplexSearch: Query String Changed:', e.target.value);
+              console.log(
+                'DataplexSearch: Query String Changed:',
+                e.target.value
+              );
               onQueryChanged(e.target.value);
             }}
             onKeyDown={e => {
@@ -535,7 +567,7 @@ class DataplexSearchPanelWrapper extends ReactWidget {
   get queryUpdated(): Signal<this, string> {
     return this._queryUpdated;
   }
-  
+
   private _resultClicked = new Signal<this, ISearchResult>(this);
   get resultClicked(): Signal<this, ISearchResult> {
     return this._resultClicked;
@@ -580,7 +612,7 @@ class DataplexSearchPanelWrapper extends ReactWidget {
           this._searchExecuted.emit({ query: q, projects: p })
         }
         onFiltersChanged={f => this._filtersChanged.emit(f)}
-        onResultClicked={r => this._resultClicked.emit(r)} 
+        onResultClicked={r => this._resultClicked.emit(r)}
       />
     );
   }
@@ -625,10 +657,13 @@ export class DataplexSearchWidget extends Panel {
     this.searchWrapper.update();
     this.fetchProjectsList();
   }
-  
-  private _onQueryUpdated(sender: DataplexSearchPanelWrapper, query: string): void {
-      this.searchWrapper.initialQuery = query;
-      this.searchWrapper.update();
+
+  private _onQueryUpdated(
+    sender: DataplexSearchPanelWrapper,
+    query: string
+  ): void {
+    this.searchWrapper.initialQuery = query;
+    this.searchWrapper.update();
   }
 
   private async fetchProjectsList() {
@@ -651,8 +686,7 @@ export class DataplexSearchWidget extends Panel {
         console.error('API Error in fetching projects:', value);
       };
 
-      const setProjectName = (name: string) => {
-      };
+      const setProjectName = (name: string) => {};
 
       await BigQueryService.getBigQueryProjectsListAPIService(
         setProjectNameInfo,
@@ -672,7 +706,7 @@ export class DataplexSearchWidget extends Panel {
       );
 
       if (projectNames.length > 0) {
-        await this.fetchDatasetsForProjects(projectNames); 
+        await this.fetchDatasetsForProjects(projectNames);
       }
     } catch (error) {
       console.error('Error fetching BigQuery projects list:', error);
@@ -778,7 +812,8 @@ export class DataplexSearchWidget extends Panel {
           if (name) {
             allResults.push({
               name: name,
-              description: description
+              description: description,
+              label: 'Bigquery / Dataset'
             });
           }
         });
@@ -809,7 +844,6 @@ export class DataplexSearchWidget extends Panel {
       );
     }
   }
-  
   /**
    * Transforms raw search results from the BigQuery Search API into the flat ISearchResult[] format.
    * @param combinedRawResults Array of raw results, grouped by project.
@@ -825,12 +859,12 @@ export class DataplexSearchWidget extends Panel {
 
       results.forEach((searchData: any) => {
         const dataplexEntry = searchData.dataplexEntry;
-        
+
         if (dataplexEntry && dataplexEntry.fullyQualifiedName) {
           const fqn = dataplexEntry.fullyQualifiedName;
-          const fqnParts = fqn.split(':'); 
+          const fqnParts = fqn.split(':');
           const tableParts = fqnParts.length > 1 ? fqnParts[1].split('.') : [];
-          
+
           if (tableParts.length < 2) return;
 
           const projectId = tableParts[0];
@@ -841,15 +875,20 @@ export class DataplexSearchWidget extends Panel {
 
           let description = dataplexEntry.description;
           if (!description) {
-              description = tableId 
-                  ? `Table in ${datasetId} (Project: ${projectId})`
-                  : `Dataset (Project: ${projectId})`;
+            description = tableId
+              ? `Table in ${datasetId} (Project: ${projectId})`
+              : `Dataset (Project: ${projectId})`;
           }
 
-          flatResults.push({
-            name: name,
-            description: description
-          });
+          const label = tableId ? 'Bigquery / Table' : 'Bigquery / Dataset';
+
+          if (name) {
+            flatResults.push({
+              name: name,
+              description: description,
+              label: label
+            } as ISearchResult);
+          }
         }
       });
     });
@@ -857,74 +896,82 @@ export class DataplexSearchWidget extends Panel {
     return flatResults;
   }
 
-
-private async _onSearchExecuted(
+  private async _onSearchExecuted(
     sender: DataplexSearchPanelWrapper,
-    args: { query: string, projects: string[] }
-) {
+    args: { query: string; projects: string[] }
+  ) {
     const { query, projects } = args;
 
     if (query.length < 3) {
-        console.warn('DataplexSearch: Search term must be at least 3 characters.');
-        this.searchWrapper.updateState(query, [], false, projects, []); 
-        return;
+      console.warn(
+        'DataplexSearch: Search term must be at least 3 characters.'
+      );
+      this.searchWrapper.updateState(query, [], false, projects, []);
+      return;
     }
 
     this.searchWrapper.updateState(query, [], true, projects, []);
-    
-    console.log(`DataplexSearch: Initiating search for query: "${query}" across projects:`, projects);
+
+    console.log(
+      `DataplexSearch: Initiating search for query: "${query}" across projects:`,
+      projects
+    );
 
     try {
-        const searchPromises = projects.map(async (projectName) => {
-            console.log(`DataplexSearch: Starting BigQuery Search for project: ${projectName}`);
-
-            let searchResult: any = null;
-            const setSearchLoading = (value: boolean) => { /* handled by global state */ };
-            const setSearchResponse = (data: any) => { searchResult = data; };
-
-            await BigQueryService.getBigQuerySearchAPIService(
-                query,
-                setSearchLoading,
-                setSearchResponse
-            );
-
-            if (searchResult) {
-                console.log(`DataplexSearch: Received result from project ${projectName}`, searchResult);
-                return { project: projectName, result: searchResult };
-            }
-            return null;
-        });
-
-        const combinedRawResults = (await Promise.all(searchPromises)).filter(
-            (result): result is { project: string; result: any } =>
-              result !== null
+      const searchPromises = projects.map(async projectName => {
+        console.log(
+          `DataplexSearch: Starting BigQuery Search for project: ${projectName}`
         );
 
-        console.log("DataplexSearch: Combined Search Results for all projects (RAW):", combinedRawResults);
-        
-        const flatResults = this.processSearchResults(combinedRawResults);
-        
-        console.log("DataplexSearch: Final Processed Flat Results:", flatResults);
+        let searchResult: any = null;
+        const setSearchLoading = (value: boolean) => {
+          /* handled by global state */
+        };
+        const setSearchResponse = (data: any) => {
+          searchResult = data;
+        };
 
-        this.searchWrapper.updateState(
-            query,
-            flatResults,
-            false,
-            projects,
-            combinedRawResults
+        await BigQueryService.getBigQuerySearchAPIService(
+          query,
+          setSearchLoading,
+          setSearchResponse
         );
 
+        if (searchResult) {
+          console.log(
+            `DataplexSearch: Received result from project ${projectName}`,
+            searchResult
+          );
+          return { project: projectName, result: searchResult };
+        }
+        return null;
+      });
+
+      const combinedRawResults = (await Promise.all(searchPromises)).filter(
+        (result): result is { project: string; result: any } => result !== null
+      );
+
+      console.log(
+        'DataplexSearch: Combined Search Results for all projects (RAW):',
+        combinedRawResults
+      );
+
+      const flatResults = this.processSearchResults(combinedRawResults);
+
+      console.log('DataplexSearch: Final Processed Flat Results:', flatResults);
+
+      this.searchWrapper.updateState(
+        query,
+        flatResults,
+        false,
+        projects,
+        combinedRawResults
+      );
     } catch (error) {
-        console.error('DataplexSearch: Error during BigQuery search:', error);
-        this.searchWrapper.updateState(
-            query,
-            [],
-            false,
-            projects,
-            []
-        );
+      console.error('DataplexSearch: Error during BigQuery search:', error);
+      this.searchWrapper.updateState(query, [], false, projects, []);
     }
-}
+  }
 
   /**
    * Utility to parse the project/dataset/table IDs from the name/description
@@ -932,30 +979,37 @@ private async _onSearchExecuted(
    * stored in the raw search results (allSearchResults) to ensure accuracy.
    */
 
-private parseResultDetails(result: ISearchResult): { projectId: string | null, datasetId: string | null, tableId: string | null } {
-    const name = result.name; 
+  private parseResultDetails(result: ISearchResult): {
+    projectId: string | null;
+    datasetId: string | null;
+    tableId: string | null;
+  } {
+    const name = result.name;
     const rawResults = this.searchWrapper.allSearchResults;
-    
+
     if (Array.isArray(rawResults)) {
       for (const projectResult of rawResults) {
         if (projectResult.result && projectResult.result.results) {
           for (const searchData of projectResult.result.results) {
             const fqn = searchData.dataplexEntry?.fullyQualifiedName;
-            const displayName = searchData.dataplexEntry?.displayName || searchData.dataplexEntry?.name;
-            
+            const displayName =
+              searchData.dataplexEntry?.displayName ||
+              searchData.dataplexEntry?.name;
+
             if (fqn && (displayName === name || fqn.endsWith(name))) {
-              const fqnParts = fqn.split(':'); 
-              const tableParts = fqnParts.length > 1 ? fqnParts[1].split('.') : [];
-              
+              const fqnParts = fqn.split(':');
+              const tableParts =
+                fqnParts.length > 1 ? fqnParts[1].split('.') : [];
+
               if (tableParts.length >= 2) {
                 const projectId = tableParts[0];
                 const datasetId = tableParts[1];
                 const tableId = tableParts.length > 2 ? tableParts[2] : null;
-                
+
                 if (name === datasetId) {
-                    return { projectId, datasetId, tableId: null }; 
+                  return { projectId, datasetId, tableId: null };
                 }
-                
+
                 return { projectId, datasetId, tableId };
               }
             }
@@ -963,40 +1017,47 @@ private parseResultDetails(result: ISearchResult): { projectId: string | null, d
         }
       }
     }
-    
+
     // 2. FALLBACK PARSING: Use description for public datasets (e.g., 'bigquery-public-data > US')
     const description = result.description || '';
     const descParts = description.split(' > ');
-    
+
     if (descParts.length >= 1) {
-        const projectIdFromDesc = descParts[0].replace('Project: ', '').trim();
+      const projectIdFromDesc = descParts[0].replace('Project: ', '').trim();
 
-        // This pattern often means the result name is the dataset ID, and the project is in the description
-        // For 'america_health_rankings' and 'bigquery-public-data > US':
-        // projectIdFromDesc = 'bigquery-public-data'
-        // name = 'america_health_rankings'
-        return { 
-            projectId: projectIdFromDesc, 
-            datasetId: name, 
-            tableId: null 
-        };
+      // This pattern often means the result name is the dataset ID, and the project is in the description
+      // For 'america_health_rankings' and 'bigquery-public-data > US':
+      // projectIdFromDesc = 'bigquery-public-data'
+      // name = 'america_health_rankings'
+      return {
+        projectId: projectIdFromDesc,
+        datasetId: name,
+        tableId: null
+      };
     }
-    
 
-    console.warn('DataplexSearch: Failed to parse IDs using known patterns for result:', result);
+    console.warn(
+      'DataplexSearch: Failed to parse IDs using known patterns for result:',
+      result
+    );
     return { projectId: null, datasetId: null, tableId: null };
-}
+  }
 
-
-  private _onResultClicked(sender: DataplexSearchPanelWrapper, result: ISearchResult): void {
+  private _onResultClicked(
+    sender: DataplexSearchPanelWrapper,
+    result: ISearchResult
+  ): void {
     const { projectId, datasetId, tableId } = this.parseResultDetails(result);
     const widgetTitle = result.name;
 
     if (!projectId || !datasetId) {
-        console.error('DataplexSearch: Cannot open widget. Could not reliably determine Project ID or Dataset ID for result:', result);
-        return; 
+      console.error(
+        'DataplexSearch: Cannot open widget. Could not reliably determine Project ID or Dataset ID for result:',
+        result
+      );
+      return;
     }
-    
+
     if (this.openedWidgets[widgetTitle]) {
       this.app.shell.activateById(widgetTitle);
       return;
@@ -1012,15 +1073,14 @@ private parseResultDetails(result: ISearchResult): { projectId: string | null, d
         projectId,
         this.themeManager
       );
-      icon = iconDatasets; 
-      
+      icon = iconDatasets;
     } else {
       content = new BigQueryDatasetWrapper(
         datasetId,
         projectId,
         this.themeManager
       );
-      icon = iconDatabaseWidget; 
+      icon = iconDatabaseWidget;
     }
 
     const widget = new MainAreaWidget<any>({ content });
@@ -1050,15 +1110,14 @@ const calculateDepth = (node: NodeApi): number => {
 };
 
 interface IDataEntry {
-    id: string;
-    name: string;
-    type: string;
-    isLoadMoreNode?: boolean;
-    isNodeOpen: boolean;
-    description: string;
-    children: any;
+  id: string;
+  name: string;
+  type: string;
+  isLoadMoreNode?: boolean;
+  isNodeOpen: boolean;
+  description: string;
+  children: any;
 }
-
 
 const BigQueryComponent = ({
   app,
@@ -1069,7 +1128,6 @@ const BigQueryComponent = ({
   settingRegistry: ISettingRegistry;
   themeManager: IThemeManager;
 }): JSX.Element => {
-
   const [projectNameInfo, setProjectNameInfo] = useState<string[]>([]);
   const [notebookValue, setNotebookValue] = useState<string>('');
   const [dataprocMetastoreServices, setDataprocMetastoreServices] =
@@ -1133,7 +1191,6 @@ const BigQueryComponent = ({
       );
     }
   };
-
 
   const treeStructureforProjects = () => {
     const data = projectNameInfo.map(projectName => ({
@@ -1245,12 +1302,11 @@ const BigQueryComponent = ({
     setTreeStructureData(tempData);
   };
 
-
   const handleOpenSearch = () => {
     setIsSearchOpen(true);
     const content = new DataplexSearchWidget(
-      app, 
-      settingRegistry, 
+      app,
+      settingRegistry,
       themeManager
     );
     const widget = new MainAreaWidget<DataplexSearchWidget>({ content });
@@ -1259,8 +1315,7 @@ const BigQueryComponent = ({
     widget.title.closable = true;
 
     app.shell.add(widget, 'main');
-  }
-
+  };
 
   const openedWidgets: Record<string, boolean> = {};
   const handleNodeClick = (node: NodeApi) => {
@@ -1309,7 +1364,6 @@ const BigQueryComponent = ({
       openedWidgets[widgetTitle] = node.data.name;
     }
   };
-
 
   type NodeProps = NodeRendererProps<IDataEntry> & {
     onClick: (node: NodeRendererProps<IDataEntry>['node']) => void;
@@ -1462,43 +1516,43 @@ const BigQueryComponent = ({
       const hasChildren =
         (node.children && node.children.length > 0) ||
         (depth !== 4 && node.children);
-        hasChildren && !node.data.isLoadMoreNode ? (
-          isIconLoading && currentNode.data.name === node.data.name ? (
-            <div className="big-query-loader-style">
-              <CircularProgress
-                size={16}
-                aria-label="Loading Spinner"
-                data-testid="loader"
-              />
-            </div>
-          ) : node.isOpen ? (
-            <>
-              <div
-                role="treeitem"
-                className="caret-icon right"
-                onClick={handleIconClick}
-              >
-                <iconDownArrow.react
-                  tag="div"
-                  className="icon-white logo-alignment-style"
-                />
-              </div>
-            </>
-          ) : (
+      hasChildren && !node.data.isLoadMoreNode ? (
+        isIconLoading && currentNode.data.name === node.data.name ? (
+          <div className="big-query-loader-style">
+            <CircularProgress
+              size={16}
+              aria-label="Loading Spinner"
+              data-testid="loader"
+            />
+          </div>
+        ) : node.isOpen ? (
+          <>
             <div
               role="treeitem"
-              className="caret-icon down"
+              className="caret-icon right"
               onClick={handleIconClick}
             >
-              <iconRightArrow.react
+              <iconDownArrow.react
                 tag="div"
                 className="icon-white logo-alignment-style"
               />
             </div>
-          )
+          </>
         ) : (
-          <div style={{ width: '29px' }}></div>
-        );
+          <div
+            role="treeitem"
+            className="caret-icon down"
+            onClick={handleIconClick}
+          >
+            <iconRightArrow.react
+              tag="div"
+              className="icon-white logo-alignment-style"
+            />
+          </div>
+        )
+      ) : (
+        <div style={{ width: '29px' }}></div>
+      );
       const renderLoadMoreNode = () =>
         isLoadMoreLoading ? (
           <div className="load-more-spinner-container">
@@ -1521,8 +1575,8 @@ const BigQueryComponent = ({
             Load More...
           </div>
         );
-      
-      { // This block handles icon rendering based on depth/type
+
+      {
         const arrowIcon =
           hasChildren && !node.data.isLoadMoreNode ? (
             isIconLoading && currentNode.data.name === node.data.name ? (
@@ -1582,7 +1636,7 @@ const BigQueryComponent = ({
             <>
               {arrowIcon}
               <div role="img" className="db-icon" onClick={handleIconClick}>
-                <iconDataset.react
+                <iconDatasets.react
                   tag="div"
                   className="icon-white logo-alignment-style"
                 />
@@ -1774,7 +1828,6 @@ const BigQueryComponent = ({
       currentNode?.toggle();
     }
   }, [treeStructureData]);
-
 
   return (
     <div className="dpms-Wrapper">
