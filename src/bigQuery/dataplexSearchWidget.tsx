@@ -34,7 +34,12 @@ import {
   TextField,
   IconButton,
   CircularProgress,
-  Menu
+  Menu,
+  // --- NEW IMPORTS FOR MULTI-SELECT/CHIPS ---
+  Checkbox,
+  ListItemText,
+  Chip 
+  // --- END NEW IMPORTS ---
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { LabIcon } from '@jupyterlab/ui-components';
@@ -60,6 +65,8 @@ import LoginErrorComponent from '../utils/loginErrorComponent';
 import { BIGQUERY_API_URL } from '../utils/const';
 import { BigQueryDatasetWrapper } from './bigQueryDatasetInfoWrapper';
 import { BigQueryTableWrapper } from './bigQueryTableInfoWrapper';
+
+// ... (Icon definitions remain the same)
 const iconDatasets = new LabIcon({
   name: 'launcher:datasets-icon',
   svgstr: datasetsIcon
@@ -96,15 +103,17 @@ const iconSearch = new LabIcon({
   name: 'launcher:search-icon',
   svgstr: searchIcon
 });
+// ... (End Icon definitions)
 
+// --- MODIFIED INTERFACES AND STATE ---
 export interface INLSearchFilters {
-  scope: string;
-  systems: string;
-  projects: string;
-  type: string;
-  subtype: string;
-  locations: string;
-  annotations: string;
+  scope: string[]; // Changed to array for multi-select
+  systems: string[];
+  projects: string[];
+  type: string[];
+  subtype: string[];
+  locations: string[];
+  annotations: string[];
 }
 export interface ISearchResult {
   name: string;
@@ -112,14 +121,15 @@ export interface ISearchResult {
   label?: 'Bigquery / Dataset' | 'Bigquery / Table';
 }
 const initialFilterState: INLSearchFilters = {
-  scope: '',
-  systems: '',
-  projects: '',
-  type: '',
-  subtype: '',
-  locations: '',
-  annotations: ''
+  scope: [], // Changed to empty array
+  systems: [],
+  projects: [],
+  type: [],
+  subtype: [],
+  locations: [],
+  annotations: []
 };
+// --- END MODIFIED INTERFACES AND STATE ---
 
 interface IDataplexSearchComponentProps {
   initialQuery: string;
@@ -127,7 +137,8 @@ interface IDataplexSearchComponentProps {
   results?: ISearchResult[];
   projectsList: string[];
   onQueryChanged: (query: string) => void;
-  onSearchExecuted: (query: string, projects: string[]) => void;
+  // NOTE: projects argument should match the new filters.projects type (string[])
+  onSearchExecuted: (query: string, projects: string[]) => void; 
   onFiltersChanged: (filters: INLSearchFilters) => void;
   onResultClicked: (result: ISearchResult) => void;
 }
@@ -147,6 +158,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   const [filters, setFilters] = useState<INLSearchFilters>(initialFilterState);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 1. Notify Lumino parent whenever filters change
   useEffect(() => {
     onFiltersChanged(filters);
   }, [filters, onFiltersChanged]);
@@ -155,21 +167,64 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     setCurrentPage(1);
   }, [results]);
 
+  // 2. Updated handler for multi-select (expects array of strings)
   const handleFilterChange = useCallback(
-    (name: keyof INLSearchFilters, value: string) => {
+    (name: keyof INLSearchFilters, value: string[]) => {
       setFilters(prev => ({ ...prev, [name]: value }));
     },
     []
   );
 
+  // 3. Clear all filters
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilterState);
+    // Optionally trigger a search immediately after clearing filters
+    onSearchExecuted(initialQuery.trim(), []); 
+  }, [initialQuery, onSearchExecuted]);
+
+  // 4. Remove a single chip/filter value
+  const handleClearChip = useCallback((filterName: keyof INLSearchFilters, valueToRemove: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterName]: prev[filterName].filter(v => v !== valueToRemove)
+    }));
   }, []);
 
+  // 5. Aggregate active filters for chip display
+  const activeFilters = useMemo(() => {
+    const active: { name: keyof INLSearchFilters, label: string, value: string }[] = [];
+    
+    // Map of filter key to a readable label
+    const filterLabels: Record<keyof INLSearchFilters, string> = {
+      projects: 'Project',
+      scope: 'Scope',
+      systems: 'System',
+      type: 'Type',
+      subtype: 'Subtype',
+      locations: 'Location',
+      annotations: 'Annotation'
+    };
+    
+    (Object.keys(filters) as (keyof INLSearchFilters)[]).forEach(key => {
+      if (filters[key].length > 0) {
+        filters[key].forEach(value => {
+          active.push({
+            name: key,
+            label: filterLabels[key] || key,
+            value: value
+          });
+        });
+      }
+    });
+    return active;
+  }, [filters]);
+
   const handleSearchClick = () => {
-    onSearchExecuted(initialQuery.trim(), projectsList);
+    // Pass the array of selected projects to the search execution
+    onSearchExecuted(initialQuery.trim(), filters.projects);
   };
 
+  // 6. MODIFIED renderDropdown for Multi-Select with Checkboxes
   const renderDropdown = (
     name: keyof INLSearchFilters,
     label: string,
@@ -185,8 +240,11 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
       <InputLabel id={`${name}-label`}>{label}</InputLabel>
       <Select
         labelId={`${name}-label`}
-        value={filters[name]}
-        onChange={e => handleFilterChange(name, e.target.value as string)}
+        multiple // Enables multi-select
+        value={filters[name]} // Expects an array of strings
+        onChange={e => handleFilterChange(name, e.target.value as string[])}
+        // Render selected values as a comma-separated list
+        renderValue={(selected: string[]) => selected.join(', ')} 
         label={label}
         sx={{
           '.MuiOutlinedInput-notchedOutline': {
@@ -194,10 +252,11 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           }
         }}
       >
-        <MenuItem value="">{`Select ${label}`}</MenuItem>
         {options.map(opt => (
           <MenuItem key={opt} value={opt}>
-            {opt}
+            {/* Checkbox for visual multi-select */}
+            <Checkbox checked={filters[name].indexOf(opt) > -1} />
+            <ListItemText primary={opt} />
           </MenuItem>
         ))}
       </Select>
@@ -316,6 +375,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
       }}
     >
       {' '}
+      {/* --- FILTER SIDEBAR --- */}
       <div
         style={{
           padding: '8px 12px 16px 12px',
@@ -362,11 +422,11 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             margin: '4px 0 6px 0'
           }}
         />
-        {/* DROPDOWN LIST */}
+        {/* DROPDOWN LIST (All now support multi-select) */}
         {renderDropdown('scope', 'Scope', [
           'Current organization',
-          'All Organizations',
-          'Project'
+          'Current Project',
+          'Starred'
         ])}
         {renderDropdown('systems', 'Systems', [
           'BigQuery',
@@ -375,22 +435,20 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
         ])}
         {renderDropdown('projects', 'Projects', projectsList)}{' '}
         {renderDropdown('type', 'Type', [
+          'Datasets',
           'Table',
-          'View',
-          'External Table',
-          'Data Stream'
         ])}
         {renderDropdown('locations', 'Locations', [
-          'US-Central1',
-          'Europe-West4',
+          'Us',
+          'Eu',
           'Global'
         ])}
         {renderDropdown('annotations', 'Annotations', [
-          'Confidential',
-          'Public',
-          'PII'
         ])}
       </div>
+      {/* --- END FILTER SIDEBAR --- */}
+
+      {/* --- SEARCH RESULTS AREA --- */}
       <div
         style={{
           flexGrow: 1,
@@ -400,31 +458,17 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           minHeight: 0
         }}
       >
+        {/* Search Bar */}
         <div
           className="nl-query-bar"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            marginBottom: '16px'
+            // Adjust margin based on whether chips will be displayed
+            marginBottom: activeFilters.length > 0 ? '8px' : '16px' 
           }}
         >
-          {/* <TextField
-            fullWidth
-            variant="outlined"
-            size="small"
-            placeholder="What dataset are you looking for?"
-            value={initialQuery}
-            onChange={e => {
-              console.log(
-                'DataplexSearch: Query String Changed:',
-                e.target.value
-              );
-              onQueryChanged(e.target.value);
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') handleSearchClick();
-            }} */}
           <TextField
             fullWidth
             variant="outlined"
@@ -436,9 +480,9 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
               console.log('DataplexSearch: Query String Changed:', newValue);
               onQueryChanged(newValue);
 
-              // OPTIONAL: Auto-search on clear (reduces a click)
               if (newValue.trim() === '') {
-                onSearchExecuted('', projectsList);
+                // Execute search with empty query and CURRENT filters
+                onSearchExecuted('', filters.projects); 
               }
             }}
             onKeyDown={e => {
@@ -449,10 +493,9 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
                 <>
                   {initialQuery.trim() !== '' && (
                     <IconButton
-                      // Clear the input and trigger the search for empty query
                       onClick={() => {
-                        onQueryChanged(''); // Clear the input field state
-                        onSearchExecuted('', projectsList); // Execute search with empty string
+                        onQueryChanged('');
+                        onSearchExecuted('', filters.projects);
                       }}
                       size="small"
                       aria-label="Clear search"
@@ -464,8 +507,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
                           lineHeight: 1
                         }}
                       >
-                        &times;{' '}
-                        {/* Using simple 'times' character for an 'X' close icon */}
+                        &times;
                       </span>
                     </IconButton>
                   )}
@@ -477,6 +519,40 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             }}
           />
         </div>
+
+        {/* --- ACTIVE FILTER CHIPS --- */}
+        {activeFilters.length > 0 && (
+          <div 
+            className="active-filters-chips"
+            style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: '8px', 
+              marginBottom: '16px' // Separator for search results title
+            }}
+          >
+            {activeFilters.map((filter, index) => (
+              <Chip
+                key={`${filter.name}-${filter.value}-${index}`}
+                label={`${filter.label}: ${filter.value}`}
+                onDelete={() => handleClearChip(filter.name, filter.value)}
+                variant="outlined"
+                size="small"
+                // Styling for JupyterLab dark theme compatibility
+                sx={{
+                  backgroundColor: 'var(--jp-layout-color2)',
+                  borderColor: 'var(--jp-border-color2)',
+                  color: 'var(--jp-ui-font-color1)',
+                  '.MuiChip-deleteIcon': {
+                    color: 'var(--jp-ui-font-color1)'
+                  }
+                }}
+              />
+            ))}
+          </div>
+        )}
+        {/* --- END ACTIVE FILTER CHIPS --- */}
+
         <div
           className="nl-search-results-container"
           style={{
@@ -592,9 +668,14 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           ) : null}
         </div>
       </div>
+      {/* --- END SEARCH RESULTS AREA --- */}
     </div>
   );
 };
+
+// The remaining classes (DataplexSearchPanelWrapper, DataplexSearchWidget, BigQueryComponent, BigQueryWidget) remain the same as they correctly consume the new array-based filters via `onFiltersChanged` and pass `filters.projects` to `onSearchExecuted`.
+
+// ... (DataplexSearchPanelWrapper class remains the same)
 class DataplexSearchPanelWrapper extends ReactWidget {
   public initialQuery: string = '';
   public searchResults: ISearchResult[] = [];
@@ -657,7 +738,10 @@ class DataplexSearchPanelWrapper extends ReactWidget {
     );
   }
 }
+// ... (End DataplexSearchPanelWrapper class)
 
+
+// ... (DataplexSearchWidget class and all other components remain the same)
 export class DataplexSearchWidget extends Panel {
   app: JupyterLab;
   settingRegistry: ISettingRegistry;
@@ -941,31 +1025,9 @@ export class DataplexSearchWidget extends Panel {
     args: { query: string; projects: string[] }
   ) {
     const { query, projects } = args;
-    // if (query.trim() === '') {
-    //     console.log('DataplexSearch: Empty query executed. Reloading initial datasets.');
 
-    //     // Set loading state immediately (Crucial for UI responsiveness)
-    //     this.searchWrapper.updateState(
-    //       query,
-    //       [], // Clear previous results
-    //       true, // Set loading to true
-    //       projects,
-    //       this.searchWrapper.allSearchResults
-    //     );
-
-    //     // Trigger the process to fetch the full list of datasets.
-    //     // This function already fetches, processes, and calls updateState(..., false, ...) on completion.
-    //     // We rely on the existing logic in fetchDatasetsForProjects to update the UI.
-    //     if (this.searchWrapper.projectsList.length > 0) {
-    //       await this.fetchDatasetsForProjects(this.searchWrapper.projectsList);
-    //     } else {
-    //       // Fallback: If projects aren't loaded, start the full initial load process
-    //       await this.fetchProjectsList();
-    //     }
-    //     return;
-    //   }
+    // This block handles the case where the user hits Search/Clear with an empty query
     if (query.trim() === '') {
-      // THIS BLOCK MUST EXIST AND CALL THE FETCH LOGIC
       console.log(
         'DataplexSearch: Empty query executed. Reloading initial datasets.'
       );
@@ -977,13 +1039,20 @@ export class DataplexSearchWidget extends Panel {
         this.searchWrapper.allSearchResults
       );
 
-      if (this.searchWrapper.projectsList.length > 0) {
-        await this.fetchDatasetsForProjects(this.searchWrapper.projectsList);
+      // NOTE: Now using the array of selected projects for filtering.
+      const projectsToFetch = projects.length > 0 ? projects : this.searchWrapper.projectsList;
+
+      if (projectsToFetch.length > 0) {
+        // Fetch datasets only for the selected projects or all projects if none selected.
+        await this.fetchDatasetsForProjects(projectsToFetch);
       } else {
+        // If projects list is not yet loaded, start the full initial load process
         await this.fetchProjectsList();
       }
       return;
     }
+    
+    // Minimum query length guardrail
     if (query.length < 3) {
       console.warn(
         'DataplexSearch: Search term must be at least 3 characters.'
@@ -998,9 +1067,12 @@ export class DataplexSearchWidget extends Panel {
       `DataplexSearch: Initiating search for query: "${query}" across projects:`,
       projects
     );
+    
+    // Use the projects array passed from the component (which includes selected projects)
+    const projectsToSearch = projects.length > 0 ? projects : this.searchWrapper.projectsList;
 
     try {
-      const searchPromises = projects.map(async projectName => {
+      const searchPromises = projectsToSearch.map(async projectName => {
         console.log(
           `DataplexSearch: Starting BigQuery Search for project: ${projectName}`
         );
