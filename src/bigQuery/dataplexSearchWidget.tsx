@@ -409,7 +409,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             marginBottom: '16px'
           }}
         >
-          <TextField
+          {/* <TextField
             fullWidth
             variant="outlined"
             size="small"
@@ -424,15 +424,55 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             }}
             onKeyDown={e => {
               if (e.key === 'Enter') handleSearchClick();
+            }} */}
+          <TextField
+            fullWidth
+            variant="outlined"
+            size="small"
+            placeholder="What dataset are you looking for?"
+            value={initialQuery}
+            onChange={e => {
+              const newValue = e.target.value;
+              console.log('DataplexSearch: Query String Changed:', newValue);
+              onQueryChanged(newValue);
+
+              // OPTIONAL: Auto-search on clear (reduces a click)
+              if (newValue.trim() === '') {
+                onSearchExecuted('', projectsList);
+              }
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') handleSearchClick();
             }}
             InputProps={{
-              startAdornment: (
-                <Search style={{ color: 'var(--jp-ui-font-color1)' }} />
-              ),
               endAdornment: (
-                <IconButton onClick={handleSearchClick}>
-                  <Search style={{ color: 'var(--jp-ui-font-color1)' }} />
-                </IconButton>
+                <>
+                  {initialQuery.trim() !== '' && (
+                    <IconButton
+                      // Clear the input and trigger the search for empty query
+                      onClick={() => {
+                        onQueryChanged(''); // Clear the input field state
+                        onSearchExecuted('', projectsList); // Execute search with empty string
+                      }}
+                      size="small"
+                      aria-label="Clear search"
+                    >
+                      <span
+                        style={{
+                          fontSize: '18px',
+                          color: 'var(--jp-ui-font-color1)',
+                          lineHeight: 1
+                        }}
+                      >
+                        &times;{' '}
+                        {/* Using simple 'times' character for an 'X' close icon */}
+                      </span>
+                    </IconButton>
+                  )}
+                  <IconButton onClick={handleSearchClick}>
+                    <Search style={{ color: 'var(--jp-ui-font-color1)' }} />
+                  </IconButton>
+                </>
               )
             }}
           />
@@ -901,7 +941,49 @@ export class DataplexSearchWidget extends Panel {
     args: { query: string; projects: string[] }
   ) {
     const { query, projects } = args;
+    // if (query.trim() === '') {
+    //     console.log('DataplexSearch: Empty query executed. Reloading initial datasets.');
 
+    //     // Set loading state immediately (Crucial for UI responsiveness)
+    //     this.searchWrapper.updateState(
+    //       query,
+    //       [], // Clear previous results
+    //       true, // Set loading to true
+    //       projects,
+    //       this.searchWrapper.allSearchResults
+    //     );
+
+    //     // Trigger the process to fetch the full list of datasets.
+    //     // This function already fetches, processes, and calls updateState(..., false, ...) on completion.
+    //     // We rely on the existing logic in fetchDatasetsForProjects to update the UI.
+    //     if (this.searchWrapper.projectsList.length > 0) {
+    //       await this.fetchDatasetsForProjects(this.searchWrapper.projectsList);
+    //     } else {
+    //       // Fallback: If projects aren't loaded, start the full initial load process
+    //       await this.fetchProjectsList();
+    //     }
+    //     return;
+    //   }
+    if (query.trim() === '') {
+      // THIS BLOCK MUST EXIST AND CALL THE FETCH LOGIC
+      console.log(
+        'DataplexSearch: Empty query executed. Reloading initial datasets.'
+      );
+      this.searchWrapper.updateState(
+        query,
+        [],
+        true,
+        projects,
+        this.searchWrapper.allSearchResults
+      );
+
+      if (this.searchWrapper.projectsList.length > 0) {
+        await this.fetchDatasetsForProjects(this.searchWrapper.projectsList);
+      } else {
+        await this.fetchProjectsList();
+      }
+      return;
+    }
     if (query.length < 3) {
       console.warn(
         'DataplexSearch: Search term must be at least 3 characters.'
