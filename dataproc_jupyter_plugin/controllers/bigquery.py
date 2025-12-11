@@ -156,7 +156,7 @@ class SearchController(APIHandler):
             system = self.get_argument("system")
             projects = await bq_projects_list()
             bq_client = await bigquery_client.get_client(self.log)
-            search_data = await bq_client.bigquery_search(
+            search_data = await bq_client.bigquery_semantic_search(
                 search_string, type, system, projects
             )
             self.finish(json.dumps(search_data))

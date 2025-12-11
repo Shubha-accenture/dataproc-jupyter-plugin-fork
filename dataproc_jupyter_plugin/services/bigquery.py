@@ -224,7 +224,9 @@ class Client:
 
         except Exception as e:
             self.log.exception(f"Error fetching Dataplex search data: {e}")
-            return {"error": str(e)}
+            return {"error": str(e)}        
+        
+    
 
     async def bigquery_projects(self, dataset_id, table_id):
         try:
@@ -245,3 +247,84 @@ class Client:
         except Exception as e:
             self.log.exception("Error fetching projects")
             return {"error": str(e)}
+        
+
+    async def bigquery_semantic_search(self, search_string: str, type: str, system: str, projects: list):
+        """Searches for BigQuery data assets using the Dataplex API with Semantic Search enabled."""
+        try:
+            dataplex_url = await urls.gcp_service_url(DATAPLEX_SERVICE_NAME)
+            api_endpoint = f"{dataplex_url}v1/projects/{self.project_id}/locations/global:searchEntries"
+            
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self._access_token}",
+                "X-Goog-User-Project": self.project_id,
+            }
+
+            # --- Query Construction ---
+            query_parts = []
+            if search_string:
+                query_parts.append(f"{search_string}")
+            
+            if system:
+                query_parts.append(f"system:{system.upper()}")
+            
+            if type:
+                # Handle pipe-separated types like 'table|view'
+                types = type.split('|')
+                type_filters = " OR ".join([f"type:{t.upper()}" for t in types])
+                query_parts.append(f"({type_filters})")
+            
+            if projects:
+                project_filters = " OR ".join([f"projectid:{p}" for p in projects])
+                query_parts.append(f"({project_filters})")
+
+            full_query = " AND ".join(filter(None, query_parts))
+            
+            if not full_query:
+                self.log.warning("No search query provided. Returning empty result.")
+                return {}
+
+            # --- Payload Construction (Always Semantic) ---
+            payload = {
+                "query": full_query,
+                "pageSize": 500,
+                "semanticSearch": True  # Hardcoded to True as requested
+            }
+            
+            has_next = True
+            search_results = []
+            
+            # --- Pagination Loop ---
+            while has_next:
+                try:
+                    async with self.client_session.post(
+                        api_endpoint, headers=headers, json=payload
+                    ) as response:
+                        if response.status == 200:
+                            resp = await response.json()
+                            if "results" in resp:
+                                search_results.extend(resp["results"])
+
+                            if "nextPageToken" in resp:
+                                payload["pageToken"] = resp["nextPageToken"]
+                            else:
+                                has_next = False
+                        else:
+                            response_text = await response.text()
+                            self.log.error(f"Error searching in Dataplex: {response.status} - {response_text}")
+                            raise Exception(f"Dataplex API Error: {response.status} - {response.reason} - {response_text}")
+
+                except aiohttp.ClientError as e:
+                    self.log.error(f"Aiohttp client error during API call: {e}")
+                    raise
+
+            if not search_results:
+                return {}
+            else:
+                return {"results": search_results}
+
+        except Exception as e:
+            self.log.exception(f"Error fetching Dataplex search data: {e}")
+            return {"error": str(e)}
+   

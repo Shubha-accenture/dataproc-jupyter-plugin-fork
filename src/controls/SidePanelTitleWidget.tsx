@@ -19,11 +19,17 @@ import { ReactWidget } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import refreshDatasetIcon from '../../style/icons/refresh_icon.svg';
 import { CircularProgress } from '@mui/material';
+// import searchIcon from '../../style/icons/search_icon_dark.svg';
 
 const iconRefreshDatasetExplorer = new LabIcon({
   name: 'launcher:refresh-dataset-explorer-icon',
   svgstr: refreshDatasetIcon
 });
+
+// const iconSearch = new LabIcon({
+//   name: 'launcher:search-icon',
+//   svgstr: searchIcon
+// });
 
 export const TitleComponent = function ({
   titleStr,
@@ -70,30 +76,45 @@ export const TitleComponent = function ({
           ) : null}
         </div>
         {getBigQueryProjects ? (
-          <span
-            onClick={() => {
-              if (!isLoading) {
-                getBigQueryProjects();
-              }
-            }}
-            aria-label="dataset-explorer-refresh"
-            className="dataset-explorer-refresh"
-            style={{ cursor: isLoading ? 'wait' : 'pointer' }}
-          >
-            {isLoading ? (
-              <CircularProgress
-                className="spin-loader-custom-style"
-                size={16}
-                aria-label="Loading Spinner"
-                data-testid="loader"
-              />
-            ) : (
-              <iconRefreshDatasetExplorer.react
-                tag="div"
-                className="icon-white logo-alignment-style"
-              />
-            )}
-          </span>
+          <>
+            <span
+              onClick={() => {
+                if (!isLoading) {
+                  getBigQueryProjects();
+                }
+              }}
+              aria-label="dataset-explorer-refresh"
+              className="dataset-explorer-refresh"
+              style={{ cursor: isLoading ? 'wait' : 'pointer' }}
+            >
+              {isLoading ? (
+                <CircularProgress
+                  className="spin-loader-custom-style"
+                  size={16}
+                  aria-label="Loading Spinner"
+                  data-testid="loader"
+                />
+              ) : (
+                <div 
+                >
+                  {/* <button
+                    // onClick={handleOpenSearch}
+                    aria-label="Open Dataplex Natural Language Search"
+                  >
+                    <span className="button-content">
+                      <iconSearch.react
+                        tag="div"
+                        className="icon-white logo-alignment-style button-icon"
+                      />
+                    </span>
+                  </button> */}
+                  <iconRefreshDatasetExplorer.react
+                    tag="div"
+                  />
+                </div>
+              )}
+            </span>
+          </>
         ) : null}
       </div>
     </div>

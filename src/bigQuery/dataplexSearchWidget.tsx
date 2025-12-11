@@ -35,11 +35,9 @@ import {
   IconButton,
   CircularProgress,
   Menu,
-  // --- ADDED IMPORTS FOR MULTI-SELECT/CHIPS ---
   Checkbox,
   ListItemText,
-  Chip 
-  // --- END ADDED IMPORTS ---
+  Chip
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { LabIcon } from '@jupyterlab/ui-components';
@@ -103,9 +101,7 @@ const iconSearch = new LabIcon({
   svgstr: searchIcon
 });
 
-// --- MODIFIED INTERFACE FOR MULTI-SELECT ---
 export interface INLSearchFilters {
-  scope: string[];
   systems: string[];
   projects: string[];
   type: string[];
@@ -114,18 +110,16 @@ export interface INLSearchFilters {
   annotations: string[];
 }
 
-// --- MODIFIED INTERFACE FOR FILTERING METADATA ---
 export interface ISearchResult {
   name: string;
   description?: string;
   label?: 'Bigquery / Dataset' | 'Bigquery / Table';
-  system?: string;     // Added for Systems filter
-  location?: string;   // Added for Locations filter
-  assetType?: string;  // Added for Type filter (e.g., 'Table', 'View')
+  system?: string;
+  location?: string;
+  assetType?: string; // Added for Type filter (e.g., 'Table', 'View')
 }
 
 const initialFilterState: INLSearchFilters = {
-  scope: [],
   systems: [],
   projects: [],
   type: [],
@@ -133,7 +127,6 @@ const initialFilterState: INLSearchFilters = {
   locations: [],
   annotations: []
 };
-// --- END MODIFIED INTERFACES ---
 
 interface IDataplexSearchComponentProps {
   initialQuery: string;
@@ -160,6 +153,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 }) => {
   const [filters, setFilters] = useState<INLSearchFilters>(initialFilterState);
   const [currentPage, setCurrentPage] = useState(1);
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]); // New state for dynamic locations
 
   // 1. Notify Lumino parent whenever filters change
   useEffect(() => {
@@ -167,10 +161,20 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   }, [filters, onFiltersChanged]);
 
   useEffect(() => {
+    const locations = new Set<string>();
+    results.forEach(result => {
+      if (result.location) {
+        locations.add(result.location);
+      }
+    });
+    const sortedLocations = Array.from(locations).sort();
+    setAvailableLocations(sortedLocations);
+  }, [results]);
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [results]);
 
-  // Updated handler for multi-select (expects array of strings)
   const handleFilterChange = useCallback(
     (name: keyof INLSearchFilters, value: string[]) => {
       setFilters(prev => ({ ...prev, [name]: value }));
@@ -180,31 +184,34 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilterState);
-    onSearchExecuted(initialQuery.trim(), []); 
+    onSearchExecuted(initialQuery.trim(), initialFilterState.projects);
   }, [initialQuery, onSearchExecuted]);
 
   // Remove a single chip/filter value
-  const handleClearChip = useCallback((filterName: keyof INLSearchFilters, valueToRemove: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterName]: prev[filterName].filter(v => v !== valueToRemove)
-    }));
-  }, []);
+  const handleClearChip = useCallback(
+    (filterName: keyof INLSearchFilters, valueToRemove: string) => {
+      setFilters(prev => ({
+        ...prev,
+        [filterName]: prev[filterName].filter(v => v !== valueToRemove)
+      }));
+    },
+    []
+  );
 
   // Aggregate active filters for chip display
   const activeFilters = useMemo(() => {
-    const active: { name: keyof INLSearchFilters, label: string, value: string }[] = [];
-    
+    const active: { name: keyof INLSearchFilters; label: string; value: string }[] =
+      [];
+
     const filterLabels: Record<keyof INLSearchFilters, string> = {
       projects: 'Project',
-      scope: 'Scope',
       systems: 'System',
       type: 'Type',
       subtype: 'Subtype',
       locations: 'Location',
       annotations: 'Annotation'
     };
-    
+
     (Object.keys(filters) as (keyof INLSearchFilters)[]).forEach(key => {
       if (filters[key].length > 0) {
         filters[key].forEach(value => {
@@ -219,48 +226,69 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     return active;
   }, [filters]);
 
-  const handleSearchClick = () => {
-    // Pass the array of selected projects to the search execution
-    onSearchExecuted(initialQuery.trim(), filters.projects);
+  const handleSearchClick = () => { //check this
+    let projectsToSearch: string[] = [];
+    // if (filters.scope.includes('Current organization')) {
+    //   projectsToSearch = projectsList;
+    // } else if (filters.scope.includes('Current project')) {
+    //   projectsToSearch = filters.projects;
+    // } else {
+    //   projectsToSearch = filters.projects;
+    // }
+    
+    onSearchExecuted(initialQuery.trim(), projectsToSearch);
   };
 
-  // MODIFIED renderDropdown for Multi-Select with Checkboxes
   const renderDropdown = (
     name: keyof INLSearchFilters,
     label: string,
     options: string[]
-  ) => (
-    <FormControl
-      key={name}
-      variant="outlined"
-      fullWidth
-      size="small"
-      style={{ marginBottom: '12px' }}
-    >
-      <InputLabel id={`${name}-label`}>{label}</InputLabel>
-      <Select
-        labelId={`${name}-label`}
-        multiple // Enables multi-select
-        value={filters[name]} // Expects an array of strings
-        onChange={e => handleFilterChange(name, e.target.value as string[])}
-        renderValue={(selected: string[]) => selected.join(', ')} 
-        label={label}
-        sx={{
-          '.MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--jp-border-color1)'
-          }
-        }}
+  ) => {
+    if (name === 'systems') {
+      options = ['BigQuery'];
+    }
+    if (name === 'locations') {
+        options = availableLocations;
+    }
+
+    if (options.length === 0 && name !== 'systems' && name !== 'type') {
+      return null;
+    }
+
+    return (
+      <FormControl
+        key={name}
+        variant="outlined"
+        fullWidth
+        size="small"
+        style={{ marginBottom: '12px' }}
       >
-        {options.map(opt => (
-          <MenuItem key={opt} value={opt}>
-            {/* Checkbox for visual multi-select */}
-            <Checkbox checked={filters[name].indexOf(opt) > -1} />
-            <ListItemText primary={opt} />
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
+        <InputLabel id={`${name}-label`}>{label}</InputLabel>
+        <Select
+          labelId={`${name}-label`}
+          multiple // Enables multi-select
+          value={filters[name]} // Expects an array of strings
+          onChange={e => handleFilterChange(name, e.target.value as string[])}
+          renderValue={(selected: string[]) => selected.join(', ')}
+          label={label}
+          disabled={name === 'systems'} // Disable systems select (it's hardcoded to BigQuery)
+          sx={{
+            '.MuiOutlinedInput-notchedOutline': {
+              borderColor: 'var(--jp-border-color1)'
+            }
+          }}
+        >
+          {options.map(opt => (
+            <MenuItem key={opt} value={opt}>
+              {/* Checkbox for visual multi-select */}
+              <Checkbox checked={filters[name].indexOf(opt) > -1} />
+              <ListItemText primary={opt} />
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    );
+  };
 
   const showFlatResults = useMemo(() => !searchLoading, [searchLoading]);
 
@@ -421,39 +449,18 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             margin: '4px 0 6px 0'
           }}
         />
-        {/* DROPDOWN LIST */}
-        {/* MODIFIED: Scope options updated */}
-        {renderDropdown('scope', 'Scope', [
-          'Current organization',
-          'Current project',
-          'Starred'
-        ])}
-        {renderDropdown('systems', 'Systems', [
-          'BigQuery',
-          'Dataplex',
-          'Cloud Storage'
-        ])}
+        {renderDropdown('systems', 'Systems', ['BigQuery', 'BigLake'])}
         {renderDropdown('projects', 'Projects', projectsList)}{' '}
         {renderDropdown('type', 'Type', [
           'Table',
           'View',
-          'External Table',
-          'Data Stream'
+          'Datasets'
         ])}
-        {renderDropdown('locations', 'Locations', [
-          'US-Central1',
-          'Europe-West4',
-          'Global'
-        ])}
+        {renderDropdown('locations', 'Locations', availableLocations)}
         {renderDropdown('annotations', 'Annotations', [
-          'Confidential',
-          'Public',
-          'PII'
         ])}
       </div>
-      {/* --- END FILTER SIDEBAR --- */}
 
-      {/* --- SEARCH RESULTS AREA --- */}
       <div
         style={{
           flexGrow: 1,
@@ -470,7 +477,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            marginBottom: activeFilters.length > 0 ? '8px' : '16px' 
+            marginBottom: activeFilters.length > 0 ? '8px' : '16px'
           }}
         >
           <TextField
@@ -485,7 +492,8 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
               onQueryChanged(newValue);
 
               if (newValue.trim() === '') {
-                onSearchExecuted('', filters.projects); 
+                let projectsToFetch: string[] = [];
+                onSearchExecuted('', projectsToFetch);
               }
             }}
             onKeyDown={e => {
@@ -498,7 +506,8 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
                     <IconButton
                       onClick={() => {
                         onQueryChanged('');
-                        onSearchExecuted('', filters.projects);
+                        let projectsToFetch: string[] = [];
+                        onSearchExecuted('', projectsToFetch);
                       }}
                       size="small"
                       aria-label="Clear search"
@@ -523,15 +532,14 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           />
         </div>
 
-        {/* --- ACTIVE FILTER CHIPS --- */}
         {activeFilters.length > 0 && (
-          <div 
+          <div
             className="active-filters-chips"
-            style={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: '8px', 
-              marginBottom: '16px' 
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              marginBottom: '16px'
             }}
           >
             {activeFilters.map((filter, index) => (
@@ -670,14 +678,10 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           ) : null}
         </div>
       </div>
-      {/* --- END SEARCH RESULTS AREA --- */}
     </div>
   );
 };
 
-// -----------------------------------------------------------------------------
-// --- LUMINO WRAPPER AND WIDGET CLASSES (DataplexSearchPanelWrapper) ---
-// -----------------------------------------------------------------------------
 
 class DataplexSearchPanelWrapper extends ReactWidget {
   public initialQuery: string = '';
@@ -719,7 +723,9 @@ class DataplexSearchPanelWrapper extends ReactWidget {
     this.initialQuery = query;
     this.searchResults = results;
     this.searchLoading = loading;
-    this.projectsList = projects;
+    if (projects.length > 0) {
+        this.projectsList = projects;
+    }
     this.allSearchResults = allResults;
     this.update();
   }
@@ -730,7 +736,7 @@ class DataplexSearchPanelWrapper extends ReactWidget {
         initialQuery={this.initialQuery}
         results={this.searchResults}
         searchLoading={this.searchLoading}
-        projectsList={this.projectsList}
+        projectsList={this.projectsList} // Pass the full list of projects for the dropdown options
         onQueryChanged={q => this._queryUpdated.emit(q)}
         onSearchExecuted={(q, p) =>
           this._searchExecuted.emit({ query: q, projects: p })
@@ -742,17 +748,12 @@ class DataplexSearchPanelWrapper extends ReactWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// --- DATAPLEX SEARCH WIDGET (Main Logic Container) ---
-// -----------------------------------------------------------------------------
-
 export class DataplexSearchWidget extends Panel {
   app: JupyterLab;
   settingRegistry: ISettingRegistry;
   themeManager: IThemeManager;
   private searchWrapper: DataplexSearchPanelWrapper;
   private openedWidgets: Record<string, boolean> = {};
-  
   // Store current filters from React component
   private currentFilters: INLSearchFilters = initialFilterState;
 
@@ -790,7 +791,7 @@ export class DataplexSearchWidget extends Panel {
     this.searchWrapper.update();
     this.fetchProjectsList();
   }
-  
+
   // Filter change handler
   private _onFiltersChanged(
     sender: DataplexSearchPanelWrapper,
@@ -926,7 +927,7 @@ export class DataplexSearchWidget extends Panel {
         projectDatasets.forEach(dataset => {
           let name: string | undefined;
           let description: string | undefined;
-          
+
           // --- FIX: Initialize system/location/assetType for filtering ---
           let system: string = 'BigQuery'; // Default system
           let location: string | undefined;
@@ -936,8 +937,8 @@ export class DataplexSearchWidget extends Panel {
             const entrySource = dataset.entrySource;
             const explicitDescription = entrySource.description;
             location = entrySource.location;
-            system = entrySource.system || 'Dataplex'; 
-            
+            system = entrySource.system || 'Dataplex';
+
             name = entrySource.displayName;
 
             description = explicitDescription
@@ -945,11 +946,10 @@ export class DataplexSearchWidget extends Panel {
               : location
               ? `${projectId} > ${location}`
               : `Project: ${projectId}`;
-              
           } else if (dataset.datasetReference) {
             const datasetRef = dataset.datasetReference;
             location = dataset.location; // Location is available here
-            system = 'BigQuery'; 
+            system = 'BigQuery';
 
             name = datasetRef.datasetId;
 
@@ -963,9 +963,9 @@ export class DataplexSearchWidget extends Panel {
               name: name,
               description: description,
               label: 'Bigquery / Dataset',
-              system: system,     
-              location: location,   
-              assetType: assetType 
+              system: system,
+              location: location,
+              assetType: assetType
             });
           }
         });
@@ -1034,11 +1034,11 @@ export class DataplexSearchWidget extends Panel {
           }
 
           const label = tableId ? 'Bigquery / Table' : 'Bigquery / Dataset';
-          
+
           // --- DATA EXTRACTION FOR FILTERS ---
-          const system = dataplexEntry.system; 
+          const system = dataplexEntry.system;
           const location = dataplexEntry.location;
-          const assetType = dataplexEntry.type; 
+          const assetType = dataplexEntry.type;
           // --- END DATA EXTRACTION ---
 
           if (name) {
@@ -1049,7 +1049,7 @@ export class DataplexSearchWidget extends Panel {
               // --- ADD FILTER FIELDS ---
               system: system,
               location: location,
-              assetType: assetType 
+              assetType: assetType
               // --- END ADD FILTER FIELDS ---
             } as ISearchResult);
           }
@@ -1065,9 +1065,34 @@ export class DataplexSearchWidget extends Panel {
     sender: DataplexSearchPanelWrapper,
     args: { query: string; projects: string[] }
   ) {
-    const { query, projects } = args;
-    const currentFilters = this.currentFilters; 
+    const { query } = args;
+    const currentFilters = this.currentFilters;
     const isActive = (arr: string[]) => arr.length > 0;
+
+    // --- Determine Projects to Operate On based on Scope filter ---
+    let projectsToUse: string[] = [];
+    // if (currentFilters.scope.includes('Current organization')) {
+    //     // Scope: Current organization -> Use all known projects
+    //     projectsToUse = this.searchWrapper.projectsList;
+    // } else if (currentFilters.scope.includes('Current project')) {
+    //     // Scope: Current project -> Use projects explicitly selected in the 'projects' filter
+    //     projectsToUse = currentFilters.projects;
+    // } else {
+    //     // No explicit scope selected or scope is empty -> Use projects explicitly selected
+    //     projectsToUse = currentFilters.projects;
+    // }
+    
+    // Fallback: If no projects are selected/available after scope logic, use all known projects
+    if (projectsToUse.length === 0 && this.searchWrapper.projectsList.length > 0) {
+        projectsToUse = this.searchWrapper.projectsList;
+    }
+
+    // projectsToSearch in search API call needs the list of projects to send to the backend service. 
+    // This is now 'projectsToUse'.
+    const projectsToSearch = projectsToUse;
+    // projects argument in updateState just updates the dropdown options, which should be the full list
+    const projectsForUpdateState = this.searchWrapper.projectsList; 
+
 
     if (query.trim() === '') {
       console.log(
@@ -1077,20 +1102,17 @@ export class DataplexSearchWidget extends Panel {
         query,
         [],
         true,
-        args.projects,
+        projectsForUpdateState, // Use full list for dropdown
         this.searchWrapper.allSearchResults
       );
-
-      const projectsToFetch = args.projects.length > 0 ? args.projects : this.searchWrapper.projectsList;
-
-      if (projectsToFetch.length > 0) {
+      
+      if (projectsToSearch.length > 0) {
         // Fetch and update the searchWrapper state internally
-        await this.fetchDatasetsForProjects(projectsToFetch);
+        await this.fetchDatasetsForProjects(projectsToSearch); // Fetch only for relevant projects
         
-        // --- FIX: Filter the results of fetchDatasetsForProjects ---
         let filteredInitialResults = this.searchWrapper.searchResults;
         
-        // 1. Filter by Systems
+        // 1. Filter by Systems (Systems is always BigQuery in dropdown, but apply filter against fetched data)
         if (isActive(currentFilters.systems)) {
             filteredInitialResults = filteredInitialResults.filter(result => 
                 result.system && currentFilters.systems.includes(result.system)
@@ -1116,7 +1138,7 @@ export class DataplexSearchWidget extends Panel {
             query,
             filteredInitialResults, 
             false,
-            args.projects,
+            projectsForUpdateState,
             this.searchWrapper.allSearchResults
         );
 
@@ -1131,13 +1153,12 @@ export class DataplexSearchWidget extends Panel {
       console.warn(
         'DataplexSearch: Search term must be at least 3 characters.'
       );
-      this.searchWrapper.updateState(query, [], false, projects, []);
+      this.searchWrapper.updateState(query, [], false, projectsForUpdateState, []);
       return;
     }
 
-    this.searchWrapper.updateState(query, [], true, projects, []);
+    this.searchWrapper.updateState(query, [], true, projectsForUpdateState, []);
 
-    const projectsToSearch = projects.length > 0 ? projects : this.searchWrapper.projectsList;
 
     try {
       const searchPromises = projectsToSearch.map(async projectName => {
@@ -1147,10 +1168,10 @@ export class DataplexSearchWidget extends Panel {
           searchResult = data;
         };
 
-        await BigQueryService.getBigQuerySearchAPIService(
-          query,
-          setSearchLoading,
-          setSearchResponse
+   await BigQueryService.getBigQuerySemanticSearchAPIService(
+            query, 
+            setSearchLoading, 
+            setSearchResponse
         );
 
         if (searchResult) {
@@ -1168,8 +1189,7 @@ export class DataplexSearchWidget extends Panel {
       // --- FILTERING LOGIC FOR SEARCH RESULTS ---
       let filteredResults = flatResults;
       
-      // 1. Filter by Systems
-      if (isActive(currentFilters.systems)) {
+  if (isActive(currentFilters.systems)) {
         filteredResults = filteredResults.filter(result => 
           result.system && currentFilters.systems.includes(result.system)
         );
@@ -1190,23 +1210,20 @@ export class DataplexSearchWidget extends Panel {
       }
       
       console.log('DataplexSearch: Final Filtered Results:', filteredResults);
-      // --- END FILTERING LOGIC ---
 
       this.searchWrapper.updateState(
         query,
-        filteredResults, 
+        filteredResults,
         false,
-        args.projects,
+        projectsForUpdateState, // Use full list for dropdown
         combinedRawResults
       );
 
     } catch (error) {
       console.error('DataplexSearch: Error during BigQuery search:', error);
-      this.searchWrapper.updateState(query, [], false, projects, []);
+      this.searchWrapper.updateState(query, [], false, projectsForUpdateState, []);
     }
   }
-  // --- END MODIFIED _onSearchExecuted ---
-
   /**
    * Utility to parse the project/dataset/table IDs from the name/description
    * This logic primarily relies on re-parsing the Full Qualified Name (FQN)
@@ -1329,9 +1346,6 @@ export class DataplexSearchWidget extends Panel {
   }
 }
 
-// -----------------------------------------------------------------------------
-// --- BIGQUERY COMPONENT AND WIDGET (Remains the same as reference) ---
-// -----------------------------------------------------------------------------
 
 const calculateDepth = (node: NodeApi): number => {
   let depth = 0;

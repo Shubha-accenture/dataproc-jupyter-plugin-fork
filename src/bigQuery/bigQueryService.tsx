@@ -553,7 +553,7 @@ export class BigQueryService {
     setSearchLoading(true);
     try {
       const data: any = await requestAPI(
-        `bigQuerySearch?search_string=${searchTerm}&type=(table|dataset)&system=bigquery`,
+        `bigQuerySearch?search_string=${searchTerm}&type=(table|dataset)&system=(bigquery)`,
         {
           method: 'POST'
         }
@@ -572,6 +572,32 @@ export class BigQueryService {
     }
   };
 
+static getBigQuerySemanticSearchAPIService = async (
+    searchTerm: string,
+    setSearchLoading: (value: boolean) => void,
+    setSearchResponse: any
+  ) => {
+    setSearchLoading(true);
+    try {
+      const data: any = await requestAPI(
+        `bigQuerySearch?search_string=${searchTerm}&type=(table|dataset|view)&system=bigquery`,
+        {
+          method: 'POST'
+        }
+      );
+
+      console.log("bq semantic search data @@@@@@@@@", data)
+      setSearchResponse(data);
+    } catch (reason) {
+      Notification.emit(
+        `Error in calling BigQurey Project List API : ${reason}`,
+        'error',
+        {
+          autoClose: 5000
+        }
+      );
+    }
+  };
   static checkBigQueryDatasetsAPIService = async () => {
     try {
       const data: any = await requestAPI(

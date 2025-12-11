@@ -849,7 +849,7 @@ const extension: JupyterFrontEndPlugin<void> = {
       const command = 'jlab-examples:command-palette';
 
       commands.addCommand(command, {
-        label: 'Google Data cloud : search for a Dataset',
+        label: 'Google Data Cloud : search for a dataset',
         caption: 'What Dataset are you looking for ?',
         execute: (args: any) => {
           const content = new DataplexSearchWidget(
