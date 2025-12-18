@@ -19,29 +19,36 @@ import { ReactWidget } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import refreshDatasetIcon from '../../style/icons/refresh_icon.svg';
 import { CircularProgress } from '@mui/material';
-// import searchIcon from '../../style/icons/search_icon_dark.svg';
-
+import searchIconLight from '../../style/icons/search_icon_light.svg';
+// import searchIconDark from '../../style/icons/search_icon_dark.svg';
 const iconRefreshDatasetExplorer = new LabIcon({
   name: 'launcher:refresh-dataset-explorer-icon',
   svgstr: refreshDatasetIcon
 });
 
-// const iconSearch = new LabIcon({
-//   name: 'launcher:search-icon',
-//   svgstr: searchIcon
+const iconSearchLight = new LabIcon({
+  name: 'launcher:search-icon-light',
+  svgstr: searchIconLight
+});
+
+// const iconSearchDark = new LabIcon({
+//   name: 'launcher:search-icon-dark',
+//   svgstr: searchIconDark
 // });
 
 export const TitleComponent = function ({
   titleStr,
   isPreview,
   getBigQueryProjects,
+  onSearchClick,
   isLoading,
   styles
 }: {
   titleStr: string;
   isPreview: boolean;
   getBigQueryProjects?: () => void;
-  isLoading?: boolean; // Add to type definition
+  onSearchClick?: () => void;
+  isLoading?: boolean;
   styles?: React.CSSProperties;
 }) {
   return (
@@ -61,7 +68,7 @@ export const TitleComponent = function ({
       <div className="dataset-explorer-refresh-container">
         <div>
           <span>{titleStr}</span>
-          {isPreview ? (
+          {isPreview && (
             <span
               style={{
                 marginLeft: '5px',
@@ -73,10 +80,26 @@ export const TitleComponent = function ({
             >
               PREVIEW
             </span>
-          ) : null}
+          )}
         </div>
-        {getBigQueryProjects ? (
-          <>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span
+            onClick={onSearchClick}
+            aria-label="Open Dataplex Natural Language Search"
+            style={{
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+           {/* {isLightTheme ? ( */}
+             <iconSearchLight.react tag="div" />
+            {/* ) : (
+              <iconSearchDark.react tag="div" />
+            )} */}
+          </span>
+
+          {getBigQueryProjects && (
             <span
               onClick={() => {
                 if (!isLoading) {
@@ -84,38 +107,23 @@ export const TitleComponent = function ({
                 }
               }}
               aria-label="dataset-explorer-refresh"
-              className="dataset-explorer-refresh"
-              style={{ cursor: isLoading ? 'wait' : 'pointer' }}
+              style={{
+                cursor: isLoading ? 'wait' : 'pointer',
+                display: 'flex'
+              }}
             >
               {isLoading ? (
                 <CircularProgress
                   className="spin-loader-custom-style"
                   size={16}
                   aria-label="Loading Spinner"
-                  data-testid="loader"
                 />
               ) : (
-                <div 
-                >
-                  {/* <button
-                    // onClick={handleOpenSearch}
-                    aria-label="Open Dataplex Natural Language Search"
-                  >
-                    <span className="button-content">
-                      <iconSearch.react
-                        tag="div"
-                        className="icon-white logo-alignment-style button-icon"
-                      />
-                    </span>
-                  </button> */}
-                  <iconRefreshDatasetExplorer.react
-                    tag="div"
-                  />
-                </div>
+                <iconRefreshDatasetExplorer.react tag="div" />
               )}
             </span>
-          </>
-        ) : null}
+          )}
+        </div>
       </div>
     </div>
   );

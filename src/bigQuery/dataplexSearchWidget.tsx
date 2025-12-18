@@ -54,7 +54,6 @@ import searchIcon from '../../style/icons/search_icon_dark.svg';
 import rightArrowIcon from '../../style/icons/right_arrow_icon.svg';
 import downArrowIcon from '../../style/icons/down_arrow_icon.svg';
 import datasetExplorerIcon from '../../style/icons/dataset_explorer_icon.svg';
-
 import { BigQueryService } from './bigQueryService';
 import { TitleComponent } from '../controls/SidePanelTitleWidget';
 import { DataprocWidget } from '../controls/DataprocWidget';
@@ -116,7 +115,7 @@ export interface ISearchResult {
   label?: 'Bigquery / Dataset' | 'Bigquery / Table';
   system?: string;
   location?: string;
-  assetType?: string; // Added for Type filter (e.g., 'Table', 'View')
+  assetType?: string;
 }
 
 const initialFilterState: INLSearchFilters = {
@@ -134,7 +133,11 @@ interface IDataplexSearchComponentProps {
   results?: ISearchResult[];
   projectsList: string[];
   onQueryChanged: (query: string) => void;
-  onSearchExecuted: (query: string, projects: string[]) => void;
+  onSearchExecuted: (
+    query: string,
+    projects: string[],
+    filters: INLSearchFilters
+  ) => void;
   onFiltersChanged: (filters: INLSearchFilters) => void;
   onResultClicked: (result: ISearchResult) => void;
 }
@@ -153,27 +156,35 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 }) => {
   const [filters, setFilters] = useState<INLSearchFilters>(initialFilterState);
   const [currentPage, setCurrentPage] = useState(1);
-  const [availableLocations, setAvailableLocations] = useState<string[]>([]); // New state for dynamic locations
 
-  // 1. Notify Lumino parent whenever filters change
+  const [masterLocations, setMasterLocations] = useState<string[]>([]);
+
   useEffect(() => {
     onFiltersChanged(filters);
   }, [filters, onFiltersChanged]);
 
   useEffect(() => {
-    const locations = new Set<string>();
-    results.forEach(result => {
-      if (result.location) {
-        locations.add(result.location);
-      }
-    });
-    const sortedLocations = Array.from(locations).sort();
-    setAvailableLocations(sortedLocations);
-  }, [results]);
+    if (
+      results.length > 0 &&
+      initialQuery.trim() === '' &&
+      masterLocations.length === 0
+    ) {
+      const locations = new Set<string>();
+      results.forEach(result => {
+        if (result.location) {
+          locations.add(result.location);
+        }
+      });
+      const sortedLocations = Array.from(locations).sort();
+      setMasterLocations(sortedLocations);
+      console.log(
+        'DataplexSearch: Master Locations Initialized:',
+        sortedLocations
+      );
+    }
 
-  useEffect(() => {
     setCurrentPage(1);
-  }, [results]);
+  }, [results, initialQuery, masterLocations.length]); // Added masterLocations.length dependency
 
   const handleFilterChange = useCallback(
     (name: keyof INLSearchFilters, value: string[]) => {
@@ -184,10 +195,13 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilterState);
-    onSearchExecuted(initialQuery.trim(), initialFilterState.projects);
+    onSearchExecuted(
+      initialQuery.trim(),
+      initialFilterState.projects,
+      initialFilterState
+    );
   }, [initialQuery, onSearchExecuted]);
 
-  // Remove a single chip/filter value
   const handleClearChip = useCallback(
     (filterName: keyof INLSearchFilters, valueToRemove: string) => {
       setFilters(prev => ({
@@ -198,10 +212,12 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     []
   );
 
-  // Aggregate active filters for chip display
   const activeFilters = useMemo(() => {
-    const active: { name: keyof INLSearchFilters; label: string; value: string }[] =
-      [];
+    const active: {
+      name: keyof INLSearchFilters;
+      label: string;
+      value: string;
+    }[] = [];
 
     const filterLabels: Record<keyof INLSearchFilters, string> = {
       projects: 'Project',
@@ -226,17 +242,9 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     return active;
   }, [filters]);
 
-  const handleSearchClick = () => { //check this
+  const handleSearchClick = () => {
     let projectsToSearch: string[] = [];
-    // if (filters.scope.includes('Current organization')) {
-    //   projectsToSearch = projectsList;
-    // } else if (filters.scope.includes('Current project')) {
-    //   projectsToSearch = filters.projects;
-    // } else {
-    //   projectsToSearch = filters.projects;
-    // }
-    
-    onSearchExecuted(initialQuery.trim(), projectsToSearch);
+    onSearchExecuted(initialQuery.trim(), projectsToSearch, filters);
   };
 
   const renderDropdown = (
@@ -245,13 +253,21 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     options: string[]
   ) => {
     if (name === 'systems') {
-      options = ['BigQuery'];
+      options = ['BigQuery', 'BigLake'];
     }
     if (name === 'locations') {
-        options = availableLocations;
+      options = masterLocations;
+    }
+    if (name === 'projects') {
+      options = projectsList;
     }
 
-    if (options.length === 0 && name !== 'systems' && name !== 'type') {
+    if (
+      options.length === 0 &&
+      name !== 'systems' &&
+      name !== 'type' &&
+      name !== 'projects'
+    ) {
       return null;
     }
 
@@ -266,12 +282,11 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
         <InputLabel id={`${name}-label`}>{label}</InputLabel>
         <Select
           labelId={`${name}-label`}
-          multiple // Enables multi-select
-          value={filters[name]} // Expects an array of strings
+          multiple
+          value={filters[name]}
           onChange={e => handleFilterChange(name, e.target.value as string[])}
           renderValue={(selected: string[]) => selected.join(', ')}
           label={label}
-          disabled={name === 'systems'} // Disable systems select (it's hardcoded to BigQuery)
           sx={{
             '.MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--jp-border-color1)'
@@ -280,7 +295,6 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
         >
           {options.map(opt => (
             <MenuItem key={opt} value={opt}>
-              {/* Checkbox for visual multi-select */}
               <Checkbox checked={filters[name].indexOf(opt) > -1} />
               <ListItemText primary={opt} />
             </MenuItem>
@@ -402,7 +416,6 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
       }}
     >
       {' '}
-      {/* --- FILTER SIDEBAR --- */}
       <div
         style={{
           padding: '8px 12px 16px 12px',
@@ -451,16 +464,11 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
         />
         {renderDropdown('systems', 'Systems', ['BigQuery', 'BigLake'])}
         {renderDropdown('projects', 'Projects', projectsList)}{' '}
-        {renderDropdown('type', 'Type', [
-          'Table',
-          'View',
-          'Datasets'
-        ])}
-        {renderDropdown('locations', 'Locations', availableLocations)}
-        {renderDropdown('annotations', 'Annotations', [
-        ])}
+        {renderDropdown('type', 'Type', ['Table', 'View', 'Datasets'])}
+        {renderDropdown('locations', 'Locations', masterLocations)}{' '}
+        {/* Using masterLocations */}
+        {renderDropdown('annotations', 'Annotations', [])}
       </div>
-
       <div
         style={{
           flexGrow: 1,
@@ -470,7 +478,6 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           minHeight: 0
         }}
       >
-        {/* Search Bar */}
         <div
           className="nl-query-bar"
           style={{
@@ -493,7 +500,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 
               if (newValue.trim() === '') {
                 let projectsToFetch: string[] = [];
-                onSearchExecuted('', projectsToFetch);
+                onSearchExecuted('', projectsToFetch, filters);
               }
             }}
             onKeyDown={e => {
@@ -507,7 +514,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
                       onClick={() => {
                         onQueryChanged('');
                         let projectsToFetch: string[] = [];
-                        onSearchExecuted('', projectsToFetch);
+                        onSearchExecuted('', projectsToFetch, filters);
                       }}
                       size="small"
                       aria-label="Clear search"
@@ -561,8 +568,6 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             ))}
           </div>
         )}
-        {/* --- END ACTIVE FILTER CHIPS --- */}
-
         <div
           className="nl-search-results-container"
           style={{
@@ -682,7 +687,6 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   );
 };
 
-
 class DataplexSearchPanelWrapper extends ReactWidget {
   public initialQuery: string = '';
   public searchResults: ISearchResult[] = [];
@@ -703,9 +707,12 @@ class DataplexSearchPanelWrapper extends ReactWidget {
 
   private _searchExecuted = new Signal<
     this,
-    { query: string; projects: string[] }
+    { query: string; projects: string[]; filters: INLSearchFilters }
   >(this);
-  get searchExecuted(): Signal<this, { query: string; projects: string[] }> {
+  get searchExecuted(): Signal<
+    this,
+    { query: string; projects: string[]; filters: INLSearchFilters }
+  > {
     return this._searchExecuted;
   }
   private _filtersChanged = new Signal<this, INLSearchFilters>(this);
@@ -724,7 +731,7 @@ class DataplexSearchPanelWrapper extends ReactWidget {
     this.searchResults = results;
     this.searchLoading = loading;
     if (projects.length > 0) {
-        this.projectsList = projects;
+      this.projectsList = projects;
     }
     this.allSearchResults = allResults;
     this.update();
@@ -736,10 +743,10 @@ class DataplexSearchPanelWrapper extends ReactWidget {
         initialQuery={this.initialQuery}
         results={this.searchResults}
         searchLoading={this.searchLoading}
-        projectsList={this.projectsList} // Pass the full list of projects for the dropdown options
+        projectsList={this.projectsList}
         onQueryChanged={q => this._queryUpdated.emit(q)}
-        onSearchExecuted={(q, p) =>
-          this._searchExecuted.emit({ query: q, projects: p })
+        onSearchExecuted={(q, p, f) =>
+          this._searchExecuted.emit({ query: q, projects: p, filters: f })
         }
         onFiltersChanged={f => this._filtersChanged.emit(f)}
         onResultClicked={r => this._resultClicked.emit(r)}
@@ -754,9 +761,6 @@ export class DataplexSearchWidget extends Panel {
   themeManager: IThemeManager;
   private searchWrapper: DataplexSearchPanelWrapper;
   private openedWidgets: Record<string, boolean> = {};
-  // Store current filters from React component
-  private currentFilters: INLSearchFilters = initialFilterState;
-
   constructor(
     app: JupyterLab,
     settingRegistry: ISettingRegistry,
@@ -785,20 +789,16 @@ export class DataplexSearchWidget extends Panel {
     this.searchWrapper.queryUpdated.connect(this._onQueryUpdated, this);
     this.searchWrapper.searchExecuted.connect(this._onSearchExecuted, this);
     this.searchWrapper.resultClicked.connect(this._onResultClicked, this);
-    // Connect filter change signal
     this.searchWrapper.filtersChanged.connect(this._onFiltersChanged, this);
 
     this.searchWrapper.update();
     this.fetchProjectsList();
   }
 
-  // Filter change handler
   private _onFiltersChanged(
     sender: DataplexSearchPanelWrapper,
     filters: INLSearchFilters
-  ): void {
-    this.currentFilters = filters;
-  }
+  ): void {}
 
   private _onQueryUpdated(
     sender: DataplexSearchPanelWrapper,
@@ -848,7 +848,11 @@ export class DataplexSearchWidget extends Panel {
       );
 
       if (projectNames.length > 0) {
-        await this.fetchDatasetsForProjects(projectNames);
+        const initialFilters =
+          this.searchWrapper.initialQuery.trim() === ''
+            ? initialFilterState
+            : undefined;
+        await this.fetchDatasetsForProjects(projectNames, initialFilters);
       }
     } catch (error) {
       console.error('Error fetching BigQuery projects list:', error);
@@ -862,7 +866,10 @@ export class DataplexSearchWidget extends Panel {
     }
   }
 
-  private async fetchDatasetsForProjects(projectIds: string[]) {
+  private async fetchDatasetsForProjects(
+    projectIds: string[],
+    filters?: INLSearchFilters
+  ) {
     const currentQuery = this.searchWrapper.initialQuery;
     const currentProjects = this.searchWrapper.projectsList;
 
@@ -927,8 +934,6 @@ export class DataplexSearchWidget extends Panel {
         projectDatasets.forEach(dataset => {
           let name: string | undefined;
           let description: string | undefined;
-
-          // --- FIX: Initialize system/location/assetType for filtering ---
           let system: string = 'BigQuery'; // Default system
           let location: string | undefined;
           let assetType: string = 'Dataset'; // Initial fetch is only for Datasets
@@ -978,9 +983,32 @@ export class DataplexSearchWidget extends Panel {
         allDatasetsByProject
       );
 
+      let filteredInitialResults = allResults;
+      if (filters) {
+        const isActive = (arr: string[]) => arr.length > 0;
+
+        if (isActive(filters.systems)) {
+          filteredInitialResults = filteredInitialResults.filter(
+            result => result.system && filters.systems.includes(result.system)
+          );
+        }
+        if (isActive(filters.type)) {
+          filteredInitialResults = filteredInitialResults.filter(
+            result =>
+              result.assetType && filters.type.includes(result.assetType)
+          );
+        }
+        if (isActive(filters.locations)) {
+          filteredInitialResults = filteredInitialResults.filter(
+            result =>
+              result.location && filters.locations.includes(result.location)
+          );
+        }
+      }
+
       this.searchWrapper.updateState(
         currentQuery,
-        allResults,
+        filteredInitialResults, // Use filtered results here
         false,
         currentProjects,
         allDatasetsByProject
@@ -996,12 +1024,6 @@ export class DataplexSearchWidget extends Panel {
       );
     }
   }
-  /**
-   * Transforms raw search results from the BigQuery Search API into the flat ISearchResult[] format,
-   * extracting metadata needed for filtering.
-   * @param combinedRawResults Array of raw results, grouped by project.
-   * @returns A flat array of ISearchResult objects suitable for the UI.
-   */
   private processSearchResults(
     combinedRawResults: { project: string; result: any }[]
   ): ISearchResult[] {
@@ -1035,22 +1057,18 @@ export class DataplexSearchWidget extends Panel {
 
           const label = tableId ? 'Bigquery / Table' : 'Bigquery / Dataset';
 
-          // --- DATA EXTRACTION FOR FILTERS ---
           const system = dataplexEntry.system;
           const location = dataplexEntry.location;
           const assetType = dataplexEntry.type;
-          // --- END DATA EXTRACTION ---
 
           if (name) {
             flatResults.push({
               name: name,
               description: description,
               label: label,
-              // --- ADD FILTER FIELDS ---
               system: system,
               location: location,
               assetType: assetType
-              // --- END ADD FILTER FIELDS ---
             } as ISearchResult);
           }
         }
@@ -1060,43 +1078,34 @@ export class DataplexSearchWidget extends Panel {
     return flatResults;
   }
 
-  // --- MODIFIED _onSearchExecuted WITH FILTERING ---
   private async _onSearchExecuted(
     sender: DataplexSearchPanelWrapper,
-    args: { query: string; projects: string[] }
+    args: { query: string; projects: string[]; filters: INLSearchFilters }
   ) {
-    const { query } = args;
-    const currentFilters = this.currentFilters;
-    const isActive = (arr: string[]) => arr.length > 0;
+    const { query, filters } = args; // Extract filters
+    const currentFilters = filters; // Renamed for clarity within the function
+    const filterSystems = currentFilters.systems;
+    const filterProjects = currentFilters.projects;
+    const filterTypes = currentFilters.type;
+    const filterLocations = currentFilters.locations;
+    // const filterAnnotations = currentFilters.annotations; // Not used yet
 
-    // --- Determine Projects to Operate On based on Scope filter ---
+    // const isActive = (arr: string[]) => arr.length > 0;
+
     let projectsToUse: string[] = [];
-    // if (currentFilters.scope.includes('Current organization')) {
-    //     // Scope: Current organization -> Use all known projects
-    //     projectsToUse = this.searchWrapper.projectsList;
-    // } else if (currentFilters.scope.includes('Current project')) {
-    //     // Scope: Current project -> Use projects explicitly selected in the 'projects' filter
-    //     projectsToUse = currentFilters.projects;
-    // } else {
-    //     // No explicit scope selected or scope is empty -> Use projects explicitly selected
-    //     projectsToUse = currentFilters.projects;
-    // }
-    
-    // Fallback: If no projects are selected/available after scope logic, use all known projects
-    if (projectsToUse.length === 0 && this.searchWrapper.projectsList.length > 0) {
-        projectsToUse = this.searchWrapper.projectsList;
+    if (
+      projectsToUse.length === 0 &&
+      this.searchWrapper.projectsList.length > 0
+    ) {
+      projectsToUse = this.searchWrapper.projectsList;
     }
 
-    // projectsToSearch in search API call needs the list of projects to send to the backend service. 
-    // This is now 'projectsToUse'.
     const projectsToSearch = projectsToUse;
-    // projects argument in updateState just updates the dropdown options, which should be the full list
-    const projectsForUpdateState = this.searchWrapper.projectsList; 
-
+    const projectsForUpdateState = this.searchWrapper.projectsList;
 
     if (query.trim() === '') {
       console.log(
-        'DataplexSearch: Empty query executed. Reloading initial datasets.'
+        'DataplexSearch: Empty query executed. Reloading initial datasets with applied filters.'
       );
       this.searchWrapper.updateState(
         query,
@@ -1105,73 +1114,49 @@ export class DataplexSearchWidget extends Panel {
         projectsForUpdateState, // Use full list for dropdown
         this.searchWrapper.allSearchResults
       );
-      
+
       if (projectsToSearch.length > 0) {
-        // Fetch and update the searchWrapper state internally
-        await this.fetchDatasetsForProjects(projectsToSearch); // Fetch only for relevant projects
-        
-        let filteredInitialResults = this.searchWrapper.searchResults;
-        
-        // 1. Filter by Systems (Systems is always BigQuery in dropdown, but apply filter against fetched data)
-        if (isActive(currentFilters.systems)) {
-            filteredInitialResults = filteredInitialResults.filter(result => 
-                result.system && currentFilters.systems.includes(result.system)
-            );
-        }
-        
-        // 2. Filter by Type (uses assetType which is 'Dataset' for initial fetch)
-        if (isActive(currentFilters.type)) {
-            filteredInitialResults = filteredInitialResults.filter(result => 
-                result.assetType && currentFilters.type.includes(result.assetType)
-            );
-        }
-
-        // 3. Filter by Locations
-        if (isActive(currentFilters.locations)) {
-            filteredInitialResults = filteredInitialResults.filter(result => 
-                result.location && currentFilters.locations.includes(result.location)
-            );
-        }
-        
-        // Update state with the final filtered initial list
-        this.searchWrapper.updateState(
-            query,
-            filteredInitialResults, 
-            false,
-            projectsForUpdateState,
-            this.searchWrapper.allSearchResults
-        );
-
+        await this.fetchDatasetsForProjects(projectsToSearch, currentFilters);
       } else {
         await this.fetchProjectsList();
       }
       return;
     }
-    
-    // If query is NOT empty:
+
     if (query.length < 3) {
       console.warn(
         'DataplexSearch: Search term must be at least 3 characters.'
       );
-      this.searchWrapper.updateState(query, [], false, projectsForUpdateState, []);
+      this.searchWrapper.updateState(
+        query,
+        [],
+        false,
+        projectsForUpdateState,
+        []
+      );
       return;
     }
 
     this.searchWrapper.updateState(query, [], true, projectsForUpdateState, []);
 
-
     try {
       const searchPromises = projectsToSearch.map(async projectName => {
         let searchResult: any = null;
-        const setSearchLoading = (value: boolean) => { /* handled by global state */ };
+        const setSearchLoading = (value: boolean) => {
+          /* handled by global state */
+        };
         const setSearchResponse = (data: any) => {
           searchResult = data;
         };
 
-   await BigQueryService.getBigQuerySemanticSearchAPIService(
-            query, 
-            setSearchLoading, 
-            setSearchResponse
+        await BigQueryService.getBigQuerySemanticSearchAPIService(
+          query,
+          filterSystems, // systems
+          filterProjects, // projects
+          filterTypes, // type
+          filterLocations, // locations
+          setSearchLoading,
+          setSearchResponse
         );
 
         if (searchResult) {
@@ -1186,30 +1171,12 @@ export class DataplexSearchWidget extends Panel {
 
       const flatResults = this.processSearchResults(combinedRawResults);
 
-      // --- FILTERING LOGIC FOR SEARCH RESULTS ---
       let filteredResults = flatResults;
-      
-  if (isActive(currentFilters.systems)) {
-        filteredResults = filteredResults.filter(result => 
-          result.system && currentFilters.systems.includes(result.system)
-        );
-      }
-      
-      // 2. Filter by Type (uses assetType)
-      if (isActive(currentFilters.type)) {
-        filteredResults = filteredResults.filter(result => 
-          result.assetType && currentFilters.type.includes(result.assetType)
-        );
-      }
 
-      // 3. Filter by Locations
-      if (isActive(currentFilters.locations)) {
-        filteredResults = filteredResults.filter(result => 
-          result.location && currentFilters.locations.includes(result.location)
-        );
-      }
-      
-      console.log('DataplexSearch: Final Filtered Results:', filteredResults);
+      console.log(
+        'DataplexSearch: Final Filtered Results (No client-side filtering applied):',
+        filteredResults
+      );
 
       this.searchWrapper.updateState(
         query,
@@ -1218,10 +1185,15 @@ export class DataplexSearchWidget extends Panel {
         projectsForUpdateState, // Use full list for dropdown
         combinedRawResults
       );
-
     } catch (error) {
       console.error('DataplexSearch: Error during BigQuery search:', error);
-      this.searchWrapper.updateState(query, [], false, projectsForUpdateState, []);
+      this.searchWrapper.updateState(
+        query,
+        [],
+        false,
+        projectsForUpdateState,
+        []
+      );
     }
   }
   /**
@@ -1269,7 +1241,6 @@ export class DataplexSearchWidget extends Panel {
       }
     }
 
-    // 2. FALLBACK PARSING: Use description for public datasets (e.g., 'bigquery-public-data > US')
     const description = result.description || '';
     const descParts = description.split(' > ');
 
@@ -1339,13 +1310,11 @@ export class DataplexSearchWidget extends Panel {
     this.app.shell.add(widget, 'main');
     this.openedWidgets[widgetTitle] = true;
 
-    // Remove from cache when disposed
     widget.disposed.connect(() => {
       delete this.openedWidgets[widgetTitle];
     });
   }
 }
-
 
 const calculateDepth = (node: NodeApi): number => {
   let depth = 0;

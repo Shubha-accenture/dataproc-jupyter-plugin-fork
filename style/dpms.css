@@ -34,6 +34,9 @@
 }
 
 .dataset-explorer-refresh {
+  display: flex;
+  justify-content: space-between;
+  width: 60px;
   cursor: pointer;
 }
 
@@ -215,11 +218,11 @@
   padding-left: 50px;
 }
 
-.load-more-icon{
+.load-more-icon {
   margin-left: 80px;
   color: #1a73e8;
   cursor: pointer;
-  width:200%;
+  width: 200%;
 }
 
 .load-more-spinner-container {

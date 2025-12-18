@@ -25,7 +25,6 @@ import tableIcon from '../../style/icons/table_icon.svg';
 import columnsIcon from '../../style/icons/columns_icon.svg';
 import databaseWidgetIcon from '../../style/icons/database_widget_icon.svg';
 import datasetsIcon from '../../style/icons/datasets_icon.svg';
-import searchIcon from '../../style/icons/search_icon_dark.svg';
 import rightArrowIcon from '../../style/icons/right_arrow_icon.svg';
 import downArrowIcon from '../../style/icons/down_arrow_icon.svg';
 import datasetExplorerIcon from '../../style/icons/dataset_explorer_icon.svg';
@@ -115,15 +114,10 @@ const BigQueryComponent = ({
     name: 'launcher:columns-icon',
     svgstr: columnsIcon
   });
-  const iconSearch = new LabIcon({
-    name: 'launcher:search-icon',
-    svgstr: searchIcon
-  });
-
   const iconDatasetExplorer = new LabIcon({
-  name: 'launcher:dataset-explorer-icon',
-  svgstr: datasetExplorerIcon
-});
+    name: 'launcher:dataset-explorer-icon',
+    svgstr: datasetExplorerIcon
+  });
 
   const [projectNameInfo, setProjectNameInfo] = useState<string[]>([]);
   // const [searchTerm, setSearchTerm] = useState('');
@@ -396,8 +390,8 @@ const BigQueryComponent = ({
   const handleOpenSearch = () => {
     setIsSearchOpen(true);
     const content = new DataplexSearchWidget(
-      app, // Added app
-      settingRegistry, // Added settingRegistry
+      app,
+      settingRegistry,
       themeManager
     );
     const widget = new MainAreaWidget<DataplexSearchWidget>({ content });
@@ -406,7 +400,7 @@ const BigQueryComponent = ({
     widget.title.closable = true;
 
     app.shell.add(widget, 'main');
-  }
+  };
 
   // const debouncedHandleSearch = debounce(handleSearch, 1000);
 
@@ -1012,6 +1006,7 @@ const BigQueryComponent = ({
         titleStr="Dataset Explorer"
         isPreview={false}
         getBigQueryProjects={() => getBigQueryProjects(true)}
+        onSearchClick={handleOpenSearch}
         isLoading={isResetLoading}
       />
       <div>
@@ -1032,23 +1027,6 @@ const BigQueryComponent = ({
             <div>
               {!loginError && !configError && !apiError && (
                 <div>
-                  <div className="search-button">
-                    <button
-                      onClick={handleOpenSearch}
-                      aria-label="Open Dataplex Natural Language Search"
-                      className="dataplex-search-button"
-                    >
-                      <span className="button-content">
-                        {/* Icon component */}
-                        <iconSearch.react
-                          tag="div"
-                          className="icon-white logo-alignment-style button-icon"
-                        />
-                        {/* Search Text */}
-                        <span className="button-text">Search</span>
-                      </span>
-                    </button>
-                  </div>
                   <div className="tree-container">
                     {treeStructureData.length > 0 &&
                       treeStructureData[0].name !== '' && (
