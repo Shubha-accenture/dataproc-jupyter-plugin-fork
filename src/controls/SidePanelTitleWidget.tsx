@@ -19,8 +19,7 @@ import { ReactWidget } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import refreshDatasetIcon from '../../style/icons/refresh_icon.svg';
 import { CircularProgress } from '@mui/material';
-import searchIconLight from '../../style/icons/search_icon_light.svg';
-// import searchIconDark from '../../style/icons/search_icon_dark.svg';
+import searchIconLight from '../../style/icons/search_icon.svg';
 const iconRefreshDatasetExplorer = new LabIcon({
   name: 'launcher:refresh-dataset-explorer-icon',
   svgstr: refreshDatasetIcon
@@ -30,11 +29,6 @@ const iconSearchLight = new LabIcon({
   name: 'launcher:search-icon-light',
   svgstr: searchIconLight
 });
-
-// const iconSearchDark = new LabIcon({
-//   name: 'launcher:search-icon-dark',
-//   svgstr: searchIconDark
-// });
 
 export const TitleComponent = function ({
   titleStr,
@@ -92,11 +86,7 @@ export const TitleComponent = function ({
               alignItems: 'center'
             }}
           >
-           {/* {isLightTheme ? ( */}
-             <iconSearchLight.react tag="div" />
-            {/* ) : (
-              <iconSearchDark.react tag="div" />
-            )} */}
+            <iconSearchLight.react tag="div" />
           </span>
 
           {getBigQueryProjects && (

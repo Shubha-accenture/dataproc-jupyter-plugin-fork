@@ -101,12 +101,13 @@ const iconSearch = new LabIcon({
 });
 
 export interface INLSearchFilters {
+  scope: string[];
   systems: string[];
   projects: string[];
   type: string[];
   subtype: string[];
   locations: string[];
-  annotations: string[];
+  annotations: string[]; //check to remove
 }
 
 export interface ISearchResult {
@@ -115,16 +116,17 @@ export interface ISearchResult {
   label?: 'Bigquery / Dataset' | 'Bigquery / Table';
   system?: string;
   location?: string;
-  assetType?: string;
+  assetType?: string; //check to remove
 }
 
 const initialFilterState: INLSearchFilters = {
+  scope: [],
   systems: [],
   projects: [],
   type: [],
   subtype: [],
   locations: [],
-  annotations: []
+  annotations: [] // check to remove
 };
 
 interface IDataplexSearchComponentProps {
@@ -184,7 +186,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     }
 
     setCurrentPage(1);
-  }, [results, initialQuery, masterLocations.length]); // Added masterLocations.length dependency
+  }, [results, initialQuery, masterLocations.length]); // Added masterLocations.length dependency make masterlocation to just location
 
   const handleFilterChange = useCallback(
     (name: keyof INLSearchFilters, value: string[]) => {
@@ -220,12 +222,13 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     }[] = [];
 
     const filterLabels: Record<keyof INLSearchFilters, string> = {
+      scope: 'Scope',
       projects: 'Project',
       systems: 'System',
       type: 'Type',
       subtype: 'Subtype',
       locations: 'Location',
-      annotations: 'Annotation'
+      annotations: 'Annotation' // check to remove
     };
 
     (Object.keys(filters) as (keyof INLSearchFilters)[]).forEach(key => {
@@ -247,62 +250,40 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     onSearchExecuted(initialQuery.trim(), projectsToSearch, filters);
   };
 
-  const renderDropdown = (
-    name: keyof INLSearchFilters,
-    label: string,
-    options: string[]
-  ) => {
-    if (name === 'systems') {
-      options = ['BigQuery', 'BigLake'];
-    }
-    if (name === 'locations') {
-      options = masterLocations;
-    }
-    if (name === 'projects') {
-      options = projectsList;
-    }
+  // const renderDropdown = (
+  //   name: keyof INLSearchFilters,
+  //   label: string,
+  //   options: string[]
+  // ) => {
+  //   // Determine specific dropdown types
+  //   // const isScope = name === 'scope';
+  //   // const isProjects = name === 'projects';
 
-    if (
-      options.length === 0 &&
-      name !== 'systems' &&
-      name !== 'type' &&
-      name !== 'projects'
-    ) {
-      return null;
-    }
+  //   // Logic to disable Project dropdown if Scope is "Current Project"
+  //   // const isProjectsDisabled =
+  //   //   isProjects && filters.scope.includes('Current Project');
 
-    return (
-      <FormControl
-        key={name}
-        variant="outlined"
-        fullWidth
-        size="small"
-        style={{ marginBottom: '12px' }}
-      >
-        <InputLabel id={`${name}-label`}>{label}</InputLabel>
-        <Select
-          labelId={`${name}-label`}
-          multiple
-          value={filters[name]}
-          onChange={e => handleFilterChange(name, e.target.value as string[])}
-          renderValue={(selected: string[]) => selected.join(', ')}
-          label={label}
-          sx={{
-            '.MuiOutlinedInput-notchedOutline': {
-              borderColor: 'var(--jp-border-color1)'
-            }
-          }}
-        >
-          {options.map(opt => (
-            <MenuItem key={opt} value={opt}>
-              <Checkbox checked={filters[name].indexOf(opt) > -1} />
-              <ListItemText primary={opt} />
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  };
+  //   if (name === 'scope') {
+  //     options = ['Current Organization', 'Current Project'];
+  //   }
+  //   if (name === 'systems') {
+  //     options = ['BigQuery'];
+  //   }
+  //   if (name === 'locations') {
+  //     options = masterLocations;
+  //   }
+  //   if (name === 'projects') {
+  //     options = projectsList;
+  //   }
+  //   if (
+  //     options.length === 0 &&
+  //     name !== 'systems' &&
+  //     name !== 'type' &&
+  //     name !== 'projects'
+  //   ) {
+  //     return null;
+  //   }
+  // };
 
   const showFlatResults = useMemo(() => !searchLoading, [searchLoading]);
 
@@ -462,12 +443,143 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             margin: '4px 0 6px 0'
           }}
         />
-        {renderDropdown('systems', 'Systems', ['BigQuery', 'BigLake'])}
-        {renderDropdown('projects', 'Projects', projectsList)}{' '}
-        {renderDropdown('type', 'Type', ['Table', 'View', 'Datasets'])}
-        {renderDropdown('locations', 'Locations', masterLocations)}{' '}
-        {/* Using masterLocations */}
-        {renderDropdown('annotations', 'Annotations', [])}
+        <>
+        {/* --- Scope Dropdown (Single Select, No Checkbox) --- */}
+        <FormControl
+          variant="outlined"
+          fullWidth
+          size="small"
+          style={{ marginBottom: '12px' }}
+        >
+          <InputLabel id="scope-label">Scope</InputLabel>
+          <Select
+            labelId="scope-label"
+            multiple={false}
+            value={filters.scope[0] || ''}
+            onChange={e =>
+              handleFilterChange('scope', [e.target.value as string])
+            }
+            label="Scope"
+          >
+            {['Current Organization', 'Current Project'].map(opt => (
+              <MenuItem key={opt} value={opt}>
+                <ListItemText primary={opt} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* --- Systems Dropdown --- */}
+        <FormControl
+          variant="outlined"
+          fullWidth
+          size="small"
+          style={{ marginBottom: '12px' }}
+        >
+          <InputLabel id="systems-label">Systems</InputLabel>
+          <Select
+            labelId="systems-label"
+            multiple
+            value={filters.systems}
+            onChange={e =>
+              handleFilterChange('systems', e.target.value as string[])
+            }
+            renderValue={(selected: string[]) => selected.join(', ')}
+            label="Systems"
+          >
+            {['BigQuery'].map(opt => (
+              <MenuItem key={opt} value={opt}>
+                <Checkbox checked={filters.systems.indexOf(opt) > -1} />
+                <ListItemText primary={opt} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* --- Projects Dropdown (Disabled if Scope is "Current Project") --- */}
+        <FormControl
+          variant="outlined"
+          fullWidth
+          size="small"
+          style={{ marginBottom: '12px' }}
+          disabled={filters.scope.includes('Current Project')}
+        >
+          <InputLabel id="projects-label">Projects</InputLabel>
+          <Select
+            labelId="projects-label"
+            multiple
+            value={filters.projects}
+            onChange={e =>
+              handleFilterChange('projects', e.target.value as string[])
+            }
+            renderValue={(selected: string[]) => selected.join(', ')}
+            label="Projects"
+          >
+            {projectsList.map(opt => (
+              <MenuItem key={opt} value={opt}>
+                <Checkbox checked={filters.projects.indexOf(opt) > -1} />
+                <ListItemText primary={opt} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* --- Type Dropdown --- */}
+        <FormControl
+          variant="outlined"
+          fullWidth
+          size="small"
+          style={{ marginBottom: '12px' }}
+        >
+          <InputLabel id="type-label">Type</InputLabel>
+          <Select
+            labelId="type-label"
+            multiple
+            value={filters.type}
+            onChange={e =>
+              handleFilterChange('type', e.target.value as string[])
+            }
+            renderValue={(selected: string[]) => selected.join(', ')}
+            label="Type"
+          >
+            {['Table', 'View', 'Datasets'].map(opt => (
+              <MenuItem key={opt} value={opt}>
+                <Checkbox checked={filters.type.indexOf(opt) > -1} />
+                <ListItemText primary={opt} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* --- Locations Dropdown --- */}
+        {masterLocations.length > 0 && (
+          <FormControl
+            variant="outlined"
+            fullWidth
+            size="small"
+            style={{ marginBottom: '12px' }}
+          >
+            <InputLabel id="locations-label">Locations</InputLabel>
+            <Select
+              labelId="locations-label"
+              multiple
+              value={filters.locations}
+              onChange={e =>
+                handleFilterChange('locations', e.target.value as string[])
+              }
+              renderValue={(selected: string[]) => selected.join(', ')}
+              label="Locations"
+            >
+              {masterLocations.map(opt => (
+                <MenuItem key={opt} value={opt}>
+                  <Checkbox checked={filters.locations.indexOf(opt) > -1} />
+                  <ListItemText primary={opt} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+      </>
       </div>
       <div
         style={{
@@ -936,7 +1048,7 @@ export class DataplexSearchWidget extends Panel {
           let description: string | undefined;
           let system: string = 'BigQuery'; // Default system
           let location: string | undefined;
-          let assetType: string = 'Dataset'; // Initial fetch is only for Datasets
+          let assetType: string = 'Dataset'; // Initial fetch is only for Datasets // check to remove
 
           if (dataset.entrySource) {
             const entrySource = dataset.entrySource;
@@ -970,7 +1082,7 @@ export class DataplexSearchWidget extends Panel {
               label: 'Bigquery / Dataset',
               system: system,
               location: location,
-              assetType: assetType
+              assetType: assetType //check to remove
             });
           }
         });
@@ -1068,7 +1180,7 @@ export class DataplexSearchWidget extends Panel {
               label: label,
               system: system,
               location: location,
-              assetType: assetType
+              assetType: assetType // check to remove
             } as ISearchResult);
           }
         }
@@ -1149,6 +1261,16 @@ export class DataplexSearchWidget extends Panel {
           searchResult = data;
         };
 
+        console.log(
+          'syetem',
+          filterSystems,
+          'filter project',
+          filterProjects,
+          'filter Types',
+          filterTypes,
+          'filter locations',
+          filterLocations
+        );
         await BigQueryService.getBigQuerySemanticSearchAPIService(
           query,
           filterSystems, // systems

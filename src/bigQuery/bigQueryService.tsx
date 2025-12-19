@@ -623,6 +623,7 @@ export class BigQueryService {
         queryUrl += `&projects=${encodeURIComponent(projectsQuery)}`;
       }
 
+      console.log("URL called ***",queryUrl)
       const data: any = await requestAPI(
         queryUrl, // Use the dynamically constructed URL
         {
