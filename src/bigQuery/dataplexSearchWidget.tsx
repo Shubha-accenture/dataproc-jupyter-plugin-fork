@@ -62,6 +62,7 @@ import LoginErrorComponent from '../utils/loginErrorComponent';
 import { BIGQUERY_API_URL } from '../utils/const';
 import { BigQueryDatasetWrapper } from './bigQueryDatasetInfoWrapper';
 import { BigQueryTableWrapper } from './bigQueryTableInfoWrapper';
+import { BigQueryRegionDropdown } from '../controls/BigQueryRegionDropdown';
 
 const iconDatasets = new LabIcon({
   name: 'launcher:datasets-icon',
@@ -100,6 +101,11 @@ const iconSearch = new LabIcon({
   svgstr: searchIcon
 });
 
+const SUBTYPE_MAPPING: Record<string, string[]> = {
+  Datasets: ['Default', 'Linked'],
+  Table: ['Biglake table', 'Biglake object table', 'External Table', 'Table'],
+  View: ['View', 'Materialized view', 'Authorized view']
+};
 export interface INLSearchFilters {
   scope: string[];
   systems: string[];
@@ -159,34 +165,34 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   const [filters, setFilters] = useState<INLSearchFilters>(initialFilterState);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [masterLocations, setMasterLocations] = useState<string[]>([]);
+  // const [masterLocations, setMasterLocations] = useState<string[]>([]);
 
   useEffect(() => {
     onFiltersChanged(filters);
   }, [filters, onFiltersChanged]);
 
-  useEffect(() => {
-    if (
-      results.length > 0 &&
-      initialQuery.trim() === '' &&
-      masterLocations.length === 0
-    ) {
-      const locations = new Set<string>();
-      results.forEach(result => {
-        if (result.location) {
-          locations.add(result.location);
-        }
-      });
-      const sortedLocations = Array.from(locations).sort();
-      setMasterLocations(sortedLocations);
-      console.log(
-        'DataplexSearch: Master Locations Initialized:',
-        sortedLocations
-      );
-    }
+  // useEffect(() => {
+  //   if (
+  //     results.length > 0 &&
+  //     initialQuery.trim() === '' &&
+  //     masterLocations.length === 0
+  //   ) {
+  //     const locations = new Set<string>();
+  //     results.forEach(result => {
+  //       if (result.location) {
+  //         locations.add(result.location);
+  //       }
+  //     });
+  //     const sortedLocations = Array.from(locations).sort();
+  //     setMasterLocations(sortedLocations);
+  //     console.log(
+  //       'DataplexSearch: Master Locations Initialized:',
+  //       sortedLocations
+  //     );
+  //   }
 
-    setCurrentPage(1);
-  }, [results, initialQuery, masterLocations.length]); // Added masterLocations.length dependency make masterlocation to just location
+  //   setCurrentPage(1);
+  // }, [results, initialQuery, masterLocations.length]); // Added masterLocations.length dependency make masterlocation to just location
 
   const handleFilterChange = useCallback(
     (name: keyof INLSearchFilters, value: string[]) => {
@@ -387,6 +393,33 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     </li>
   );
 
+  const handleLocationUpdate = (newRegion: string) => {
+    // The component returns a string via its internal onRegionChange
+    handleFilterChange('locations', newRegion ? [newRegion] : []);
+  };
+
+  // Sync Subtypes when Types change
+  const handleTypeChange = (selectedTypes: string[]) => {
+    setFilters(prev => {
+      // Determine which subtypes are still valid based on the new types
+      const validSubtypes = selectedTypes.flatMap(
+        t => SUBTYPE_MAPPING[t] || []
+      );
+      const newSubtype = prev.subtype.filter(s => validSubtypes.includes(s));
+
+      return {
+        ...prev,
+        type: selectedTypes,
+        subtype: newSubtype
+      };
+    });
+  };
+
+  const availableSubtypes = useMemo(() => {
+    const options = filters.type.flatMap(t => SUBTYPE_MAPPING[t] || []);
+    return Array.from(new Set(options)); // Unique values
+  }, [filters.type]);
+
   return (
     <div
       style={{
@@ -444,142 +477,201 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           }}
         />
         <>
-        {/* --- Scope Dropdown (Single Select, No Checkbox) --- */}
-        <FormControl
-          variant="outlined"
-          fullWidth
-          size="small"
-          style={{ marginBottom: '12px' }}
-        >
-          <InputLabel id="scope-label">Scope</InputLabel>
-          <Select
-            labelId="scope-label"
-            multiple={false}
-            value={filters.scope[0] || ''}
-            onChange={e =>
-              handleFilterChange('scope', [e.target.value as string])
-            }
-            label="Scope"
-          >
-            {['Current Organization', 'Current Project'].map(opt => (
-              <MenuItem key={opt} value={opt}>
-                <ListItemText primary={opt} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* --- Systems Dropdown --- */}
-        <FormControl
-          variant="outlined"
-          fullWidth
-          size="small"
-          style={{ marginBottom: '12px' }}
-        >
-          <InputLabel id="systems-label">Systems</InputLabel>
-          <Select
-            labelId="systems-label"
-            multiple
-            value={filters.systems}
-            onChange={e =>
-              handleFilterChange('systems', e.target.value as string[])
-            }
-            renderValue={(selected: string[]) => selected.join(', ')}
-            label="Systems"
-          >
-            {['BigQuery'].map(opt => (
-              <MenuItem key={opt} value={opt}>
-                <Checkbox checked={filters.systems.indexOf(opt) > -1} />
-                <ListItemText primary={opt} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* --- Projects Dropdown (Disabled if Scope is "Current Project") --- */}
-        <FormControl
-          variant="outlined"
-          fullWidth
-          size="small"
-          style={{ marginBottom: '12px' }}
-          disabled={filters.scope.includes('Current Project')}
-        >
-          <InputLabel id="projects-label">Projects</InputLabel>
-          <Select
-            labelId="projects-label"
-            multiple
-            value={filters.projects}
-            onChange={e =>
-              handleFilterChange('projects', e.target.value as string[])
-            }
-            renderValue={(selected: string[]) => selected.join(', ')}
-            label="Projects"
-          >
-            {projectsList.map(opt => (
-              <MenuItem key={opt} value={opt}>
-                <Checkbox checked={filters.projects.indexOf(opt) > -1} />
-                <ListItemText primary={opt} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* --- Type Dropdown --- */}
-        <FormControl
-          variant="outlined"
-          fullWidth
-          size="small"
-          style={{ marginBottom: '12px' }}
-        >
-          <InputLabel id="type-label">Type</InputLabel>
-          <Select
-            labelId="type-label"
-            multiple
-            value={filters.type}
-            onChange={e =>
-              handleFilterChange('type', e.target.value as string[])
-            }
-            renderValue={(selected: string[]) => selected.join(', ')}
-            label="Type"
-          >
-            {['Table', 'View', 'Datasets'].map(opt => (
-              <MenuItem key={opt} value={opt}>
-                <Checkbox checked={filters.type.indexOf(opt) > -1} />
-                <ListItemText primary={opt} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* --- Locations Dropdown --- */}
-        {masterLocations.length > 0 && (
+          {/* --- Scope Dropdown (Single Select, No Checkbox) --- */}
           <FormControl
             variant="outlined"
             fullWidth
             size="small"
             style={{ marginBottom: '12px' }}
           >
-            <InputLabel id="locations-label">Locations</InputLabel>
+            <InputLabel id="scope-label">Scope</InputLabel>
             <Select
-              labelId="locations-label"
-              multiple
-              value={filters.locations}
+              labelId="scope-label"
+              multiple={false}
+              value={filters.scope[0] || ''}
               onChange={e =>
-                handleFilterChange('locations', e.target.value as string[])
+                handleFilterChange('scope', [e.target.value as string])
               }
-              renderValue={(selected: string[]) => selected.join(', ')}
-              label="Locations"
+              label="Scope"
             >
-              {masterLocations.map(opt => (
+              {['Current Organization', 'Current Project'].map(opt => (
                 <MenuItem key={opt} value={opt}>
-                  <Checkbox checked={filters.locations.indexOf(opt) > -1} />
                   <ListItemText primary={opt} />
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-        )}
-      </>
+
+          {/* --- Systems Dropdown --- */}
+          <FormControl
+            variant="outlined"
+            fullWidth
+            size="small"
+            style={{ marginBottom: '12px' }}
+          >
+            <InputLabel id="systems-label">Systems</InputLabel>
+            <Select
+              labelId="systems-label"
+              multiple
+              value={filters.systems}
+              onChange={e =>
+                handleFilterChange('systems', e.target.value as string[])
+              }
+              renderValue={(selected: string[]) => selected.join(', ')}
+              label="Systems"
+            >
+              {['BigQuery'].map(opt => (
+                <MenuItem key={opt} value={opt}>
+                  <Checkbox checked={filters.systems.indexOf(opt) > -1} />
+                  <ListItemText primary={opt} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* --- Projects Dropdown (Disabled if Scope is "Current Project") --- */}
+          <FormControl
+            variant="outlined"
+            fullWidth
+            size="small"
+            style={{ marginBottom: '12px' }}
+            disabled={filters.scope.includes('Current Project')}
+          >
+            <InputLabel id="projects-label">Projects</InputLabel>
+            <Select
+              labelId="projects-label"
+              multiple
+              value={filters.projects}
+              onChange={e =>
+                handleFilterChange('projects', e.target.value as string[])
+              }
+              renderValue={(selected: string[]) => selected.join(', ')}
+              label="Projects"
+            >
+              {projectsList.map(opt => (
+                <MenuItem key={opt} value={opt}>
+                  <Checkbox checked={filters.projects.indexOf(opt) > -1} />
+                  <ListItemText primary={opt} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* --- Type Dropdown --- */}
+          <FormControl
+            variant="outlined"
+            fullWidth
+            size="small"
+            style={{ marginBottom: '12px' }}
+          >
+            <InputLabel id="type-label">Type</InputLabel>
+            <Select
+              labelId="type-label"
+              multiple
+              value={filters.type}
+              onChange={e => handleTypeChange(e.target.value as string[])}
+              renderValue={(selected: string[]) => selected.join(', ')}
+              label="Type"
+            >
+              {['Table', 'View', 'Datasets'].map(opt => (
+                <MenuItem key={opt} value={opt}>
+                  <Checkbox checked={filters.type.indexOf(opt) > -1} />
+                  <ListItemText primary={opt} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* --- Conditional Subtype Dropdown --- */}
+          {filters.type.length > 0 && availableSubtypes.length > 0 && (
+            <FormControl
+              variant="outlined"
+              fullWidth
+              size="small"
+              style={{ marginBottom: '12px' }}
+            >
+              <InputLabel id="subtype-label">Subtype</InputLabel>
+              <Select
+                labelId="subtype-label"
+                multiple
+                value={filters.subtype}
+                onChange={e =>
+                  handleFilterChange('subtype', e.target.value as string[])
+                }
+                renderValue={(selected: string[]) => selected.join(', ')}
+                label="Subtype"
+              >
+                {availableSubtypes.map(opt => (
+                  <MenuItem key={opt} value={opt}>
+                    <Checkbox checked={filters.subtype.indexOf(opt) > -1} />
+                    <ListItemText primary={opt} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {/* --- Locations Dropdown --- */}
+          {/* {masterLocations.length > 0 && (
+            <FormControl
+              variant="outlined"
+              fullWidth
+              size="small"
+              style={{ marginBottom: '12px' }}
+            >
+              <InputLabel id="locations-label">Locations</InputLabel>
+              <Select
+                labelId="locations-label"
+                multiple
+                value={filters.locations}
+                onChange={e =>
+                  handleFilterChange('locations', e.target.value as string[])
+                }
+                renderValue={(selected: string[]) => selected.join(', ')}
+                label="Locations"
+              >
+                {masterLocations.map(opt => (
+                  <MenuItem key={opt} value={opt}>
+                    <Checkbox checked={filters.locations.indexOf(opt) > -1} />
+                    <ListItemText primary={opt} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )} */}
+
+          <div
+            className="location-filter-container"
+            style={{ position: 'relative' }}
+          >
+            {/* Force the label styling from the outside since we can't edit the internal TextField */}
+            <style>{`
+    .custom-location-dropdown .MuiInputLabel-root {
+      display: none; /* Hide the hardcoded 'BigQuery Region*' */
+    }
+    .custom-location-dropdown .MuiOutlinedInput-root::before {
+      content: 'Locations';
+      position: absolute;
+      top: -9px;
+      left: 10px;
+      font-size: 12px;
+      background: var(--jp-layout-color1);
+      padding: 0 4px;
+      color: var(--jp-ui-font-color2);
+      z-index: 1;
+    }
+  `}</style>
+
+            <div className="custom-location-dropdown">
+              <BigQueryRegionDropdown
+                projectId={filters.projects[0] || ''}
+                // CRITICAL: If locations is empty, pass an empty string to avoid [object Object]
+                region={filters.locations[0] || ''}
+                onRegionChange={handleLocationUpdate}
+              />
+            </div>
+          </div>
+        </>
       </div>
       <div
         style={{
@@ -1276,7 +1368,7 @@ export class DataplexSearchWidget extends Panel {
           filterSystems, // systems
           filterProjects, // projects
           filterTypes, // type
-          filterLocations, // locations
+          filterLocations, // locations //check cgeck check
           setSearchLoading,
           setSearchResponse
         );

@@ -251,6 +251,7 @@ export class BigQueryService {
     setNextPageToken?: (projectId: string, token: string | null) => void
   ) => {
     const pageToken = nextPageToken ?? '';
+    console.log("dataset service called here ")
     try {
       const settings = await settingRegistry.load(PLUGIN_ID);
       const location = settings.get('bqRegion')['composite'];
@@ -593,7 +594,7 @@ export class BigQueryService {
     setSearchResponse: any
   ) => {
     setSearchLoading(true);
-
+    console.log("semantic search service called here ")
     try {
       let queryUrl = `bigQuerySearch?search_string=${encodeURIComponent(
         searchTerm
