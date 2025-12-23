@@ -267,16 +267,16 @@ class Client:
                 query_parts.append(f"{search_string}")
             
             if system:
-                query_parts.append(f"system:{system.upper()}")
+                query_parts.append(f"system={system.upper()}")
             
             if type:
                 # Handle pipe-separated types like 'table|view'
                 types = type.split('|')
-                type_filters = " OR ".join([f"type:{t.upper()}" for t in types])
+                type_filters = " OR ".join([f"type={t.upper()}" for t in types])
                 query_parts.append(f"({type_filters})")
             
             if projects:
-                project_filters = " OR ".join([f"projectid:{p}" for p in projects])
+                project_filters = " OR ".join([f"projectid={p}" for p in projects])
                 query_parts.append(f"({project_filters})")
 
             full_query = " AND ".join(filter(None, query_parts))
