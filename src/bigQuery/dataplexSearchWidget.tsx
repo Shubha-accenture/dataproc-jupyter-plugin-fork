@@ -176,7 +176,7 @@ const initialFilterState: INLSearchFilters = {
   projects: [],
   type: [],
   subtype: [],
-  locations: [],
+  locations: []
   // annotations: []
 };
 
@@ -223,12 +223,21 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilterState);
-    onSearchExecuted(
-      initialQuery.trim(),
-      initialFilterState.projects,
-      initialFilterState
-    );
-  }, [initialQuery, onSearchExecuted]);
+
+    // If query is empty, just reset the UI locally instead of hitting the backend
+    if (initialQuery.trim() === '') {
+      onQueryChanged('');
+      // Manually trigger a "reset" state instead of a search
+      onSearchExecuted('', [], initialFilterState);
+    } else {
+      // If there IS a query, re-run that query with no filters
+      onSearchExecuted(
+        initialQuery.trim(),
+        initialFilterState.projects,
+        initialFilterState
+      );
+    }
+  }, [initialQuery, onSearchExecuted, onQueryChanged]);
 
   const handleClearChip = useCallback(
     (filterName: keyof INLSearchFilters, valueToRemove: string) => {
@@ -253,7 +262,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
       systems: 'System',
       type: 'Type',
       subtype: 'Subtype',
-      locations: 'Locations',
+      locations: 'Locations'
       // annotations: 'Annotation'
     };
 
@@ -322,6 +331,10 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
         {result.label === 'Bigquery / Dataset' ? (
           <div role="img" className="db-icon">
             <iconDatasets.react tag="div" />
+          </div>
+        ) : result.label === 'Bigquery / View' ? (
+          <div role="img" className="db-icon">
+            <iconColumns.react tag="div" />{' '}
           </div>
         ) : (
           <div role="img" className="db-icon">
@@ -740,7 +753,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
               color: 'var(--jp-ui-font-color0)'
             }}
           >
-            {initialQuery.trim() === '' ? 'Dataset Search' : 'Search Results'}
+            {/* {initialQuery.trim() === '' ? 'Dataset Search' : 'Search Results'} */}
           </h2>
 
           {searchLoading ? (
@@ -950,6 +963,17 @@ export class DataplexSearchWidget extends Panel {
     );
     try {
       let projectNames: string[] = [];
+      // const setProjectNameInfo = (data: string[]) => {
+      //   projectNames = data;
+      // };
+      // const setIsLoading = (value: boolean) => {
+      //   this.searchWrapper.searchLoading = value;
+      // };
+      // const setApiError = (value: boolean) => {
+      //   console.error('API Error in fetching projects:', value);
+      // };
+
+      // const setProjectName = (name: string) => {};
       await BigQueryService.getBigQueryProjectsListAPIService(
         (data: string[]) => (projectNames = data),
         val => (this.searchWrapper.searchLoading = val),
@@ -963,6 +987,23 @@ export class DataplexSearchWidget extends Panel {
         projectNames,
         []
       );
+           console.log('DataplexSearch: BigQuery Projects List:', projectNames);
+
+      // this.searchWrapper.updateState(
+      //   this.searchWrapper.initialQuery,
+      //   this.searchWrapper.searchResults,
+      //   false, // Set loading to false
+      //   projectNames,
+      //   this.searchWrapper.allSearchResults
+      // );
+
+      if (projectNames.length > 0) {
+        // const initialFilters =
+        //   this.searchWrapper.initialQuery.trim() === ''
+        //     ? initialFilterState
+        //     : undefined;
+        await this.fetchDatasetsForProjects(projectNames);
+      }
     } catch (e) {
       this.searchWrapper.updateState(
         this.searchWrapper.initialQuery,
@@ -973,6 +1014,169 @@ export class DataplexSearchWidget extends Panel {
       );
     }
   }
+
+
+  
+
+    private async fetchDatasetsForProjects(
+    projectIds: string[],
+    // filters?: INLSearchFilters
+  ) {
+    // const currentQuery = this.searchWrapper.initialQuery;
+    // const currentProjects = this.searchWrapper.projectsList;
+
+    //   this.searchWrapper.updateState(
+    //   currentQuery,
+    //   this.searchWrapper.searchResults,
+    //   true,
+    //   currentProjects,
+    //   this.searchWrapper.allSearchResults
+    // );
+
+    // let allResults: ISearchResult[] = [];
+    const allDatasetsByProject: any = {};
+
+    try {
+      const datasetPromises = projectIds.map(async projectId => {
+        let projectDatasets: any[] = [];
+
+        const setDatabaseNames = (data: any[]) => {
+          /* N/A in this scope */
+        };
+        const setDataSetResponse = (data: any) => {
+          /* N/A in this scope */
+        };
+        const setIsIconLoading = (value: boolean) => {
+          /* N/A in this scope */
+        };
+        const setIsLoading = (value: boolean) => {
+          /* N/A in this scope */
+        };
+        const setIsLoadMoreLoading = (value: boolean) => {
+          /* N/A in this scope */
+        };
+
+        const handleFinalDatasetList = (finalDatasets: any[]) => {
+          projectDatasets = finalDatasets;
+        };
+
+        const handleNextPageTokens = (
+          projectId: string,
+          token: string | null
+        ) => {
+          /* N/A in this scope */
+        };
+
+        await BigQueryService.getBigQueryDatasetsAPIServiceNew(
+          this.settingRegistry,
+          setDatabaseNames,
+          setDataSetResponse,
+          projectId,
+          setIsIconLoading,
+          setIsLoading,
+          setIsLoadMoreLoading,
+        [],
+          handleFinalDatasetList,
+          undefined,
+          handleNextPageTokens
+        );
+
+        allDatasetsByProject[projectId] = projectDatasets;
+
+        // projectDatasets.forEach(dataset => {
+        //   let name: string | undefined;
+        //   let description: string | undefined;
+        //   let system: string = 'BigQuery'; // Default system
+        //   let location: string | undefined;
+        //   let assetType: string = 'Dataset'; // Initial fetch is only for Datasets // check to remove
+
+        //   if (dataset.entrySource) {
+        //     const entrySource = dataset.entrySource;
+        //     const explicitDescription = entrySource.description;
+        //     location = entrySource.location;
+        //     system = entrySource.system || 'Dataplex';
+
+        //     name = entrySource.displayName;
+
+        //     description = explicitDescription
+        //       ? explicitDescription
+        //       : location
+        //       ? `${projectId} > ${location}`
+        //       : `Project: ${projectId}`;
+        //   } else if (dataset.datasetReference) {
+        //     const datasetRef = dataset.datasetReference;
+        //     location = dataset.location; // Location is available here
+        //     system = 'BigQuery';
+
+        //     name = datasetRef.datasetId;
+
+        //     description = location
+        //       ? `${projectId} > ${location}`
+        //       : `Project: ${projectId}`;
+        //   }
+
+        //   if (name) {
+        //     allResults.push({
+        //       name: name,
+        //       description: description,
+        //       label: 'Bigquery / Dataset',
+        //       system: system,
+        //       location: location,
+        //       assetType: assetType //check to remove
+        //     });
+        //   }
+        // });
+      });
+
+      await Promise.all(datasetPromises);
+
+      console.log(
+        'DataplexSearch: All Datasets by Project ID:',
+        allDatasetsByProject
+      );
+
+      // let filteredInitialResults = allResults;
+      // if (filters) {
+      //   const isActive = (arr: string[]) => arr.length > 0;
+
+      //   if (isActive(filters.systems)) {
+      //     filteredInitialResults = filteredInitialResults.filter(
+      //       result => result.system && filters.systems.includes(result.system)
+      //     );
+      //   }
+      //   if (isActive(filters.type)) {
+      //     filteredInitialResults = filteredInitialResults.filter(
+      //       result =>
+      //         result.assetType && filters.type.includes(result.assetType)
+      //     );
+      //   }
+      //   if (isActive(filters.locations)) {
+      //     filteredInitialResults = filteredInitialResults.filter(
+      //       result =>
+      //         result.location && filters.locations.includes(result.location)
+      //     );
+      //   }
+      // }
+
+      // this.searchWrapper.updateState(
+      //   currentQuery,
+      //   filteredInitialResults, // Use filtered results here
+      //   false,
+      //   currentProjects,
+      //   allDatasetsByProject
+      // );
+    } catch (error) {
+      console.error('Error fetching datasets for projects:', error);
+      // this.searchWrapper.updateState(
+      //   currentQuery,
+      //   [],
+      //   false,
+      //   currentProjects,
+      //   []
+      // );
+    }
+  }
+
 
   private processSearchResults(
     combinedRawResults: { project: string; result: any }[]
@@ -1037,6 +1241,23 @@ export class DataplexSearchWidget extends Panel {
     args: { query: string; projects: string[]; filters: INLSearchFilters }
   ) {
     const { query, filters } = args;
+    const hasActiveFilters =
+      filters.systems.length > 0 ||
+      filters.projects.length > 0 ||
+      filters.type.length > 0 ||
+      filters.locations.length > 0;
+
+    if (query.trim() === '' && !hasActiveFilters) {
+      // Reset to initial state without calling the backend
+      this.searchWrapper.updateState(
+        '',
+        [], // This ensures totalResults is 0
+        false,
+        this.searchWrapper.projectsList,
+        []
+      );
+      return;
+    }
     const projectsToSearch =
       filters.projects.length > 0
         ? filters.projects
@@ -1083,86 +1304,99 @@ export class DataplexSearchWidget extends Panel {
     }
   }
 
-private parseResultDetails(result: ISearchResult): {
-  projectId: string | null;
-  datasetId: string | null;
-  tableId: string | null;
-} {
-  const name = result.name;
-  const rawResults = this.searchWrapper.allSearchResults;
+  private parseResultDetails(result: ISearchResult): {
+    projectId: string | null;
+    datasetId: string | null;
+    tableId: string | null;
+  } {
+    const name = result.name;
+    const rawResults = this.searchWrapper.allSearchResults;
 
-  // 1. Search the raw results cache for the specific entry
-  if (Array.isArray(rawResults)) {
-    for (const projectResult of rawResults) {
-      const items = projectResult.result?.results || [];
-      for (const item of items) {
-        const entry = item.dataplexEntry;
-        if (entry && (entry.displayName === name || entry.fullyQualifiedName?.includes(name))) {
-          // Normalize FQN: convert colons to dots and split
-          const parts = entry.fullyQualifiedName.replace(':', '.').split('.');
-          
-          // Logic: BigQuery FQNs are usually project.dataset.table
-          if (parts.length >= 2) {
-            const isTable = result.label?.includes('Table');
-            return {
-              projectId: parts[0],
-              datasetId: parts[1],
-              tableId: isTable ? (parts[2] || name) : null
-            };
+    // 1. Search the raw results cache for the specific entry
+    if (Array.isArray(rawResults)) {
+      for (const projectResult of rawResults) {
+        const items = projectResult.result?.results || [];
+        for (const item of items) {
+          const entry = item.dataplexEntry;
+          if (
+            entry &&
+            (entry.displayName === name ||
+              entry.fullyQualifiedName?.includes(name))
+          ) {
+            // Normalize FQN: convert colons to dots and split
+            const parts = entry.fullyQualifiedName.replace(':', '.').split('.');
+
+            // Logic: BigQuery FQNs are usually project.dataset.table
+            if (parts.length >= 2) {
+              const isTable = result.label?.includes('Table');
+              return {
+                projectId: parts[0],
+                datasetId: parts[1],
+                tableId: isTable ? parts[2] || name : null
+              };
+            }
           }
         }
       }
     }
+
+    // 2. Fallback: Parse from the description string you built in processSearchResults
+    // Format was: "Table in {datasetId} (Project: {projectId})"
+    const description = result.description || '';
+    const projectMatch = description.match(/Project: ([^)]+)/);
+
+    // If we can't find the project in the string, use the first project in the list
+    const fallbackProject = projectMatch
+      ? projectMatch[1]
+      : this.searchWrapper.projectsList[0];
+
+    return {
+      projectId: fallbackProject,
+      datasetId: result.label?.includes('Table')
+        ? description.split(' ')[2]
+        : name,
+      tableId: result.label?.includes('Table') ? name : null
+    };
   }
-
-  // 2. Fallback: Parse from the description string you built in processSearchResults
-  // Format was: "Table in {datasetId} (Project: {projectId})"
-  const description = result.description || '';
-  const projectMatch = description.match(/Project: ([^)]+)/);
-  
-  // If we can't find the project in the string, use the first project in the list
-  const fallbackProject = projectMatch ? projectMatch[1] : this.searchWrapper.projectsList[0];
-
-  return {
-    projectId: fallbackProject,
-    datasetId: result.label?.includes('Table') ? description.split(' ')[2] : name,
-    tableId: result.label?.includes('Table') ? name : null
-  };
-}
 
   private _onResultClicked(
-  sender: DataplexSearchPanelWrapper,
-  result: ISearchResult
-): void {
-  const { projectId, datasetId, tableId } = this.parseResultDetails(result);
+    sender: DataplexSearchPanelWrapper,
+    result: ISearchResult
+  ): void {
+    const { projectId, datasetId, tableId } = this.parseResultDetails(result);
 
-  if (!projectId || !datasetId) {
-    console.error('Missing IDs:', { projectId, datasetId, tableId });
-    return;
+    if (!projectId || !datasetId) {
+      console.error('Missing IDs:', { projectId, datasetId, tableId });
+      return;
+    }
+
+    const widgetTitle = result.name;
+    if (this.openedWidgets[widgetTitle]) {
+      this.app.shell.activateById(widgetTitle);
+      return;
+    }
+
+    // Create content based on type
+    const content = tableId
+      ? new BigQueryTableWrapper(
+          tableId,
+          datasetId,
+          projectId,
+          this.themeManager
+        )
+      : new BigQueryDatasetWrapper(datasetId, projectId, this.themeManager);
+
+    const widget = new MainAreaWidget<any>({ content });
+    widget.id = widgetTitle;
+    widget.title.label = widgetTitle;
+    widget.title.closable = true;
+    // Use iconTable for tables, iconDatasets for datasets
+    widget.title.icon = tableId ? iconTable : iconDatasets;
+
+    this.app.shell.add(widget, 'main');
+    this.openedWidgets[widgetTitle] = true;
+    widget.disposed.connect(() => delete this.openedWidgets[widgetTitle]);
   }
-
-  const widgetTitle = result.name;
-  if (this.openedWidgets[widgetTitle]) {
-    this.app.shell.activateById(widgetTitle);
-    return;
-  }
-
-  // Create content based on type
-  const content = tableId
-    ? new BigQueryTableWrapper(tableId, datasetId, projectId, this.themeManager)
-    : new BigQueryDatasetWrapper(datasetId, projectId, this.themeManager);
-
-  const widget = new MainAreaWidget<any>({ content });
-  widget.id = widgetTitle;
-  widget.title.label = widgetTitle;
-  widget.title.closable = true;
-  // Use iconTable for tables, iconDatasets for datasets
-  widget.title.icon = tableId ? iconTable : iconDatasets;
-
-  this.app.shell.add(widget, 'main');
-  this.openedWidgets[widgetTitle] = true;
-  widget.disposed.connect(() => delete this.openedWidgets[widgetTitle]);
-}
 }
 
 const calculateDepth = (node: NodeApi): number => {
