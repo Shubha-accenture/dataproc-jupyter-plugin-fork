@@ -158,6 +158,7 @@ export interface INLSearchFilters {
   type: string[];
   subtype: string[];
   locations: string[];
+  datasets: string[];
   // annotations: string[]; //check to remove
 }
 
@@ -176,7 +177,8 @@ const initialFilterState: INLSearchFilters = {
   projects: [],
   type: [],
   subtype: [],
-  locations: []
+  locations: [],
+  datasets: []
   // annotations: []
 };
 
@@ -185,10 +187,12 @@ interface IDataplexSearchComponentProps {
   searchLoading: boolean;
   results?: ISearchResult[];
   projectsList: string[];
+  datasetList: string[];
   onQueryChanged: (query: string) => void;
   onSearchExecuted: (
     query: string,
     projects: string[],
+    datasets: string[],
     filters: INLSearchFilters
   ) => void;
   onFiltersChanged: (filters: INLSearchFilters) => void;
@@ -205,6 +209,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   onSearchExecuted,
   onFiltersChanged,
   projectsList,
+  datasetList,
   onResultClicked
 }) => {
   const [filters, setFilters] = useState<INLSearchFilters>(initialFilterState);
@@ -228,12 +233,13 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     if (initialQuery.trim() === '') {
       onQueryChanged('');
       // Manually trigger a "reset" state instead of a search
-      onSearchExecuted('', [], initialFilterState);
+      onSearchExecuted('', [], [], initialFilterState);
     } else {
       // If there IS a query, re-run that query with no filters
       onSearchExecuted(
         initialQuery.trim(),
         initialFilterState.projects,
+        initialFilterState.datasets,
         initialFilterState
       );
     }
@@ -262,7 +268,8 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
       systems: 'System',
       type: 'Type',
       subtype: 'Subtype',
-      locations: 'Locations'
+      locations: 'Locations',
+      datasets: 'Datasets'
       // annotations: 'Annotation'
     };
 
@@ -286,7 +293,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   }, [filters]);
 
   const handleSearchClick = () => {
-    onSearchExecuted(initialQuery.trim(), [], filters);
+    onSearchExecuted(initialQuery.trim(), [], [], filters);
   };
 
   const showFlatResults = useMemo(() => !searchLoading, [searchLoading]);
@@ -644,6 +651,42 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             </Select>
           </FormControl>
         </div>
+        <FormControl
+          variant="outlined"
+          fullWidth
+          size="small"
+          style={{ marginBottom: '12px' }}
+        >
+          <InputLabel id="datasets-label">Datasets</InputLabel>
+          <Select
+            labelId="datasets-label"
+            multiple
+            value={filters.datasets || []}
+            onChange={e =>
+              handleFilterChange('datasets', e.target.value as string[])
+            }
+            renderValue={(selected: string[]) => selected.join(', ')}
+            label="Datasets"
+            MenuProps={{
+              PaperProps: {
+                style: {
+                  maxHeight: 400, // Limits height to 400px
+                  width: 300 // Limits width
+                }
+              }
+            }}
+          >
+            {Array.isArray(datasetList) &&
+              datasetList.map((name: any) => (
+                <MenuItem key={name} value={name}>
+                  <Checkbox
+                    checked={(filters.datasets || []).indexOf(name) > -1}
+                  />
+                  <ListItemText primary={name} />
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
       </div>
       <div
         style={{
@@ -673,7 +716,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
               const newValue = e.target.value;
               onQueryChanged(newValue);
               if (newValue.trim() === '') {
-                onSearchExecuted('', [], filters);
+                onSearchExecuted('', [], [], filters);
               }
             }}
             onKeyDown={e => {
@@ -686,7 +729,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
                     <IconButton
                       onClick={() => {
                         onQueryChanged('');
-                        onSearchExecuted('', [], filters);
+                        onSearchExecuted('', [], [], filters);
                       }}
                       size="small"
                     >
@@ -857,6 +900,7 @@ class DataplexSearchPanelWrapper extends ReactWidget {
   public searchLoading: boolean = false;
   public projectsList: string[] = [];
   public allSearchResults: any[] = [];
+  public datasetList: string[] = [];
 
   private _queryUpdated = new Signal<this, string>(this);
   get queryUpdated(): Signal<this, string> {
@@ -870,7 +914,12 @@ class DataplexSearchPanelWrapper extends ReactWidget {
 
   private _searchExecuted = new Signal<
     this,
-    { query: string; projects: string[]; filters: INLSearchFilters }
+    {
+      query: string;
+      projects: string[];
+      datasets: string[];
+      filters: INLSearchFilters;
+    }
   >(this);
   get searchExecuted() {
     return this._searchExecuted;
@@ -886,12 +935,14 @@ class DataplexSearchPanelWrapper extends ReactWidget {
     results: ISearchResult[],
     loading: boolean,
     projects: string[],
+    datasets: string[],
     allResults: any[]
   ): void {
     this.initialQuery = query;
     this.searchResults = results;
     this.searchLoading = loading;
     if (projects.length > 0) this.projectsList = projects;
+    if (datasets.length > 0) this.datasetList = datasets;
     this.allSearchResults = allResults;
     this.update();
   }
@@ -903,9 +954,15 @@ class DataplexSearchPanelWrapper extends ReactWidget {
         results={this.searchResults}
         searchLoading={this.searchLoading}
         projectsList={this.projectsList}
+        datasetList={this.datasetList}
         onQueryChanged={q => this._queryUpdated.emit(q)}
-        onSearchExecuted={(q, p, f) =>
-          this._searchExecuted.emit({ query: q, projects: p, filters: f })
+        onSearchExecuted={(q, p, d, f) =>
+          this._searchExecuted.emit({
+            query: q,
+            projects: p,
+            datasets: d,
+            filters: f
+          })
         }
         onFiltersChanged={f => this._filtersChanged.emit(f)}
         onResultClicked={r => this._resultClicked.emit(r)}
@@ -959,6 +1016,7 @@ export class DataplexSearchWidget extends Panel {
       [],
       true,
       [],
+      [],
       []
     );
     try {
@@ -985,9 +1043,10 @@ export class DataplexSearchWidget extends Panel {
         [],
         false,
         projectNames,
+        [],
         []
       );
-           console.log('DataplexSearch: BigQuery Projects List:', projectNames);
+      console.log('DataplexSearch: BigQuery Projects List:', projectNames);
 
       // this.searchWrapper.updateState(
       //   this.searchWrapper.initialQuery,
@@ -1010,170 +1069,66 @@ export class DataplexSearchWidget extends Panel {
         [],
         false,
         [],
+        [],
         []
       );
     }
   }
 
-
-  
-
-    private async fetchDatasetsForProjects(
-    projectIds: string[],
-    // filters?: INLSearchFilters
-  ) {
-    // const currentQuery = this.searchWrapper.initialQuery;
-    // const currentProjects = this.searchWrapper.projectsList;
-
-    //   this.searchWrapper.updateState(
-    //   currentQuery,
-    //   this.searchWrapper.searchResults,
-    //   true,
-    //   currentProjects,
-    //   this.searchWrapper.allSearchResults
-    // );
-
-    // let allResults: ISearchResult[] = [];
+  private async fetchDatasetsForProjects(projectIds: string[]) {
     const allDatasetsByProject: any = {};
 
     try {
       const datasetPromises = projectIds.map(async projectId => {
         let projectDatasets: any[] = [];
 
-        const setDatabaseNames = (data: any[]) => {
-          /* N/A in this scope */
-        };
-        const setDataSetResponse = (data: any) => {
-          /* N/A in this scope */
-        };
-        const setIsIconLoading = (value: boolean) => {
-          /* N/A in this scope */
-        };
-        const setIsLoading = (value: boolean) => {
-          /* N/A in this scope */
-        };
-        const setIsLoadMoreLoading = (value: boolean) => {
-          /* N/A in this scope */
-        };
-
+        // Create a callback to capture the datasets for this specific project
         const handleFinalDatasetList = (finalDatasets: any[]) => {
           projectDatasets = finalDatasets;
         };
 
-        const handleNextPageTokens = (
-          projectId: string,
-          token: string | null
-        ) => {
-          /* N/A in this scope */
-        };
-
         await BigQueryService.getBigQueryDatasetsAPIServiceNew(
           this.settingRegistry,
-          setDatabaseNames,
-          setDataSetResponse,
+          () => {}, // setDatabaseNames
+          () => {}, // setDataSetResponse
           projectId,
-          setIsIconLoading,
-          setIsLoading,
-          setIsLoadMoreLoading,
-        [],
-          handleFinalDatasetList,
+          () => {}, // setIsIconLoading
+          () => {}, // setIsLoading
+          () => {}, // setIsLoadMoreLoading
+          [],
+          handleFinalDatasetList, // <--- This will capture the data
           undefined,
-          handleNextPageTokens
+          () => {} // handleNextPageTokens
         );
 
         allDatasetsByProject[projectId] = projectDatasets;
-
-        // projectDatasets.forEach(dataset => {
-        //   let name: string | undefined;
-        //   let description: string | undefined;
-        //   let system: string = 'BigQuery'; // Default system
-        //   let location: string | undefined;
-        //   let assetType: string = 'Dataset'; // Initial fetch is only for Datasets // check to remove
-
-        //   if (dataset.entrySource) {
-        //     const entrySource = dataset.entrySource;
-        //     const explicitDescription = entrySource.description;
-        //     location = entrySource.location;
-        //     system = entrySource.system || 'Dataplex';
-
-        //     name = entrySource.displayName;
-
-        //     description = explicitDescription
-        //       ? explicitDescription
-        //       : location
-        //       ? `${projectId} > ${location}`
-        //       : `Project: ${projectId}`;
-        //   } else if (dataset.datasetReference) {
-        //     const datasetRef = dataset.datasetReference;
-        //     location = dataset.location; // Location is available here
-        //     system = 'BigQuery';
-
-        //     name = datasetRef.datasetId;
-
-        //     description = location
-        //       ? `${projectId} > ${location}`
-        //       : `Project: ${projectId}`;
-        //   }
-
-        //   if (name) {
-        //     allResults.push({
-        //       name: name,
-        //       description: description,
-        //       label: 'Bigquery / Dataset',
-        //       system: system,
-        //       location: location,
-        //       assetType: assetType //check to remove
-        //     });
-        //   }
-        // });
+        return projectDatasets;
       });
 
-      await Promise.all(datasetPromises);
+      const results = await Promise.all(datasetPromises);
 
-      console.log(
-        'DataplexSearch: All Datasets by Project ID:',
-        allDatasetsByProject
+      // Flatten the results: Extract just the dataset names/IDs for the dropdown
+      // Based on BigQuery API, this is usually .datasetReference.datasetId
+      const flatDatasetNames = results
+        .flat()
+        .map(ds => ds.datasetReference?.datasetId || ds.id || ds.name)
+        .filter(Boolean);
+
+      console.log('Processed Dataset Names for Dropdown:', flatDatasetNames);
+
+      // CRITICAL: Update the state so the React component re-renders
+      this.searchWrapper.updateState(
+        this.searchWrapper.initialQuery,
+        this.searchWrapper.searchResults,
+        false,
+        this.searchWrapper.projectsList,
+        flatDatasetNames, // <--- Pass the new list here
+        this.searchWrapper.allSearchResults
       );
-
-      // let filteredInitialResults = allResults;
-      // if (filters) {
-      //   const isActive = (arr: string[]) => arr.length > 0;
-
-      //   if (isActive(filters.systems)) {
-      //     filteredInitialResults = filteredInitialResults.filter(
-      //       result => result.system && filters.systems.includes(result.system)
-      //     );
-      //   }
-      //   if (isActive(filters.type)) {
-      //     filteredInitialResults = filteredInitialResults.filter(
-      //       result =>
-      //         result.assetType && filters.type.includes(result.assetType)
-      //     );
-      //   }
-      //   if (isActive(filters.locations)) {
-      //     filteredInitialResults = filteredInitialResults.filter(
-      //       result =>
-      //         result.location && filters.locations.includes(result.location)
-      //     );
-      //   }
-      // }
-
-      // this.searchWrapper.updateState(
-      //   currentQuery,
-      //   filteredInitialResults, // Use filtered results here
-      //   false,
-      //   currentProjects,
-      //   allDatasetsByProject
-      // );
     } catch (error) {
       console.error('Error fetching datasets for projects:', error);
-      // this.searchWrapper.updateState(
-      //   currentQuery,
-      //   [],
-      //   false,
-      //   currentProjects,
-      //   []
-      // );
+      this.searchWrapper.searchLoading = false;
+      this.searchWrapper.update();
     }
   }
 
@@ -1254,6 +1209,7 @@ export class DataplexSearchWidget extends Panel {
         [], // This ensures totalResults is 0
         false,
         this.searchWrapper.projectsList,
+        this.searchWrapper.datasetList,
         []
       );
       return;
@@ -1268,6 +1224,7 @@ export class DataplexSearchWidget extends Panel {
       [],
       true,
       this.searchWrapper.projectsList,
+      this.searchWrapper.datasetList,
       []
     );
 
@@ -1291,6 +1248,7 @@ export class DataplexSearchWidget extends Panel {
         flatResults,
         false,
         this.searchWrapper.projectsList,
+        this.searchWrapper.datasetList,
         searchResult ? [searchResult] : []
       );
     } catch (error) {
@@ -1299,6 +1257,7 @@ export class DataplexSearchWidget extends Panel {
         [],
         false,
         this.searchWrapper.projectsList,
+        this.searchWrapper.datasetList,
         []
       );
     }
