@@ -20,6 +20,11 @@ import { Paper, Box, CircularProgress } from '@mui/material';
 import { BigQueryService } from './bigQueryService';
 import { handleDebounce } from '../utils/utils';
 
+interface IPreviewColumn {
+  Header: string;
+  accessor: string;
+}
+
 const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
   const [previewDataList, setPreviewDataList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +32,7 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(50);
   const [previewHeight, setPreviewHeight] = useState(window.innerHeight - 180);
+  
 
   useEffect(() => {
     const handleUpdateHeight = () => setPreviewHeight(window.innerHeight - 180);
@@ -36,82 +42,70 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
   }, []);
 
   const muiColumns: GridColDef[] = useMemo(() => {
-    return column.map((col: any) => ({
-      field: col.name,
-      headerName: col.name,
-      flex: 1,
-      minWidth: 150,
-      renderCell: (params: any) => {
-        if (
-          params.value === null ||
-          params.value === undefined ||
-          params.value === ''
-        ) {
-          return (
-            <Box sx={{ color: 'text.disabled', fontStyle: 'italic' }}>null</Box>
-          );
-        }
-        return String(params.value);
+    return column.map((col: any) => {
+      // 1. Determine the logic type
+      let columnType: 'string' | 'number' | 'boolean' = 'string';
+      const bqType = col.type?.toUpperCase();
+
+      if (
+        ['INTEGER', 'FLOAT', 'NUMERIC', 'DECIMAL', 'INT64', 'FLOAT64'].includes(
+          bqType
+        )
+      ) {
+        columnType = 'number';
+      } else if (['BOOLEAN', 'BOOL'].includes(bqType)) {
+        columnType = 'boolean';
       }
+
+      return {
+        field: col.name,
+        headerName: col.name,
+        type: columnType, // Enables the correct filter icons (=, >, <)
+        flex: 1,
+        minWidth: 150,
+
+        // 2. Add the valueGetter here
+        valueGetter: (value: any) => {
+          if (
+            columnType === 'number' &&
+            value !== null &&
+            value !== undefined
+          ) {
+            const parsed = Number(value);
+            return isNaN(parsed) ? value : parsed;
+          }
+          return value;
+        },
+
+        renderCell: (params: any) => {
+          if (
+            params.value === null ||
+            params.value === undefined ||
+            params.value === ''
+          ) {
+            return (
+              <Box sx={{ color: 'text.disabled', fontStyle: 'italic' }}>
+                null
+              </Box>
+            );
+          }
+          return String(params.value);
+        }
+      };
+    });
+  }, [column]);
+
+  const serviceColumns: IPreviewColumn[] = useMemo(() => {
+    return column.map((col: any) => ({
+      Header: col.name,
+      accessor: col.name
     }));
   }, [column]);
 
   useEffect(() => {
-    // const dataSetterWrapper = (rawData: any[]) => {
-    //   setIsLoading(false);
-
-    //   // DEBUG LOG 1: See the raw structure from BigQuery
-    //   console.log("RAW DATA FROM SERVICE:", rawData);
-
-    //   if (Array.isArray(rawData) && rawData.length > 0) {
-    //     const transformedRows = rawData.map((row, rowIndex) => {
-    //       const newRow: any = { id: `row-${pageIndex}-${rowIndex}` };
-
-    //       let rowValues: any[] = [];
-
-    //       // DEBUG LOG 2: See an individual row structure
-    //       if (rowIndex === 0) console.log("INDIVIDUAL ROW STRUCTURE:", row);
-
-    //       if (row.f && Array.isArray(row.f)) {
-    //         rowValues = row.f.map((item: any) => item.v);
-    //       } else if (Array.isArray(row)) {
-    //         rowValues = row;
-    //       } else if (typeof row === 'object' && row !== null) {
-    //         // If it's an object, check if it has the keys we need or just values
-    //         rowValues = Object.values(row);
-    //       }
-
-    //       // DEBUG LOG 3: See the extracted values before mapping
-    //       if (rowIndex === 0) console.log("EXTRACTED VALUES ARRAY:", rowValues);
-
-    //       column.forEach((col: any, colIndex: number) => {
-    //         newRow[col.name] = rowValues[colIndex] ?? null;
-    //       });
-
-    //       return newRow;
-    //     });
-
-    //     setPreviewDataList(transformedRows);
-    //   } else {
-    //     setPreviewDataList([]);
-    //   }
-    // };
-
     setIsLoading(true);
-    // BigQueryService.bigQueryPreviewAPIService(
-    //   muiColumns as any,
-    //   tableId,
-    //   dataSetId,
-    //   setIsLoading,
-    //   projectId,
-    //   pageSize,
-    //   pageIndex,
-    //   setTotalRowSize,
-    //   dataSetterWrapper
-    // );
-    // Inside PreviewDataInfo.tsx
     BigQueryService.bigQueryPreviewAPIService(
-      muiColumns,
+      serviceColumns,
       tableId,
       dataSetId,
       setIsLoading,
@@ -119,9 +113,9 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
       pageSize,
       pageIndex,
       setTotalRowSize,
-      setPreviewDataList // Back to the normal setter!
+      setPreviewDataList
     );
-  }, [pageSize, pageIndex, tableId, dataSetId, projectId, column]);
+  }, [serviceColumns, tableId, dataSetId, projectId, pageSize, pageIndex]);
 
   return (
     <Paper
@@ -138,11 +132,7 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
         columns={muiColumns}
         loading={isLoading}
         rowCount={Number(totalRowSize)}
-        getRowId={(row: any) => {
-          // If your data ever has a unique column like 'uuid', use that.
-          // Otherwise, we use the row's position in the current list.
-          return previewDataList.indexOf(row);
-        }}
+        getRowId={(row: any) => previewDataList.indexOf(row)}
         paginationMode="server"
         paginationModel={{ page: pageIndex, pageSize: pageSize }}
         onPaginationModelChange={model => {

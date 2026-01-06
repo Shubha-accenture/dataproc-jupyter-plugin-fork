@@ -21,65 +21,13 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { BIGQUERY_SERVICE_NAME, DEFAULT_PUBLIC_PROJECT_ID, PLUGIN_ID } from '../utils/const';
 import { authApi } from '../utils/utils';
 
-// interface IPreviewColumn {
-//   Header: string;
-//   accessor: string;
-// }
-
+interface IPreviewColumn {
+  Header: string;
+  accessor: string;
+}
 export class BigQueryService {
-  // static bigQueryPreviewAPIService = async (
-  //   columns: IPreviewColumn[],
-  //   tableId: string,
-  //   dataSetId: string,
-  //   setIsLoading: (value: boolean) => void,
-  //   projectId: string,
-  //   maxResults: number,
-  //   pageIndex: number,
-  //   setTotalRowSize: (value: string) => void,
-  //   setPreviewDataList: any
-  // ) => {
-  //   setIsLoading(true);
-  //   try {
-  //     const startIndex = pageIndex * maxResults;
-  //     const data: any = await requestAPI(
-  //       `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}`
-  //     );
-
-  //     if (data.error) {
-  //       Notification.emit(data.error, 'error', {
-  //         autoClose: 5000
-  //       });
-  //       setIsLoading(false);
-  //     } else if (data.totalRows == 0) {
-  //       setIsLoading(false);
-  //     } else {
-  //       let transformRowInfoList: any = [];
-  //       data.rows.forEach((rowInfo: any) => {
-  //         let transformRowInfo: any = {};
-  //         rowInfo['f'].forEach((fieldInfo: any, index: number) => {
-  //           transformRowInfo[columns[index].Header] =
-  //             typeof fieldInfo['v'] === 'object'
-  //               ? JSON.stringify(fieldInfo['v'])
-  //               : fieldInfo['v'];
-  //         });
-  //         transformRowInfoList.push(transformRowInfo);
-  //       });
-  //       setPreviewDataList(transformRowInfoList);
-  //       setIsLoading(false);
-  //       setTotalRowSize(data.totalRows);
-  //     }
-  //   } catch (reason) {
-  //     Notification.emit(
-  //       `Error in calling BigQuery Preview API : ${reason}`,
-  //       'error',
-  //       {
-  //         autoClose: 5000
-  //       }
-  //     );
-  //   }
-  // };
-static bigQueryPreviewAPIService = async (
-    columns: any[], // Changed to any to support both MUI and react-table types
+  static bigQueryPreviewAPIService = async (
+    columns: IPreviewColumn[],
     tableId: string,
     dataSetId: string,
     setIsLoading: (value: boolean) => void,
@@ -97,7 +45,9 @@ static bigQueryPreviewAPIService = async (
       );
 
       if (data.error) {
-        Notification.emit(data.error, 'error', { autoClose: 5000 });
+        Notification.emit(data.error, 'error', {
+          autoClose: 5000
+        });
         setIsLoading(false);
       } else if (data.totalRows == 0) {
         setIsLoading(false);
@@ -105,17 +55,11 @@ static bigQueryPreviewAPIService = async (
         let transformRowInfoList: any = [];
         data.rows.forEach((rowInfo: any) => {
           let transformRowInfo: any = {};
-          
           rowInfo['f'].forEach((fieldInfo: any, index: number) => {
-            // FIX: Try to get the key from 'field' (MUI), then 'Header' (react-table)
-            const columnKey = columns[index]?.field || columns[index]?.Header;
-            
-            if (columnKey) {
-              transformRowInfo[columnKey] =
-                typeof fieldInfo['v'] === 'object' && fieldInfo['v'] !== null
-                  ? JSON.stringify(fieldInfo['v'])
-                  : fieldInfo['v'];
-            }
+            transformRowInfo[columns[index].Header] =
+              typeof fieldInfo['v'] === 'object'
+                ? JSON.stringify(fieldInfo['v'])
+                : fieldInfo['v'];
           });
           transformRowInfoList.push(transformRowInfo);
         });
@@ -124,9 +68,64 @@ static bigQueryPreviewAPIService = async (
         setTotalRowSize(data.totalRows);
       }
     } catch (reason) {
-      Notification.emit(`Error in calling BigQuery Preview API : ${reason}`, 'error', { autoClose: 5000 });
+      Notification.emit(
+        `Error in calling BigQuery Preview API : ${reason}`,
+        'error',
+        {
+          autoClose: 5000
+        }
+      );
     }
   };
+// static bigQueryPreviewAPIService = async (
+//     columns: any[], // Changed to any to support both MUI and react-table types
+//     tableId: string,
+//     dataSetId: string,
+//     setIsLoading: (value: boolean) => void,
+//     projectId: string,
+//     maxResults: number,
+//     pageIndex: number,
+//     setTotalRowSize: (value: string) => void,
+//     setPreviewDataList: any
+//   ) => {
+//     setIsLoading(true);
+//     try {
+//       const startIndex = pageIndex * maxResults;
+//       const data: any = await requestAPI(
+//         `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}`
+//       );
+
+//       if (data.error) {
+//         Notification.emit(data.error, 'error', { autoClose: 5000 });
+//         setIsLoading(false);
+//       } else if (data.totalRows == 0) {
+//         setIsLoading(false);
+//       } else {
+//         let transformRowInfoList: any = [];
+//         data.rows.forEach((rowInfo: any) => {
+//           let transformRowInfo: any = {};
+          
+//           rowInfo['f'].forEach((fieldInfo: any, index: number) => {
+//             // FIX: Try to get the key from 'field' (MUI), then 'Header' (react-table)
+//             const columnKey = columns[index]?.field || columns[index]?.Header;
+            
+//             if (columnKey) {
+//               transformRowInfo[columnKey] =
+//                 typeof fieldInfo['v'] === 'object' && fieldInfo['v'] !== null
+//                   ? JSON.stringify(fieldInfo['v'])
+//                   : fieldInfo['v'];
+//             }
+//           });
+//           transformRowInfoList.push(transformRowInfo);
+//         });
+//         setPreviewDataList(transformRowInfoList);
+//         setIsLoading(false);
+//         setTotalRowSize(data.totalRows);
+//       }
+//     } catch (reason) {
+//       Notification.emit(`Error in calling BigQuery Preview API : ${reason}`, 'error', { autoClose: 5000 });
+//     }
+//   };
 
   static getBigQueryColumnDetailsAPIService = async (
     datasetId: string,
