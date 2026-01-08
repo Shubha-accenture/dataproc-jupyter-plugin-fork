@@ -32,7 +32,7 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(50);
   const [previewHeight, setPreviewHeight] = useState(window.innerHeight - 180);
-  
+  // const [filterModel, setFilterModel] = useState<any>({ items: [] });
 
   useEffect(() => {
     const handleUpdateHeight = () => setPreviewHeight(window.innerHeight - 180);
@@ -113,9 +113,18 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
       pageSize,
       pageIndex,
       setTotalRowSize,
-      setPreviewDataList
+      setPreviewDataList,
+      // filterModel
     );
-  }, [serviceColumns, tableId, dataSetId, projectId, pageSize, pageIndex]);
+  }, [
+    serviceColumns,
+    tableId,
+    dataSetId,
+    projectId,
+    pageSize,
+    pageIndex,
+    // filterModel
+  ]);
 
   return (
     <Paper
@@ -134,6 +143,11 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
         rowCount={Number(totalRowSize)}
         getRowId={(row: any) => previewDataList.indexOf(row)}
         paginationMode="server"
+        // filterMode="server" // Add this!
+        // onFilterModelChange={newModel => {
+        //   setFilterModel(newModel);
+        //   setPageIndex(0); // Reset to first page so we don't look at a non-existent page
+        // }}
         paginationModel={{ page: pageIndex, pageSize: pageSize }}
         onPaginationModelChange={model => {
           setPageIndex(model.page);
