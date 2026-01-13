@@ -214,6 +214,20 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 }) => {
   const [filters, setFilters] = useState<INLSearchFilters>(initialFilterState);
   const [currentPage, setCurrentPage] = useState(1);
+  const [datasetSearchTerm, setDatasetSearchTerm] = useState('');
+
+  // Filter the datasetList based on what the user types
+  const filteredDatasetOptions = useMemo(() => {
+    // Requirement 1: If user hasn't typed anything, don't show the list
+    if (!datasetSearchTerm.trim()) {
+      return [];
+    }
+
+    // Requirement 2: datasetList is already filtered by the Widget side (see below)
+    return datasetList.filter(name =>
+      name.toLowerCase().includes(datasetSearchTerm.toLowerCase())
+    );
+  }, [datasetList, datasetSearchTerm]);
 
   useEffect(() => {
     onFiltersChanged(filters);
@@ -421,6 +435,16 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     });
   };
 
+  const renderLoadingLabel = (label: string, isLoading: boolean) => {
+  return isLoading ? (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {label} <CircularProgress size={14} color="inherit" />
+    </div>
+  ) : (
+    label
+  );
+};
+
   const availableSubtypes = useMemo(() => {
     const options = filters.type.flatMap(t => SUBTYPE_MAPPING[t] || []);
     return Array.from(new Set(options));
@@ -536,9 +560,18 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           fullWidth
           size="small"
           style={{ marginBottom: '12px' }}
-          disabled={filters.scope.includes('Current Project')}
+          /* Matches the 'disabled' logic from CreateBatch */
+          disabled={
+            filters.scope.includes('Current Project') ||
+            (projectsList.length === 0 && searchLoading)
+          }
         >
-          <InputLabel id="projects-label">Projects</InputLabel>
+          <InputLabel id="projects-label">
+            {renderLoadingLabel(
+              'Projects',
+              searchLoading && projectsList.length === 0
+            )}
+          </InputLabel>
           <Select
             labelId="projects-label"
             multiple
@@ -547,14 +580,23 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
               handleFilterChange('projects', e.target.value as string[])
             }
             renderValue={(selected: string[]) => selected.join(', ')}
-            label="Projects"
+            label={renderLoadingLabel(
+              'Projects',
+              searchLoading && projectsList.length === 0
+            )}
           >
-            {projectsList.map(opt => (
-              <MenuItem key={opt} value={opt}>
-                <Checkbox checked={filters.projects.indexOf(opt) > -1} />
-                <ListItemText primary={opt} />
+            {projectsList.length > 0 ? (
+              projectsList.map(opt => (
+                <MenuItem key={opt} value={opt}>
+                  <Checkbox checked={filters.projects.indexOf(opt) > -1} />
+                  <ListItemText primary={opt} />
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>
+                {searchLoading ? 'Loading projects...' : 'No projects found'}
               </MenuItem>
-            ))}
+            )}
           </Select>
         </FormControl>
 
@@ -665,26 +707,55 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             onChange={e =>
               handleFilterChange('datasets', e.target.value as string[])
             }
-            renderValue={(selected: string[]) => selected.join(', ')}
+            renderValue={(selected: string[]) => (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {selected.map(value => (
+                  <Chip key={value} label={value} size="small" />
+                ))}
+              </div>
+            )}
             label="Datasets"
             MenuProps={{
-              PaperProps: {
-                style: {
-                  maxHeight: 400, // Limits height to 400px
-                  width: 300 // Limits width
-                }
-              }
+              autoFocus: false,
+              PaperProps: { style: { maxHeight: 400, width: 300 } }
             }}
           >
-            {Array.isArray(datasetList) &&
-              datasetList.map((name: any) => (
+            <li
+              style={{
+                padding: '8px 16px',
+                position: 'sticky',
+                top: 0,
+                backgroundColor: 'var(--jp-layout-color1)',
+                zIndex: 1
+              }}
+            >
+              <TextField
+                size="small"
+                autoFocus
+                placeholder="Search for dataset..."
+                fullWidth
+                value={datasetSearchTerm}
+                onChange={e => setDatasetSearchTerm(e.target.value)}
+                onKeyDown={e => e.stopPropagation()}
+              />
+            </li>
+
+            {datasetSearchTerm.trim() === '' ? (
+              <MenuItem disabled>
+                <ListItemText secondary="Type to search datasets..." />
+              </MenuItem>
+            ) : filteredDatasetOptions.length > 0 ? (
+              filteredDatasetOptions.map((name: string) => (
                 <MenuItem key={name} value={name}>
                   <Checkbox
                     checked={(filters.datasets || []).indexOf(name) > -1}
                   />
                   <ListItemText primary={name} />
                 </MenuItem>
-              ))}
+              ))
+            ) : (
+              <MenuItem disabled>No datasets found</MenuItem>
+            )}
           </Select>
         </FormControl>
       </div>
@@ -799,19 +870,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             {/* {initialQuery.trim() === '' ? 'Dataset Search' : 'Search Results'} */}
           </h2>
 
-          {searchLoading ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                color: 'var(--jp-ui-font-color2)'
-              }}
-            >
-              <CircularProgress size={16} />
-              <span>Searching...</span>
-            </div>
-          ) : showFlatResults ? (
+          {showFlatResults ? (
             <>
               {initialQuery.trim() !== '' && (
                 <p
@@ -903,6 +962,7 @@ class DataplexSearchPanelWrapper extends ReactWidget {
   public datasetList: string[] = [];
 
   private _queryUpdated = new Signal<this, string>(this);
+  currentFilters: any;
   get queryUpdated(): Signal<this, string> {
     return this._queryUpdated;
   }
@@ -1074,6 +1134,7 @@ export class DataplexSearchWidget extends Panel {
       );
     }
   }
+  private allDatasetsByProject: Record<string, string[]> = {};
 
   private async fetchDatasetsForProjects(projectIds: string[]) {
     const allDatasetsByProject: any = {};
@@ -1116,6 +1177,16 @@ export class DataplexSearchWidget extends Panel {
 
       console.log('Processed Dataset Names for Dropdown:', flatDatasetNames);
 
+      // After fetching, store them in the local map:
+      results.forEach((datasets, index) => {
+        const projectId = projectIds[index];
+        this.allDatasetsByProject[projectId] = datasets
+          .map(ds => ds.datasetReference?.datasetId || ds.id || ds.name)
+          .filter(Boolean);
+      });
+
+      this.refreshDatasetDropdown();
+
       // CRITICAL: Update the state so the React component re-renders
       this.searchWrapper.updateState(
         this.searchWrapper.initialQuery,
@@ -1132,6 +1203,37 @@ export class DataplexSearchWidget extends Panel {
     }
   }
 
+  private refreshDatasetDropdown() {
+    const currentFilters = this.searchWrapper.currentFilters;
+    const activeProjects = currentFilters?.projects || []; // Access the current filters
+    // Logic for Requirement 2:
+    let displayList: string[] = [];
+
+    // Check if any specific projects are selected in the 'Projects' dropdown
+    // const activeProjects = this.searchWrapper.currentFilters?.projects || [];
+
+    if (activeProjects.length > 0) {
+      // Only show datasets belonging to selected projects
+      activeProjects.forEach((pId: string | number) => {
+        if (this.allDatasetsByProject[pId]) {
+          displayList.push(...this.allDatasetsByProject[pId]);
+        }
+      });
+    } else {
+      // If no project selected, show all datasets from all available projects
+      displayList = Object.values(this.allDatasetsByProject).flat();
+    }
+
+    // Update the UI state with the filtered list
+    this.searchWrapper.updateState(
+      this.searchWrapper.initialQuery,
+      this.searchWrapper.searchResults,
+      false,
+      this.searchWrapper.projectsList,
+      Array.from(new Set(displayList)), // Unique values
+      this.searchWrapper.allSearchResults
+    );
+  }
 
   private processSearchResults(
     combinedRawResults: { project: string; result: any }[]
@@ -1196,17 +1298,19 @@ export class DataplexSearchWidget extends Panel {
     args: { query: string; projects: string[]; filters: INLSearchFilters }
   ) {
     const { query, filters } = args;
+
     const hasActiveFilters =
       filters.systems.length > 0 ||
       filters.projects.length > 0 ||
       filters.type.length > 0 ||
-      filters.locations.length > 0;
+      filters.locations.length > 0 ||
+      (filters.datasets && filters.datasets.length > 0);
 
     if (query.trim() === '' && !hasActiveFilters) {
-      // Reset to initial state without calling the backend
+      // Reset state if nothing is searched and no filters are active
       this.searchWrapper.updateState(
         '',
-        [], // This ensures totalResults is 0
+        [],
         false,
         this.searchWrapper.projectsList,
         this.searchWrapper.datasetList,
@@ -1214,11 +1318,8 @@ export class DataplexSearchWidget extends Panel {
       );
       return;
     }
-    const projectsToSearch =
-      filters.projects.length > 0
-        ? filters.projects
-        : this.searchWrapper.projectsList;
 
+    // 2. Set UI to loading state
     this.searchWrapper.updateState(
       query,
       [],
@@ -1229,9 +1330,26 @@ export class DataplexSearchWidget extends Panel {
     );
 
     try {
+      const projectsToSearch =
+        filters.projects.length > 0
+          ? filters.projects
+          : this.searchWrapper.projectsList;
+
+      // 3. Construct the API query
+      // If user selected specific datasets via the dropdown/chip,
+      // we can append them to the semantic search query or ensure the API handles the filter.
       let searchResult: any = null;
+
+      // We prioritize the manual query, but if empty, we search for the specific datasets selected
+      const finalQuery =
+        query.trim() !== ''
+          ? query
+          : filters.datasets.length > 0
+          ? `datasets: ${filters.datasets.join(' ')}`
+          : 'datasets';
+
       await BigQueryService.getBigQuerySemanticSearchAPIService(
-        query || 'datasets',
+        finalQuery,
         filters.systems,
         projectsToSearch,
         filters.type,
@@ -1243,6 +1361,7 @@ export class DataplexSearchWidget extends Panel {
       const flatResults = this.processSearchResults([
         { project: projectsToSearch[0], result: searchResult }
       ]);
+
       this.searchWrapper.updateState(
         query,
         flatResults,
@@ -1252,6 +1371,7 @@ export class DataplexSearchWidget extends Panel {
         searchResult ? [searchResult] : []
       );
     } catch (error) {
+      console.error('Search execution failed', error);
       this.searchWrapper.updateState(
         query,
         [],
