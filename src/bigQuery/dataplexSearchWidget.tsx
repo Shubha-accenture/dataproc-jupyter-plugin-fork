@@ -274,6 +274,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
       name: keyof INLSearchFilters;
       label: string;
       value: string;
+      originalValue: string; // Helpful if you need the full path for deletion logic
     }[] = [];
 
     const filterLabels: Record<keyof INLSearchFilters, string> = {
@@ -284,21 +285,28 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
       subtype: 'Subtype',
       locations: 'Locations',
       datasets: 'Datasets'
-      // annotations: 'Annotation'
     };
 
     (Object.keys(filters) as (keyof INLSearchFilters)[]).forEach(key => {
-      if (filters[key].length > 0) {
+      if (filters[key] && filters[key].length > 0) {
         filters[key].forEach(value => {
           // Logic: Only add the chip if it's NOT the default 'Current Organization'
           if (key === 'scope' && value === 'Current Organization') {
             return;
           }
 
+          // START: Added logic for display name variable
+          const filterValue =
+            key === 'datasets' && value.includes('/')
+              ? value.split('/').pop() || value
+              : value;
+          // END: Added logic
+
           active.push({
             name: key,
             label: filterLabels[key] || key,
-            value: value
+            value: filterValue, // This is what the user sees on the Chip
+            originalValue: value // We keep this to ensure handleClearChip still works
           });
         });
       }
@@ -436,14 +444,14 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   };
 
   const renderLoadingLabel = (label: string, isLoading: boolean) => {
-  return isLoading ? (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      {label} <CircularProgress size={14} color="inherit" />
-    </div>
-  ) : (
-    label
-  );
-};
+    return isLoading ? (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {label} <CircularProgress size={14} color="inherit" />
+      </div>
+    ) : (
+      label
+    );
+  };
 
   const availableSubtypes = useMemo(() => {
     const options = filters.type.flatMap(t => SUBTYPE_MAPPING[t] || []);
@@ -707,13 +715,13 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             onChange={e =>
               handleFilterChange('datasets', e.target.value as string[])
             }
-            renderValue={(selected: string[]) => (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                {selected.map(value => (
-                  <Chip key={value} label={value} size="small" />
-                ))}
-              </div>
-            )}
+            renderValue={(selected: string[]) =>
+              selected
+                .map(name =>
+                  name.includes('/') ? name.split('/').pop() : name
+                )
+                .join(', ')
+            }
             label="Datasets"
             MenuProps={{
               autoFocus: false,
@@ -739,20 +747,25 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
                 onKeyDown={e => e.stopPropagation()}
               />
             </li>
-
             {datasetSearchTerm.trim() === '' ? (
               <MenuItem disabled>
                 <ListItemText secondary="Type to search datasets..." />
               </MenuItem>
             ) : filteredDatasetOptions.length > 0 ? (
-              filteredDatasetOptions.map((name: string) => (
-                <MenuItem key={name} value={name}>
-                  <Checkbox
-                    checked={(filters.datasets || []).indexOf(name) > -1}
-                  />
-                  <ListItemText primary={name} />
-                </MenuItem>
-              ))
+              filteredDatasetOptions.map((name: string) => {
+                const displayName = name.includes('/')
+                  ? name.split('/').pop()
+                  : name;
+
+                return (
+                  <MenuItem key={name} value={name}>
+                    <Checkbox
+                      checked={(filters.datasets || []).indexOf(name) > -1}
+                    />
+                    <ListItemText primary={displayName} />
+                  </MenuItem>
+                );
+              })
             ) : (
               <MenuItem disabled>No datasets found</MenuItem>
             )}
@@ -834,10 +847,18 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             }}
           >
             {activeFilters.map((filter, index) => (
+              // <Chip
+              //   key={`${filter.name}-${filter.value}-${index}`}
+              //   label={`${filter.label}: ${filter.value}`}
+              //   onDelete={() => handleClearChip(filter.name, filter.value)}
+              //   variant="outlined"
+              //   size="small"
               <Chip
-                key={`${filter.name}-${filter.value}-${index}`}
-                label={`${filter.label}: ${filter.value}`}
-                onDelete={() => handleClearChip(filter.name, filter.value)}
+                key={`${filter.name}-${filter.originalValue}-${index}`}
+                label={`${filter.label}: ${filter.value}`} // Shows "Datasets: test_dataset3"
+                onDelete={() =>
+                  handleClearChip(filter.name, filter.originalValue)
+                } // Removes the full path
                 variant="outlined"
                 size="small"
                 sx={{
