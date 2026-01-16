@@ -251,7 +251,7 @@ export class BigQueryService {
     setNextPageToken?: (projectId: string, token: string | null) => void
   ) => {
     const pageToken = nextPageToken ?? '';
-    console.log("dataset service called here ")
+    console.log('dataset service called here ');
     try {
       const settings = await settingRegistry.load(PLUGIN_ID);
       const location = settings.get('bqRegion')['composite'];
@@ -557,32 +557,32 @@ export class BigQueryService {
     }
   };
 
-  static getBigQuerySearchAPIService = async (
-    searchTerm: string,
-    setSearchLoading: (value: boolean) => void,
-    setSearchResponse: any
-  ) => {
-    setSearchLoading(true);
-    try {
-      const data: any = await requestAPI(
-        `bigQuerySearch?search_string=${searchTerm}&type=(table|dataset)&system=(bigquery)`,
-        {
-          method: 'POST'
-        }
-      );
+  // static getBigQuerySearchAPIService = async (
+  //   searchTerm: string,
+  //   setSearchLoading: (value: boolean) => void,
+  //   setSearchResponse: any
+  // ) => {
+  //   setSearchLoading(true);
+  //   try {
+  //     const data: any = await requestAPI(
+  //       `bigQuerySearch?search_string=${searchTerm}&type=(table|dataset)&system=(bigquery)`,
+  //       {
+  //         method: 'POST'
+  //       }
+  //     );
 
-      console.log('bq search data @@@@@@@@@', data);
-      setSearchResponse(data);
-    } catch (reason) {
-      Notification.emit(
-        `Error in calling BigQurey Project List API : ${reason}`,
-        'error',
-        {
-          autoClose: 5000
-        }
-      );
-    }
-  };
+  //     console.log('bq search data @@@@@@@@@', data);
+  //     setSearchResponse(data);
+  //   } catch (reason) {
+  //     Notification.emit(
+  //       `Error in calling BigQurey Project List API : ${reason}`,
+  //       'error',
+  //       {
+  //         autoClose: 5000
+  //       }
+  //     );
+  //   }
+  // };
 
   static getBigQuerySemanticSearchAPIService = async (
     searchTerm: string,
@@ -590,49 +590,51 @@ export class BigQueryService {
     filterProjects: string[],
     filterTypes: string[],
     filterLocations: string[],
+    scope: boolean,
     setSearchLoading: (value: boolean) => void,
     setSearchResponse: any
   ) => {
     setSearchLoading(true);
-    console.log("semantic search service called here ")
     try {
-      let queryUrl = `bigQuerySearch?search_string=${encodeURIComponent(
-        searchTerm
-      )}`;
+      let queryParams: string[] = [];
+      const term = searchTerm ? searchTerm.trim() : '';
+      queryParams.push(`search_string=${encodeURIComponent(term)}`);
+
+      if (scope) {
+        queryParams.push(`scope=true`);
+      }
+
       if (filterSystems && filterSystems.length > 0) {
-        const systemsQuery = filterSystems.map(s => `system=${s}`).join('|');
-        queryUrl += `&${systemsQuery}`;
+        const systemsQuery = filterSystems.join('|');
+        queryParams.push(`system=${encodeURIComponent(systemsQuery)}`);
       } else {
-        queryUrl += `&system=bigquery`;
+        queryParams.push(`system=bigquery`);
       }
 
       if (filterTypes && filterTypes.length > 0) {
         const typesQuery = filterTypes.join('|');
-        queryUrl += `&type=${encodeURIComponent(typesQuery)}`;
+        queryParams.push(`type=${encodeURIComponent(typesQuery)}`);
       } else {
-        queryUrl += `&type=${encodeURIComponent('table|dataset|view')}`;
+        queryParams.push(`type=${encodeURIComponent('table|dataset|view')}`);
       }
 
       if (filterLocations && filterLocations.length > 0) {
-        const locationsQuery = filterLocations
-          .map(l => `location=${l}`)
-          .join('|');
-        queryUrl += `&${locationsQuery}`;
+        filterLocations.forEach(l =>
+          queryParams.push(`location=${encodeURIComponent(l)}`)
+        );
       }
+
       if (filterProjects && filterProjects.length > 0) {
-        const projectsQuery = filterProjects.join(',');
-        queryUrl += `&projects=${encodeURIComponent(projectsQuery)}`;
+        const projectsQuery = filterProjects.join('|');
+        queryParams.push(`projects=${encodeURIComponent(projectsQuery)}`);
       }
 
-      console.log("URL called ***",queryUrl)
-      const data: any = await requestAPI(
-        queryUrl, // Use the dynamically constructed URL
-        {
-          method: 'POST'
-        }
-      );
+      const queryUrl = `bigQuerySearch?${queryParams.join('&')}`;
 
-      console.log('bq semantic search data @@@@@@@@@', data);
+      console.log('semantic search called ***', queryUrl);
+
+      const data: any = await requestAPI(queryUrl, { method: 'POST' });
+
       setSearchResponse(data);
     } catch (reason) {
       Notification.emit(

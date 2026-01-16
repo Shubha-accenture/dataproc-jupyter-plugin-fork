@@ -249,7 +249,7 @@ class Client:
             return {"error": str(e)}
         
 
-    async def bigquery_semantic_search(self, search_string: str, type: str, system: str, projects: list):
+    async def bigquery_semantic_search(self, search_string: str, type: str, system: str, projects: list,scope: bool = False):
         """Searches for BigQuery data assets using the Dataplex API with Semantic Search enabled."""
         try:
             dataplex_url = await urls.gcp_service_url(DATAPLEX_SERVICE_NAME)
@@ -261,7 +261,6 @@ class Client:
                 "X-Goog-User-Project": self.project_id,
             }
 
-            # --- Query Construction ---
             query_parts = []
             if search_string:
                 query_parts.append(f"{search_string}")
@@ -270,13 +269,12 @@ class Client:
                 query_parts.append(f"system={system.upper()}")
             
             if type:
-                # Handle pipe-separated types like 'table|view'
                 types = type.split('|')
                 type_filters = " OR ".join([f"type={t.upper()}" for t in types])
                 query_parts.append(f"({type_filters})")
             
             if projects:
-                project_filters = " OR ".join([f"projectid={p}" for p in projects])
+                project_filters = " OR ".join([f"projectid:{p}" for p in projects])
                 query_parts.append(f"({project_filters})")
 
             full_query = " AND ".join(filter(None, query_parts))
@@ -285,12 +283,16 @@ class Client:
                 self.log.warning("No search query provided. Returning empty result.")
                 return {}
 
-            # --- Payload Construction (Always Semantic) ---
             payload = {
+                "name":'projects/dataproc-jupyter-extension-dev/locations/global',
                 "query": full_query,
                 "pageSize": 500,
                 "semanticSearch": True  # Hardcoded to True as requested
             }
+
+            if scope:
+                # If True: Restrict to "projects/<id>"
+                payload["scope"] = f"projects/{self.project_id}"
             
             has_next = True
             search_results = []

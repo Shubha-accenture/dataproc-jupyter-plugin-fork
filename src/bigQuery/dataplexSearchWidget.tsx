@@ -1351,10 +1351,10 @@ export class DataplexSearchWidget extends Panel {
     );
 
     try {
-      const projectsToSearch =
-        filters.projects.length > 0
-          ? filters.projects
-          : this.searchWrapper.projectsList;
+      // const projectsToSearch =
+      //   filters.projects.length > 0
+      //     ? filters.projects
+      //     : this.searchWrapper.projectsList;
 
       // 3. Construct the API query
       // If user selected specific datasets via the dropdown/chip,
@@ -1362,25 +1362,29 @@ export class DataplexSearchWidget extends Panel {
       let searchResult: any = null;
 
       // We prioritize the manual query, but if empty, we search for the specific datasets selected
-      const finalQuery =
-        query.trim() !== ''
-          ? query
-          : filters.datasets.length > 0
-          ? `datasets: ${filters.datasets.join(' ')}`
-          : 'datasets';
+      // const finalQuery =
+      //   query.trim() !== ''
+      //     ? query
+      //     : filters.datasets.length > 0
+      //     ? `datasets: ${filters.datasets.join(' ')}`
+      //     : 'datasets';
+
+      // If "Current Project" is in the scope list, we set this flag to true.
+      const scope = filters.scope && filters.scope.includes('Current Project');
 
       await BigQueryService.getBigQuerySemanticSearchAPIService(
-        finalQuery,
+        query,
         filters.systems,
-        projectsToSearch,
+        filters.projects,
         filters.type,
         filters.locations,
+        scope,
         val => {},
         (data: any) => (searchResult = data)
       );
 
       const flatResults = this.processSearchResults([
-        { project: projectsToSearch[0], result: searchResult }
+        { project: filters.projects[0], result: searchResult }
       ]);
 
       this.searchWrapper.updateState(
