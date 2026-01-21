@@ -185,6 +185,8 @@ const initialFilterState: INLSearchFilters = {
 interface IDataplexSearchComponentProps {
   initialQuery: string;
   searchLoading: boolean;
+  datasetsLoading: boolean;
+  resetDatasetsTrigger: number;
   results?: ISearchResult[];
   projectsList: string[];
   datasetList: string[];
@@ -204,6 +206,8 @@ const RESULTS_PER_PAGE = 50;
 const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   initialQuery,
   searchLoading,
+  datasetsLoading,
+  resetDatasetsTrigger,
   results = [],
   onQueryChanged,
   onSearchExecuted,
@@ -216,14 +220,21 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [datasetSearchTerm, setDatasetSearchTerm] = useState('');
 
+  // To reset datasets selection when trigger changes
+  useEffect(() => {
+    if (resetDatasetsTrigger > 0) {
+      setFilters(prev => ({ ...prev, datasets: [] }));
+    }
+  }, [resetDatasetsTrigger]);
+
   // Filter the datasetList based on what the user types
   const filteredDatasetOptions = useMemo(() => {
-    // Requirement 1: If user hasn't typed anything, don't show the list
+    // If user hasn't typed anything, don't show the list
     if (!datasetSearchTerm.trim()) {
       return [];
     }
 
-    // Requirement 2: datasetList is already filtered by the Widget side (see below)
+    //datasetList is already filtered by the Widget side (see below)
     return datasetList.filter(name =>
       name.toLowerCase().includes(datasetSearchTerm.toLowerCase())
     );
@@ -680,7 +691,6 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
               }
               renderValue={(selected: string[]) => selected.join(', ')}
               label="Locations"
-              // Optional: Add MenuProps to prevent the long list from overflowing the screen
               MenuProps={{
                 PaperProps: {
                   style: {
@@ -707,7 +717,9 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           size="small"
           style={{ marginBottom: '12px' }}
         >
-          <InputLabel id="datasets-label">Datasets</InputLabel>
+          <InputLabel id="datasets-label">
+            {renderLoadingLabel('Datasets', datasetsLoading)}
+          </InputLabel>
           <Select
             labelId="datasets-label"
             multiple
@@ -727,47 +739,67 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
               autoFocus: false,
               PaperProps: { style: { maxHeight: 400, width: 300 } }
             }}
+            disabled={datasetsLoading}
           >
-            <li
-              style={{
-                padding: '8px 16px',
-                position: 'sticky',
-                top: 0,
-                backgroundColor: 'var(--jp-layout-color1)',
-                zIndex: 1
-              }}
-            >
-              <TextField
-                size="small"
-                autoFocus
-                placeholder="Search for dataset..."
-                fullWidth
-                value={datasetSearchTerm}
-                onChange={e => setDatasetSearchTerm(e.target.value)}
-                onKeyDown={e => e.stopPropagation()}
-              />
-            </li>
-            {datasetSearchTerm.trim() === '' ? (
-              <MenuItem disabled>
-                <ListItemText secondary="Type to search datasets..." />
+            {datasetsLoading ? (
+              <MenuItem
+                disabled
+                style={{ justifyContent: 'center', gap: '10px' }}
+              >
+                <CircularProgress size={20} />
+                <ListItemText primary="Fetching datasets..." />
               </MenuItem>
-            ) : filteredDatasetOptions.length > 0 ? (
-              filteredDatasetOptions.map((name: string) => {
-                const displayName = name.includes('/')
-                  ? name.split('/').pop()
-                  : name;
-
-                return (
-                  <MenuItem key={name} value={name}>
-                    <Checkbox
-                      checked={(filters.datasets || []).indexOf(name) > -1}
-                    />
-                    <ListItemText primary={displayName} />
-                  </MenuItem>
-                );
-              })
             ) : (
-              <MenuItem disabled>No datasets found</MenuItem>
+              [
+                <li
+                  key="search-field"
+                  style={{
+                    padding: '8px 16px',
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: 'var(--jp-layout-color1)',
+                    zIndex: 1
+                  }}
+                >
+                  <TextField
+                    size="small"
+                    autoFocus
+                    placeholder="Search for dataset..."
+                    fullWidth
+                    value={datasetSearchTerm}
+                    onChange={e => setDatasetSearchTerm(e.target.value)}
+                    onKeyDown={e => e.stopPropagation()}
+                  />
+                </li>,
+                ...(datasetSearchTerm.trim() === ''
+                  ? [
+                      <MenuItem key="placeholder" disabled>
+                        <ListItemText secondary="Type to search datasets..." />
+                      </MenuItem>
+                    ]
+                  : filteredDatasetOptions.length > 0
+                  ? filteredDatasetOptions.map((name: string) => {
+                      const displayName = name.includes('/')
+                        ? name.split('/').pop()
+                        : name;
+
+                      return (
+                        <MenuItem key={name} value={name}>
+                          <Checkbox
+                            checked={
+                              (filters.datasets || []).indexOf(name) > -1
+                            }
+                          />
+                          <ListItemText primary={displayName} />
+                        </MenuItem>
+                      );
+                    })
+                  : [
+                      <MenuItem key="no-results" disabled>
+                        No datasets found
+                      </MenuItem>
+                    ])
+              ]
             )}
           </Select>
         </FormControl>
@@ -978,6 +1010,10 @@ class DataplexSearchPanelWrapper extends ReactWidget {
   public initialQuery: string = '';
   public searchResults: ISearchResult[] = [];
   public searchLoading: boolean = false;
+
+  public datasetsLoading: boolean = false;
+  public resetDatasetsTrigger: number = 0;
+
   public projectsList: string[] = [];
   public allSearchResults: any[] = [];
   public datasetList: string[] = [];
@@ -1017,7 +1053,9 @@ class DataplexSearchPanelWrapper extends ReactWidget {
     loading: boolean,
     projects: string[],
     datasets: string[],
-    allResults: any[]
+    allResults: any[],
+    datasetsLoading?: boolean,
+    resetTrigger?: number
   ): void {
     this.initialQuery = query;
     this.searchResults = results;
@@ -1025,6 +1063,10 @@ class DataplexSearchPanelWrapper extends ReactWidget {
     if (projects.length > 0) this.projectsList = projects;
     if (datasets.length > 0) this.datasetList = datasets;
     this.allSearchResults = allResults;
+
+    if (datasetsLoading !== undefined) this.datasetsLoading = datasetsLoading;
+    if (resetTrigger !== undefined) this.resetDatasetsTrigger = resetTrigger;
+
     this.update();
   }
 
@@ -1034,6 +1076,8 @@ class DataplexSearchPanelWrapper extends ReactWidget {
         initialQuery={this.initialQuery}
         results={this.searchResults}
         searchLoading={this.searchLoading}
+        datasetsLoading={this.datasetsLoading}
+        resetDatasetsTrigger={this.resetDatasetsTrigger}
         projectsList={this.projectsList}
         datasetList={this.datasetList}
         onQueryChanged={q => this._queryUpdated.emit(q)}
@@ -1058,6 +1102,7 @@ export class DataplexSearchWidget extends Panel {
   themeManager: IThemeManager;
   private searchWrapper: DataplexSearchPanelWrapper;
   private openedWidgets: Record<string, boolean> = {};
+  private prevSelectedProjects: string[] = [];
 
   constructor(
     app: JupyterLab,
@@ -1082,8 +1127,47 @@ export class DataplexSearchWidget extends Panel {
     this.searchWrapper.queryUpdated.connect(this._onQueryUpdated, this);
     this.searchWrapper.searchExecuted.connect(this._onSearchExecuted, this);
     this.searchWrapper.resultClicked.connect(this._onResultClicked, this);
+
+    this.searchWrapper.filtersChanged.connect(this._onFiltersChanged, this);
+
     this.searchWrapper.update();
     this.fetchProjectsList();
+  }
+
+  private async _onFiltersChanged(
+    sender: DataplexSearchPanelWrapper,
+    filters: INLSearchFilters
+  ) {
+    this.searchWrapper.currentFilters = filters;
+
+    const currentProjects = filters.projects || [];
+    const prevProjects = this.prevSelectedProjects;
+
+    const projectsChanged =
+      currentProjects.length !== prevProjects.length ||
+      !currentProjects.every(p => prevProjects.includes(p));
+
+    if (projectsChanged) {
+      this.prevSelectedProjects = currentProjects;
+
+
+      this.searchWrapper.updateState(
+        this.searchWrapper.initialQuery,
+        this.searchWrapper.searchResults,
+        this.searchWrapper.searchLoading,
+        this.searchWrapper.projectsList,
+        [],
+        this.searchWrapper.allSearchResults,
+        true, // datasetsLoading = true
+        Date.now() // resetDatasetsTrigger = new timestamp
+      );
+      const projectsToFetch =
+        currentProjects.length > 0
+          ? currentProjects
+          : this.searchWrapper.projectsList;
+
+      await this.fetchDatasetsForProjects(projectsToFetch);
+    }
   }
 
   private _onQueryUpdated(sender: DataplexSearchPanelWrapper, query: string) {
@@ -1157,9 +1241,8 @@ export class DataplexSearchWidget extends Panel {
   }
   private allDatasetsByProject: Record<string, string[]> = {};
 
-  private async fetchDatasetsForProjects(projectIds: string[]) {
-    const allDatasetsByProject: any = {};
 
+  private async fetchDatasetsForProjects(projectIds: string[]) {
     try {
       const datasetPromises = projectIds.map(async projectId => {
         let projectDatasets: any[] = [];
@@ -1183,43 +1266,23 @@ export class DataplexSearchWidget extends Panel {
           () => {} // handleNextPageTokens
         );
 
-        allDatasetsByProject[projectId] = projectDatasets;
+        const simpleDatasetList = projectDatasets
+          .map(ds => ds.datasetReference?.datasetId || ds.id || ds.name)
+          .filter(Boolean);
+
+        this.allDatasetsByProject[projectId] = simpleDatasetList;
         return projectDatasets;
       });
 
-      const results = await Promise.all(datasetPromises);
-
-      // Flatten the results: Extract just the dataset names/IDs for the dropdown
-      // Based on BigQuery API, this is usually .datasetReference.datasetId
-      const flatDatasetNames = results
-        .flat()
-        .map(ds => ds.datasetReference?.datasetId || ds.id || ds.name)
-        .filter(Boolean);
-
-      console.log('Processed Dataset Names for Dropdown:', flatDatasetNames);
-
-      // After fetching, store them in the local map:
-      results.forEach((datasets, index) => {
-        const projectId = projectIds[index];
-        this.allDatasetsByProject[projectId] = datasets
-          .map(ds => ds.datasetReference?.datasetId || ds.id || ds.name)
-          .filter(Boolean);
-      });
+      await Promise.all(datasetPromises);
 
       this.refreshDatasetDropdown();
 
-      // CRITICAL: Update the state so the React component re-renders
-      this.searchWrapper.updateState(
-        this.searchWrapper.initialQuery,
-        this.searchWrapper.searchResults,
-        false,
-        this.searchWrapper.projectsList,
-        flatDatasetNames, // <--- Pass the new list here
-        this.searchWrapper.allSearchResults
-      );
+      this.searchWrapper.datasetsLoading = false;
+      this.searchWrapper.update();
     } catch (error) {
       console.error('Error fetching datasets for projects:', error);
-      this.searchWrapper.searchLoading = false;
+      this.searchWrapper.datasetsLoading = false;
       this.searchWrapper.update();
     }
   }
