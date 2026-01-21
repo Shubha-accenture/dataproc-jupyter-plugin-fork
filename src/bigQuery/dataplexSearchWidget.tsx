@@ -1241,36 +1241,52 @@ export class DataplexSearchWidget extends Panel {
   }
   private allDatasetsByProject: Record<string, string[]> = {};
 
-
-  private async fetchDatasetsForProjects(projectIds: string[]) {
+private async fetchDatasetsForProjects(projectIds: string[]) {
     try {
       const datasetPromises = projectIds.map(async projectId => {
         let projectDatasets: any[] = [];
-
-        // Create a callback to capture the datasets for this specific project
         const handleFinalDatasetList = (finalDatasets: any[]) => {
           projectDatasets = finalDatasets;
         };
 
         await BigQueryService.getBigQueryDatasetsAPIServiceNew(
           this.settingRegistry,
-          () => {}, // setDatabaseNames
-          () => {}, // setDataSetResponse
+          () => {}, 
+          () => {}, 
           projectId,
-          () => {}, // setIsIconLoading
-          () => {}, // setIsLoading
-          () => {}, // setIsLoadMoreLoading
+          () => {}, 
+          () => {}, 
+          () => {}, 
           [],
-          handleFinalDatasetList, // <--- This will capture the data
+          handleFinalDatasetList,
           undefined,
-          () => {} // handleNextPageTokens
+          () => {} 
         );
 
-        const simpleDatasetList = projectDatasets
-          .map(ds => ds.datasetReference?.datasetId || ds.id || ds.name)
-          .filter(Boolean);
+        // Construct the "Full Name" (Project/Dataset) here
+      const fullDatasetNames = projectDatasets
+          .map(ds => {
+            //Preferred: Get ID directly from reference
+            let shortId = ds.datasetReference?.datasetId;
 
-        this.allDatasetsByProject[projectId] = simpleDatasetList;
+            // Parse 'name' (projects/my-project/datasets/my_dataset)
+            if (!shortId && ds.name) {
+              const parts = ds.name.split('/');
+              shortId = parts[parts.length - 1]; // Always take the last part
+            }
+
+            // Parse 'id' (my-project:my_dataset)
+            if (!shortId && ds.id) {
+               shortId = ds.id.split(':').pop();
+            }
+
+            // Ensure we strictly return "project/datasetId"
+            return shortId ? `${projectId}/${shortId}` : null;
+          })
+          .filter(Boolean) as string[];
+
+        // Store the full names in our map
+        this.allDatasetsByProject[projectId] = fullDatasetNames;
         return projectDatasets;
       });
 
@@ -1278,8 +1294,10 @@ export class DataplexSearchWidget extends Panel {
 
       this.refreshDatasetDropdown();
 
+      // Turn off the loader
       this.searchWrapper.datasetsLoading = false;
       this.searchWrapper.update();
+      
     } catch (error) {
       console.error('Error fetching datasets for projects:', error);
       this.searchWrapper.datasetsLoading = false;
@@ -1290,7 +1308,6 @@ export class DataplexSearchWidget extends Panel {
   private refreshDatasetDropdown() {
     const currentFilters = this.searchWrapper.currentFilters;
     const activeProjects = currentFilters?.projects || []; // Access the current filters
-    // Logic for Requirement 2:
     let displayList: string[] = [];
 
     // Check if any specific projects are selected in the 'Projects' dropdown
@@ -1377,11 +1394,34 @@ export class DataplexSearchWidget extends Panel {
     return flatResults;
   }
 
-  private async _onSearchExecuted(
+ private async _onSearchExecuted(
     sender: DataplexSearchPanelWrapper,
     args: { query: string; projects: string[]; filters: INLSearchFilters }
   ) {
     const { query, filters } = args;
+    let finalQuery = query;
+
+    if (filters.datasets && filters.datasets.length > 0) {
+      const location = filters.locations.length > 0 ? filters.locations[0] : 'us';
+
+      const datasetPaths = filters.datasets.map(dsString => {
+        const parts = dsString.split('/');
+        if (parts.length >= 2) {
+          const project = parts[0];
+          const dataset = parts[1];
+          return `projects/${project}/locations/${location}/entryGroups/@bigquery/entries/bigquery.googleapis.com/projects/${project}/datasets/${dataset}`;
+        }
+        return null;
+      }).filter(Boolean);
+
+      if (datasetPaths.length > 0) {
+        const formattedQuery = `(parent=(${datasetPaths.join('|')}))`;
+        console.log('Formed Dataset Query:', formattedQuery);
+
+        // If user typed text, append the dataset filter. Otherwise use just the filter.
+        finalQuery = query.trim() !== '' ? `${query} ${formattedQuery}` : formattedQuery;
+      }
+    }
 
     const hasActiveFilters =
       filters.systems.length > 0 ||
@@ -1390,8 +1430,7 @@ export class DataplexSearchWidget extends Panel {
       filters.locations.length > 0 ||
       (filters.datasets && filters.datasets.length > 0);
 
-    if (query.trim() === '' && !hasActiveFilters) {
-      // Reset state if nothing is searched and no filters are active
+    if (finalQuery.trim() === '' && !hasActiveFilters) {
       this.searchWrapper.updateState(
         '',
         [],
@@ -1403,9 +1442,8 @@ export class DataplexSearchWidget extends Panel {
       return;
     }
 
-    // 2. Set UI to loading state
     this.searchWrapper.updateState(
-      query,
+      query, // Keep the UI showing the "original" query string user typed
       [],
       true,
       this.searchWrapper.projectsList,
@@ -1414,29 +1452,11 @@ export class DataplexSearchWidget extends Panel {
     );
 
     try {
-      // const projectsToSearch =
-      //   filters.projects.length > 0
-      //     ? filters.projects
-      //     : this.searchWrapper.projectsList;
-
-      // 3. Construct the API query
-      // If user selected specific datasets via the dropdown/chip,
-      // we can append them to the semantic search query or ensure the API handles the filter.
       let searchResult: any = null;
-
-      // We prioritize the manual query, but if empty, we search for the specific datasets selected
-      // const finalQuery =
-      //   query.trim() !== ''
-      //     ? query
-      //     : filters.datasets.length > 0
-      //     ? `datasets: ${filters.datasets.join(' ')}`
-      //     : 'datasets';
-
-      // If "Current Project" is in the scope list, we set this flag to true.
       const scope = filters.scope && filters.scope.includes('Current Project');
 
       await BigQueryService.getBigQuerySemanticSearchAPIService(
-        query,
+        finalQuery,
         filters.systems,
         filters.projects,
         filters.type,
