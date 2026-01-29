@@ -34,59 +34,24 @@ import {
   TextField,
   IconButton,
   CircularProgress,
-  Menu,
   Checkbox,
   ListItemText,
   Chip
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { LabIcon } from '@jupyterlab/ui-components';
-import { v4 as uuidv4 } from 'uuid';
-import { auto } from '@popperjs/core';
-import { Tree, NodeRendererProps, NodeApi } from 'react-arborist';
 
-import bigQueryProjectIcon from '../../style/icons/bigquery_project_icon.svg';
 import tableIcon from '../../style/icons/table_icon.svg';
 import columnsIcon from '../../style/icons/columns_icon.svg';
-import databaseWidgetIcon from '../../style/icons/database_widget_icon.svg';
 import datasetsIcon from '../../style/icons/datasets_icon.svg';
-import searchIcon from '../../style/icons/search_icon_dark.svg';
-import rightArrowIcon from '../../style/icons/right_arrow_icon.svg';
-import downArrowIcon from '../../style/icons/down_arrow_icon.svg';
-import datasetExplorerIcon from '../../style/icons/dataset_explorer_icon.svg';
+
 import { BigQueryService } from './bigQueryService';
-import { TitleComponent } from '../controls/SidePanelTitleWidget';
-import { DataprocWidget } from '../controls/DataprocWidget';
-import { checkConfig, handleDebounce } from '../utils/utils';
-import LoginErrorComponent from '../utils/loginErrorComponent';
-import { BIGQUERY_API_URL } from '../utils/const';
 import { BigQueryDatasetWrapper } from './bigQueryDatasetInfoWrapper';
 import { BigQueryTableWrapper } from './bigQueryTableInfoWrapper';
-// import { BigQueryRegionDropdown } from '../controls/BigQueryRegionDropdown';
 
 const iconDatasets = new LabIcon({
   name: 'launcher:datasets-icon',
   svgstr: datasetsIcon
-});
-const iconDatabaseWidget = new LabIcon({
-  name: 'launcher:databse-widget-icon',
-  svgstr: databaseWidgetIcon
-});
-const iconDatasetExplorer = new LabIcon({
-  name: 'launcher:dataset-explorer-icon',
-  svgstr: datasetExplorerIcon
-});
-const iconRightArrow = new LabIcon({
-  name: 'launcher:right-arrow-icon',
-  svgstr: rightArrowIcon
-});
-const iconDownArrow = new LabIcon({
-  name: 'launcher:down-arrow-icon',
-  svgstr: downArrowIcon
-});
-const iconBigQueryProject = new LabIcon({
-  name: 'launcher:bigquery-project-icon',
-  svgstr: bigQueryProjectIcon
 });
 const iconTable = new LabIcon({
   name: 'launcher:table-icon',
@@ -96,18 +61,14 @@ const iconColumns = new LabIcon({
   name: 'launcher:columns-icon',
   svgstr: columnsIcon
 });
-const iconSearch = new LabIcon({
-  name: 'launcher:search-icon',
-  svgstr: searchIcon
-});
 
-const SUBTYPE_MAPPING: Record<string, string[]> = {
+const subtypeMapping: Record<string, string[]> = {
   Dataset: ['Default', 'Linked'],
   Table: ['Biglake table', 'Biglake object table', 'External Table', 'Table'],
   View: ['View', 'Materialized view', 'Authorized view']
 };
 
-export const DATAPLEX_LOCATIONS = [
+export const dataplexLocations = [
   'africa-south1',
   'asia-east1',
   'asia-east2',
@@ -151,6 +112,7 @@ export const DATAPLEX_LOCATIONS = [
   'us-west3',
   'us-west4'
 ];
+
 export interface INLSearchFilters {
   scope: string[];
   systems: string[];
@@ -159,7 +121,6 @@ export interface INLSearchFilters {
   subtype: string[];
   locations: string[];
   datasets: string[];
-  // annotations: string[]; //check to remove
 }
 
 export interface ISearchResult {
@@ -168,7 +129,10 @@ export interface ISearchResult {
   label?: string;
   system?: string;
   location?: string;
-  assetType?: string; //check to remove
+  assetType?: string;
+  projectId?: string;
+  datasetId?: string;
+  tableId?: string | null;
 }
 
 const initialFilterState: INLSearchFilters = {
@@ -179,7 +143,6 @@ const initialFilterState: INLSearchFilters = {
   subtype: [],
   locations: [],
   datasets: []
-  // annotations: []
 };
 
 interface IDataplexSearchComponentProps {
@@ -229,12 +192,9 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 
   // Filter the datasetList based on what the user types
   const filteredDatasetOptions = useMemo(() => {
-    // If user hasn't typed anything, don't show the list
     if (!datasetSearchTerm.trim()) {
       return [];
     }
-
-    //datasetList is already filtered by the Widget side (see below)
     return datasetList.filter(name =>
       name.toLowerCase().includes(datasetSearchTerm.toLowerCase())
     );
@@ -253,14 +213,10 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilterState);
-
-    // If query is empty, just reset the UI locally instead of hitting the backend
     if (initialQuery.trim() === '') {
       onQueryChanged('');
-      // Manually trigger a "reset" state instead of a search
       onSearchExecuted('', [], [], initialFilterState);
     } else {
-      // If there IS a query, re-run that query with no filters
       onSearchExecuted(
         initialQuery.trim(),
         initialFilterState.projects,
@@ -285,7 +241,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
       name: keyof INLSearchFilters;
       label: string;
       value: string;
-      originalValue: string; // Helpful if you need the full path for deletion logic
+      originalValue: string;
     }[] = [];
 
     const filterLabels: Record<keyof INLSearchFilters, string> = {
@@ -301,23 +257,19 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     (Object.keys(filters) as (keyof INLSearchFilters)[]).forEach(key => {
       if (filters[key] && filters[key].length > 0) {
         filters[key].forEach(value => {
-          // Logic: Only add the chip if it's NOT the default 'Current Organization'
           if (key === 'scope' && value === 'Current Organization') {
             return;
           }
-
-          // START: Added logic for display name variable
           const filterValue =
             key === 'datasets' && value.includes('/')
               ? value.split('/').pop() || value
               : value;
-          // END: Added logic
 
           active.push({
             name: key,
             label: filterLabels[key] || key,
-            value: filterValue, // This is what the user sees on the Chip
-            originalValue: value // We keep this to ensure handleClearChip still works
+            value: filterValue,
+            originalValue: value
           });
         });
       }
@@ -435,15 +387,9 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
     </li>
   );
 
-  // const handleLocationUpdate = (newRegion: string) => {
-  //   handleFilterChange('locations', newRegion ? [newRegion] : []);
-  // };
-
   const handleTypeChange = (selectedTypes: string[]) => {
     setFilters(prev => {
-      const validSubtypes = selectedTypes.flatMap(
-        t => SUBTYPE_MAPPING[t] || []
-      );
+      const validSubtypes = selectedTypes.flatMap(t => subtypeMapping[t] || []);
       const newSubtype = prev.subtype.filter(s => validSubtypes.includes(s));
 
       return {
@@ -465,7 +411,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   };
 
   const availableSubtypes = useMemo(() => {
-    const options = filters.type.flatMap(t => SUBTYPE_MAPPING[t] || []);
+    const options = filters.type.flatMap(t => subtypeMapping[t] || []);
     return Array.from(new Set(options));
   }, [filters.type]);
 
@@ -579,7 +525,6 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
           fullWidth
           size="small"
           style={{ marginBottom: '12px' }}
-          /* Matches the 'disabled' logic from CreateBatch */
           disabled={
             filters.scope.includes('Current Project') ||
             (projectsList.length === 0 && searchLoading)
@@ -699,7 +644,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
                 }
               }}
             >
-              {DATAPLEX_LOCATIONS.map(opt => (
+              {dataplexLocations.map(opt => (
                 <MenuItem key={opt} value={opt}>
                   <Checkbox
                     checked={filters.locations.indexOf(opt) > -1}
@@ -879,18 +824,12 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
             }}
           >
             {activeFilters.map((filter, index) => (
-              // <Chip
-              //   key={`${filter.name}-${filter.value}-${index}`}
-              //   label={`${filter.label}: ${filter.value}`}
-              //   onDelete={() => handleClearChip(filter.name, filter.value)}
-              //   variant="outlined"
-              //   size="small"
               <Chip
                 key={`${filter.name}-${filter.originalValue}-${index}`}
-                label={`${filter.label}: ${filter.value}`} // Shows "Datasets: test_dataset3"
+                label={`${filter.label}: ${filter.value}`}
                 onDelete={() =>
                   handleClearChip(filter.name, filter.originalValue)
-                } // Removes the full path
+                }
                 variant="outlined"
                 size="small"
                 sx={{
@@ -919,9 +858,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
               margin: '0 0 16px 0',
               color: 'var(--jp-ui-font-color0)'
             }}
-          >
-            {/* {initialQuery.trim() === '' ? 'Dataset Search' : 'Search Results'} */}
-          </h2>
+          ></h2>
 
           {showFlatResults ? (
             <>
@@ -993,7 +930,8 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
                 </>
               ) : (
                 <p style={{ color: 'var(--jp-ui-font-color2)' }}>
-                  {initialQuery.trim() === ''
+                  {/* CHANGED: Check if query is empty AND no filters are active */}
+                  {initialQuery.trim() === '' && activeFilters.length === 0
                     ? 'Enter a query to find Dataplex assets.'
                     : 'No results found.'}
                 </p>
@@ -1006,7 +944,7 @@ const DataplexSearchComponent: React.FC<IDataplexSearchComponentProps> = ({
   );
 };
 
-class DataplexSearchPanelWrapper extends ReactWidget {
+export class DataplexSearchPanelWrapper extends ReactWidget {
   public initialQuery: string = '';
   public searchResults: ISearchResult[] = [];
   public searchLoading: boolean = false;
@@ -1125,8 +1063,8 @@ export class DataplexSearchWidget extends Panel {
     this.searchWrapper.node.style.height = '100%';
     this.searchWrapper.node.style.width = '100%';
     this.searchWrapper.queryUpdated.connect(this._onQueryUpdated, this);
-    this.searchWrapper.searchExecuted.connect(this._onSearchExecuted, this);
-    this.searchWrapper.resultClicked.connect(this._onResultClicked, this);
+    this.searchWrapper.searchExecuted.connect(this.onSearchExecuted, this);
+    this.searchWrapper.resultClicked.connect(this.onResultClicked, this);
 
     this.searchWrapper.filtersChanged.connect(this._onFiltersChanged, this);
 
@@ -1149,7 +1087,6 @@ export class DataplexSearchWidget extends Panel {
 
     if (projectsChanged) {
       this.prevSelectedProjects = currentProjects;
-
 
       this.searchWrapper.updateState(
         this.searchWrapper.initialQuery,
@@ -1186,17 +1123,6 @@ export class DataplexSearchWidget extends Panel {
     );
     try {
       let projectNames: string[] = [];
-      // const setProjectNameInfo = (data: string[]) => {
-      //   projectNames = data;
-      // };
-      // const setIsLoading = (value: boolean) => {
-      //   this.searchWrapper.searchLoading = value;
-      // };
-      // const setApiError = (value: boolean) => {
-      //   console.error('API Error in fetching projects:', value);
-      // };
-
-      // const setProjectName = (name: string) => {};
       await BigQueryService.getBigQueryProjectsListAPIService(
         (data: string[]) => (projectNames = data),
         val => (this.searchWrapper.searchLoading = val),
@@ -1211,21 +1137,8 @@ export class DataplexSearchWidget extends Panel {
         [],
         []
       );
-      console.log('DataplexSearch: BigQuery Projects List:', projectNames);
-
-      // this.searchWrapper.updateState(
-      //   this.searchWrapper.initialQuery,
-      //   this.searchWrapper.searchResults,
-      //   false, // Set loading to false
-      //   projectNames,
-      //   this.searchWrapper.allSearchResults
-      // );
 
       if (projectNames.length > 0) {
-        // const initialFilters =
-        //   this.searchWrapper.initialQuery.trim() === ''
-        //     ? initialFilterState
-        //     : undefined;
         await this.fetchDatasetsForProjects(projectNames);
       }
     } catch (e) {
@@ -1241,7 +1154,7 @@ export class DataplexSearchWidget extends Panel {
   }
   private allDatasetsByProject: Record<string, string[]> = {};
 
-private async fetchDatasetsForProjects(projectIds: string[]) {
+  private async fetchDatasetsForProjects(projectIds: string[]) {
     try {
       const datasetPromises = projectIds.map(async projectId => {
         let projectDatasets: any[] = [];
@@ -1251,41 +1164,35 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
 
         await BigQueryService.getBigQueryDatasetsAPIServiceNew(
           this.settingRegistry,
-          () => {}, 
-          () => {}, 
+          () => {},
+          () => {},
           projectId,
-          () => {}, 
-          () => {}, 
-          () => {}, 
+          () => {},
+          () => {},
+          () => {},
           [],
           handleFinalDatasetList,
           undefined,
-          () => {} 
+          () => {}
         );
 
-        // Construct the "Full Name" (Project/Dataset) here
-      const fullDatasetNames = projectDatasets
+        const fullDatasetNames = projectDatasets
           .map(ds => {
-            //Preferred: Get ID directly from reference
             let shortId = ds.datasetReference?.datasetId;
 
-            // Parse 'name' (projects/my-project/datasets/my_dataset)
             if (!shortId && ds.name) {
               const parts = ds.name.split('/');
-              shortId = parts[parts.length - 1]; // Always take the last part
+              shortId = parts[parts.length - 1];
             }
 
-            // Parse 'id' (my-project:my_dataset)
             if (!shortId && ds.id) {
-               shortId = ds.id.split(':').pop();
+              shortId = ds.id.split(':').pop();
             }
 
-            // Ensure we strictly return "project/datasetId"
             return shortId ? `${projectId}/${shortId}` : null;
           })
           .filter(Boolean) as string[];
 
-        // Store the full names in our map
         this.allDatasetsByProject[projectId] = fullDatasetNames;
         return projectDatasets;
       });
@@ -1294,10 +1201,8 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
 
       this.refreshDatasetDropdown();
 
-      // Turn off the loader
       this.searchWrapper.datasetsLoading = false;
       this.searchWrapper.update();
-      
     } catch (error) {
       console.error('Error fetching datasets for projects:', error);
       this.searchWrapper.datasetsLoading = false;
@@ -1307,31 +1212,25 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
 
   private refreshDatasetDropdown() {
     const currentFilters = this.searchWrapper.currentFilters;
-    const activeProjects = currentFilters?.projects || []; // Access the current filters
+    const activeProjects = currentFilters?.projects || [];
     let displayList: string[] = [];
 
-    // Check if any specific projects are selected in the 'Projects' dropdown
-    // const activeProjects = this.searchWrapper.currentFilters?.projects || [];
-
     if (activeProjects.length > 0) {
-      // Only show datasets belonging to selected projects
       activeProjects.forEach((pId: string | number) => {
         if (this.allDatasetsByProject[pId]) {
           displayList.push(...this.allDatasetsByProject[pId]);
         }
       });
     } else {
-      // If no project selected, show all datasets from all available projects
       displayList = Object.values(this.allDatasetsByProject).flat();
     }
 
-    // Update the UI state with the filtered list
     this.searchWrapper.updateState(
       this.searchWrapper.initialQuery,
       this.searchWrapper.searchResults,
       false,
       this.searchWrapper.projectsList,
-      Array.from(new Set(displayList)), // Unique values
+      Array.from(new Set(displayList)),
       this.searchWrapper.allSearchResults
     );
   }
@@ -1345,15 +1244,28 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
       results.forEach((searchData: any) => {
         const entry = searchData.dataplexEntry;
         if (entry && entry.fullyQualifiedName) {
-          const fqnParts = entry.fullyQualifiedName.split(':');
-          const tableParts = fqnParts.length > 1 ? fqnParts[1].split('.') : [];
-          if (tableParts.length < 2) return;
+          const cleanFqn = entry.fullyQualifiedName.replace(':', '.');
+          const parts = cleanFqn.split('.');
 
-          const projectId = tableParts[0];
-          const datasetId = tableParts[1];
-          const tableId = tableParts.length > 2 ? tableParts[2] : null;
+          let projectId: string | undefined;
+          let datasetId: string | undefined;
+          let tableId: string | null = null;
 
-          // Extract the ID from the end of the entryType URI
+          // If standard "project.dataset.table" or "project.dataset"
+          if (parts.length >= 2) {
+            // If part[0] is 'bigquery' or 'dataplex', shift.
+            const startIdx =
+              parts[0] === 'bigquery' || parts[0] === 'dataplex' ? 1 : 0;
+
+            if (parts.length > startIdx + 1) {
+              projectId = parts[startIdx];
+              datasetId = parts[startIdx + 1];
+              if (parts.length > startIdx + 2) {
+                tableId = parts[startIdx + 2];
+              }
+            }
+          }
+
           const entryTypeId = entry.entryType?.split('/').pop() || '';
 
           let label:
@@ -1377,7 +1289,7 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
           }
 
           flatResults.push({
-            name: entry.displayName || tableId || datasetId,
+            name: entry.displayName || tableId || datasetId || 'Unknown',
             description:
               entry.description ||
               (tableId
@@ -1386,7 +1298,10 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
             label: label,
             system: entry.system,
             location: entry.location,
-            assetType: entry.entryType
+            assetType: entry.entryType,
+            projectId,
+            datasetId,
+            tableId
           });
         }
       });
@@ -1394,56 +1309,122 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
     return flatResults;
   }
 
- private async _onSearchExecuted(
+  private async onSearchExecuted(
     sender: DataplexSearchPanelWrapper,
     args: { query: string; projects: string[]; filters: INLSearchFilters }
   ) {
     const { query, filters } = args;
-    let finalQuery = query;
+    let finalQueryParts: string[] = [];
 
-    if (filters.datasets && filters.datasets.length > 0) {
-      const location = filters.locations.length > 0 ? filters.locations[0] : 'us';
+    // 1. Handle User Text Query
+    if (query.trim() !== '') {
+      finalQueryParts.push(query.trim());
+    }
 
-      const datasetPaths = filters.datasets.map(dsString => {
-        const parts = dsString.split('/');
-        if (parts.length >= 2) {
-          const project = parts[0];
-          const dataset = parts[1];
-          return `projects/${project}/locations/${location}/entryGroups/@bigquery/entries/bigquery.googleapis.com/projects/${project}/datasets/${dataset}`;
+    // 2. Handle Logic ONLY if Subtypes are present
+    // We only form the manual 'type' query string if the user picked a subtype.
+    if (filters.subtype && filters.subtype.length > 0) {
+      const subtypeConditions: string[] = [];
+
+      // --- TABLE SUBTYPES ---
+      if (filters.type.includes('Table')) {
+        const tableSubParts: string[] = [];
+        if (filters.subtype.includes('External Table'))
+          tableSubParts.push(
+            'dataplex-types.global.bigquery-table.type=EXTERNAL_TABLE'
+          );
+        if (filters.subtype.includes('Biglake table'))
+          tableSubParts.push(
+            'dataplex-types.global.bigquery-table.type=BIGLAKE_TABLE'
+          );
+        if (filters.subtype.includes('Biglake object table'))
+          tableSubParts.push(
+            'dataplex-types.global.bigquery-table.type=BIGLAKE_OBJECT_TABLE'
+          );
+        if (filters.subtype.includes('Table'))
+          tableSubParts.push('dataplex-types.global.bigquery-table.type=TABLE');
+
+        if (tableSubParts.length > 0) {
+          subtypeConditions.push(
+            `(type=projects/dataplex-types/locations/global/entryTypes/bigquery-table AND (${tableSubParts.join(
+              ' OR '
+            )}))`
+          );
         }
-        return null;
-      }).filter(Boolean);
+      }
 
-      if (datasetPaths.length > 0) {
-        const formattedQuery = `(parent=(${datasetPaths.join('|')}))`;
-        console.log('Formed Dataset Query:', formattedQuery);
+      // --- VIEW SUBTYPES ---
+      if (filters.type.includes('View')) {
+        const viewSubParts: string[] = [];
+        if (filters.subtype.includes('Materialized view'))
+          viewSubParts.push(
+            'dataplex-types.global.bigquery-view.type=MATERIALIZED_VIEW'
+          );
+        if (filters.subtype.includes('Authorized view'))
+          viewSubParts.push(
+            'dataplex-types.global.bigquery-view.type=AUTHORIZED_VIEW'
+          );
+        if (filters.subtype.includes('View'))
+          viewSubParts.push('dataplex-types.global.bigquery-view.type=VIEW');
 
-        // If user typed text, append the dataset filter. Otherwise use just the filter.
-        finalQuery = query.trim() !== '' ? `${query} ${formattedQuery}` : formattedQuery;
+        if (viewSubParts.length > 0) {
+          subtypeConditions.push(
+            `(type=projects/dataplex-types/locations/global/entryTypes/bigquery-view AND (${viewSubParts.join(
+              ' OR '
+            )}))`
+          );
+        }
+      }
+
+      // --- DATASET SUBTYPES ---
+      if (filters.type.includes('Dataset')) {
+        const dsSubParts: string[] = [];
+        if (filters.subtype.includes('Default'))
+          dsSubParts.push(
+            'dataplex-types.global.bigquery-dataset.type=DEFAULT'
+          );
+        if (filters.subtype.includes('Linked'))
+          dsSubParts.push('dataplex-types.global.bigquery-dataset.type=LINKED');
+
+        if (dsSubParts.length > 0) {
+          subtypeConditions.push(
+            `(type=projects/dataplex-types/locations/global/entryTypes/bigquery-dataset AND (${dsSubParts.join(
+              ' OR '
+            )}))`
+          );
+        }
+      }
+
+      if (subtypeConditions.length > 0) {
+        finalQueryParts.push(`(${subtypeConditions.join(' OR ')})`);
       }
     }
 
-    const hasActiveFilters =
-      filters.systems.length > 0 ||
-      filters.projects.length > 0 ||
-      filters.type.length > 0 ||
-      filters.locations.length > 0 ||
-      (filters.datasets && filters.datasets.length > 0);
+    // 3. Always enforce BigQuery context and Exclusions
+    // finalQueryParts.push('-has=dataplex-types.global.bigquery-row-access-policy');
+    // finalQueryParts.push('-has=dataplex-types.global.bigquery-data-policy');
 
-    if (finalQuery.trim() === '' && !hasActiveFilters) {
-      this.searchWrapper.updateState(
-        '',
-        [],
-        false,
-        this.searchWrapper.projectsList,
-        this.searchWrapper.datasetList,
-        []
-      );
-      return;
+    // 4. Handle Parent (Dataset) paths
+    if (filters.datasets && filters.datasets.length > 0) {
+      // const location = filters.locations.length > 0 ? filters.locations[0] : 'us';
+      const datasetPaths = filters.datasets
+        .map(dsString => {
+          const parts = dsString.split('/');
+          return parts.length >= 2
+            ? `projects/${parts[0]}/locations/${location}/entryGroups/@bigquery/entries/bigquery.googleapis.com/projects/${parts[0]}/datasets/${parts[1]}`
+            : null;
+        })
+        .filter(Boolean);
+
+      if (datasetPaths.length > 0) {
+        finalQueryParts.push(`parent=(${datasetPaths.join('|')})`);
+      }
     }
 
+    const finalQuery = finalQueryParts.join(' AND ');
+
     this.searchWrapper.updateState(
-      query, // Keep the UI showing the "original" query string user typed
+      query,
       [],
       true,
       this.searchWrapper.projectsList,
@@ -1455,11 +1436,14 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
       let searchResult: any = null;
       const scope = filters.scope && filters.scope.includes('Current Project');
 
+      // IMPORTANT: We pass the UI 'filters.type' back to the service here.
+      // If subtype is empty, the service uses this standard 'type' array to filter.
+      // If subtype is present, our 'finalQuery' handles the heavy lifting.
       await BigQueryService.getBigQuerySemanticSearchAPIService(
         finalQuery,
-        filters.systems,
+        [],
         filters.projects,
-        filters.type,
+        filters.type, // Pass the original Type array for standard BQ filtering
         filters.locations,
         scope,
         val => {},
@@ -1491,79 +1475,23 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
     }
   }
 
-  private parseResultDetails(result: ISearchResult): {
-    projectId: string | null;
-    datasetId: string | null;
-    tableId: string | null;
-  } {
-    const name = result.name;
-    const rawResults = this.searchWrapper.allSearchResults;
-
-    // 1. Search the raw results cache for the specific entry
-    if (Array.isArray(rawResults)) {
-      for (const projectResult of rawResults) {
-        const items = projectResult.result?.results || [];
-        for (const item of items) {
-          const entry = item.dataplexEntry;
-          if (
-            entry &&
-            (entry.displayName === name ||
-              entry.fullyQualifiedName?.includes(name))
-          ) {
-            // Normalize FQN: convert colons to dots and split
-            const parts = entry.fullyQualifiedName.replace(':', '.').split('.');
-
-            // Logic: BigQuery FQNs are usually project.dataset.table
-            if (parts.length >= 2) {
-              const isTable = result.label?.includes('Table');
-              return {
-                projectId: parts[0],
-                datasetId: parts[1],
-                tableId: isTable ? parts[2] || name : null
-              };
-            }
-          }
-        }
-      }
-    }
-
-    // 2. Fallback: Parse from the description string you built in processSearchResults
-    // Format was: "Table in {datasetId} (Project: {projectId})"
-    const description = result.description || '';
-    const projectMatch = description.match(/Project: ([^)]+)/);
-
-    // If we can't find the project in the string, use the first project in the list
-    const fallbackProject = projectMatch
-      ? projectMatch[1]
-      : this.searchWrapper.projectsList[0];
-
-    return {
-      projectId: fallbackProject,
-      datasetId: result.label?.includes('Table')
-        ? description.split(' ')[2]
-        : name,
-      tableId: result.label?.includes('Table') ? name : null
-    };
-  }
-
-  private _onResultClicked(
+  private onResultClicked(
     sender: DataplexSearchPanelWrapper,
     result: ISearchResult
   ): void {
-    const { projectId, datasetId, tableId } = this.parseResultDetails(result);
+    const { projectId, datasetId, tableId, name } = result;
 
     if (!projectId || !datasetId) {
-      console.error('Missing IDs:', { projectId, datasetId, tableId });
+      console.error('Missing IDs in search result:', result);
       return;
     }
 
-    const widgetTitle = result.name;
+    const widgetTitle = name;
     if (this.openedWidgets[widgetTitle]) {
       this.app.shell.activateById(widgetTitle);
       return;
     }
 
-    // Create content based on type
     const content = tableId
       ? new BigQueryTableWrapper(
           tableId,
@@ -1577,879 +1505,10 @@ private async fetchDatasetsForProjects(projectIds: string[]) {
     widget.id = widgetTitle;
     widget.title.label = widgetTitle;
     widget.title.closable = true;
-    // Use iconTable for tables, iconDatasets for datasets
     widget.title.icon = tableId ? iconTable : iconDatasets;
 
     this.app.shell.add(widget, 'main');
     this.openedWidgets[widgetTitle] = true;
     widget.disposed.connect(() => delete this.openedWidgets[widgetTitle]);
-  }
-}
-
-const calculateDepth = (node: NodeApi): number => {
-  let depth = 0;
-  let currentNode = node;
-  while (currentNode.parent) {
-    depth++;
-    currentNode = currentNode.parent;
-  }
-  return depth;
-};
-
-interface IDataEntry {
-  id: string;
-  name: string;
-  type: string;
-  isLoadMoreNode?: boolean;
-  isNodeOpen: boolean;
-  description: string;
-  children: any;
-}
-
-const BigQueryComponent = ({
-  app,
-  settingRegistry,
-  themeManager
-}: {
-  app: JupyterLab;
-  settingRegistry: ISettingRegistry;
-  themeManager: IThemeManager;
-}): JSX.Element => {
-  const [projectNameInfo, setProjectNameInfo] = useState<string[]>([]);
-  const [notebookValue, setNotebookValue] = useState<string>('');
-  const [dataprocMetastoreServices, setDataprocMetastoreServices] =
-    useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadMoreLoading, setIsLoadMoreLoading] = useState(false);
-  const [isResetLoading, setResetLoading] = useState(false);
-  const [databaseNames, setDatabaseNames] = useState<string[]>([]);
-
-  const [dataSetResponse, setDataSetResponse] = useState<any>();
-  const [tableResponse, setTableResponse] = useState<any>();
-  const [schemaResponse, setSchemaResponse] = useState<any>();
-
-  const [treeStructureData, setTreeStructureData] = useState<any>([]);
-
-  const [currentNode, setCurrentNode] = useState<any>();
-  const [isIconLoading, setIsIconLoading] = useState(false);
-
-  const [apiError, setApiError] = useState(false);
-
-  const [height, setHeight] = useState(window.innerHeight - 125);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [configError, setConfigError] = useState(false);
-  const [loginError, setLoginError] = useState(false);
-  const [projectName, setProjectName] = useState<string>('');
-
-  const [nextPageTokens, setNextPageTokens] = useState<
-    Map<string, string | null>
-  >(new Map());
-  const [allDatasets, setAllDatasets] = useState<Map<string, any[]>>(new Map());
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  console.log(isSearchOpen);
-
-  function handleUpdateHeight() {
-    let updateHeight = window.innerHeight - 125;
-    setHeight(updateHeight);
-  }
-
-  const debouncedHandleUpdateHeight = handleDebounce(handleUpdateHeight, 500);
-
-  useEffect(() => {
-    window.addEventListener('resize', debouncedHandleUpdateHeight);
-
-    return () => {
-      window.removeEventListener('resize', debouncedHandleUpdateHeight);
-    };
-  }, []);
-
-  const getBigQueryColumnDetails = async (
-    tableId: string,
-    datasetId: string,
-    projectId: string | undefined
-  ) => {
-    if (tableId && datasetId && projectId) {
-      await BigQueryService.getBigQueryColumnDetailsAPIService(
-        datasetId,
-        tableId,
-        projectId,
-        setIsIconLoading,
-        setSchemaResponse
-      );
-    }
-  };
-
-  const treeStructureforProjects = () => {
-    const data = projectNameInfo.map(projectName => ({
-      id: uuidv4(),
-      name: projectName,
-      children: [],
-      isNodeOpen: false
-    }));
-
-    data.sort((a, b) => a.name.localeCompare(b.name));
-
-    setTreeStructureData(data);
-  };
-
-  const treeStructureforDatasets = () => {
-    let tempData = [...treeStructureData];
-
-    tempData.forEach((projectData: any) => {
-      if (projectData.name === currentNode.data.name) {
-        const datasetNodes = databaseNames.map(datasetName => ({
-          id: uuidv4(),
-          name: datasetName,
-          isLoadMoreNode: false,
-          isNodeOpen: false,
-          children: []
-        }));
-        datasetNodes.sort((a, b) => a.name.localeCompare(b.name));
-
-        const nextPageToken = nextPageTokens.get(projectData.name);
-        if (nextPageToken) {
-          datasetNodes.push({
-            id: uuidv4(),
-            name: '',
-            isLoadMoreNode: true,
-            isNodeOpen: false,
-            children: []
-          });
-        }
-        projectData['children'] = datasetNodes;
-      }
-    });
-
-    tempData.sort((a, b) => a.name.localeCompare(b.name));
-
-    setTreeStructureData(tempData);
-  };
-
-  const treeStructureforTables = () => {
-    let tempData = [...treeStructureData];
-
-    tempData.forEach((projectData: any) => {
-      if (projectData.name === currentNode.parent.data.name) {
-        projectData.children.forEach((dataset: any) => {
-          if (tableResponse.length > 0 && tableResponse[0].tableReference) {
-            if (dataset.name === tableResponse[0].tableReference.datasetId) {
-              dataset['children'] = tableResponse.map((tableDetails: any) => ({
-                id: uuidv4(),
-                name: tableDetails.tableReference.tableId,
-                children: [],
-                isNodeOpen: false
-              }));
-            }
-          } else {
-            if (dataset.name === tableResponse) {
-              dataset['children'] = false;
-            }
-          }
-        });
-      }
-    });
-
-    setTreeStructureData(tempData);
-  };
-
-  const treeStructureforSchema = () => {
-    let tempData = [...treeStructureData];
-
-    tempData.forEach((projectData: any) => {
-      if (projectData.name === currentNode.parent.parent.data.name) {
-        projectData.children.forEach((dataset: any) => {
-          if (dataset.name === schemaResponse.tableReference.datasetId) {
-            dataset.children.forEach((table: any) => {
-              if (table.name === schemaResponse.tableReference.tableId) {
-                if (schemaResponse.schema?.fields) {
-                  table['children'] = schemaResponse.schema?.fields.map(
-                    (column: any) => ({
-                      id: uuidv4(),
-                      name: column.name,
-                      type: column.type,
-                      mode: column.mode,
-                      key: column.key,
-                      collation: column.collation,
-                      defaultValue: column.defaultValue,
-                      policyTags: column.policyTags,
-                      dataPolicies: column.dataPolicies,
-                      tableDescription: column.tableDescription,
-                      description: column.description
-                    })
-                  );
-                } else {
-                  table['children'] = false;
-                }
-              }
-            });
-          }
-        });
-      }
-    });
-    setTreeStructureData(tempData);
-  };
-
-  const handleOpenSearch = () => {
-    setIsSearchOpen(true);
-    const content = new DataplexSearchWidget(
-      app,
-      settingRegistry,
-      themeManager
-    );
-    const widget = new MainAreaWidget<DataplexSearchWidget>({ content });
-    widget.title.label = 'Dataset Search';
-    widget.title.icon = iconDatasetExplorer;
-    widget.title.closable = true;
-
-    app.shell.add(widget, 'main');
-  };
-
-  const openedWidgets: Record<string, boolean> = {};
-  const handleNodeClick = (node: NodeApi) => {
-    const depth = calculateDepth(node);
-    const widgetTitle = node.data.name;
-    if (!openedWidgets[widgetTitle]) {
-      if (depth === 2) {
-        const content = new BigQueryDatasetWrapper(
-          node.data.name,
-          node?.parent?.data?.name,
-          themeManager
-        );
-        const widget = new MainAreaWidget<BigQueryDatasetWrapper>({ content });
-        const widgetId = 'node-widget-db';
-        widget.id = widgetId;
-        widget.title.label = node.data.name;
-        widget.title.closable = true;
-        widget.title.icon = iconDatabaseWidget;
-        app.shell.add(widget, 'main');
-        widget.disposed.connect(() => {
-          const widgetTitle = widget.title.label;
-          delete openedWidgets[widgetTitle];
-        });
-      } else if (depth === 3 && node.parent && node.parent.parent) {
-        const database = node.parent.data.name;
-        const projectId = node.parent.parent.data.name;
-
-        const content = new BigQueryTableWrapper(
-          node.data.name,
-          database,
-          projectId,
-          themeManager
-        );
-        const widget = new MainAreaWidget<BigQueryTableWrapper>({ content });
-        const widgetId = `node-widget-${uuidv4()}`;
-        widget.id = widgetId;
-        widget.title.label = node.data.name;
-        widget.title.closable = true;
-        widget.title.icon = iconDatasets;
-        app.shell.add(widget, 'main');
-        widget.disposed.connect(() => {
-          const widgetTitle = widget.title.label;
-          delete openedWidgets[widgetTitle];
-        });
-      }
-      openedWidgets[widgetTitle] = node.data.name;
-    }
-  };
-
-  type NodeProps = NodeRendererProps<IDataEntry> & {
-    onClick: (node: NodeRendererProps<IDataEntry>['node']) => void;
-    nextPageTokens: Map<string, string | null>;
-    getBigQueryDatasets: (projectId: string) => Promise<void>;
-  };
-  const Node = ({
-    node,
-    style,
-    onClick,
-    nextPageTokens,
-    getBigQueryDatasets
-  }: NodeProps) => {
-    const [contextMenu, setContextMenu] = useState<{
-      mouseX: number;
-      mouseY: number;
-    } | null>(null);
-    const handleToggle = () => {
-      if (node.data.isLoadMoreNode) {
-        const projectId = node.parent?.data?.name;
-        const nextPageToken = projectId
-          ? nextPageTokens.get(projectId)
-          : undefined;
-        if (projectId && nextPageToken) {
-          setCurrentNode(node.parent);
-          setIsLoadMoreLoading(true);
-          getBigQueryDatasets(projectId);
-        }
-        return;
-      }
-      if (calculateDepth(node) === 1 && !node.isOpen) {
-        setCurrentNode(node);
-        if (!allDatasets.has(node.data.name)) {
-          setIsIconLoading(true);
-          getBigQueryDatasets(node.data.name);
-        } else {
-          node.toggle();
-        }
-      } else if (calculateDepth(node) === 2 && !node.isOpen) {
-        setCurrentNode(node);
-        setIsIconLoading(true);
-        getBigQueryTables(node.data.name, node.parent?.data?.name);
-      } else if (calculateDepth(node) === 3 && node.parent && !node.isOpen) {
-        setCurrentNode(node);
-        setIsIconLoading(true);
-        getBigQueryColumnDetails(
-          node.data.name,
-          node.parent?.data?.name,
-          node?.parent?.parent?.data?.name
-        );
-      } else {
-        node.toggle();
-      }
-    };
-    const handleIconClick = (event: React.MouseEvent) => {
-      if (node.isOpen !== node.data.isNodeOpen) {
-        node.toggle();
-      }
-      if (event.currentTarget.classList.contains('caret-icon')) {
-        node.data.isNodeOpen = !node.data.isNodeOpen;
-        handleToggle();
-      }
-    };
-    const handleTextClick = (event: React.MouseEvent) => {
-      event.stopPropagation();
-      onClick(node);
-    };
-
-    const handleContextMenu = (event: React.MouseEvent) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const depth = calculateDepth(node);
-      if (depth === 3) {
-        setContextMenu(
-          contextMenu === null
-            ? {
-                mouseX: event.clientX + 2,
-                mouseY: event.clientY - 6
-              }
-            : null
-        );
-      }
-    };
-
-    const handleClose = () => {
-      setContextMenu(null);
-    };
-
-    const handleCopyId = () => {
-      const projectName = node.parent?.parent?.data.name;
-      const datasetName = node.parent?.data.name;
-      const tableName = node.data.name;
-      const fullTableName = `${projectName}.${datasetName}.${tableName}`;
-      navigator.clipboard.writeText(fullTableName);
-      handleClose();
-    };
-
-    const handleOpenTableDetails = () => {
-      onClick(node);
-      handleClose();
-    };
-
-    /**
-     * Creates a new notebook with BigQuery code to query the specified table
-     * Uses JupyterLab commands API for reliability
-     */
-    const createBigQueryNotebookWithQuery = async (
-      app: JupyterLab,
-      fullTableName: string
-    ) => {
-      try {
-        const notebookPanel = await app.commands.execute(
-          'notebook:create-new',
-          {
-            kernelName: 'python3'
-          }
-        );
-
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        app.shell.activateById(notebookPanel.id);
-
-        await app.commands.execute('notebook:replace-selection', {
-          text: '#Uncomment if bigquery-magics is not installed \n#!pip install bigquery-magics\n%load_ext bigquery_magics'
-        });
-
-        await app.commands.execute('notebook:run-cell-and-insert-below');
-        await app.commands.execute('notebook:replace-selection', {
-          text: `%%bqsql\nselect * from ${fullTableName} limit 20`
-        });
-      } catch (error) {
-        console.error('Error creating notebook:', error);
-      }
-
-      handleClose();
-    };
-
-    const handleQueryTable = async () => {
-      const projectId = node.parent?.parent?.data.name;
-      const datasetId = node.parent?.data.name;
-      const tableId = node.data.name;
-      const fullTableName = `\`${projectId}.${datasetId}.${tableId}\``;
-
-      await createBigQueryNotebookWithQuery(app, fullTableName);
-    };
-
-    const depth = calculateDepth(node);
-    const renderNodeIcon = () => {
-      const hasChildren =
-        (node.children && node.children.length > 0) ||
-        (depth !== 4 && node.children);
-      hasChildren && !node.data.isLoadMoreNode ? (
-        isIconLoading && currentNode.data.name === node.data.name ? (
-          <div className="big-query-loader-style">
-            <CircularProgress
-              size={16}
-              aria-label="Loading Spinner"
-              data-testid="loader"
-            />
-          </div>
-        ) : node.isOpen ? (
-          <>
-            <div
-              role="treeitem"
-              className="caret-icon right"
-              onClick={handleIconClick}
-            >
-              <iconDownArrow.react
-                tag="div"
-                className="icon-white logo-alignment-style"
-              />
-            </div>
-          </>
-        ) : (
-          <div
-            role="treeitem"
-            className="caret-icon down"
-            onClick={handleIconClick}
-          >
-            <iconRightArrow.react
-              tag="div"
-              className="icon-white logo-alignment-style"
-            />
-          </div>
-        )
-      ) : (
-        <div style={{ width: '29px' }}></div>
-      );
-      const renderLoadMoreNode = () =>
-        isLoadMoreLoading ? (
-          <div className="load-more-spinner-container">
-            <div className="load-more-spinner">
-              <CircularProgress
-                className="spin-loader-custom-style"
-                size={20}
-                aria-label="Loading Spinner"
-                data-testid="loader"
-              />
-            </div>
-            Loading datasets
-          </div>
-        ) : (
-          <div
-            role="treeitem"
-            className="caret-icon down load-more-icon"
-            onClick={handleToggle}
-          >
-            Load More...
-          </div>
-        );
-
-      {
-        const arrowIcon =
-          hasChildren && !node.data.isLoadMoreNode ? (
-            isIconLoading && currentNode.data.name === node.data.name ? (
-              <div className="big-query-loader-style">
-                <CircularProgress
-                  size={16}
-                  aria-label="Loading Spinner"
-                  data-testid="loader"
-                />
-              </div>
-            ) : node.data.isNodeOpen ? (
-              <>
-                <div
-                  role="treeitem"
-                  className="caret-icon down"
-                  onClick={handleIconClick}
-                >
-                  <iconDownArrow.react
-                    tag="div"
-                    className="icon-white logo-alignment-style"
-                  />
-                </div>
-              </>
-            ) : (
-              <div
-                role="treeitem"
-                className="caret-icon right"
-                onClick={handleIconClick}
-              >
-                <iconRightArrow.react
-                  tag="div"
-                  className="icon-white logo-alignment-style"
-                />
-              </div>
-            )
-          ) : (
-            <div style={{ width: '29px' }}></div>
-          );
-
-        if (node.data.isLoadMoreNode) {
-          return renderLoadMoreNode();
-        }
-        if (depth === 1) {
-          return (
-            <>
-              {arrowIcon}
-              <div role="img" className="db-icon" onClick={handleIconClick}>
-                <iconBigQueryProject.react
-                  tag="div"
-                  className="icon-white logo-alignment-style"
-                />
-              </div>
-            </>
-          );
-        } else if (depth === 2) {
-          return (
-            <>
-              {arrowIcon}
-              <div role="img" className="db-icon" onClick={handleIconClick}>
-                <iconDatasets.react
-                  tag="div"
-                  className="icon-white logo-alignment-style"
-                />
-              </div>
-            </>
-          );
-        } else if (depth === 3) {
-          return (
-            <>
-              {arrowIcon}
-              <div role="img" className="table-icon" onClick={handleIconClick}>
-                <iconTable.react
-                  tag="div"
-                  className="icon-white logo-alignment-style"
-                />
-              </div>
-            </>
-          );
-        }
-
-        return (
-          <>
-            <iconColumns.react
-              tag="div"
-              className="icon-white logo-alignment-style"
-            />
-          </>
-        );
-      }
-    };
-
-    return (
-      <>
-        <div style={style}>
-          {renderNodeIcon()}
-          <div
-            role="treeitem"
-            title={node.data.name}
-            onClick={handleTextClick}
-            onContextMenu={handleContextMenu}
-          >
-            {node.data.name}
-          </div>
-          <div title={node?.data?.type} className="dpms-column-type-text">
-            {node.data.type}
-          </div>
-
-          <Menu
-            open={contextMenu !== null}
-            onClose={handleClose}
-            anchorReference="anchorPosition"
-            anchorPosition={
-              contextMenu !== null
-                ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-                : undefined
-            }
-          >
-            <MenuItem onClick={handleQueryTable}>Query table</MenuItem>
-            <MenuItem onClick={handleOpenTableDetails}>
-              Open table details
-            </MenuItem>
-            <MenuItem onClick={handleCopyId}>Copy table ID</MenuItem>
-          </Menu>
-        </div>
-      </>
-    );
-  };
-
-  const getBigQueryProjects = async (isReset: boolean) => {
-    if (isReset) {
-      setAllDatasets(new Map());
-      setNextPageTokens(new Map());
-      setResetLoading(true);
-    }
-    await BigQueryService.getBigQueryProjectsListAPIService(
-      setProjectNameInfo,
-      setIsLoading,
-      setApiError,
-      setProjectName
-    );
-  };
-
-  const getBigQueryDatasets = async (projectId: string) => {
-    const pageTokenForProject = nextPageTokens.get(projectId);
-    const allDatasetsUnderProject = allDatasets.get(projectId) || [];
-
-    await BigQueryService.getBigQueryDatasetsAPIService(
-      notebookValue,
-      settingRegistry,
-      setDatabaseNames,
-      setDataSetResponse,
-      projectId,
-      setIsIconLoading,
-      setIsLoading,
-      setIsLoadMoreLoading,
-      allDatasetsUnderProject,
-      (value: any[]) => {
-        setAllDatasets(prev => {
-          const newMap = new Map(prev);
-          newMap.set(projectId, value);
-          return newMap;
-        });
-      },
-      pageTokenForProject,
-      (projectId: string, token: string | null) => {
-        setNextPageTokens(prevTokens => {
-          const newMap = new Map(prevTokens);
-          if (token) {
-            newMap.set(projectId, token);
-          } else {
-            newMap.delete(projectId);
-          }
-          return newMap;
-        });
-      }
-    );
-  };
-
-  const getBigQueryTables = async (
-    datasetId: string,
-    projectId: string | undefined
-  ) => {
-    if (datasetId && projectId) {
-      await BigQueryService.getBigQueryTableAPIService(
-        notebookValue,
-        datasetId,
-        setDatabaseNames,
-        setTableResponse,
-        projectId,
-        setIsIconLoading
-      );
-    }
-  };
-
-  const getActiveNotebook = () => {
-    setNotebookValue('bigframes');
-    setDataprocMetastoreServices('bigframes');
-  };
-
-  useEffect(() => {
-    checkConfig(setLoggedIn, setConfigError, setLoginError);
-    setLoggedIn(!loginError && !configError);
-    if (loggedIn) {
-      setIsLoading(false);
-    }
-  }, []);
-  useEffect(() => {
-    getActiveNotebook();
-    return () => {
-      setNotebookValue('');
-    };
-  }, [notebookValue]);
-
-  useEffect(() => {
-    getBigQueryProjects(false);
-  }, [dataprocMetastoreServices]);
-
-  useEffect(() => {
-    if (projectNameInfo.length > 0) {
-      treeStructureforProjects();
-    }
-  }, [projectNameInfo]);
-
-  useEffect(() => {
-    if (dataSetResponse) {
-      treeStructureforDatasets();
-    }
-  }, [dataSetResponse]);
-
-  useEffect(() => {
-    if (tableResponse) {
-      treeStructureforTables();
-    }
-  }, [tableResponse]);
-
-  useEffect(() => {
-    if (schemaResponse) {
-      treeStructureforSchema();
-    }
-  }, [schemaResponse]);
-
-  useEffect(() => {
-    if (treeStructureData.length > 0 && treeStructureData[0].name !== '') {
-      setIsLoading(false);
-      setResetLoading(false);
-      setIsLoadMoreLoading(false);
-    }
-    if (currentNode && !currentNode.isOpen) {
-      currentNode?.toggle();
-    }
-  }, [treeStructureData]);
-
-  return (
-    <div className="dpms-Wrapper">
-      <TitleComponent
-        titleStr="Dataset Explorer"
-        isPreview={false}
-        getBigQueryProjects={() => getBigQueryProjects(true)}
-        isLoading={isResetLoading}
-      />
-      <div>
-        <div>
-          {isLoading ? (
-            <div className="database-loader">
-              <div>
-                <CircularProgress
-                  className="spin-loader-custom-style"
-                  size={20}
-                  aria-label="Loading Spinner"
-                  data-testid="loader"
-                />
-              </div>
-              Loading datasets
-            </div>
-          ) : (
-            <div>
-              {!loginError && !configError && !apiError && (
-                <div>
-                  <div className="search-button">
-                    <button
-                      onClick={handleOpenSearch}
-                      aria-label="Open Dataplex Natural Language Search"
-                      className="dataplex-search-button"
-                    >
-                      <span className="button-content">
-                        {/* Icon component */}
-                        <iconSearch.react
-                          tag="div"
-                          className="icon-white logo-alignment-style button-icon"
-                        />
-                        {/* Search Text */}
-                        <span className="button-text">Search</span>
-                      </span>
-                    </button>
-                  </div>
-                  <div className="tree-container">
-                    {treeStructureData.length > 0 &&
-                      treeStructureData[0].name !== '' && (
-                        <>
-                          <Tree
-                            className="dataset-tree"
-                            data={treeStructureData}
-                            indent={24}
-                            width={auto}
-                            height={height}
-                            rowHeight={36}
-                            overscanCount={1}
-                            paddingTop={30}
-                            paddingBottom={10}
-                            padding={25}
-                            idAccessor={(node: any) => node.id}
-                          >
-                            {(props: NodeRendererProps<any>) => (
-                              <Node
-                                {...props}
-                                onClick={handleNodeClick}
-                                nextPageTokens={nextPageTokens}
-                                getBigQueryDatasets={getBigQueryDatasets}
-                              />
-                            )}
-                          </Tree>
-                        </>
-                      )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          {apiError && !loginError && !configError && (
-            <div className="sidepanel-login-error">
-              <p>
-                Bigquery API is not enabled for this project. Please{' '}
-                <a
-                  href={`${BIGQUERY_API_URL}?project=${projectName}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link-class"
-                >
-                  enable
-                </a>
-                <span> it. </span>
-              </p>
-            </div>
-          )}
-          {(loginError || configError) && (
-            <div className="sidepanel-login-error">
-              <LoginErrorComponent
-                setLoginError={setLoginError}
-                loginError={loginError}
-                configError={configError}
-                setConfigError={setConfigError}
-                app={app}
-                fromPage="sidepanel"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export class BigQueryWidget extends DataprocWidget {
-  app: JupyterLab;
-  settingRegistry: ISettingRegistry;
-  enableBigqueryIntegration: boolean;
-
-  constructor(
-    app: JupyterLab,
-    settingRegistry: ISettingRegistry,
-    enableBigqueryIntegration: boolean,
-    themeManager: IThemeManager
-  ) {
-    super(themeManager);
-    this.app = app;
-    this.settingRegistry = settingRegistry;
-    this.enableBigqueryIntegration = enableBigqueryIntegration;
-  }
-
-  renderInternal(): JSX.Element {
-    return (
-      <BigQueryComponent
-        app={this.app}
-        settingRegistry={this.settingRegistry}
-        themeManager={this.themeManager}
-      />
-    );
   }
 }

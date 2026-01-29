@@ -157,6 +157,7 @@ class SearchController(APIHandler):
             scope_str = self.get_argument("scope", default="false")
             scope = scope_str.lower() == "true"
             projects_arg = self.get_argument("projects", default=None)
+            locations = self.get_arguments("location")
             
             if projects_arg:
                 projects = projects_arg.split('|')
@@ -165,7 +166,7 @@ class SearchController(APIHandler):
 
             bq_client = await bigquery_client.get_client(self.log)
             search_data = await bq_client.bigquery_semantic_search(
-                search_string, type, system, projects,scope
+                search_string, type, system, projects,scope,locations
             )
             self.finish(json.dumps(search_data))
         except Exception as e:

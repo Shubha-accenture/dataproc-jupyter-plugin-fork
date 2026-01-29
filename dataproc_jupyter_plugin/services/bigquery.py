@@ -249,7 +249,7 @@ class Client:
             return {"error": str(e)}
         
 
-    async def bigquery_semantic_search(self, search_string: str, type: str, system: str, projects: list,scope: bool = False):
+    async def bigquery_semantic_search(self, search_string: str, type: str, system: str, projects: list,scope: bool, locations: list):
         """Searches for BigQuery data assets using the Dataplex API with Semantic Search enabled."""
         try:
             dataplex_url = await urls.gcp_service_url(DATAPLEX_SERVICE_NAME)
@@ -276,6 +276,10 @@ class Client:
             if projects:
                 project_filters = " OR ".join([f"projectid:{p}" for p in projects])
                 query_parts.append(f"({project_filters})")
+
+            if locations:
+                location_filters = " OR ".join([f"location={l}" for l in locations])
+                query_parts.append(f"({location_filters})")
 
             full_query = " AND ".join(filter(None, query_parts))
             

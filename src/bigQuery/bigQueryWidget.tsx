@@ -84,7 +84,7 @@ const calculateDepth = (node: NodeApi): number => {
 //   };
 // };
 
-const BigQueryComponent = ({
+export const BigQueryComponent = ({
   app,
   settingRegistry,
   themeManager
