@@ -15,7 +15,7 @@
 //  * limitations under the License.
 //  */
 import React, { useEffect, useState, useMemo } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridFilterModel, GridSortModel } from '@mui/x-data-grid';
 import { Paper, Box, CircularProgress } from '@mui/material';
 import { BigQueryService } from './bigQueryService';
 import { handleDebounce } from '../utils/utils';
@@ -32,7 +32,19 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(50);
   const [previewHeight, setPreviewHeight] = useState(window.innerHeight - 180);
-  // const [filterModel, setFilterModel] = useState<any>({ items: [] });
+  
+  const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
+  const [debouncedFilterModel, setDebouncedFilterModel] = useState<GridFilterModel>({ items: [] });
+
+  const [sortModel, setSortModel] = useState<GridSortModel>([]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFilterModel(filterModel);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [filterModel]);
 
   useEffect(() => {
     const handleUpdateHeight = () => setPreviewHeight(window.innerHeight - 180);
@@ -114,7 +126,8 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
       pageIndex,
       setTotalRowSize,
       setPreviewDataList,
-      // filterModel
+      debouncedFilterModel,
+      sortModel,
     );
   }, [
     serviceColumns,
@@ -123,7 +136,8 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
     projectId,
     pageSize,
     pageIndex,
-    // filterModel
+    debouncedFilterModel,
+    sortModel,
   ]);
 
   return (
@@ -143,11 +157,21 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
         rowCount={Number(totalRowSize)}
         getRowId={(row: any) => previewDataList.indexOf(row)}
         paginationMode="server"
-        // filterMode="server" // Add this!
-        // onFilterModelChange={newModel => {
-        //   setFilterModel(newModel);
-        //   setPageIndex(0); // Reset to first page so we don't look at a non-existent page
-        // }}
+        filterMode="server"
+        sortingMode="server"
+        filterModel={filterModel} 
+        sortModel={sortModel}
+        
+        onFilterModelChange={newModel => {
+          setFilterModel(newModel);
+          setPageIndex(0);
+        }}
+
+        onSortModelChange={newModel => {
+            setSortModel(newModel);
+            setPageIndex(0);
+        }}
+
         paginationModel={{ page: pageIndex, pageSize: pageSize }}
         onPaginationModelChange={model => {
           setPageIndex(model.page);

@@ -25,6 +25,7 @@ import { authApi } from '../utils/utils';
 //   Header: string;
 //   accessor: string;
 // }
+
 export class BigQueryService {
 
   // static bigQueryPreviewAPIService = async (
@@ -199,7 +200,7 @@ export class BigQueryService {
 //     }
 //   };
 
-static bigQueryPreviewAPIService = async (
+  static bigQueryPreviewAPIService = async (
     columns: any[],
     tableId: string,
     dataSetId: string,
@@ -209,30 +210,37 @@ static bigQueryPreviewAPIService = async (
     pageIndex: number,
     setTotalRowSize: (value: string) => void,
     setPreviewDataList: (data: any[]) => void,
-    filterModel?: any // Ensure this is passed from the component
+    filterModel?: any,
+    sortModel?: any,
   ) => {
     setIsLoading(true);
     try {
-      // 1. Build Filter Query String
       let filterQuery = "";
       if (filterModel?.items?.length > 0) {
-        const item = filterModel.items[0];
-        // Only append if there is an actual value to filter by
-        if (item.value !== undefined && item.value !== null && item.value !== "") {
-          const encodedField = encodeURIComponent(item.field);
-          const encodedOp = encodeURIComponent(item.operator);
-          const encodedVal = encodeURIComponent(item.value);
-          
-          filterQuery = `&filter_field=${encodedField}&filter_op=${encodedOp}&filter_val=${encodedVal}`;
+        filterModel.items.forEach((item: any, index: number) => {
+          if (item.value !== undefined && item.value !== null && item.value !== "") {
+              const encodedField = encodeURIComponent(item.field);
+              const encodedOp = encodeURIComponent(item.operator);
+              const encodedVal = encodeURIComponent(item.value);
+              
+              filterQuery += `&filter_field=${encodedField}&filter_op=${encodedOp}&filter_val=${encodedVal}`;
+          }
+        });
+      }
+      
+      let sortQuery = "";
+      if (sortModel?.length > 0) {
+        const sortItem = sortModel[0];
+        if (sortItem.field && sortItem.sort) {
+            const encodedSortField = encodeURIComponent(sortItem.field);
+            const encodedSortDir = encodeURIComponent(sortItem.sort); // 'asc' or 'desc'
+            sortQuery = `&sort_field=${encodedSortField}&sort_dir=${encodedSortDir}`;
         }
       }
 
-      // 2. Calculate Pagination
       const startIndex = pageIndex * maxResults;
       
-      // 3. Construct URL with Filter Params
-      // The backend handler must be able to read 'filter_field', 'filter_op', and 'filter_val'
-      const apiUrl = `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}${filterQuery}`;
+      const apiUrl = `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}${filterQuery}${sortQuery}`;
 
       const data: any = await requestAPI(apiUrl);
 
@@ -244,11 +252,9 @@ static bigQueryPreviewAPIService = async (
         setTotalRowSize('0');
         setIsLoading(false);
       } else {
-        // 4. Transform BigQuery's "f" and "v" structure into flat JSON
         const transformRowInfoList = data.rows.map((rowInfo: any) => {
           const transformRowInfo: any = {};
           rowInfo['f'].forEach((fieldInfo: any, index: number) => {
-            // Support both 'Header' (your current service) and 'field' (MUI)
             const col = columns[index];
             const columnKey = col?.Header || col?.field || col?.accessor;
             
