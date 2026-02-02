@@ -1,123 +1,89 @@
-// /**
-//  * @license
-//  * Copyright 2024 Google LLC
-//  *
-//  * Licensed under the Apache License, Version 2.0 (the "License");
-//  * you may not use this file except in compliance with the License.
-//  * You may obtain a copy of the License at
-//  *
-//  *   http://www.apache.org/licenses/LICENSE-2.0
-//  *
-//  * Unless required by applicable law or agreed to in writing, software
-//  * distributed under the License is distributed on an "AS IS" BASIS,
-//  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  * See the License for the specific language governing permissions and
-//  * limitations under the License.
-//  */
-import React, { useEffect, useState, useMemo } from 'react';
-import { DataGrid, GridColDef, GridFilterModel, GridSortModel } from '@mui/x-data-grid';
-import { Paper, Box, CircularProgress } from '@mui/material';
-import { BigQueryService } from './bigQueryService';
-import { handleDebounce } from '../utils/utils';
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-interface IPreviewColumn {
-  Header: string;
-  accessor: string;
-}
+import React, { useEffect, useState } from 'react';
+import { useGlobalFilter, usePagination, useTable } from 'react-table';
+import TableData from '../utils/tableData';
+import { BigQueryService } from './bigQueryService';
+import { ICellProps, handleDebounce } from '../utils/utils';
+import { PreviewPaginationView } from '../utils/previewPaginationView';
+import { CircularProgress } from '@mui/material';
 
 const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
-  const [previewDataList, setPreviewDataList] = useState<any[]>([]);
+  const [previewDataList, setPreviewDataList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [totalRowSize, setTotalRowSize] = useState('0');
+  const [totalRowSize, setTotalRowSize] = useState('');
+
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(50);
+
   const [previewHeight, setPreviewHeight] = useState(window.innerHeight - 180);
-  
-  const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
-  const [debouncedFilterModel, setDebouncedFilterModel] = useState<GridFilterModel>({ items: [] });
 
-  const [sortModel, setSortModel] = useState<GridSortModel>([]);
+  function handleUpdateHeight() {
+    let updateHeight = window.innerHeight - 180;
+    setPreviewHeight(updateHeight);
+  }
 
+  // Debounce the handleUpdateHeight function
+  const debouncedHandleUpdateHeight = handleDebounce(handleUpdateHeight, 500);
+
+  // Add event listener for window resize using useEffect
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedFilterModel(filterModel);
-    }, 300);
+    window.addEventListener('resize', debouncedHandleUpdateHeight);
 
-    return () => clearTimeout(handler);
-  }, [filterModel]);
-
-  useEffect(() => {
-    const handleUpdateHeight = () => setPreviewHeight(window.innerHeight - 180);
-    const debounced = handleDebounce(handleUpdateHeight, 500);
-    window.addEventListener('resize', debounced);
-    return () => window.removeEventListener('resize', debounced);
+    // Cleanup function to remove event listener on component unmount
+    return () => {
+      window.removeEventListener('resize', debouncedHandleUpdateHeight);
+    };
   }, []);
 
-  const muiColumns: GridColDef[] = useMemo(() => {
-    return column.map((col: any) => {
-      // 1. Determine the logic type
-      let columnType: 'string' | 'number' | 'boolean' = 'string';
-      const bqType = col.type?.toUpperCase();
+  const data = previewDataList;
 
-      if (
-        ['INTEGER', 'FLOAT', 'NUMERIC', 'DECIMAL', 'INT64', 'FLOAT64'].includes(
-          bqType
-        )
-      ) {
-        columnType = 'number';
-      } else if (['BOOLEAN', 'BOOL'].includes(bqType)) {
-        columnType = 'boolean';
-      }
+  const columns = React.useMemo(
+    () =>
+      column.map((column: any) => ({
+        Header: column.name.split(' ')[0],
+        accessor: column.name.split(' ')[0]
+      })),
+    []
+  );
 
-      return {
-        field: col.name,
-        headerName: col.name,
-        type: columnType, // Enables the correct filter icons (=, >, <)
-        flex: 1,
-        minWidth: 150,
-
-        // 2. Add the valueGetter here
-        valueGetter: (value: any) => {
-          if (
-            columnType === 'number' &&
-            value !== null &&
-            value !== undefined
-          ) {
-            const parsed = Number(value);
-            return isNaN(parsed) ? value : parsed;
-          }
-          return value;
-        },
-
-        renderCell: (params: any) => {
-          if (
-            params.value === null ||
-            params.value === undefined ||
-            params.value === ''
-          ) {
-            return (
-              <Box sx={{ color: 'text.disabled', fontStyle: 'italic' }}>
-                null
-              </Box>
-            );
-          }
-          return String(params.value);
-        }
-      };
-    });
-  }, [column]);
-
-  const serviceColumns: IPreviewColumn[] = useMemo(() => {
-    return column.map((col: any) => ({
-      Header: col.name,
-      accessor: col.name
-    }));
-  }, [column]);
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    page,
+    setPageSize,
+    state: { pageSize }
+  } = useTable(
+    {
+      columns,
+      data,
+      autoResetPage: false,
+      initialState: { pageSize: 50, pageIndex: 0 }
+    },
+    useGlobalFilter,
+    usePagination
+  );
 
   useEffect(() => {
-    setIsLoading(true);
     BigQueryService.bigQueryPreviewAPIService(
-      serviceColumns,
+      columns,
       tableId,
       dataSetId,
       setIsLoading,
@@ -125,85 +91,75 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
       pageSize,
       pageIndex,
       setTotalRowSize,
-      setPreviewDataList,
-      debouncedFilterModel,
-      sortModel,
+      setPreviewDataList
     );
-  }, [
-    serviceColumns,
-    tableId,
-    dataSetId,
-    projectId,
-    pageSize,
-    pageIndex,
-    debouncedFilterModel,
-    sortModel,
-  ]);
+  }, [pageSize, pageIndex]);
+
+  const tableDataCondition = (cell: ICellProps) => {
+    return (
+      <td {...cell.getCellProps()} className="preview-table-data">
+        {cell.value === null ? 'null' : cell.render('Cell')}
+      </td>
+    );
+  };
+
+  const handlePageChange = (newPageIndex: number) => {
+    setPageIndex(newPageIndex);
+  };
 
   return (
-    <Paper
-      sx={{
-        height: previewHeight,
-        width: '100%',
-        border: '1px solid #e0e0e0',
-        boxShadow: 'none'
-      }}
-    >
-      <DataGrid
-        className="custom-data-grid"
-        rows={previewDataList}
-        columns={muiColumns}
-        loading={isLoading}
-        rowCount={Number(totalRowSize)}
-        getRowId={(row: any) => previewDataList.indexOf(row)}
-        paginationMode="server"
-        filterMode="server"
-        sortingMode="server"
-        filterModel={filterModel} 
-        sortModel={sortModel}
-        
-        onFilterModelChange={newModel => {
-          setFilterModel(newModel);
-          setPageIndex(0);
-        }}
-
-        onSortModelChange={newModel => {
-            setSortModel(newModel);
-            setPageIndex(0);
-        }}
-
-        paginationModel={{ page: pageIndex, pageSize: pageSize }}
-        onPaginationModelChange={model => {
-          setPageIndex(model.page);
-          setPageSize(model.pageSize);
-        }}
-        pageSizeOptions={[10, 25, 50, 100]}
-        disableRowSelectionOnClick
-        density="compact"
-        sx={{
-          border: 0,
-          '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 'bold' },
-          '& .MuiDataGrid-cell:focus': { outline: 'none' }
-        }}
-        slots={{
-          noRowsOverlay: () => (
-            <Box sx={{ p: 2, textAlign: 'center' }}>No data available</Box>
-          ),
-          loadingOverlay: () => (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100%'
-              }}
-            >
-              <CircularProgress size={30} />
-            </Box>
-          )
-        }}
-      />
-    </Paper>
+    <div>
+      {previewDataList.length > 0 ? (
+        <div>
+          <div
+            className="preview-data-table-parent"
+            style={{ height: previewHeight }}
+          >
+            <TableData
+              getTableProps={getTableProps}
+              headerGroups={headerGroups}
+              getTableBodyProps={getTableBodyProps}
+              isLoading={isLoading}
+              rows={rows}
+              page={page}
+              prepareRow={prepareRow}
+              tableDataCondition={tableDataCondition}
+              fromPage="Preview"
+            />
+            {Number(totalRowSize) >= 50 && (
+              <PreviewPaginationView
+                pageSize={pageSize}
+                setPageSize={setPageSize}
+                pageIndex={pageIndex}
+                totalRowSize={totalRowSize}
+                canPreviousPage={pageIndex !== 0}
+                canNextPage={
+                  pageIndex !== Math.floor(Number(totalRowSize) / pageSize)
+                }
+                onPageChange={handlePageChange}
+              />
+            )}
+          </div>
+        </div>
+      ) : (
+        <div>
+          {isLoading && (
+            <div className="spin-loader-main">
+              <CircularProgress
+                className="spin-loader-custom-style"
+                size={18}
+                aria-label="Loading Spinner"
+                data-testid="loader"
+              />
+              Loading Preview Data
+            </div>
+          )}
+          {!isLoading && (
+            <div className="no-data-style">No rows to display</div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 

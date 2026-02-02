@@ -15,10 +15,6 @@
 
 import aiohttp
 
-from google.cloud import bigquery
-import json
-import datetime
-
 from dataproc_jupyter_plugin import urls
 from dataproc_jupyter_plugin.commons.constants import (
     BIGQUERY_SERVICE_NAME,
@@ -45,7 +41,6 @@ class Client:
         self.project_id = credentials["project_id"]
         self.region_id = credentials["region_id"]
         self.client_session = client_session
-        self.bqclient = bigquery.Client() 
 
     def create_headers(self):
         return {
@@ -141,84 +136,21 @@ class Client:
             return {"error": str(e)}
 
     async def bigquery_preview_data(
-        self, dataset_id, table_id, max_results, start_index, project_id,
-        filter_fields=None,filter_ops=None,filter_vals=None,sort_field=None,sort_dir=None, 
+        self, dataset_id, table_id, max_results, start_index, project_id
     ):
         try:
-            offset = int(start_index)
-            
-            table_ref = f"`{project_id}.{dataset_id}.{table_id}`"
-            
-            if sort_field and sort_dir:
-                sql_query = f"SELECT `{sort_field}` as col1,* FROM {table_ref}"
-            else:
-                sql_query = f"SELECT * FROM {table_ref}"
-            
-            conditions = []
-            query_params = [] 
-            
-            if filter_fields and len(filter_fields) > 0:
-                for i, field in enumerate(filter_fields):
-                    op = filter_ops[i] if i < len(filter_ops) else 'equals'
-                    val = filter_vals[i] if i < len(filter_vals) else None
-
-                    if val is not None and val != "":
-                        param_name = f"filterVal{i}" 
-                        
-                        if op == 'equals':
-                            conditions.append(f"`{field}` = @{param_name}")
-                            query_params.append(bigquery.ScalarQueryParameter(param_name, "STRING", val))
-                        elif op == 'contains':
-                            conditions.append(f"CONTAINS_SUBSTR(CAST(`{field}` AS STRING), @{param_name})")
-                            query_params.append(bigquery.ScalarQueryParameter(param_name, "STRING", val))
-                        # Heree, We need to add more as required
-                
-                if conditions:
-                    sql_query += f" WHERE {' AND '.join(conditions)}"
-            
-            if sort_field and sort_dir:
-                direction = "DESC" if sort_dir.lower() == "desc" else "ASC"
-                sql_query += f" ORDER BY col1 {direction}"
-                
-            sql_count_query = sql_query.replace(f"SELECT * FROM {table_ref}", f"SELECT COUNT(*) as total_count FROM {table_ref}")
-
-            sql_query_with_limit = sql_query + f" LIMIT @limit OFFSET @offset"
-            query_params.append(bigquery.ScalarQueryParameter("limit", "INT64", max_results))
-            query_params.append(bigquery.ScalarQueryParameter("offset", "INT64", offset))
-
-            self.log.info(f"Executing BigQuery SQL Query: {sql_query}")
-
-            job_config = bigquery.QueryJobConfig(
-                query_parameters=query_params
-            )
-
-            query_job = self.bqclient.query(sql_query_with_limit, job_config=job_config)
-            results = query_job.result()
-            
-            count_query_job = self.bqclient.query(sql_count_query, job_config=job_config)
-            count_results = count_query_job.result()
-            
-            for row in count_results:
-                total_rows_estimate = row['total_count']
-                break 
-            else:
-                total_rows_estimate = 0
-            
-            transformed_rows = []
-            for row in results:
-                f_list = []
-                for field_name in row.keys():
-                    value = row[field_name]
-                    if isinstance(value, datetime.datetime) or isinstance(value, datetime.date) or isinstance(value, datetime.time):
-                        value = value.isoformat()
-                    f_list.append({"v": value})
-                transformed_rows.append({"f": f_list})
-
-            return {
-                "rows": transformed_rows,
-                "totalRows": str(total_rows_estimate) 
-            }
-            
+            bigquery_url = await urls.gcp_service_url(BIGQUERY_SERVICE_NAME)
+            api_endpoint = f"{bigquery_url}bigquery/v2/projects/{project_id}/datasets/{dataset_id}/tables/{table_id}/data?maxResults={max_results}&startIndex={start_index}"
+            async with self.client_session.get(
+                api_endpoint, headers=self.create_headers()
+            ) as response:
+                if response.status == 200:
+                    resp = await response.json()
+                    return resp
+                else:
+                    raise Exception(
+                        f"Error displaying BigQuery preview data: {response.reason} {await response.text()}"
+                    )
         except Exception as e:
             self.log.exception("Error fetching preview data")
             return {"error": str(e)}

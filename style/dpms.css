@@ -225,22 +225,3 @@
 .load-more-spinner-container {
   width: 200%;
 }
-
-.custom-data-grid .MuiDataGrid-columnHeaderTitle {
-  font-weight: 800 !important;
-  color: #000000;
-}
-.custom-data-grid .MuiDataGrid-columnHeaders {
-  border-bottom: 2px solid #bdbdbd !important;
-  background-color: #f5f5f5;
-}
-.custom-data-grid .MuiDataGrid-columnHeader {
-  border-right: 1px solid #e0e0e0 !important;
-}
-.custom-data-grid .MuiDataGrid-columnHeader:last-child {
-  border-right: none !important;
-}
-.custom-data-grid .MuiDataGrid-cell {
-  border-right: 1px solid #f0f0f0 !important;
-}
-

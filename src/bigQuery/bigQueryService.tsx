@@ -21,187 +21,14 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { BIGQUERY_SERVICE_NAME, DEFAULT_PUBLIC_PROJECT_ID, PLUGIN_ID } from '../utils/const';
 import { authApi } from '../utils/utils';
 
-// interface IPreviewColumn {
-//   Header: string;
-//   accessor: string;
-// }
+interface IPreviewColumn {
+  Header: string;
+  accessor: string;
+}
 
 export class BigQueryService {
-
-  // static bigQueryPreviewAPIService = async (
-  //   columns: any[], // Supports both MUI and react-table column structures
-  //   tableId: string,
-  //   dataSetId: string,
-  //   setIsLoading: (value: boolean) => void,
-  //   projectId: string,
-  //   maxResults: number,
-  //   pageIndex: number,
-  //   setTotalRowSize: (value: string) => void,
-  //   setPreviewDataList: (data: any[]) => void,
-  //   filterModel?: any
-  // ) => {
-  //   setIsLoading(true);
-  //   try {
-  //     // 1. Construct the WHERE clause based on DataGrid's filterModel
-  //     let filterQuery = "";
-  //     if (filterModel?.items?.length > 0) {
-  //       const item = filterModel.items[0];
-  //       if (item.value !== undefined && item.value !== null && item.value !== "") {
-  //         const operatorMap: any = {
-  //           '=': '=',
-  //           '>': '>',
-  //           '<': '<',
-  //           '>=': '>=',
-  //           '<=': '<=',
-  //           'contains': 'LIKE',
-  //           'startsWith': 'LIKE',
-  //         };
-          
-  //         let op = operatorMap[item.operator] || '=';
-  //         let val = item.value;
-
-  //         // SQL formatting for strings/patterns
-  //         if (item.operator === 'contains') val = `'%${val}%'`;
-  //         else if (item.operator === 'startsWith') val = `'${val}%'`;
-  //         else if (typeof val === 'string') val = `'${val}'`;
-
-  //         filterQuery = `&filter_field=${item.field}&filter_op=${op}&filter_val=${val}`;
-  //       }
-  //     }
-
-  //     const startIndex = pageIndex * maxResults;
-      
-  //     // 2. Call the API with pagination and filter parameters
-  //     // Note: Ensure your backend handler is updated to read filter_field, filter_op, and filter_val
-  //     const data: any = await requestAPI(
-  //       `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}${filterQuery}`
-  //     );
-
-  //     if (data.error) {
-  //       Notification.emit(data.error, 'error', { autoClose: 5000 });
-  //       setIsLoading(false);
-  //     } else if (data.totalRows === 0 || !data.rows) {
-  //       setPreviewDataList([]);
-  //       setTotalRowSize('0');
-  //       setIsLoading(false);
-  //     } else {
-  //       // 3. Transform BigQuery's "f" and "v" structure into a flat JSON object
-  //       let transformRowInfoList: any = [];
-        
-  //       data.rows.forEach((rowInfo: any) => {
-  //         let transformRowInfo: any = {};
-          
-  //         rowInfo['f'].forEach((fieldInfo: any, index: number) => {
-  //           // Determine the key name (supports 'field' from MUI or 'Header' from react-table)
-  //           const columnKey = columns[index]?.field || columns[index]?.Header || columns[index]?.accessor;
-            
-  //           if (columnKey) {
-  //             const rawValue = fieldInfo['v'];
-  //             transformRowInfo[columnKey] =
-  //               typeof rawValue === 'object' && rawValue !== null
-  //                 ? JSON.stringify(rawValue)
-  //                 : rawValue;
-  //           }
-  //         });
-  //         transformRowInfoList.push(transformRowInfo);
-  //       });
-
-  //       setPreviewDataList(transformRowInfoList);
-  //       setTotalRowSize(data.totalRows);
-  //       setIsLoading(false);
-  //     }
-  //   } catch (reason) {
-  //     setIsLoading(false);
-  //     Notification.emit(
-  //       `Error in calling BigQuery Preview API: ${reason}`,
-  //       'error',
-  //       { autoClose: 5000 }
-  //     );
-  //   }
-  // };
-
-//   static bigQueryPreviewAPIService = async (
-//     columns: IPreviewColumn[],
-//     tableId: string,
-//     dataSetId: string,
-//     setIsLoading: (value: boolean) => void,
-//     projectId: string,
-//     maxResults: number,
-//     pageIndex: number,
-//     setTotalRowSize: (value: string) => void,
-//     setPreviewDataList: any,
-//     filterModel?:any
-//   ) => {
-//     setIsLoading(true);
-//     try {
-//       const startIndex = pageIndex * maxResults;
-//       const data: any = await requestAPI(
-//         `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}`
-//       );
-// let whereClause = "";
-//       if (filterModel?.items?.length > 0) {
-//         const item = filterModel.items[0]; // Simplified for single filter
-//         if (item.value !== undefined && item.value !== null && item.value !== "") {
-//           const operatorMap: any = {
-//             '=': '=',
-//             '>': '>',
-//             '<': '<',
-//             '>=': '>=',
-//             '<=': '<=',
-//             'contains': 'LIKE',
-//             'startsWith': 'LIKE',
-//           };
-          
-//           let val = item.value;
-//           let op = operatorMap[item.operator] || '=';
-          
-//           if (item.operator === 'contains') val = `'%${val}%'`;
-//           else if (item.operator === 'startsWith') val = `'${val}%'`;
-//           else if (typeof val === 'string') val = `'${val}'`;
-
-//           whereClause = `WHERE ${item.field} ${op} ${val}`;
-//         }
-//       }
-
-//       // Your existing BigQuery API call logic here...
-//       // Ensure the query sent to BQ includes the ${whereClause}
-//       console.log("Generated SQL Fragment:", whereClause);
-//       if (data.error) {
-//         Notification.emit(data.error, 'error', {
-//           autoClose: 5000
-//         });
-//         setIsLoading(false);
-//       } else if (data.totalRows == 0) {
-//         setIsLoading(false);
-//       } else {
-//         let transformRowInfoList: any = [];
-//         data.rows.forEach((rowInfo: any) => {
-//           let transformRowInfo: any = {};
-//           rowInfo['f'].forEach((fieldInfo: any, index: number) => {
-//             transformRowInfo[columns[index].Header] =
-//               typeof fieldInfo['v'] === 'object'
-//                 ? JSON.stringify(fieldInfo['v'])
-//                 : fieldInfo['v'];
-//           });
-//           transformRowInfoList.push(transformRowInfo);
-//         });
-//         setPreviewDataList(transformRowInfoList);
-//         setIsLoading(false);
-//         setTotalRowSize(data.totalRows);
-//       }
-//     } catch (reason) {
-//       Notification.emit(
-//         `Error in calling BigQuery Preview API : ${reason}`,
-//         'error',
-//         {
-//           autoClose: 5000
-//         }
-//       );
-//     }
-//   };
-
   static bigQueryPreviewAPIService = async (
-    columns: any[],
+    columns: IPreviewColumn[],
     tableId: string,
     dataSetId: string,
     setIsLoading: (value: boolean) => void,
@@ -209,79 +36,49 @@ export class BigQueryService {
     maxResults: number,
     pageIndex: number,
     setTotalRowSize: (value: string) => void,
-    setPreviewDataList: (data: any[]) => void,
-    filterModel?: any,
-    sortModel?: any,
+    setPreviewDataList: any
   ) => {
     setIsLoading(true);
     try {
-      let filterQuery = "";
-      if (filterModel?.items?.length > 0) {
-        filterModel.items.forEach((item: any, index: number) => {
-          if (item.value !== undefined && item.value !== null && item.value !== "") {
-              const encodedField = encodeURIComponent(item.field);
-              const encodedOp = encodeURIComponent(item.operator);
-              const encodedVal = encodeURIComponent(item.value);
-              
-              filterQuery += `&filter_field=${encodedField}&filter_op=${encodedOp}&filter_val=${encodedVal}`;
-          }
-        });
-      }
-      
-      let sortQuery = "";
-      if (sortModel?.length > 0) {
-        const sortItem = sortModel[0];
-        if (sortItem.field && sortItem.sort) {
-            const encodedSortField = encodeURIComponent(sortItem.field);
-            const encodedSortDir = encodeURIComponent(sortItem.sort); // 'asc' or 'desc'
-            sortQuery = `&sort_field=${encodedSortField}&sort_dir=${encodedSortDir}`;
-        }
-      }
-
       const startIndex = pageIndex * maxResults;
-      
-      const apiUrl = `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}${filterQuery}${sortQuery}`;
-
-      const data: any = await requestAPI(apiUrl);
+      const data: any = await requestAPI(
+        `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}`
+      );
 
       if (data.error) {
-        Notification.emit(data.error, 'error', { autoClose: 5000 });
+        Notification.emit(data.error, 'error', {
+          autoClose: 5000
+        });
         setIsLoading(false);
-      } else if (!data.rows || data.totalRows === 0) {
-        setPreviewDataList([]);
-        setTotalRowSize('0');
+      } else if (data.totalRows == 0) {
         setIsLoading(false);
       } else {
-        const transformRowInfoList = data.rows.map((rowInfo: any) => {
-          const transformRowInfo: any = {};
+        let transformRowInfoList: any = [];
+        data.rows.forEach((rowInfo: any) => {
+          let transformRowInfo: any = {};
           rowInfo['f'].forEach((fieldInfo: any, index: number) => {
-            const col = columns[index];
-            const columnKey = col?.Header || col?.field || col?.accessor;
-            
-            if (columnKey) {
-              const rawValue = fieldInfo['v'];
-              transformRowInfo[columnKey] =
-                typeof rawValue === 'object' && rawValue !== null
-                  ? JSON.stringify(rawValue)
-                  : rawValue;
-            }
+            transformRowInfo[columns[index].Header] =
+              typeof fieldInfo['v'] === 'object'
+                ? JSON.stringify(fieldInfo['v'])
+                : fieldInfo['v'];
           });
-          return transformRowInfo;
+          transformRowInfoList.push(transformRowInfo);
         });
-
         setPreviewDataList(transformRowInfoList);
-        setTotalRowSize(data.totalRows.toString());
         setIsLoading(false);
+        setTotalRowSize(data.totalRows);
       }
     } catch (reason) {
-      setIsLoading(false);
       Notification.emit(
-        `Error in calling BigQuery Preview API: ${reason}`,
+        `Error in calling BigQuery Preview API : ${reason}`,
         'error',
-        { autoClose: 5000 }
+        {
+          autoClose: 5000
+        }
       );
     }
   };
+
   static getBigQueryColumnDetailsAPIService = async (
     datasetId: string,
     tableId: string,

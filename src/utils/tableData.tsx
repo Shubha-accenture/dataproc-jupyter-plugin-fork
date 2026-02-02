@@ -68,7 +68,7 @@ function TableData({
                 {...column.getHeaderProps()}
                 className="clusters-table-header"
               >
-                {(column.render('Header')as any)}
+                {column.render('Header')}
               </th>
             ))}
           </tr>
