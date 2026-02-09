@@ -15,13 +15,17 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, useTransition } from 'react';
 import { IThemeManager } from '@jupyterlab/apputils';
 import { DataprocWidget } from '../controls/DataprocWidget';
-import PreviewDataInfo from './previewDataInfo';
 import BigQueryTableInfo from './bigQueryTableInfo';
 import BigQuerySchemaInfo from './bigQuerySchema';
 import { BigQueryService } from './bigQueryService';
+import { Box, CircularProgress } from '@mui/material';
+
+const BigQueryDataTableInfo = React.lazy(
+  () => import('./bigQueryDataTableInfo')
+);
 
 interface IDatabaseProps {
   title: string;
@@ -38,8 +42,12 @@ const BigQueryTableInfoWrapper = ({
   const [selectedMode, setSelectedMode] = useState<Mode>('Details');
   const [schemaInfoResponse, setSchemaInfoResponse] = useState<any>();
 
+  const [isPending, startTransition] = useTransition();
+
   const selectedModeChange = (mode: Mode) => {
-    setSelectedMode(mode);
+    startTransition(() => {
+      setSelectedMode(mode);
+    });
   };
 
   const toggleStyleSelection = (toggleItem: string) => {
@@ -82,6 +90,7 @@ const BigQueryTableInfoWrapper = ({
             role="tabpanel"
             className={toggleStyleSelection('Preview')}
             onClick={() => selectedModeChange('Preview')}
+            style={{ opacity: isPending ? 0.7 : 1 }}
           >
             Preview
           </div>
@@ -107,12 +116,27 @@ const BigQueryTableInfoWrapper = ({
           schemaInfoResponse &&
           schemaInfoResponse.length > 0 && (
             <>
-              <PreviewDataInfo
-                column={schemaInfoResponse}
-                tableId={title}
-                dataSetId={database}
-                projectId={projectId}
-              />
+              <Suspense
+                fallback={
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      p: 4,
+                      mt: 4
+                    }}
+                  >
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <BigQueryDataTableInfo
+                  column={schemaInfoResponse}
+                  tableId={title}
+                  dataSetId={database}
+                  projectId={projectId}
+                />
+              </Suspense>
             </>
           )}
       </div>
