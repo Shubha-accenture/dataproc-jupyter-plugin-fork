@@ -21,7 +21,8 @@ import {
   type MRT_ColumnDef,
   type MRT_ColumnFiltersState,
   type MRT_SortingState,
-  type MRT_PaginationState
+  type MRT_PaginationState,
+  type MRT_GroupingState // 1. Import Grouping Type
 } from 'material-react-table';
 import { Box } from '@mui/material';
 import { BigQueryService } from './bigQueryService';
@@ -31,7 +32,7 @@ interface IPreviewColumn {
   accessor: string;
 }
 
-// Helper types to match what BigQueryService likely expects from the previous MUI DataGrid implementation
+// Helper types
 interface GridFilterItem {
   field: string;
   operator?: string;
@@ -67,11 +68,14 @@ const BigQueryDataTableInfo = ({
     pageSize: 50
   });
 
+  // 2. Add Grouping State
+  const [grouping, setGrouping] = useState<MRT_GroupingState>([]);
+
   // Debounce State for Filtering
   const [debouncedColumnFilters, setDebouncedColumnFilters] =
     useState<MRT_ColumnFiltersState>([]);
 
-  // Handle Window Resize (Optional, MRT handles scroll internally better, but keeping for layout consistency)
+  // Handle Window Resize
   const [previewHeight, setPreviewHeight] = useState(window.innerHeight - 180);
   useEffect(() => {
     const handleUpdateHeight = () => setPreviewHeight(window.innerHeight - 180);
@@ -97,13 +101,12 @@ const BigQueryDataTableInfo = ({
       let filterVariant: 'text' | 'range' | 'checkbox' = 'text';
       let size = 180;
 
-      // Map BigQuery types to MRT Filter Variants
       if (
         ['INTEGER', 'FLOAT', 'NUMERIC', 'DECIMAL', 'INT64', 'FLOAT64'].includes(
           bqType
         )
       ) {
-        filterVariant = 'range'; // Range slider/inputs for numbers
+        filterVariant = 'range';
         size = 120;
       } else if (['BOOLEAN', 'BOOL'].includes(bqType)) {
         filterVariant = 'checkbox';
@@ -115,7 +118,8 @@ const BigQueryDataTableInfo = ({
         header: col.name,
         filterVariant: filterVariant,
         size: size,
-        // Custom Cell Render to handle nulls
+        // Enable grouping for all columns by default
+        enableGrouping: true,
         Cell: ({ cell }: any) => {
           const val = cell.getValue();
           if (val === null || val === undefined || val === '') {
@@ -134,7 +138,7 @@ const BigQueryDataTableInfo = ({
     });
   }, [column]);
 
-  // Prepare Service Columns (kept for compatibility with Service)
+  // Prepare Service Columns
   const serviceColumns: IPreviewColumn[] = useMemo(() => {
     return column.map((col: any) => ({
       Header: col.name,
@@ -147,28 +151,18 @@ const BigQueryDataTableInfo = ({
     const fetchData = () => {
       setIsLoading(true);
 
-      // --- ADAPTER: Convert MRT State to MUI DataGrid format for Service Compatibility ---
-
-      // Convert MRT Sorting to GridSortModel
       const sortModel: GridSortModel = sorting.map(sort => ({
         field: sort.id,
         sort: sort.desc ? 'desc' : 'asc'
       }));
 
-      // Convert MRT Filters to GridFilterModel
-      // Note: MRT 'range' filters usually come as [min, max].
-      // You might need to adjust logic here depending on how your BigQueryService parses 'value'.
       const filterModel: GridFilterModel = {
         items: debouncedColumnFilters.map(filter => ({
           field: filter.id,
-          // Defaulting operator to 'contains' or generic equals.
-          // If the service logic uses specific operators like '>', '<', this adapter needs specific tuning.
           operator: Array.isArray(filter.value) ? 'between' : 'contains',
           value: filter.value
         }))
       };
-
-      // ---------------------------------------------------------------------------------
 
       BigQueryService.bigQueryPreviewAPIService(
         serviceColumns,
@@ -177,11 +171,11 @@ const BigQueryDataTableInfo = ({
         setIsLoading,
         projectId,
         pagination.pageSize,
-        pagination.pageIndex, // MRT uses 0-based index, ensure service expects 0-based
+        pagination.pageIndex,
         setTotalRowSize,
         setPreviewDataList,
-        filterModel, // Passing adapted filter model
-        sortModel // Passing adapted sort model
+        filterModel,
+        sortModel
       );
     };
 
@@ -201,18 +195,23 @@ const BigQueryDataTableInfo = ({
     <MaterialReactTable
       columns={columns}
       data={previewDataList}
+      // 3. Enable Grouping Features
+      enableGrouping={true}
+      groupedColumnMode="reorder" // Matches the demo default
       // State Management
       state={{
         columnFilters,
         isLoading,
         pagination,
         sorting,
+        grouping, // Pass grouping state here
         showProgressBars: isLoading
       }}
       // Event Handlers
       onColumnFiltersChange={setColumnFilters}
       onPaginationChange={setPagination}
       onSortingChange={setSorting}
+      onGroupingChange={setGrouping} // Pass grouping setter here
       // Server-Side Logic Flags
       manualFiltering={true}
       manualPagination={true}
@@ -220,13 +219,13 @@ const BigQueryDataTableInfo = ({
       rowCount={Number(totalRowSize)}
       // Styling & Options
       enableRowSelection={false}
-      enableColumnActions={false}
+      enableColumnActions={true}
       enableDensityToggle={false}
       initialState={{ density: 'compact' }}
       muiTableProps={{
         sx: {
-          minHeight: '720px !important', // Adjust this based on your expected total column width
-          maxHeight: '720px !important' // Ensure maxHeight is enforced for scroll
+          minHeight: '720px !important',
+          maxHeight: '720px !important'
         }
       }}
       muiTableContainerProps={{
@@ -234,7 +233,22 @@ const BigQueryDataTableInfo = ({
           height: previewHeight,
           maxHeight: previewHeight,
           overflowX: 'auto'
+        },
+        onDragStart: e => {
+          // Allows MRT to handle the start, but hides it from Jupyter
+          e.stopPropagation();
+        },
+        onDragOver: e => {
+          // Critical: Prevents Jupyter from cancelling the "drop" potential
+          e.stopPropagation();
+        },
+        onDrop: e => {
+          // Ensures the final drop event stays within the React Tree
+          e.stopPropagation();
         }
+      }}
+      muiTableHeadCellProps={{
+        onDragStart: e => e.stopPropagation()
       }}
       renderEmptyRowsFallback={() => (
         <Box
