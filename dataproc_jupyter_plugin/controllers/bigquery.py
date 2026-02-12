@@ -122,6 +122,12 @@ class PreviewController(APIHandler):
             filter_fields = self.get_arguments("filter_field")
             filter_ops = self.get_arguments("filter_op")
             filter_vals = self.get_arguments("filter_val")
+
+            group_by = self.get_argument("group_by_fields", default=None)
+            aggregation_fields = self.get_arguments("aggregation_field")
+            aggregation_ops = self.get_arguments("aggregation_op")
+            print("$$$$$$$$$$Aggregation Fields: ", aggregation_fields)
+            print("$$$$$$$$$$Aggregation Ops: ", aggregation_ops)
             
             sort_field = self.get_argument("sort_field", default=None)
             sort_dir = self.get_argument("sort_dir", default=None)
@@ -134,6 +140,9 @@ class PreviewController(APIHandler):
                 max_results, 
                 start_index, 
                 project_id,
+                group_by,
+                aggregation_fields,
+                aggregation_ops,
                 filter_fields=filter_fields,
                 filter_ops=filter_ops,
                 filter_vals=filter_vals,
@@ -141,7 +150,7 @@ class PreviewController(APIHandler):
                 sort_dir=sort_dir            
             )
             
-            print("***************************" , preview_data)
+            # print("***************************" , preview_data)
             
             self.finish(json.dumps(preview_data))
         except Exception as e:

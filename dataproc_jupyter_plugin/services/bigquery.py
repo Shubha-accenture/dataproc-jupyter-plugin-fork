@@ -141,18 +141,31 @@ class Client:
             return {"error": str(e)}
 
     async def bigquery_preview_data(
-        self, dataset_id, table_id, max_results, start_index, project_id,
-        filter_fields=None,filter_ops=None,filter_vals=None,sort_field=None,sort_dir=None, 
+        self, dataset_id, table_id, max_results, start_index, project_id, group_by=None,aggregation_fields=None,
+        aggregation_ops=None, filter_fields=None,filter_ops=None,filter_vals=None,sort_field=None,sort_dir=None, 
     ):
         try:
             offset = int(start_index)
             
             table_ref = f"`{project_id}.{dataset_id}.{table_id}`"
             
-            if sort_field and sort_dir:
-                sql_query = f"SELECT `{sort_field}` as col1,* FROM {table_ref}"
+            # if sort_field and sort_dir:
+            #     sql_query = f"SELECT `{sort_field}` as col1,* FROM {table_ref}"
+            # else:
+            if group_by and aggregation_fields and aggregation_ops and len(aggregation_fields) > 0 and len(aggregation_ops) > 0:
+                aggregations_query = ''
+                for i, field in enumerate(aggregation_fields):
+                    op = aggregation_ops[i] if i < len(aggregation_ops) else 'none'
+                    if op != 'none':
+                        aggregations_query += f"{op.upper()}(`{field}`) AS `{field}_{op}`"
+
+                sql_query = f"SELECT {group_by},{aggregations_query} FROM {table_ref}"
+
+                # sql_query = f"SELECT {aggregation_op.upper()}(`{aggregation_field}`) AS `{aggregation_field}_{aggregation_op}` FROM {table_ref}"
             else:
                 sql_query = f"SELECT * FROM {table_ref}"
+            
+            print("SQL Query before filters and grouping: ", sql_query)
             
             conditions = []
             query_params = [] 
@@ -175,12 +188,28 @@ class Client:
                 
                 if conditions:
                     sql_query += f" WHERE {' AND '.join(conditions)}"
+
+            print("SQL Query after filters: ", sql_query)
             
+            if group_by and aggregation_fields and aggregation_ops and len(aggregation_fields) > 0 and len(aggregation_ops) > 0:
+                group_by_fields = [f"`{field}`" for field in group_by.split(',')]
+                sql_query += f" GROUP BY {', '.join(group_by_fields)}"
+            
+            print("SQL Query after grouping: ", sql_query)
+            
+            if group_by and aggregation_fields and aggregation_ops and len(aggregation_fields) > 0 and len(aggregation_ops) > 0:
+                sql_count_query = f"SELECT COUNT(*) as total_count FROM ({sql_query}) AS subquery"
+            else:
+                sql_count_query = sql_query.replace(f"SELECT * FROM {table_ref}", f"SELECT COUNT(*) as total_count FROM {table_ref}")
+
+            print("SQL Count Query: ", sql_count_query)
+
             if sort_field and sort_dir:
+            #   sql_query = f"SELECT `{sort_field}` as col1,* FROM {table_ref}"
                 direction = "DESC" if sort_dir.lower() == "desc" else "ASC"
-                sql_query += f" ORDER BY col1 {direction}"
-                
-            sql_count_query = sql_query.replace(f"SELECT * FROM {table_ref}", f"SELECT COUNT(*) as total_count FROM {table_ref}")
+                sql_query = sql_query + f"ORDER BY {sort_field} {direction}"
+
+            print("SQL Query with sorting and limit: ", sql_query)
 
             sql_query_with_limit = sql_query + f" LIMIT @limit OFFSET @offset"
             query_params.append(bigquery.ScalarQueryParameter("limit", "INT64", max_results))
