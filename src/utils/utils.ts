@@ -290,13 +290,12 @@ export const checkConfig = async (
 ): Promise<void> => {
   const credentials = await authApi();
   if (credentials) {
-      if (credentials.config_error === 1) {
-        setConfigError(true);
-      }
-      if (credentials.login_error === 1) {
-        setLoginError(true);
-      }
-     else {
+    if (credentials.config_error === 1) {
+      setConfigError(true);
+    }
+    if (credentials.login_error === 1) {
+      setLoginError(true);
+    } else {
       setLoginState(true);
     }
   }
@@ -356,26 +355,31 @@ const iconScalaLogo = new LabIcon({
   svgstr: scalaLogo
 });
 
-export const iconDisplay = (kernelType: KernelSpecAPI.ISpecModel,themeManager: IThemeManager) => {
+export const iconDisplay = (
+  kernelType: KernelSpecAPI.ISpecModel,
+  themeManager: IThemeManager
+) => {
   const kernalName = kernelType?.name || '';
   const kernalLanguage = kernelType?.language || '';
-  
+
   if (kernalName.includes('spylon') || kernalName.includes('apache')) {
     return iconScalaLogo;
   }
-  
+
   if (kernalName.includes('ir')) {
-    return iconSparkRLogo;  
-  } 
-  
-  if (kernalName.includes('pyspark') 
-    || kernelType?.resources.endpointParentResource.includes('/sessions')) {
+    return iconSparkRLogo;
+  }
+
+  if (
+    kernalName.includes('pyspark') ||
+    kernelType?.resources.endpointParentResource.includes('/sessions')
+  ) {
     if (kernalLanguage === 'scala') {
       return iconScalaLogo;
     }
     return iconPysparkLogo;
   }
-  
+
   return iconPythonLogo;
 };
 
@@ -563,4 +567,21 @@ export const handleApiError = (
       });
     }
   }
+};
+
+/**
+ * Checks if the provided BigQuery data type is numeric.
+ * @param {string} type - The BigQuery data type to check.
+ * @returns {boolean} - True if the type is numeric, false otherwise.
+ */
+export const isNumericType = (type: string) => {
+  const t = type?.toUpperCase();
+  return [
+    'INTEGER',
+    'FLOAT',
+    'NUMERIC',
+    'DECIMAL',
+    'INT64',
+    'FLOAT64'
+  ].includes(t);
 };

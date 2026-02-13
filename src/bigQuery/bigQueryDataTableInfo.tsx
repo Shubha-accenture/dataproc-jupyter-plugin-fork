@@ -37,44 +37,13 @@ import {
   Typography
 } from '@mui/material';
 import { BigQueryService } from './bigQueryService';
-
-interface IPreviewColumn {
-  Header: string;
-  accessor: string;
-}
-
-// Helper types
-interface GridFilterItem {
-  field: string;
-  operator?: string;
-  value?: any;
-}
-interface GridFilterModel {
-  items: GridFilterItem[];
-}
-interface GridSortItem {
-  field: string;
-  sort: 'asc' | 'desc' | null | undefined;
-}
-type GridSortModel = GridSortItem[];
-
-// Helper to check for numeric BQ types
-const isNumericType = (type: string) => {
-  const t = type?.toUpperCase();
-  return [
-    'INTEGER',
-    'FLOAT',
-    'NUMERIC',
-    'DECIMAL',
-    'INT64',
-    'FLOAT64'
-  ].includes(t);
-};
-
-interface AggregationRule {
-  col: string;
-  func: string;
-}
+import {
+  AggregationRule,
+  GridFilterModel,
+  GridSortModel,
+  IPreviewColumn
+} from '../interfaces/bigQuery/BigQueryDataTableInfoInterface';
+import { isNumericType } from '../utils/utils';
 
 const BigQueryDataTableInfo = ({
   column,
@@ -112,57 +81,18 @@ const BigQueryDataTableInfo = ({
   // State for Table Container Height
   const [previewHeight, setPreviewHeight] = useState(500);
 
-  // Debounce Filter Logic
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedColumnFilters(columnFilters);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [columnFilters]);
-
-  // Determine Visibility of Aggregation Section
+  /**
+   * Determines whether to show the aggregation panel based on the presence of active groupings.
+   */
   const showAggregationPanel = useMemo(() => {
-    if (!column || grouping.length === 0) return false;
-    return grouping.some(gCol => {
-      const colDef = column.find((c: any) => c.name === gCol);
-      return colDef && isNumericType(colDef.type);
-    });
-  }, [grouping, column]);
-
-  // --- Dynamic Height Calculation Effect ---
-  useEffect(() => {
-    const calculateHeight = () => {
-      // 1. Base Offset: Includes Jupyter Headers (~120px) + MRT Toolbar (~60px) + Pagination (~60px)
-      let offset = 240;
-
-      // 2. Aggregation Panel Offset: Add extra space if the panel is visible
-      if (showAggregationPanel) {
-        offset += 100;
-      }
-
-      // 3. Calculate remaining space
-      const calculatedHeight = window.innerHeight - offset;
-
-      // 4. Safety floor: Don't let it shrink below 300px
-      setPreviewHeight(Math.max(300, calculatedHeight));
-    };
-
-    // Calculate immediately
-    calculateHeight();
-
-    // Recalculate on resize
-    window.addEventListener('resize', calculateHeight);
-    return () => window.removeEventListener('resize', calculateHeight);
-  }, [showAggregationPanel]);
-
-  // Reset aggregations if grouping is cleared
-  useEffect(() => {
-    if (grouping.length === 0) {
-      setAggregations([]);
-    }
+    return grouping.length > 0;
   }, [grouping]);
 
-  // Handle Adding Aggregation
+  /**
+   * Handles adding a new aggregation rule based on the selected function and column.
+   * Validates that both an aggregation function and column are selected before adding.
+   * Resets the selection after adding the rule.
+   */
   const handleAddAggregation = () => {
     if (selectedAggFunc && selectedAggCol) {
       setAggregations(prev => [
@@ -174,12 +104,17 @@ const BigQueryDataTableInfo = ({
     }
   };
 
-  // Handle Removing Aggregation
+  /**
+   * Handles removing an aggregation rule based on its index in the current list.
+   * @param {Number} index - The index of the aggregation rule to remove.
+   */
   const handleRemoveAggregation = (index: number) => {
     setAggregations(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Define Columns
+  /**
+   * Column Definitions with Robust Cell Rendering
+   */
   const columns = useMemo<MRT_ColumnDef<any>[]>(() => {
     if (!column) return [];
 
@@ -196,13 +131,11 @@ const BigQueryDataTableInfo = ({
         size = 100;
       }
 
-      // --- CRITICAL FIX: Custom Renderer Closure ---
-      // We define this INSIDE the map so we can access `col.name` directly.
-      // This guarantees we find the data even if MRT's `cell.getValue()` is confused by grouping.
+      // Custom Renderer to ensure data is always visible
       const renderCell = ({ cell, row }: any) => {
         let val = cell.getValue();
 
-        // Fallback: If cell value is missing (common in GroupedCell), fetch from original row data
+        // Fallback: If cell value is missing, fetch from original row data
         if (val === undefined || val === null) {
           val = row?.original?.[col.name];
         }
@@ -228,13 +161,15 @@ const BigQueryDataTableInfo = ({
         enableGrouping: true,
         // Apply the robust renderer to ALL cell types
         Cell: renderCell,
-        GroupedCell: renderCell, // Fixes empty column when grouped
-        AggregatedCell: renderCell // Fixes empty column when aggregated
+        GroupedCell: renderCell,
+        AggregatedCell: renderCell
       };
     });
   }, [column]);
 
-  // Prepare Service Columns
+  /***
+   * Prepare Service Columns
+   */
   const serviceColumns: IPreviewColumn[] = useMemo(() => {
     return column.map((col: any) => ({
       Header: col.name,
@@ -242,42 +177,86 @@ const BigQueryDataTableInfo = ({
     }));
   }, [column]);
 
-  // Fetch Data Effect
-  useEffect(() => {
-    const fetchData = () => {
-      setIsLoading(true);
+  /**
+   * Fetches BigQuery table data based on current state parameters such as sorting, filtering, pagination, grouping, and aggregations.
+   */
+  const fetchBigQueryTableData = () => {
+    setIsLoading(true);
 
-      const sortModel: GridSortModel = sorting.map(sort => ({
-        field: sort.id,
-        sort: sort.desc ? 'desc' : 'asc'
-      }));
+    const sortModel: GridSortModel = sorting.map(sort => ({
+      field: sort.id,
+      sort: sort.desc ? 'desc' : 'asc'
+    }));
 
-      const filterModel: GridFilterModel = {
-        items: debouncedColumnFilters.map(filter => ({
-          field: filter.id,
-          operator: Array.isArray(filter.value) ? 'between' : 'contains',
-          value: filter.value
-        }))
-      };
-
-      BigQueryService.bigQueryPreviewAPIService(
-        serviceColumns,
-        tableId,
-        dataSetId,
-        setIsLoading,
-        projectId,
-        pagination.pageSize,
-        pagination.pageIndex,
-        setTotalRowSize,
-        setPreviewDataList,
-        filterModel,
-        sortModel,
-        grouping,
-        aggregations
-      );
+    const filterModel: GridFilterModel = {
+      items: debouncedColumnFilters.map(filter => ({
+        field: filter.id,
+        operator: Array.isArray(filter.value) ? 'between' : 'contains',
+        value: filter.value
+      }))
     };
 
-    fetchData();
+    BigQueryService.bigQueryPreviewAPIService(
+      serviceColumns,
+      tableId,
+      dataSetId,
+      setIsLoading,
+      projectId,
+      pagination.pageSize,
+      pagination.pageIndex,
+      setTotalRowSize,
+      setPreviewDataList,
+      filterModel,
+      sortModel,
+      grouping,
+      aggregations
+    );
+  };
+
+  // Debounce Filter Logic
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedColumnFilters(columnFilters);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [columnFilters]);
+
+  //Dynamic Height Calculation
+  useEffect(() => {
+    const calculateHeight = () => {
+      // Base Offset: Includes Jupyter Headers (~120px) + MRT Toolbar (~60px) + Pagination (~60px)
+      let offset = 240;
+
+      // Aggregation Panel Offset: Add extra space if the panel is visible
+      if (showAggregationPanel) {
+        offset += 100;
+      }
+
+      // Calculate remaining space
+      const calculatedHeight = window.innerHeight - offset;
+
+      // Safety floor: Don't let it shrink below 300px
+      setPreviewHeight(Math.max(300, calculatedHeight));
+    };
+
+    // Calculate immediately
+    calculateHeight();
+
+    // Recalculate on resize
+    window.addEventListener('resize', calculateHeight);
+    return () => window.removeEventListener('resize', calculateHeight);
+  }, [showAggregationPanel]);
+
+  // Reset aggregations if grouping is cleared
+  useEffect(() => {
+    if (grouping.length === 0) {
+      setAggregations([]);
+    }
+  }, [grouping]);
+
+  // Fetch Data Effect
+  useEffect(() => {
+    fetchBigQueryTableData();
   }, [
     serviceColumns,
     tableId,
@@ -291,175 +270,174 @@ const BigQueryDataTableInfo = ({
   ]);
 
   return (
-    console.log('modified'),
-    (
-      <MaterialReactTable
-        columns={columns}
-        data={previewDataList}
-        // Grouping Configuration
-        enableGrouping={true}
-        groupedColumnMode={false} // Keeps the column in the table
-        enableExpanding={false} // Disables accordion behavior
-        // State Management
-        state={{
-          columnFilters,
-          isLoading,
-          pagination,
-          sorting,
-          grouping,
-          showProgressBars: isLoading
-        }}
-        // Event Handlers
-        onColumnFiltersChange={setColumnFilters}
-        onPaginationChange={setPagination}
-        onSortingChange={setSorting}
-        onGroupingChange={setGrouping}
-        // Server-Side Logic Flags
-        manualFiltering={true}
-        manualPagination={true}
-        manualSorting={true}
-        manualGrouping={true}
-        rowCount={Number(totalRowSize)}
-        // Custom Toolbar Rendering
-        renderTopToolbar={({ table }) => (
-          <Box>
-            <MRT_TopToolbar table={table} />
+    <MaterialReactTable
+      columns={columns}
+      data={previewDataList}
+      // Grouping Configuration
+      enableGrouping={true}
+      groupedColumnMode={false}
+      enableExpanding={false}
+      // State Management
+      state={{
+        columnFilters,
+        isLoading,
+        pagination,
+        sorting,
+        grouping,
+        showProgressBars: isLoading
+      }}
+      // Event Handlers
+      onColumnFiltersChange={setColumnFilters}
+      onPaginationChange={setPagination}
+      onSortingChange={setSorting}
+      onGroupingChange={setGrouping}
+      // Server-Side Logic Flags
+      manualFiltering={true}
+      manualPagination={true}
+      manualSorting={true}
+      manualGrouping={true}
+      rowCount={Number(totalRowSize)}
+      // Custom Toolbar Rendering
+      renderTopToolbar={({ table }) => (
+        <Box>
+          <MRT_TopToolbar table={table} />
 
-            {showAggregationPanel && (
-              <Box
-                sx={{
-                  p: '8px 16px',
-                  backgroundColor: '#f5f5f5',
-                  borderBottom: '1px solid #e0e0e0'
-                }}
-              >
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <FormControl size="small" sx={{ minWidth: 120 }}>
-                    <InputLabel>Aggregation</InputLabel>
-                    <Select
-                      value={selectedAggFunc}
-                      label="Aggregation"
-                      onChange={e => setSelectedAggFunc(e.target.value)}
-                    >
-                      <MenuItem value="MIN">MIN</MenuItem>
-                      <MenuItem value="MAX">MAX</MenuItem>
-                      <MenuItem value="SUM">SUM</MenuItem>
-                      <MenuItem value="AVG">AVG</MenuItem>
-                      <MenuItem value="COUNT">COUNT</MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <FormControl size="small" sx={{ minWidth: 200 }}>
-                    <InputLabel>Column</InputLabel>
-                    <Select
-                      value={selectedAggCol}
-                      label="Column"
-                      onChange={e => setSelectedAggCol(e.target.value)}
-                    >
-                      {column
-                        ?.filter((col: any) => {
-                          const isNumeric = isNumericType(col.type);
-                          const isGrouped = grouping.includes(col.name);
-                          return isNumeric && !isGrouped;
-                        })
-                        .map((col: any) => {
-                          const isDisabled = aggregations.some(
-                            agg => agg.col === col.name
-                          );
-                          return (
-                            <MenuItem
-                              key={col.name}
-                              value={col.name}
-                              disabled={isDisabled}
-                            >
-                              {col.name}
-                            </MenuItem>
-                          );
-                        })}
-                    </Select>
-                  </FormControl>
-
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={handleAddAggregation}
-                    disabled={!selectedAggFunc || !selectedAggCol}
+          {showAggregationPanel && (
+            <Box
+              sx={{
+                p: '8px 16px',
+                backgroundColor: '#f5f5f5',
+                borderBottom: '1px solid #e0e0e0'
+              }}
+            >
+              <Stack direction="row" spacing={2} alignItems="center">
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Aggregation</InputLabel>
+                  <Select
+                    value={selectedAggFunc}
+                    label="Aggregation"
+                    onChange={e => setSelectedAggFunc(e.target.value)}
                   >
-                    Add
-                  </Button>
+                    <MenuItem value="MIN">MIN</MenuItem>
+                    <MenuItem value="MAX">MAX</MenuItem>
+                    <MenuItem value="SUM">SUM</MenuItem>
+                    <MenuItem value="AVG">AVG</MenuItem>
+                    <MenuItem value="COUNT">COUNT</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Column</InputLabel>
+                  <Select
+                    value={selectedAggCol}
+                    label="Column"
+                    onChange={e => setSelectedAggCol(e.target.value)}
+                  >
+                    {column
+                      ?.filter((col: any) => {
+                        // Must be Numeric Type
+                        const isNumeric = isNumericType(col.type);
+                        // Must NOT be the one currently used for grouping
+                        const isGrouped = grouping.includes(col.name);
+                        return isNumeric && !isGrouped;
+                      })
+                      .map((col: any) => {
+                        const isDisabled = aggregations.some(
+                          agg => agg.col === col.name
+                        );
+                        return (
+                          <MenuItem
+                            key={col.name}
+                            value={col.name}
+                            disabled={isDisabled}
+                          >
+                            {col.name}
+                          </MenuItem>
+                        );
+                      })}
+                  </Select>
+                </FormControl>
+
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleAddAggregation}
+                  disabled={!selectedAggFunc || !selectedAggCol}
+                >
+                  Add
+                </Button>
+              </Stack>
+
+              {aggregations.length > 0 && (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ mt: 2, flexWrap: 'wrap', gap: 1 }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      alignSelf: 'center',
+                      mr: 1,
+                      color: 'text.secondary'
+                    }}
+                  >
+                    Active Aggregations:
+                  </Typography>
+                  {aggregations.map((agg, index) => (
+                    <Chip
+                      key={`${agg.col}-${agg.func}`}
+                      label={`${agg.col} (${agg.func})`}
+                      onDelete={() => handleRemoveAggregation(index)}
+                      color="primary"
+                      variant="outlined"
+                      size="small"
+                    />
+                  ))}
                 </Stack>
-
-                {aggregations.length > 0 && (
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{ mt: 2, flexWrap: 'wrap', gap: 1 }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        alignSelf: 'center',
-                        mr: 1,
-                        color: 'text.secondary'
-                      }}
-                    >
-                      Active Aggregations:
-                    </Typography>
-                    {aggregations.map((agg, index) => (
-                      <Chip
-                        key={`${agg.col}-${agg.func}`}
-                        label={`${agg.col} (${agg.func})`}
-                        onDelete={() => handleRemoveAggregation(index)}
-                        color="primary"
-                        variant="outlined"
-                        size="small"
-                      />
-                    ))}
-                  </Stack>
-                )}
-              </Box>
-            )}
-          </Box>
-        )}
-        // Styling & Options
-        enableRowSelection={false}
-        enableColumnActions={true}
-        enableDensityToggle={false}
-        initialState={{ density: 'compact' }}
-        muiTableProps={{
-          sx: {
-            tableLayout: 'fixed'
-          }
-        }}
-        // Applied calculated height
-        muiTableContainerProps={{
-          sx: {
-            height: `${previewHeight}px`,
-            maxHeight: `${previewHeight}px`,
-            overflowX: 'auto',
-            flexGrow: 1
-          },
-          onDragStart: e => e.stopPropagation(),
-          onDragOver: e => e.stopPropagation(),
-          onDrop: e => e.stopPropagation()
-        }}
-        muiTableHeadCellProps={{
-          onDragStart: e => e.stopPropagation()
-        }}
-        renderEmptyRowsFallback={() => (
-          <Box
-            sx={{
-              p: 2,
-              textAlign: 'center',
-              fontStyle: 'italic',
-              color: 'text.secondary'
-            }}
-          >
-            No data available
-          </Box>
-        )}
-      />
-    )
+              )}
+            </Box>
+          )}
+        </Box>
+      )}
+      // Styling & Options
+      enableRowSelection={false}
+      enableColumnActions={true}
+      enableDensityToggle={false}
+      initialState={{ density: 'compact' }}
+      muiTableProps={{
+        sx: {
+          tableLayout: 'fixed'
+        }
+      }}
+      // Applied calculated height
+      muiTableContainerProps={{
+        sx: {
+          height: `${previewHeight}px`,
+          maxHeight: `${previewHeight}px`,
+          overflowX: 'auto',
+          flexGrow: 1
+        },
+        onDragStart: e => e.stopPropagation(),
+        onDragOver: e => e.stopPropagation(),
+        onDrop: e => e.stopPropagation()
+      }}
+      muiTableHeadCellProps={{
+        onDragStart: e => e.stopPropagation()
+      }}
+      renderEmptyRowsFallback={() => (
+        <Box
+          sx={{
+            p: 2,
+            textAlign: 'center',
+            fontStyle: 'italic',
+            color: 'text.secondary'
+          }}
+        >
+          No data available
+        </Box>
+      )}
+    />
   );
 };
 
