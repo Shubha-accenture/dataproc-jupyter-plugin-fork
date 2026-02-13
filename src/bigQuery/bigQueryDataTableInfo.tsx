@@ -287,7 +287,6 @@ const BigQueryDataTableInfo = ({
     pagination.pageSize,
     debouncedColumnFilters,
     sorting,
-    grouping,
     aggregations
   ]);
 
