@@ -245,7 +245,8 @@ class Client:
 
             return {
                 "rows": transformed_rows,
-                "totalRows": str(total_rows_estimate) 
+                "totalRows": str(total_rows_estimate),
+                "sqlQuery": sql_query
             }
             
         except Exception as e:

@@ -277,6 +277,8 @@ const BigQueryDataTableInfo = ({
       enableGrouping={true}
       groupedColumnMode={false}
       enableExpanding={false}
+      isMultiSortEvent={() => true} //enable multisorting
+      maxMultiSortColCount={3}
       // State Management
       state={{
         columnFilters,
@@ -297,6 +299,9 @@ const BigQueryDataTableInfo = ({
       manualSorting={true}
       manualGrouping={true}
       rowCount={Number(totalRowSize)}
+      // Disabling Global Filter and full-screen icon as we have column-specific filters
+      enableGlobalFilter={false}
+      enableFullScreenToggle={false}
       // Custom Toolbar Rendering
       renderTopToolbar={({ table }) => (
         <Box>
