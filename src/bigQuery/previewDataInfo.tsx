@@ -15,7 +15,12 @@
 //  * limitations under the License.
 //  */
 import React, { useEffect, useState, useMemo } from 'react';
-import { DataGrid, GridColDef, GridFilterModel, GridSortModel } from '@mui/x-data-grid';
+import {
+  DataGrid,
+  GridColDef,
+  GridFilterModel,
+  GridSortModel
+} from '@mui/x-data-grid';
 import { Paper, Box, CircularProgress } from '@mui/material';
 import { BigQueryService } from './bigQueryService';
 import { handleDebounce } from '../utils/utils';
@@ -32,9 +37,12 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(50);
   const [previewHeight, setPreviewHeight] = useState(window.innerHeight - 180);
-  
-  const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
-  const [debouncedFilterModel, setDebouncedFilterModel] = useState<GridFilterModel>({ items: [] });
+
+  const [filterModel, setFilterModel] = useState<GridFilterModel>({
+    items: []
+  });
+  const [debouncedFilterModel, setDebouncedFilterModel] =
+    useState<GridFilterModel>({ items: [] });
 
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
 
@@ -127,7 +135,7 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
       setTotalRowSize,
       setPreviewDataList,
       debouncedFilterModel,
-      sortModel,
+      sortModel
     );
   }, [
     serviceColumns,
@@ -137,7 +145,7 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
     pageSize,
     pageIndex,
     debouncedFilterModel,
-    sortModel,
+    sortModel
   ]);
 
   return (
@@ -159,19 +167,16 @@ const PreviewDataInfo = ({ column, tableId, dataSetId, projectId }: any) => {
         paginationMode="server"
         filterMode="server"
         sortingMode="server"
-        filterModel={filterModel} 
+        filterModel={filterModel}
         sortModel={sortModel}
-        
         onFilterModelChange={newModel => {
           setFilterModel(newModel);
           setPageIndex(0);
         }}
-
         onSortModelChange={newModel => {
-            setSortModel(newModel);
-            setPageIndex(0);
+          setSortModel(newModel);
+          setPageIndex(0);
         }}
-
         paginationModel={{ page: pageIndex, pageSize: pageSize }}
         onPaginationModelChange={model => {
           setPageIndex(model.page);

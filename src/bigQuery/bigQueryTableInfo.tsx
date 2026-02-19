@@ -20,11 +20,11 @@ import { BigQueryService } from './bigQueryService';
 import { CircularProgress } from '@mui/material';
 
 const BigQueryTableInfo = ({
-  title,
+  node,
   dataset,
   projectId
 }: {
-  title: string;
+  node: any;
   dataset: string;
   projectId: string;
 }) => {
@@ -42,7 +42,7 @@ const BigQueryTableInfo = ({
 
   useEffect(() => {
     BigQueryService.getBigQueryTableInfoAPIService(
-      title,
+      node?.data?.name,
       dataset,
       setTableInfo,
       datasetInfo,
@@ -57,7 +57,7 @@ const BigQueryTableInfo = ({
         <div className="database-loader">
           <div>
             <CircularProgress
-              className = "spin-loader-custom-style"
+              className="spin-loader-custom-style"
               size={20}
               aria-label="Loading Spinner"
               data-testid="loader"

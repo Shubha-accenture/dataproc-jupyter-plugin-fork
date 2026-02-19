@@ -17,6 +17,7 @@
 
 import React, { Suspense, useEffect, useState, useTransition } from 'react';
 import { IThemeManager } from '@jupyterlab/apputils';
+import { JupyterLab } from '@jupyterlab/application';
 import { DataprocWidget } from '../controls/DataprocWidget';
 import BigQueryTableInfo from './bigQueryTableInfo';
 import BigQuerySchemaInfo from './bigQuerySchema';
@@ -28,14 +29,16 @@ const BigQueryDataTableInfo = React.lazy(
 );
 
 interface IDatabaseProps {
-  title: string;
+  node: any;
   database: string;
   projectId: string;
+  app: JupyterLab;
 }
 const BigQueryTableInfoWrapper = ({
-  title,
+  node,
   database,
-  projectId
+  projectId,
+  app
 }: IDatabaseProps): React.JSX.Element => {
   type Mode = 'Details' | 'Schema' | 'Preview';
 
@@ -61,7 +64,7 @@ const BigQueryTableInfoWrapper = ({
   useEffect(() => {
     BigQueryService.getBigQuerySchemaInfoAPIService(
       database,
-      title,
+      node?.data?.name,
       projectId,
       setSchemaInfoResponse
     );
@@ -70,7 +73,7 @@ const BigQueryTableInfoWrapper = ({
   return (
     <div className="dpms-Wrapper">
       <div className="table-info-overlay">
-        <div className="title-overlay">{title}</div>
+        <div className="title-overlay">{node?.data?.name}</div>
         <div className="clusters-list-overlay" role="tab">
           <div
             role="tabpanel"
@@ -97,7 +100,7 @@ const BigQueryTableInfoWrapper = ({
         </div>
         {selectedMode === 'Details' && (
           <BigQueryTableInfo
-            title={title}
+            node={node}
             dataset={database}
             projectId={projectId}
           />
@@ -132,9 +135,10 @@ const BigQueryTableInfoWrapper = ({
               >
                 <BigQueryDataTableInfo
                   column={schemaInfoResponse}
-                  tableId={title}
+                  node={node}
                   dataSetId={database}
                   projectId={projectId}
+                  app={app}
                 />
               </Suspense>
             </>
@@ -146,10 +150,11 @@ const BigQueryTableInfoWrapper = ({
 
 export class BigQueryTableWrapper extends DataprocWidget {
   constructor(
-    title: string,
+    public treeNode: any,
     private database: string,
     private projectId: string,
-    themeManager: IThemeManager
+    themeManager: IThemeManager,
+    private app: JupyterLab
   ) {
     super(themeManager);
   }
@@ -157,9 +162,10 @@ export class BigQueryTableWrapper extends DataprocWidget {
   renderInternal(): React.JSX.Element {
     return (
       <BigQueryTableInfoWrapper
-        title={this.title.label}
+        node={this.treeNode}
         database={this.database}
         projectId={this.projectId}
+        app={this.app}
       />
     );
   }

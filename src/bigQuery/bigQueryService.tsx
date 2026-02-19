@@ -216,7 +216,8 @@ export class BigQueryService {
     filterModel?: any,
     sortModel?: any,
     groupByColumns?: string[],
-    aggregations?: any
+    aggregations?: any,
+    setGeneratedSql?: (sql: string) => void
   ) => {
     setIsLoading(true);
     try {
@@ -307,6 +308,7 @@ export class BigQueryService {
 
         setPreviewDataList(transformRowInfoList);
         setTotalRowSize(data.totalRows.toString());
+        setGeneratedSql && setGeneratedSql(data.sqlQuery || '');
         setIsLoading(false);
       }
     } catch (reason) {
