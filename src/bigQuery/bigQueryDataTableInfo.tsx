@@ -231,12 +231,15 @@ const BigQueryDataTableInfo = ({
 
     try {
       // Create a new notebook
-      await app.commands.execute('notebook:create-new', {
+      const notebookPanel = await app.commands.execute('notebook:create-new', {
         kernelName: 'python3'
       });
 
       // Wait briefly for the notebook to initialize
       await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Activate the notebook
+      app.shell.activateById(notebookPanel.id);
 
       // Insert the generated SQL from API
       await app.commands.execute('notebook:replace-selection', {
