@@ -262,6 +262,7 @@ def setup_handlers(web_app):
         "jupyterlabVersion": LatestVersionController,
         "updatePlugin": UpdatePackage,
         "checkApiEnabled": checkApiEnabled.CheckApiController,
+        "bigQueryAskAi": bigquery.AskAiController,
     }
     handlers = [(full_path(name), handler) for name, handler in handlersMap.items()]
     web_app.add_handlers(host_pattern, handlers)

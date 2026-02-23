@@ -109,6 +109,38 @@ class TableInfoController(APIHandler):
             self.finish({"error": str(e)})
 
 
+class AskAiController(APIHandler):
+    @tornado.web.authenticated
+    async def post(self):
+        try:
+            # Get the payload sent from the frontend
+            input_data = self.get_json_body()
+            query = input_data.get("query")
+            schema = input_data.get("schema")
+            table = input_data.get("table")
+
+            if not query or not table:
+                self.set_status(400)
+                self.finish({"error": "Missing required parameters: query or table"})
+                return
+
+            bq_client = await bigquery_client.get_client(self.log)
+            ai_data = await bq_client.generate_and_execute_ai_sql(
+                query=query, 
+                schema=schema, 
+                table=table
+            )
+            
+            if "error" in ai_data:
+                self.set_status(500)
+                
+            self.finish(json.dumps(ai_data))
+        except Exception as e:
+            self.log.exception("Error processing Ask AI request")
+            self.set_status(500)
+            self.finish({"error": str(e)})
+
+
 class PreviewController(APIHandler):
     @tornado.web.authenticated
     async def get(self):

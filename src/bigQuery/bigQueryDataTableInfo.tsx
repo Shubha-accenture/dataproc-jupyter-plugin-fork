@@ -37,9 +37,12 @@ import {
   Stack,
   Chip,
   Typography,
-  Tooltip
+  Tooltip,
+  TextField,
+  CircularProgress
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'; // Added for AI styling
 import { BigQueryService } from './bigQueryService';
 import {
   AggregationRule,
@@ -62,8 +65,12 @@ const BigQueryDataTableInfo = ({
   const [isLoading, setIsLoading] = useState(true);
   const [totalRowSize, setTotalRowSize] = useState('0');
 
-  //Store the generated SQL from the API response
+  // Store the generated SQL from the API response
   const [generatedSql, setGeneratedSql] = useState<string>('');
+
+  // AI / Gemini State
+  const [nlQuery, setNlQuery] = useState<string>('');
+  const [isGeneratingAiSql, setIsGeneratingAiSql] = useState(false);
 
   // MRT State
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
@@ -97,11 +104,6 @@ const BigQueryDataTableInfo = ({
     return grouping.length > 0;
   }, [grouping]);
 
-  /**
-   * Handles adding a new aggregation rule based on the selected function and column.
-   * Validates that both an aggregation function and column are selected before adding.
-   * Resets the selection after adding the rule.
-   */
   const handleAddAggregation = () => {
     if (selectedAggFunc && selectedAggCol) {
       setAggregations(prev => [
@@ -113,10 +115,6 @@ const BigQueryDataTableInfo = ({
     }
   };
 
-  /**
-   * Handles removing an aggregation rule based on its index in the current list.
-   * @param {Number} index - The index of the aggregation rule to remove.
-   */
   const handleRemoveAggregation = (index: number) => {
     setAggregations(prev => prev.filter((_, i) => i !== index));
   };
@@ -134,17 +132,15 @@ const BigQueryDataTableInfo = ({
 
       if (isNumericType(bqType)) {
         filterVariant = 'range';
-        size = 120;
+        size = 1920;
       } else if (['BOOLEAN', 'BOOL'].includes(bqType)) {
         filterVariant = 'checkbox';
         size = 100;
       }
 
-      // Custom Renderer to ensure data is always visible
       const renderCell = ({ cell, row }: any) => {
         let val = cell.getValue();
 
-        // Fallback: If cell value is missing, fetch from original row data
         if (val === undefined || val === null) {
           val = row?.original?.[col.name];
         }
@@ -168,7 +164,6 @@ const BigQueryDataTableInfo = ({
         filterVariant: filterVariant,
         size: size,
         enableGrouping: true,
-        // Apply the robust renderer to ALL cell types
         Cell: renderCell,
         GroupedCell: renderCell,
         AggregatedCell: renderCell
@@ -176,9 +171,6 @@ const BigQueryDataTableInfo = ({
     });
   }, [column]);
 
-  /***
-   * Prepare Service Columns
-   */
   const serviceColumns: IPreviewColumn[] = useMemo(() => {
     return column.map((col: any) => ({
       Header: col.name,
@@ -187,8 +179,49 @@ const BigQueryDataTableInfo = ({
   }, [column]);
 
   /**
-   * Fetches BigQuery table data based on current state parameters such as sorting, filtering, pagination, grouping, and aggregations.
+   * Handles natural language to SQL queries using the Gemini API.
+   * NOTE: This calls a backend service to prevent exposing Gemini API keys on the frontend.
    */
+  const handleAiQuerySubmit = async () => {
+    if (!nlQuery.trim()) return;
+
+    setIsGeneratingAiSql(true);
+    setIsLoading(true);
+
+    try {
+      // Create a context string of the table's schema (columns and their types)
+      // to send to Gemini so it understands what it is querying.
+      const tableSchemaContext = column
+        .map((col: any) => `${col.name} (${col.type})`)
+        .join(', ');
+
+      const fullyQualifiedTableName = `${projectId}.${dataSetId}.${node?.data?.name}`;
+
+      // Call the backend service. This service should:
+      // 1. Ask Gemini to convert `nlQuery` to a SQL string using `tableSchemaContext`.
+      // 2. Execute that generated SQL against BigQuery.
+      // 3. Return both the generated SQL and the resulting dataset.
+      const response = await BigQueryService.generateAndExecuteAiSql(
+        nlQuery,
+        tableSchemaContext,
+        fullyQualifiedTableName
+      );
+
+      if (response) {
+        setGeneratedSql(response.sqlQuery);
+        setPreviewDataList(response.data);
+        setTotalRowSize(response.data.length.toString());
+        // You may also need to dynamically update the columns/serviceColumns
+        // if the SELECT statement alters the standard columns.
+      }
+    } catch (error) {
+      console.error('Error executing AI query:', error);
+    } finally {
+      setIsGeneratingAiSql(false);
+      setIsLoading(false);
+    }
+  };
+
   const fetchBigQueryTableData = () => {
     setIsLoading(true);
 
@@ -223,9 +256,6 @@ const BigQueryDataTableInfo = ({
     );
   };
 
-  /**
-   * Opens a notebook and inserts the SQL generated by the API
-   */
   const handleCopySQLQuery = async () => {
     if (!generatedSql) return;
 
@@ -234,8 +264,6 @@ const BigQueryDataTableInfo = ({
       const notebookPanel = await app.commands.execute('notebook:create-new', {
         kernelName: 'python3'
       });
-
-      // Wait briefly for the notebook to initialize
       await new Promise(resolve => setTimeout(resolve, 300));
 
       // Activate the notebook
@@ -250,7 +278,6 @@ const BigQueryDataTableInfo = ({
     }
   };
 
-  // Debounce Filter Logic
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedColumnFilters(columnFilters);
@@ -258,42 +285,32 @@ const BigQueryDataTableInfo = ({
     return () => clearTimeout(handler);
   }, [columnFilters]);
 
-  //Dynamic Height Calculation
   useEffect(() => {
     const calculateHeight = () => {
-      // Base Offset: Includes Jupyter Headers (~120px) + MRT Toolbar (~60px) + Pagination (~60px)
       let offset = 240;
+      if (showAggregationPanel) offset += 100;
+      // Add a slight offset for our new AI toolbar input
+      offset += 60;
 
-      // Aggregation Panel Offset: Add extra space if the panel is visible
-      if (showAggregationPanel) {
-        offset += 100;
-      }
-
-      // Calculate remaining space
       const calculatedHeight = window.innerHeight - offset;
-
-      // Safety floor: Don't let it shrink below 300px
       setPreviewHeight(Math.max(300, calculatedHeight));
     };
 
-    // Calculate immediately
     calculateHeight();
-
-    // Recalculate on resize
     window.addEventListener('resize', calculateHeight);
     return () => window.removeEventListener('resize', calculateHeight);
   }, [showAggregationPanel]);
 
-  // Reset aggregations if grouping is cleared
   useEffect(() => {
-    if (grouping.length === 0) {
-      setAggregations([]);
-    }
+    if (grouping.length === 0) setAggregations([]);
   }, [grouping]);
 
-  // Fetch Data Effect
   useEffect(() => {
-    fetchBigQueryTableData();
+    // Only trigger default fetch if we aren't generating AI SQL
+    // to prevent race conditions or overwriting AI results.
+    if (!isGeneratingAiSql) {
+      fetchBigQueryTableData();
+    }
   }, [
     serviceColumns,
     node?.data?.name,
@@ -318,13 +335,11 @@ const BigQueryDataTableInfo = ({
     <MaterialReactTable
       columns={columns}
       data={previewDataList}
-      // Grouping Configuration
       enableGrouping={true}
       groupedColumnMode={false}
       enableExpanding={false}
-      isMultiSortEvent={() => true} //enable multisorting
+      isMultiSortEvent={() => true}
       maxMultiSortColCount={3}
-      // State Management
       state={{
         columnFilters,
         isLoading,
@@ -333,18 +348,15 @@ const BigQueryDataTableInfo = ({
         grouping,
         showProgressBars: isLoading
       }}
-      // Event Handlers
       onColumnFiltersChange={setColumnFilters}
       onPaginationChange={setPagination}
       onSortingChange={setSorting}
       onGroupingChange={setGrouping}
-      // Server-Side Logic Flags
       manualFiltering={true}
       manualPagination={true}
       manualSorting={true}
       manualGrouping={true}
       rowCount={Number(totalRowSize)}
-      // Disabling Global Filter and full-screen icon as we have column-specific filters
       enableGlobalFilter={false}
       enableFullScreenToggle={false}
       renderToolbarInternalActions={({ table }) => (
@@ -372,9 +384,47 @@ const BigQueryDataTableInfo = ({
           </Tooltip>
         </Box>
       )}
-      // Custom Toolbar Rendering
       renderTopToolbar={({ table }) => (
         <Box>
+          {/* Gemini AI Input Bar */}
+          <Box
+            sx={{
+              p: '8px 16px',
+              display: 'flex',
+              gap: 2,
+              alignItems: 'center',
+              borderBottom: '1px solid #e0e0e0',
+              backgroundColor: '#fafafa'
+            }}
+          >
+            <TextField
+              size="small"
+              fullWidth
+              variant="outlined"
+              placeholder="Ask Gemini to query this data (e.g., 'Show me users from NY with age > 30')"
+              value={nlQuery}
+              onChange={e => setNlQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAiQuerySubmit()}
+              disabled={isGeneratingAiSql || isLoading}
+            />
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleAiQuerySubmit}
+              disabled={isGeneratingAiSql || isLoading || !nlQuery.trim()}
+              startIcon={
+                isGeneratingAiSql ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <AutoAwesomeIcon />
+                )
+              }
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              Ask AI
+            </Button>
+          </Box>
+
           <MRT_TopToolbar table={table} />
 
           {showAggregationPanel && (
@@ -410,9 +460,7 @@ const BigQueryDataTableInfo = ({
                   >
                     {column
                       ?.filter((col: any) => {
-                        // Must be Numeric Type
                         const isNumeric = isNumericType(col.type);
-                        // Must NOT be the one currently used for grouping
                         const isGrouped = grouping.includes(col.name);
                         return isNumeric && !isGrouped;
                       })
@@ -475,7 +523,6 @@ const BigQueryDataTableInfo = ({
           )}
         </Box>
       )}
-      // Styling & Options
       enableRowSelection={false}
       enableColumnActions={true}
       enableDensityToggle={false}
@@ -485,7 +532,6 @@ const BigQueryDataTableInfo = ({
           tableLayout: 'fixed'
         }
       }}
-      // Applied calculated height
       muiTableContainerProps={{
         sx: {
           height: `${previewHeight}px`,

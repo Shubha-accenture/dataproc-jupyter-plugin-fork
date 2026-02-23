@@ -139,6 +139,72 @@ class Client:
         except Exception as e:
             self.log.exception(f"Error fetching table information")
             return {"error": str(e)}
+        
+
+    async def generate_and_execute_ai_sql(self, query: str, schema: str, table: str):
+        try:
+            # 1. Call Vertex AI Gemini to translate natural language to SQL
+            # Defaulting to us-central1 if region_id is missing/global, as Vertex AI requires a specific region
+            region = self.region_id if self.region_id and self.region_id != "global" else "us-central1"
+            
+            ai_endpoint = f"https://{region}-aiplatform.googleapis.com/v1/projects/{self.project_id}/locations/{region}/publishers/google/models/gemini-2.5-flash:generateContent"
+            
+            prompt = f"""You are a BigQuery SQL expert. Convert the following natural language request into a valid BigQuery SQL query.
+            Table Name: `{table}`
+            Schema (Columns): {schema}
+            Request: {query}
+            
+            Return ONLY the raw SQL query. Do not wrap it in markdown blockquotes (e.g., ```sql). Do not include any explanations."""
+
+            payload = {
+                "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.0 # Keep temperature at 0 for strict SQL generation
+                }
+            }
+
+            async with self.client_session.post(
+                ai_endpoint, headers=self.create_headers(), json=payload
+            ) as response:
+                if response.status != 200:
+                    raise Exception(f"Vertex AI API Error: {response.reason} {await response.text()}")
+                
+                resp = await response.json()
+                
+                # Extract text from Gemini response
+                sql_query = resp['candidates'][0]['content']['parts'][0]['text'].strip()
+
+                # Clean up the output just in case the LLM ignored the "no markdown" instruction
+                if sql_query.startswith("```"):
+                    sql_query = sql_query.strip("`")
+                    if sql_query.lower().startswith("sql"):
+                        sql_query = sql_query[3:].strip()
+
+            self.log.info(f"AI Generated SQL: {sql_query}")
+
+            # 2. Execute the generated SQL against BigQuery
+            query_job = self.bqclient.query(sql_query)
+            results = query_job.result()
+
+            # 3. Transform the results into a flat dictionary list for the frontend table
+            transformed_rows = []
+            for row in results:
+                row_dict = {}
+                for key, value in dict(row).items():
+                    if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
+                        row_dict[key] = value.isoformat()
+                    else:
+                        row_dict[key] = value
+                transformed_rows.append(row_dict)
+
+            return {
+                "sqlQuery": sql_query,
+                "data": transformed_rows
+            }
+
+        except Exception as e:
+            self.log.exception("Error in AI SQL generation or execution")
+            return {"error": str(e)}
 
     async def bigquery_preview_data(
         self, dataset_id, table_id, max_results, start_index, project_id, group_by=None,aggregation_fields=None,

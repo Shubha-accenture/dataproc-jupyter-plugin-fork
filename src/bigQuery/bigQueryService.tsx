@@ -203,6 +203,50 @@ export class BigQueryService {
   //     }
   //   };
 
+  /**
+   * Sends a natural language query to the backend to be converted to SQL via Gemini
+   * and executed against BigQuery.
+   * * @param nlQuery The natural language question from the user.
+   * @param schemaContext A string representation of the table schema (columns and types).
+   * @param tableName The fully qualified BigQuery table name (projectId.datasetId.tableName).
+   * @returns An object containing the generated SQL string and the resulting data array.
+   */
+  static async generateAndExecuteAiSql(
+    nlQuery: string,
+    schemaContext: string,
+    tableName: string
+  ): Promise<{ sqlQuery: string; data: any[] } | null> {
+    try {
+      // NOTE: Update '/api/bigquery/ask-ai' to match your actual backend endpoint route.
+      // If you are using Axios or another HTTP client instead of fetch, adjust accordingly.
+      const bigQueryData: any = await requestAPI('bigQueryAskAi', {
+        method: 'POST',
+        body: JSON.stringify({
+          query: nlQuery,
+          schema: schemaContext,
+          table: tableName
+        })
+      });
+
+      if (!bigQueryData.ok) {
+        const errorData = bigQueryData.error || {};
+        throw new Error(
+          errorData.message || 'Failed to generate or execute AI query'
+        );
+      }
+
+      const result = await bigQueryData.json();
+
+      return {
+        sqlQuery: result.sqlQuery, // The generated SQL from Gemini
+        data: result.data // The actual rows returned from BigQuery
+      };
+    } catch (error) {
+      console.error('API Error in generateAndExecuteAiSql:', error);
+      return null;
+    }
+  }
+
   static bigQueryPreviewAPIService = async (
     columns: any[],
     tableId: string,
