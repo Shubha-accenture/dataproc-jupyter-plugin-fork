@@ -15,7 +15,14 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef
+} from 'react';
+import { Notification } from '@jupyterlab/apputils';
 import {
   MaterialReactTable,
   MRT_TopToolbar,
@@ -52,6 +59,7 @@ import { COPY_SQL_QUERY_BTN_TEXT, DEFAULT_SQL_QUERY } from '../utils/const';
 import { BigQueryTableAddButton } from './BigQueryDataTableInfo.styles';
 import AddAggregationIcon from '../../style/icons/add_icon_aggregation.svg';
 import { LabIcon } from '@jupyterlab/ui-components';
+import { transformBigQueryRows } from '../utils/bigQueryHelper';
 
 const iconAddAggregation = new LabIcon({
   name: 'launcher:add-aggregation-icon',
@@ -91,6 +99,8 @@ const BigQueryDataTableInfo: React.FC<BigQueryDataTableInfoProps> = ({
 
   // UI State
   const [previewHeight, setPreviewHeight] = useState(500);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   /**
    * Determines whether to show the aggregation panel based on the presence of active groupings.
@@ -228,7 +238,13 @@ const BigQueryDataTableInfo: React.FC<BigQueryDataTableInfoProps> = ({
   /**
    * Fetches preview data from the BigQuery API based on the current state of filters, sorting, pagination, grouping, and aggregations. Updates the loading state and total row size accordingly.
    */
-  const fetchBigQueryTableData = useCallback(() => {
+  const fetchBigQueryTableData = useCallback(async () => {
+    // Cancel the previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setIsLoading(true);
 
     const sortModel: GridSortModel = sorting.map(sort => ({
@@ -244,22 +260,49 @@ const BigQueryDataTableInfo: React.FC<BigQueryDataTableInfoProps> = ({
       }))
     };
 
-    BigQueryService.bigQueryPreviewAPIService(
-      serviceColumns,
-      node?.data?.name,
-      dataSetId,
-      setIsLoading,
-      projectId,
-      pagination.pageSize,
-      pagination.pageIndex,
-      setTotalRowSize,
-      setPreviewDataList,
-      filterModel,
-      sortModel,
-      grouping,
-      aggregations,
-      setGeneratedSql
-    );
+    try {
+      const data = await BigQueryService.bigQueryPreviewAPIService(
+        node?.data?.name,
+        dataSetId,
+        projectId,
+        pagination.pageSize,
+        pagination.pageIndex,
+        filterModel,
+        sortModel,
+        grouping,
+        aggregations,
+        abortControllerRef.current.signal
+      );
+
+      if (!data?.rows || data.totalRows === 0) {
+        setPreviewDataList([]);
+        setTotalRowSize('0');
+      } else {
+        const transformedData = transformBigQueryRows(
+          data.rows,
+          serviceColumns
+        );
+
+        setPreviewDataList(transformedData);
+        setTotalRowSize((data.totalRows || 0).toString());
+        if (data.sqlQuery) setGeneratedSql(data.sqlQuery);
+      }
+    } catch (error: any) {
+      // Ignore AbortErrors as they are intentional when overriding previous requests
+      if (error.name === 'AbortError') return;
+
+      Notification.emit(
+        `Error in calling BigQuery Preview API: ${error.message || error}`,
+        'error',
+        { autoClose: 5000 }
+      );
+      setPreviewDataList([]);
+    } finally {
+      // Ensure we don't turn off loading if another request was just fired
+      if (!abortControllerRef.current?.signal.aborted) {
+        setIsLoading(false);
+      }
+    }
   }, [
     serviceColumns,
     node?.data?.name,
@@ -402,19 +445,31 @@ const BigQueryDataTableInfo: React.FC<BigQueryDataTableInfoProps> = ({
                 </Select>
               </FormControl>
 
-              <BigQueryTableAddButton
-                variant="outlined"
-                size="small"
-                onClick={handleAddAggregation}
-                disabled={!selectedAggFunc || !selectedAggCol}
-                startIcon={
-                  <span style={{ paddingTop: '2px' }}>
-                    <iconAddAggregation.react />
-                  </span>
-                }
-              >
-                Add
-              </BigQueryTableAddButton>
+              {(() => {
+                const addDisabled = !selectedAggFunc || !selectedAggCol;
+                return (
+                  <BigQueryTableAddButton
+                    variant="outlined"
+                    size="small"
+                    onClick={handleAddAggregation}
+                    disabled={addDisabled}
+                    startIcon={
+                      <span
+                        style={{
+                          paddingTop: '4px',
+                          opacity: addDisabled ? 0.5 : 1,
+                          filter: addDisabled ? 'grayscale(100%)' : 'none',
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        <iconAddAggregation.react />
+                      </span>
+                    }
+                  >
+                    Add
+                  </BigQueryTableAddButton>
+                );
+              })()}
             </Stack>
 
             {aggregations.length > 0 && (
@@ -476,6 +531,14 @@ const BigQueryDataTableInfo: React.FC<BigQueryDataTableInfoProps> = ({
     ),
     []
   );
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handler = setTimeout(() => {

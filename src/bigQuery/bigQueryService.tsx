@@ -24,6 +24,7 @@ import {
   PLUGIN_ID
 } from '../utils/const';
 import { authApi } from '../utils/utils';
+import { buildBigQueryApiUrl } from '../utils/bigQueryHelper';
 
 // interface IPreviewColumn {
 //   Header: string;
@@ -203,119 +204,163 @@ export class BigQueryService {
   //     }
   //   };
 
+  // static bigQueryPreviewAPIService = async (
+  //   columns: any[],
+  //   tableId: string,
+  //   dataSetId: string,
+  //   setIsLoading: (value: boolean) => void,
+  //   projectId: string,
+  //   maxResults: number,
+  //   pageIndex: number,
+  //   setTotalRowSize: (value: string) => void,
+  //   setPreviewDataList: (data: any[]) => void,
+  //   filterModel?: any,
+  //   sortModel?: any,
+  //   groupByColumns?: string[],
+  //   aggregations?: any,
+  //   setGeneratedSql?: (sql: string) => void
+  // ) => {
+  //   setIsLoading(true);
+  //   try {
+  //     let filterQuery = '';
+  //     if (filterModel?.items?.length > 0) {
+  //       filterModel.items.forEach((item: any, index: number) => {
+  //         if (
+  //           item.value !== undefined &&
+  //           item.value !== null &&
+  //           item.value !== ''
+  //         ) {
+  //           const encodedField = encodeURIComponent(item.field);
+  //           const encodedOp = encodeURIComponent(item.operator);
+  //           const encodedVal = encodeURIComponent(item.value);
+
+  //           filterQuery += `&filter_field=${encodedField}&filter_op=${encodedOp}&filter_val=${encodedVal}`;
+  //         }
+  //       });
+  //     }
+
+  //     let sortQuery = '';
+  //     if (sortModel?.length > 0) {
+  //       const sortItem = sortModel[0];
+  //       if (sortItem.field && sortItem.sort) {
+  //         const encodedSortField = encodeURIComponent(sortItem.field);
+  //         const encodedSortDir = encodeURIComponent(sortItem.sort); // 'asc' or 'desc'
+  //         sortQuery = `&sort_field=${encodedSortField}&sort_dir=${encodedSortDir}`;
+  //       }
+  //     }
+
+  //     let groupByQuery = '';
+  //     if (groupByColumns && groupByColumns.length > 0) {
+  //       const encodedGroupBy = groupByColumns
+  //         .map(col => encodeURIComponent(col))
+  //         .join(',');
+  //       groupByQuery = `&group_by_fields=${encodedGroupBy}`;
+  //     }
+
+  //     let aggregationQuery = '';
+  //     if (aggregations) {
+  //       // Ensure we handle both an Array of objects or a single Object
+  //       const aggList = Array.isArray(aggregations)
+  //         ? aggregations
+  //         : [aggregations];
+
+  //       aggList.forEach((agg: any) => {
+  //         // Check if the object has the specific structure { col: '...', func: '...' }
+  //         if (agg && agg.col && agg.func) {
+  //           const encodedField = encodeURIComponent(agg.col);
+  //           const encodedOp = encodeURIComponent(agg.func);
+  //           aggregationQuery += `&aggregation_field=${encodedField}&aggregation_op=${encodedOp}`;
+  //         }
+  //       });
+  //     }
+
+  //     const startIndex = pageIndex * maxResults;
+
+  //     const apiUrl = `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}${filterQuery}${sortQuery}${groupByQuery}${aggregationQuery}`;
+
+  //     const data: any = await requestAPI(apiUrl);
+
+  //     if (data.error) {
+  //       Notification.emit(data.error, 'error', { autoClose: 5000 });
+  //       setIsLoading(false);
+  //     } else if (!data.rows || data.totalRows === 0) {
+  //       setPreviewDataList([]);
+  //       setTotalRowSize('0');
+  //       setIsLoading(false);
+  //     } else {
+  //       const transformRowInfoList = data.rows.map((rowInfo: any) => {
+  //         const transformRowInfo: any = {};
+  //         rowInfo['f'].forEach((fieldInfo: any, index: number) => {
+  //           const col = columns[index];
+  //           const columnKey = col?.Header || col?.field || col?.accessor;
+
+  //           if (columnKey) {
+  //             const rawValue = fieldInfo['v'];
+  //             transformRowInfo[columnKey] =
+  //               typeof rawValue === 'object' && rawValue !== null
+  //                 ? JSON.stringify(rawValue)
+  //                 : rawValue;
+  //           }
+  //         });
+  //         return transformRowInfo;
+  //       });
+
+  //       setPreviewDataList(transformRowInfoList);
+  //       setTotalRowSize(data.totalRows.toString());
+  //       setGeneratedSql && setGeneratedSql(data.sqlQuery || '');
+  //       setIsLoading(false);
+  //     }
+  //   } catch (reason) {
+  //     setIsLoading(false);
+  //     Notification.emit(
+  //       `Error in calling BigQuery Preview API: ${reason}`,
+  //       'error',
+  //       { autoClose: 5000 }
+  //     );
+  //   }
+  // };
+
   static bigQueryPreviewAPIService = async (
-    columns: any[],
     tableId: string,
     dataSetId: string,
-    setIsLoading: (value: boolean) => void,
     projectId: string,
     maxResults: number,
     pageIndex: number,
-    setTotalRowSize: (value: string) => void,
-    setPreviewDataList: (data: any[]) => void,
     filterModel?: any,
     sortModel?: any,
     groupByColumns?: string[],
     aggregations?: any,
-    setGeneratedSql?: (sql: string) => void
+    abortSignal?: AbortSignal
   ) => {
-    setIsLoading(true);
     try {
-      let filterQuery = '';
-      if (filterModel?.items?.length > 0) {
-        filterModel.items.forEach((item: any, index: number) => {
-          if (
-            item.value !== undefined &&
-            item.value !== null &&
-            item.value !== ''
-          ) {
-            const encodedField = encodeURIComponent(item.field);
-            const encodedOp = encodeURIComponent(item.operator);
-            const encodedVal = encodeURIComponent(item.value);
-
-            filterQuery += `&filter_field=${encodedField}&filter_op=${encodedOp}&filter_val=${encodedVal}`;
-          }
-        });
-      }
-
-      let sortQuery = '';
-      if (sortModel?.length > 0) {
-        const sortItem = sortModel[0];
-        if (sortItem.field && sortItem.sort) {
-          const encodedSortField = encodeURIComponent(sortItem.field);
-          const encodedSortDir = encodeURIComponent(sortItem.sort); // 'asc' or 'desc'
-          sortQuery = `&sort_field=${encodedSortField}&sort_dir=${encodedSortDir}`;
-        }
-      }
-
-      let groupByQuery = '';
-      if (groupByColumns && groupByColumns.length > 0) {
-        const encodedGroupBy = groupByColumns
-          .map(col => encodeURIComponent(col))
-          .join(',');
-        groupByQuery = `&group_by_fields=${encodedGroupBy}`;
-      }
-
-      let aggregationQuery = '';
-      if (aggregations) {
-        // Ensure we handle both an Array of objects or a single Object
-        const aggList = Array.isArray(aggregations)
-          ? aggregations
-          : [aggregations];
-
-        aggList.forEach((agg: any) => {
-          // Check if the object has the specific structure { col: '...', func: '...' }
-          if (agg && agg.col && agg.func) {
-            const encodedField = encodeURIComponent(agg.col);
-            const encodedOp = encodeURIComponent(agg.func);
-            aggregationQuery += `&aggregation_field=${encodedField}&aggregation_op=${encodedOp}`;
-          }
-        });
-      }
-
-      const startIndex = pageIndex * maxResults;
-
-      const apiUrl = `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}${filterQuery}${sortQuery}${groupByQuery}${aggregationQuery}`;
-
-      const data: any = await requestAPI(apiUrl);
-
-      if (data.error) {
-        Notification.emit(data.error, 'error', { autoClose: 5000 });
-        setIsLoading(false);
-      } else if (!data.rows || data.totalRows === 0) {
-        setPreviewDataList([]);
-        setTotalRowSize('0');
-        setIsLoading(false);
-      } else {
-        const transformRowInfoList = data.rows.map((rowInfo: any) => {
-          const transformRowInfo: any = {};
-          rowInfo['f'].forEach((fieldInfo: any, index: number) => {
-            const col = columns[index];
-            const columnKey = col?.Header || col?.field || col?.accessor;
-
-            if (columnKey) {
-              const rawValue = fieldInfo['v'];
-              transformRowInfo[columnKey] =
-                typeof rawValue === 'object' && rawValue !== null
-                  ? JSON.stringify(rawValue)
-                  : rawValue;
-            }
-          });
-          return transformRowInfo;
-        });
-
-        setPreviewDataList(transformRowInfoList);
-        setTotalRowSize(data.totalRows.toString());
-        setGeneratedSql && setGeneratedSql(data.sqlQuery || '');
-        setIsLoading(false);
-      }
-    } catch (reason) {
-      setIsLoading(false);
-      Notification.emit(
-        `Error in calling BigQuery Preview API: ${reason}`,
-        'error',
-        { autoClose: 5000 }
+      const apiUrl = buildBigQueryApiUrl(
+        projectId,
+        dataSetId,
+        tableId,
+        maxResults,
+        pageIndex,
+        filterModel,
+        sortModel,
+        groupByColumns,
+        aggregations
       );
+
+      // Abort signal to your request handler to cancel pending requests
+      const data: any = await requestAPI(apiUrl, { signal: abortSignal });
+
+      // Handle standard API wrapper errors
+      if (data?.error) {
+        throw new Error(
+          typeof data.error === 'string'
+            ? data.error
+            : JSON.stringify(data.error)
+        );
+      }
+
+      return data;
+    } catch (error: any) {
+      // Re-throw so the UI component can handle Notifications and cleanup
+      throw error;
     }
   };
 
