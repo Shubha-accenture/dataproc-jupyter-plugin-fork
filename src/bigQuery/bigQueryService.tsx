@@ -273,8 +273,6 @@ export class BigQueryService {
         });
       }
 
-      console.log('aggregationQuery', aggregationQuery);
-
       const startIndex = pageIndex * maxResults;
 
       const apiUrl = `bigQueryPreview?project_id=${projectId}&dataset_id=${dataSetId}&table_id=${tableId}&max_results=${maxResults}&start_index=${startIndex}${filterQuery}${sortQuery}${groupByQuery}${aggregationQuery}`;
@@ -320,6 +318,7 @@ export class BigQueryService {
       );
     }
   };
+
   static getBigQueryColumnDetailsAPIService = async (
     datasetId: string,
     tableId: string,

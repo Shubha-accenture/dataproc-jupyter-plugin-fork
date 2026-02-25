@@ -41,3 +41,17 @@ export interface AggregationRule {
   col: string;
   func: string;
 }
+
+export interface BigQueryColumn {
+  name: string;
+  type: string;
+  [key: string]: any;
+}
+
+export interface BigQueryDataTableInfoProps {
+  column: BigQueryColumn[];
+  node: any;
+  dataSetId: string;
+  projectId: string;
+  app: any;
+}

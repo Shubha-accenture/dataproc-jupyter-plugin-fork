@@ -308,3 +308,5 @@ export const BIGQUERY_API_URL =
   'https://console.cloud.google.com/apis/library/bigquery.googleapis.com';
 
 export const DEFAULT_SQL_QUERY = 'SELECT * FROM';
+
+export const COPY_SQL_QUERY_BTN_TEXT = 'Export to Notebook';
