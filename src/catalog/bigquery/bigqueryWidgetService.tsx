@@ -17,9 +17,7 @@
 
 import { Notification } from '@jupyterlab/apputils';
 import { requestAPI } from 'handler/handler';
-import {
-  BIGQUERY_SERVICE_NAME,
-} from 'utils/const';
+import { BIGQUERY_SERVICE_NAME } from 'utils/const';
 import { authApi } from 'utils/utils';
 
 export class BigQueryWidgetService {
