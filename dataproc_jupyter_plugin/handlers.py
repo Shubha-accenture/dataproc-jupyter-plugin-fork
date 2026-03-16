@@ -36,7 +36,8 @@ from dataproc_jupyter_plugin import credentials, urls
 from dataproc_jupyter_plugin.commons import constants
 from dataproc_jupyter_plugin.controllers import (
     bigquery,
-    checkApiEnabled
+    checkApiEnabled,
+    biglake
 )
 from dataproc_jupyter_plugin.controllers.version import (
     LatestVersionController,
@@ -262,6 +263,7 @@ def setup_handlers(web_app):
         "jupyterlabVersion": LatestVersionController,
         "updatePlugin": UpdatePackage,
         "checkApiEnabled": checkApiEnabled.CheckApiController,
+        "v1/projects/(.*)/catalogs": biglake.BigLakeCatalogController,
     }
     handlers = [(full_path(name), handler) for name, handler in handlersMap.items()]
     web_app.add_handlers(host_pattern, handlers)
