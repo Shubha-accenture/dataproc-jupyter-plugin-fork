@@ -1,0 +1,110 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto);
+
+.catalog-widget-wrapper {
+  font-family: 'Roboto' !important;
+  background: var(--jp-layout-color1);
+  display: block;
+  box-sizing: border-box;
+  height: 100vh;
+  overflow: auto;
+}
+
+/* Layout for the tree items at different nesting levels */
+.catalog-dataset-tree div[role='treeitem'][aria-level='0'] > div,
+.catalog-dataset-tree div[role='treeitem'][aria-level='1'] > div,
+.catalog-dataset-tree div[role='treeitem'][aria-level='2'] > div,
+.catalog-dataset-tree div[role='treeitem'][aria-level='3'] > div {
+  display: flex;
+  align-items: center;
+}
+
+.catalog-dataset-tree div[role='treeitem'][aria-level='4'] > div {
+  display: flex;
+}
+
+/* Icon margins and cursors at different levels */
+.catalog-dataset-tree
+  div[role='treeitem'][aria-level='0']
+  > div
+  > div
+  > div
+  > svg,
+.catalog-dataset-tree
+  div[role='treeitem'][aria-level='1']
+  > div
+  > div
+  > div
+  > svg {
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.catalog-dataset-tree
+  div[role='treeitem'][aria-level='2']
+  > div
+  > div
+  > div
+  > svg,
+.catalog-dataset-tree
+  div[role='treeitem'][aria-level='3']
+  > div
+  > div
+  > div
+  > svg,
+.catalog-dataset-tree div[role='treeitem'][aria-level='4'] > div > div > svg {
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+/* Text clipping and ellipsis for tree items */
+.catalog-dataset-tree div[role='treeitem'] > div > div:nth-last-child(2) {
+  cursor: pointer;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.catalog-dataset-tree div[role='treeitem'][aria-level='5'] > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.catalog-error {
+  margin-top: 50px;
+  margin-left: 10px;
+  font-weight: 550;
+  font-size: 15px;
+  width: auto;
+}
+
+.tree-container {
+  margin-left: 13px;
+  margin-top: 10px;
+  height: 100%;
+}
+
+.catalog-loader {
+  display: flex;
+  margin-top: 50px;
+  margin-left: 10px;
+}
+
+.catalog-dataset-tree div[role='treeitem'] > div > div:nth-last-child(2) {
+  cursor: pointer;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.catalog-dataset-tree
+  div[role='treeitem'][aria-level='3']
+  > div
+  > div:nth-last-child(2) {
+  cursor: context-menu !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-top: 3px;
+  margin-left: 5px;
+}

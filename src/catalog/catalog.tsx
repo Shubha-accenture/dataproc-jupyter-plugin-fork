@@ -261,7 +261,7 @@ const CatalogComponent = ({
       <div>
         <div>
           {isLoading ? (
-            <div className="database-loader">
+            <div className="catalog-loader">
               <div>
                 <CircularProgress
                   className="spin-loader-custom-style"
@@ -281,7 +281,7 @@ const CatalogComponent = ({
                       treeStructureData[0].name !== '' && (
                         <>
                           <Tree
-                            className="dataset-tree"
+                            className="catalog-dataset-tree"
                             data={treeStructureData}
                             openByDefault={false}
                             indent={24}
