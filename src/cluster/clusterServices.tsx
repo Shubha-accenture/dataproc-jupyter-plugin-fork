@@ -76,7 +76,6 @@ export class ClusterService {
     try {
       const projectId = await getProjectId();
       setProjectId(projectId);
-      const credentials = await authApi();
       const queryParams = new URLSearchParams();
       queryParams.append('pageSize', '50');
       queryParams.append('pageToken', pageToken);
