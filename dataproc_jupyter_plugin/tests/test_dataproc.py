@@ -3,6 +3,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 
 from dataproc_jupyter_plugin.tests import mocks
+from google.api_core.exceptions import NotFound
 
 
 @pytest.fixture
@@ -164,7 +165,7 @@ async def test_list_clusters_error(monkeypatch, jp_fetch, mock_dataproc_service)
 async def test_cluster_detail_error(monkeypatch, jp_fetch, mock_dataproc_service):
     mocks.patch_mocks(monkeypatch)
     
-    mock_dataproc_service.get_cluster_details.side_effect = Exception("Detail API Error")
+    mock_dataproc_service.get_cluster_details.side_effect = NotFound("Cluster not found")
 
     try:
         response = await jp_fetch(
@@ -175,10 +176,10 @@ async def test_cluster_detail_error(monkeypatch, jp_fetch, mock_dataproc_service
             },
         )
     except tornado.httpclient.HTTPClientError as e:
-        assert e.code == 500
+        assert e.code == 404
         payload = json.loads(e.response.body)
-        assert payload["error"]["code"] == 500
-        assert payload["error"]["message"] == "Detail API Error"
+        assert payload["error"]["code"] == 404
+        assert "Cluster not found" in payload["error"]["message"]
 
 
 async def test_stop_cluster_error(monkeypatch, jp_fetch, mock_dataproc_service):

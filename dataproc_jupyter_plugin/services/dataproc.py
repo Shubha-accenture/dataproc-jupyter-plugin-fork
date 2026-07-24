@@ -10,6 +10,8 @@ class DataprocService:
 
     async def get_client(self):
         cached = await credentials.get_cached()
+        if cached.get("login_error") or cached.get("config_error"):
+            raise ValueError("GCP credentials or configuration (project/region) are missing or invalid.")
         access_token = cached.get("access_token")
         project_id = cached.get("project_id")
         region_id = cached.get("region_id")
@@ -32,21 +34,20 @@ class DataprocService:
             page_token=page_token
         )
         response = await client.list_clusters(request=request)
-        # response is a pager, we just want the raw page to return next_page_token and clusters
-        page = response.messages[0] if hasattr(response, "messages") else response
         
-        # Actually, list_clusters returns a pager. We can get the raw response page by doing:
-        # We should use the async pager's raw_page or just iterate. But frontend expects:
-        # { clusters: [...], nextPageToken: "..." }
         clusters = []
-        async for cluster in response:
-            clusters.append(proto.Message.to_dict(cluster, use_integers_for_enums=False, preserving_proto_field_name=False))
-            if len(clusters) == page_size:
-                break
-        
+        next_page_token = ""
+        async for page in response.pages:
+            clusters = [
+                proto.Message.to_dict(cluster, use_integers_for_enums=False, preserving_proto_field_name=False)
+                for cluster in page
+            ]
+            next_page_token = response.next_page_token
+            break
+            
         return {
             "clusters": clusters,
-            "nextPageToken": response.next_page_token
+            "nextPageToken": next_page_token
         }
 
 
