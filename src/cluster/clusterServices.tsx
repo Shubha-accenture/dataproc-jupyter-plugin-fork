@@ -174,22 +174,15 @@ export class ClusterService {
       setProjectName(credentials.project_id || '');
       requestAPI(`clusterDetail?cluster=${clusterSelected}`)
         .then((responseResult: any) => {
-          if (responseResult.error && responseResult.error.code === 404) {
-            setErrorView(true);
-          }
-          if (responseResult?.error?.code) {
-            Notification.emit(
-              `Failed to fetch cluster details : ${responseResult?.error?.message}`,
-              'error',
-              { autoClose: 5000 }
-            );
-          }
           setClusterInfo(responseResult);
           setIsLoading(false);
         })
         .catch((err: any) => {
           console.log(err);
           setIsLoading(false);
+          if (err.response && err.response.status === 404) {
+            setErrorView(true);
+          }
           DataprocLoggingService.log(
             'Error listing clusters Details',
             LOG_LEVEL.ERROR
@@ -282,20 +275,12 @@ export class ClusterService {
     const credentials = await authApi();
     if (credentials) {
       requestAPI(`deleteCluster?cluster=${selectedcluster}`, { method: 'DELETE' })
-        .then((responseResult: any) => {
-          if (responseResult?.error?.code) {
-            Notification.emit(
-              `Error deleting cluster : ${responseResult?.error?.message}`,
-              'error',
-              { autoClose: 5000 }
-            );
-          } else {
-            Notification.emit(
-              `Cluster ${selectedcluster} deleted successfully`,
-              'success',
-              { autoClose: 5000 }
-            );
-          }
+        .then(() => {
+          Notification.emit(
+            `Cluster ${selectedcluster} deleted successfully`,
+            'success',
+            { autoClose: 5000 }
+          );
         })
         .catch((err: any) => {
           DataprocLoggingService.log('Error deleting cluster', LOG_LEVEL.ERROR);
