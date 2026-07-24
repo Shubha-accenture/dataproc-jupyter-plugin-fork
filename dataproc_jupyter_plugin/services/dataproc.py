@@ -35,19 +35,14 @@ class DataprocService:
         )
         response = await client.list_clusters(request=request)
         
-        clusters = []
-        next_page_token = ""
-        async for page in response.pages:
-            clusters = [
-                proto.Message.to_dict(cluster, use_integers_for_enums=False, preserving_proto_field_name=False)
-                for cluster in page
-            ]
-            next_page_token = response.next_page_token
-            break
-            
+        clusters = [
+            proto.Message.to_dict(cluster, use_integers_for_enums=False, preserving_proto_field_name=False)
+            for cluster in response.clusters
+        ]
+        
         return {
             "clusters": clusters,
-            "nextPageToken": next_page_token
+            "nextPageToken": response.next_page_token
         }
 
 
