@@ -115,7 +115,7 @@ export class ClusterService {
         ...transformClusterListData
       ];
 
-      if (formattedResponse.nextPageToken) {
+      if (formattedResponse?.nextPageToken) {
         this.listClustersAPIService(
           setProjectId,
           renderActions,
@@ -133,31 +133,19 @@ export class ClusterService {
         setIsLoading(false);
         setLoggedIn(true);
       }
-
-      if (
-        formattedResponse?.error?.code &&
-        !credentials?.login_error &&
-        !credentials?.config_error
-      ) {
-        const credentials = await authApi();
-
+    } catch (error: any) {
+      setIsLoading(false);
+      DataprocLoggingService.log('Error listing clusters', LOG_LEVEL.ERROR);
+      const credentials = await authApi();
+      if (!credentials?.login_error && !credentials?.config_error) {
         handleApiError(
-          formattedResponse,
+          { error: { code: error.response?.status || 500, message: error.message || error } },
           credentials,
           setApiDialogOpen,
           setEnableLink,
           setPollingDisable,
           'clusters'
         );
-      }
-    } catch (error) {
-      setIsLoading(false);
-      DataprocLoggingService.log('Error listing clusters', LOG_LEVEL.ERROR);
-      const credentials = await authApi();
-      if (!credentials?.login_error && !credentials?.config_error) {
-        Notification.emit(`Failed to fetch clusters list : ${error}`, 'error', {
-          autoClose: 5000
-        });
       }
     }
   };
@@ -208,15 +196,6 @@ export class ClusterService {
         ClusterService.startClusterApi(selectedCluster);
         clearInterval(timer.current);
       }
-      if (formattedResponse?.error?.code) {
-        Notification.emit(
-          `Failed to fetch status for cluster ${selectedCluster} : ${formattedResponse?.error?.message}`,
-          'error',
-          {
-            autoClose: 5000
-          }
-        );
-      }
       listClustersAPI();
     } catch (error) {
       DataprocLoggingService.log('Error fetching status', LOG_LEVEL.ERROR);
@@ -246,15 +225,7 @@ export class ClusterService {
       timer.current = setInterval(() => {
         statusApi(selectedCluster);
       }, POLLING_TIME_LIMIT);
-      if (formattedResponse?.error?.code) {
-        Notification.emit(
-          `Failed to restart cluster ${selectedCluster} : ${formattedResponse?.error?.message}`,
-          'error',
-          {
-            autoClose: 5000
-          }
-        );
-      }
+      
       // This is an artifact of the refactoring
       listClustersAPI();
 
@@ -298,13 +269,7 @@ export class ClusterService {
     const credentials = await authApi();
     if (credentials) {
       requestAPI(`${operation}Cluster?cluster=${selectedcluster}`, { method: 'POST' })
-        .then((responseResult: any) => {
-          if (responseResult?.error?.code) {
-            Notification.emit(responseResult?.error?.message, 'error', {
-              autoClose: 5000
-            });
-          }
-        })
+        .then(() => {})
         .catch((err: any) => {
           DataprocLoggingService.log(
             `Error ${operation} cluster`,
