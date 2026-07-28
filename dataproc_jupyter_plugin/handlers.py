@@ -258,10 +258,6 @@ def setup_handlers(web_app):
         "jupyterlabVersion": LatestVersionController,
         "updatePlugin": UpdatePackage,
         "checkApiEnabled": checkApiEnabled.CheckApiController,
-        "listClusters": dataproc.ListClustersController,
-        "clusterDetail": dataproc.ClusterDetailController,
-        "stopCluster": dataproc.StopClusterController,
-        "startCluster": dataproc.StartClusterController,
         "deleteCluster": dataproc.DeleteClusterController,
     }
     handlers = [(full_path(name), handler) for name, handler in handlersMap.items()]
