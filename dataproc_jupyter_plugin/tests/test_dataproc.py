@@ -72,8 +72,8 @@ async def test_stop_cluster_error(monkeypatch, jp_fetch, mock_dataproc_service):
     
     mock_dataproc_service.stop_cluster.side_effect = Exception("Stop API Error")
 
-    try:
-        response = await jp_fetch(
+    with pytest.raises(tornado.httpclient.HTTPClientError) as exc_info:
+        await jp_fetch(
             "dataproc-plugin",
             "stopCluster",
             method="POST",
@@ -82,11 +82,10 @@ async def test_stop_cluster_error(monkeypatch, jp_fetch, mock_dataproc_service):
             },
             body=""
         )
-    except tornado.httpclient.HTTPClientError as e:
-        assert e.code == 500
-        payload = json.loads(e.response.body)
-        assert payload["error"]["code"] == 500
-        assert payload["error"]["message"] == "Stop API Error"
+    assert exc_info.value.code == 500
+    payload = json.loads(exc_info.value.response.body)
+    assert payload["error"]["code"] == 500
+    assert payload["error"]["message"] == "Stop API Error"
 
 
 async def test_start_cluster_error(monkeypatch, jp_fetch, mock_dataproc_service):
@@ -94,8 +93,8 @@ async def test_start_cluster_error(monkeypatch, jp_fetch, mock_dataproc_service)
     
     mock_dataproc_service.start_cluster.side_effect = Exception("Start API Error")
 
-    try:
-        response = await jp_fetch(
+    with pytest.raises(tornado.httpclient.HTTPClientError) as exc_info:
+        await jp_fetch(
             "dataproc-plugin",
             "startCluster",
             method="POST",
@@ -104,8 +103,7 @@ async def test_start_cluster_error(monkeypatch, jp_fetch, mock_dataproc_service)
             },
             body=""
         )
-    except tornado.httpclient.HTTPClientError as e:
-        assert e.code == 500
-        payload = json.loads(e.response.body)
-        assert payload["error"]["code"] == 500
-        assert payload["error"]["message"] == "Start API Error"
+    assert exc_info.value.code == 500
+    payload = json.loads(exc_info.value.response.body)
+    assert payload["error"]["code"] == 500
+    assert payload["error"]["message"] == "Start API Error"
