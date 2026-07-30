@@ -27,31 +27,33 @@ class DataprocService:
 
     async def list_clusters(self, page_size=50, page_token=""):
         client, project_id, region_id = await self.get_client()
-        request = dataproc.ListClustersRequest(
-            project_id=project_id,
-            region=region_id,
-            page_size=page_size,
-            page_token=page_token
-        )
-        response = await client.list_clusters(request=request)
-        
-        clusters = [
-            proto.Message.to_dict(cluster, use_integers_for_enums=False, preserving_proto_field_name=False)
-            for cluster in response.clusters
-        ]
-        
-        return {
-            "clusters": clusters,
-            "nextPageToken": response.next_page_token
-        }
+        async with client:
+            request = dataproc.ListClustersRequest(
+                project_id=project_id,
+                region=region_id,
+                page_size=page_size,
+                page_token=page_token
+            )
+            response = await client.list_clusters(request=request)
+            
+            clusters = [
+                proto.Message.to_dict(cluster, use_integers_for_enums=False, preserving_proto_field_name=False)
+                for cluster in response.clusters
+            ]
+            
+            return {
+                "clusters": clusters,
+                "nextPageToken": response.next_page_token
+            }
 
 
     async def get_cluster_details(self, cluster_name):
         client, project_id, region_id = await self.get_client()
-        request = dataproc.GetClusterRequest(
-            project_id=project_id,
-            region=region_id,
-            cluster_name=cluster_name
-        )
-        response = await client.get_cluster(request=request)
-        return proto.Message.to_dict(response, use_integers_for_enums=False, preserving_proto_field_name=False)
+        async with client:
+            request = dataproc.GetClusterRequest(
+                project_id=project_id,
+                region=region_id,
+                cluster_name=cluster_name
+            )
+            response = await client.get_cluster(request=request)
+            return proto.Message.to_dict(response, use_integers_for_enums=False, preserving_proto_field_name=False)

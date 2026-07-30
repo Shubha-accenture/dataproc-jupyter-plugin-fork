@@ -15,8 +15,9 @@ class ListClustersController(APIHandler):
             self.finish(result)
         except GoogleAPICallError as e:
             self.log.exception("Google API Error listing clusters")
-            self.set_status(e.code)
-            self.finish({"message": str(e), "error": {"code": e.code, "message": str(e)}})
+            status_code = e.code if isinstance(e.code, int) and 100 <= e.code < 600 else 500
+            self.set_status(status_code)
+            self.finish({"message": str(e), "error": {"code": status_code, "message": str(e)}})
         except ValueError as e:
             self.log.exception("Configuration Error")
             self.set_status(400)
@@ -37,8 +38,9 @@ class ClusterDetailController(APIHandler):
             self.finish(result)
         except GoogleAPICallError as e:
             self.log.exception("Google API Error getting cluster details")
-            self.set_status(e.code)
-            self.finish({"message": str(e), "error": {"code": e.code, "message": str(e)}})
+            status_code = e.code if isinstance(e.code, int) and 100 <= e.code < 600 else 500
+            self.set_status(status_code)
+            self.finish({"message": str(e), "error": {"code": status_code, "message": str(e)}})
         except ValueError as e:
             self.log.exception("Configuration Error")
             self.set_status(400)

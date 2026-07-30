@@ -70,8 +70,8 @@ async def test_list_clusters_error(monkeypatch, jp_fetch, mock_dataproc_service)
     
     mock_dataproc_service.list_clusters.side_effect = Exception("Mocked API Error")
 
-    try:
-        response = await jp_fetch(
+    with pytest.raises(tornado.httpclient.HTTPClientError) as exc_info:
+        await jp_fetch(
             "dataproc-plugin",
             "listClusters",
             params={
@@ -79,11 +79,10 @@ async def test_list_clusters_error(monkeypatch, jp_fetch, mock_dataproc_service)
                 "pageToken": "token123",
             },
         )
-    except tornado.httpclient.HTTPClientError as e:
-        assert e.code == 500
-        payload = json.loads(e.response.body)
-        assert payload["error"]["code"] == 500
-        assert payload["error"]["message"] == "Mocked API Error"
+    assert exc_info.value.code == 500
+    payload = json.loads(exc_info.value.response.body)
+    assert payload["error"]["code"] == 500
+    assert payload["error"]["message"] == "Mocked API Error"
 
 
 async def test_cluster_detail_error(monkeypatch, jp_fetch, mock_dataproc_service):
@@ -91,16 +90,15 @@ async def test_cluster_detail_error(monkeypatch, jp_fetch, mock_dataproc_service
     
     mock_dataproc_service.get_cluster_details.side_effect = NotFound("Cluster not found")
 
-    try:
-        response = await jp_fetch(
+    with pytest.raises(tornado.httpclient.HTTPClientError) as exc_info:
+        await jp_fetch(
             "dataproc-plugin",
             "clusterDetail",
             params={
                 "cluster": "test-cluster",
             },
         )
-    except tornado.httpclient.HTTPClientError as e:
-        assert e.code == 404
-        payload = json.loads(e.response.body)
-        assert payload["error"]["code"] == 404
-        assert "Cluster not found" in payload["error"]["message"]
+    assert exc_info.value.code == 404
+    payload = json.loads(exc_info.value.response.body)
+    assert payload["error"]["code"] == 404
+    assert "Cluster not found" in payload["error"]["message"]
