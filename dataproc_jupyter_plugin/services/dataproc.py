@@ -15,6 +15,8 @@ class DataprocService:
         access_token = cached.get("access_token")
         project_id = cached.get("project_id")
         region_id = cached.get("region_id")
+        if not access_token or not project_id or not region_id:
+            raise ValueError("GCP credentials or configuration (project/region) are missing or invalid.")
         
         cred = oauth2.Credentials(access_token)
         api_endpoint = f"{region_id}-dataproc.googleapis.com:443"
@@ -27,10 +29,11 @@ class DataprocService:
 
     async def delete_cluster(self, cluster_name):
         client, project_id, region_id = await self.get_client()
-        request = dataproc.DeleteClusterRequest(
-            project_id=project_id,
-            region=region_id,
-            cluster_name=cluster_name
-        )
-        operation = await client.delete_cluster(request=request)
-        return {"status": "deleting", "operationName": operation.operation.name}
+        async with client:
+            request = dataproc.DeleteClusterRequest(
+                project_id=project_id,
+                region=region_id,
+                cluster_name=cluster_name
+            )
+            operation = await client.delete_cluster(request=request)
+            return {"status": "deleting", "operationName": operation.operation.name}

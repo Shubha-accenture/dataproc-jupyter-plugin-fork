@@ -45,8 +45,8 @@ async def test_delete_cluster_error(monkeypatch, jp_fetch, mock_dataproc_service
     
     mock_dataproc_service.delete_cluster.side_effect = Exception("Delete API Error")
 
-    try:
-        response = await jp_fetch(
+    with pytest.raises(tornado.httpclient.HTTPClientError) as exc_info:
+        await jp_fetch(
             "dataproc-plugin",
             "deleteCluster",
             method="DELETE",
@@ -54,8 +54,7 @@ async def test_delete_cluster_error(monkeypatch, jp_fetch, mock_dataproc_service
                 "cluster": "test-cluster",
             },
         )
-    except tornado.httpclient.HTTPClientError as e:
-        assert e.code == 500
-        payload = json.loads(e.response.body)
-        assert payload["error"]["code"] == 500
-        assert payload["error"]["message"] == "Delete API Error"
+    assert exc_info.value.code == 500
+    payload = json.loads(exc_info.value.response.body)
+    assert payload["error"]["code"] == 500
+    assert payload["error"]["message"] == "Delete API Error"
