@@ -526,7 +526,7 @@ async def test_job_item_controller_delete_server_error(jp_fetch, monkeypatch):
 
 
 async def test_job_cancel_controller_post_missing_job_id(jp_fetch):
-    response = await jp_fetch("dataproc-plugin", "jobCancel", method="POST")
+    response = await jp_fetch("dataproc-plugin", "jobCancel", method="POST", body="")
     assert response.code == 200
     payload = json.loads(response.body)
     assert payload == {"error": {"code": 400, "message": "Missing required parameter: jobId"}}
@@ -539,7 +539,7 @@ async def test_job_cancel_controller_post_success(jp_fetch, monkeypatch):
     monkeypatch.setattr("dataproc_jupyter_plugin.controllers.jobs.credentials.get_cached", mock_creds)
     monkeypatch.setattr("dataproc_jupyter_plugin.services.jobs.JobsService.cancel_job", mock_cancel_job)
 
-    response = await jp_fetch("dataproc-plugin", "jobCancel", method="POST", params={"jobId": "job-1"})
+    response = await jp_fetch("dataproc-plugin", "jobCancel", method="POST", params={"jobId": "job-1"}, body="")
     assert response.code == 200
     payload = json.loads(response.body)
     assert payload == {"status": {"state": "CANCELLED"}}
@@ -549,7 +549,7 @@ async def test_job_cancel_controller_post_value_error(jp_fetch, monkeypatch):
     mock_creds = AsyncMock(side_effect=ValueError("Auth failed"))
     monkeypatch.setattr("dataproc_jupyter_plugin.controllers.jobs.credentials.get_cached", mock_creds)
 
-    response = await jp_fetch("dataproc-plugin", "jobCancel", method="POST", params={"jobId": "job-1"})
+    response = await jp_fetch("dataproc-plugin", "jobCancel", method="POST", params={"jobId": "job-1"}, body="")
     assert response.code == 200
     payload = json.loads(response.body)
     assert payload == {"error": {"code": 400, "message": "Auth failed"}}
@@ -559,7 +559,7 @@ async def test_job_cancel_controller_post_server_error(jp_fetch, monkeypatch):
     mock_creds = AsyncMock(side_effect=Exception("Cancel internal error"))
     monkeypatch.setattr("dataproc_jupyter_plugin.controllers.jobs.credentials.get_cached", mock_creds)
 
-    response = await jp_fetch("dataproc-plugin", "jobCancel", method="POST", params={"jobId": "job-1"})
+    response = await jp_fetch("dataproc-plugin", "jobCancel", method="POST", params={"jobId": "job-1"}, body="")
     assert response.code == 200
     payload = json.loads(response.body)
     assert payload == {"error": {"code": 500, "message": "Server error: Cancel internal error"}}
