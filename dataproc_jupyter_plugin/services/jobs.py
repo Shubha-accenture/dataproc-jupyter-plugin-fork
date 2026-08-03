@@ -57,6 +57,8 @@ class JobsService:
     async def get_base_url(self):
         try:
             dataproc_url = await urls.gcp_service_url(DATAPROC_SERVICE_NAME)
+            if not dataproc_url.endswith("/"):
+                dataproc_url += "/"
             return f"{dataproc_url}v1/projects/{self.project_id}/regions/{self.region_id}/jobs"
         except Exception as e:
             self.log.exception("Failed to resolve Dataproc service URL")
@@ -65,11 +67,15 @@ class JobsService:
     async def _parse_response(self, response, operation_name):
         """Helper method to safely parse HTTP response from Dataproc API."""
         try:
+            if response.status == 204:
+                return {}
             try:
                 res_json = await response.json()
                 return res_json
             except (aiohttp.ContentTypeError, json.JSONDecodeError):
                 raw_text = await response.text()
+                if response.status == 200 and not raw_text.strip():
+                    return {}
                 self.log.warning(
                     f"Non-JSON response received during {operation_name} (HTTP {response.status}): {raw_text}"
                 )
