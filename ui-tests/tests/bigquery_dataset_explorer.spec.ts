@@ -17,44 +17,139 @@
 
 import { test, expect, galata } from '@jupyterlab/galata';
 
-test('bigquery-dataset-explorer', async ({ page, request }) => {
-  const issues = await page.request.get(
-    'http://localhost:8888/dataproc-plugin/settings'
-  );
-  expect(issues.ok()).toBeTruthy();
-  const response: any = await issues.json();
-  expect(response.enable_bigquery_integration).toBe(true);
+test.describe('bigquery-dataset-explorer', () => {
+  test('Sanity : Dataset Explorer', async ({ page, request }) => {
+    // Fetch Dataproc plugin settings
+    const issues = await page.request.get('http://localhost:8888/dataproc-plugin/settings');
+    expect(issues.ok()).toBeTruthy();
 
-  const tabExists = await page.isVisible(
-    'role=tab[name="Dataset Explorer - BigQuery"]'
-  );
-
-  if (tabExists) {
+    // Parse response and check BigQuery integration is enabled
+    const response = await issues.json();
     expect(response.enable_bigquery_integration).toBe(true);
-    await page
-      .getByRole('tab', { name: 'Dataset Explorer - BigQuery' })
-      .click();
 
-    // Wait for the Dataset projects to populate.
-    await page.waitForSelector('div[role="treeitem"][aria-level="1"]');
-    await page.waitForSelector('div[role="treeitem"].caret-icon.down');
+    // Check if the "Dataset Explorer - BigQuery" tab is visible
+    const tabExists = await page.isVisible('role=tab[name="Dataset Explorer - BigQuery"]');
 
-    // Wait for network activity to settle to ensure consistency and avoid flaky issues
-    await page.waitForLoadState('networkidle');
+    if (tabExists) {
+      // Click on the "Dataset Explorer - BigQuery" tab
+      await page.getByRole('tab', { name: 'Dataset Explorer - BigQuery' }).click();
 
-    // Expand the first dataset project. This should always be the `bigquery-public-data` one.
-    await page.locator('div[role="treeitem"].caret-icon.down').nth(0).click();
+      // Wait for the Dataset projects to populate.
+      await page.waitForSelector('div[role="treeitem"][aria-level="1"]');
+      await page.waitForSelector('div[role="treeitem"].caret-icon.down');
 
-    // Wait for the first dataset to be displayed, and then expand it.
-    await page.waitForSelector('div[role="treeitem"][aria-level="2"]');
-    await page.waitForSelector('div[role="treeitem"].caret-icon.down');
-    await page.locator('div[role="treeitem"].caret-icon.down').nth(0).click();
+      // Wait for network activity to settle to ensure consistency and avoid flaky issues
+      await page.waitForLoadState('networkidle');
 
-    // Click on the first table displayed.
-    await page.locator('div[role="treeitem"][aria-level="3"]').first().click();
-    await page.getByText('Schema', { exact: true }).click();
-    await page.getByText('Preview', { exact: true }).click();
-  } else {
-    expect(response.enable_bigquery_integration).toBe(false);
-  }
+      // Expand the first dataset project. This should always be the `bigquery-public-data` one.
+      await page.locator('div[role="treeitem"].caret-icon.down').nth(0).click();
+
+      // Click on the first table displayed.
+      await page.locator('div[role="treeitem"][aria-level="2"]').first().click();
+  
+      // Wait for the dataset details to be loaded
+      await page.getByText('Loading dataset details').waitFor({ state: "hidden" });
+
+      // Check dataset details are visible
+      await expect(page.getByText('Dataset info', { exact: true })).toBeVisible();
+      const datasetRowHeaders = [
+        'Dataset ID', 'Created', 'Default table expiration',
+        'Last modified', 'Data location', 'Description', 'Default collation',
+        'Default rounding mode', 'Time travel window', 'Storage billing model', 'Case insensitive'
+      ];
+      for (const header of datasetRowHeaders) {
+        await expect(page.getByRole('cell', { name: header, exact: true })).toBeVisible();
+      }
+
+      // Click on expand icon
+      await page.locator('div[role="treeitem"].caret-icon.down').nth(0).click();
+      await page.getByTestId('loader').first().waitFor({ state: "detached" });
+
+      // Click on the first table
+      await page.locator('div[role="treeitem"][aria-level="3"]').first().click();
+
+      // Wait for the table details to load
+      await page.getByText('Loading table details').waitFor({ state: "hidden" });
+
+      // Check table details are visible
+      await expect(page.getByText('Table info')).toBeVisible();
+      const tableHeaders = [
+        'Table ID', 'Created', 'Last modified', 'Table expiration',
+        'Data location', 'Default collation', 'Default rounding mode', 'Description', 'Case insensitive'
+      ];
+      for (const header of tableHeaders) {
+        await expect(page.getByRole('cell', { name: header, exact: true })).toBeVisible();
+      }
+
+      // Click on the Schema tab and check all schema fields are visible
+      await page.getByText('Schema', { exact: true }).click();
+      const schemaHeaders = [
+        'Field name', 'Type', 'Mode', 'Key', 'Collation', 'Default Value',
+        'Policy Tags', 'Data Policies', 'Description'
+      ];
+      for (const header of schemaHeaders) {
+        await expect(page.getByRole('columnheader', { name: header, exact: true })).toBeVisible();
+      }
+
+      // Click on the Preview tab and check if data is present
+      await page.getByText('Preview', { exact: true }).click();
+
+      // Wait for the preview data to load
+      await page.getByText('Loading Preview Data').waitFor({ state: "hidden" });
+
+      // Check if data is present in the preview table
+      const dataExists = await page.locator('table.clusters-list-table').isVisible();
+      if (dataExists) {
+        const rowCount = await page.locator('table.clusters-list-table tr').count();
+        expect(rowCount).toBeGreaterThan(0);
+      } else {
+        await expect(page.getByText('No rows to display')).toBeVisible();
+      }
+
+    } else {
+      // If the tab doesn't exist, verify BigQuery integration is disabled
+      expect(response.enable_bigquery_integration).toBe(false);
+    }
+  });
+
+  test('Can verify search field and refresh button', async ({ page, request }) => {
+    // Fetch Dataproc plugin settings
+    const issues = await page.request.get('http://localhost:8888/dataproc-plugin/settings');
+    expect(issues.ok()).toBeTruthy();
+
+    // Parse response and check BigQuery integration is enabled
+    const response = await issues.json();
+    expect(response.enable_bigquery_integration).toBe(true);
+
+    // Check if the "Dataset Explorer - BigQuery" tab is visible
+    const tabExists = await page.isVisible('role=tab[name="Dataset Explorer - BigQuery"]');
+
+    if (tabExists) {
+      // Click on the "Dataset Explorer - BigQuery" tab
+      await page.getByRole('tab', { name: 'Dataset Explorer - BigQuery' }).click();
+
+      await page.waitForSelector('div[role="treeitem"].caret-icon.down');
+
+      // Wait for network activity to settle to ensure consistency and avoid flaky issues
+      await page.waitForLoadState('networkidle');
+
+      // Check austin_311 is not visible before search
+      await expect(page.locator('[role="treeitem"][title="austin_311"]')).not.toBeVisible();
+
+      await page.getByPlaceholder('Enter your keyword to search').first().click();
+      await page.getByPlaceholder('Enter your keyword to search').first().fill('austin_311');
+
+      await expect(page.locator('[aria-label="Loading Spinner"]').first()).toBeVisible({timeout: 5000});
+      await page.locator('[aria-label="Loading Spinner"]').first().waitFor({ state: "detached" });
+
+      // Check austin_311 is visible after search
+      await expect(page.locator('[role="treeitem"][title="austin_311"]')).toBeVisible({timeout: 10000});
+
+      // Click on refresh button and check austin_311 is not visible
+      await page.locator('.dataset-explorer-refresh > .icon-white > svg').first().click();
+      await page.locator('[aria-label="Loading Spinner"]').first().waitFor({ state: "detached" });
+
+      await expect(page.locator('[role="treeitem"][title="austin_311"]')).not.toBeVisible();
+    }
+  });
 });

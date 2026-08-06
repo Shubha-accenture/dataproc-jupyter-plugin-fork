@@ -18,7 +18,7 @@
 import { test, expect, galata } from '@jupyterlab/galata';
 
 test.describe('Settings Menu', () => {
-  test('Can find settings menu', async ({ page }) => {
+  test('Sanity: Can find settings menu', async ({ page }) => {
     await page
       .getByLabel('main menu', { exact: true })
       .getByText('Settings')
@@ -27,7 +27,7 @@ test.describe('Settings Menu', () => {
     await cloudSettings.click();
   });
 
-  test('Can change project', async ({ page }) => {
+  test('Sanity: Can change project', async ({ page }) => {
     await page
       .getByLabel('main menu', { exact: true })
       .getByText('Settings')
@@ -42,8 +42,10 @@ test.describe('Settings Menu', () => {
 
     // Assert that we can save the project after we fill in project again.
     await page.getByRole('combobox', { name: 'Project ID' }).click();
-    await page.getByRole('combobox', { name: 'Project ID' }).fill('kokoro');
-    await page.getByRole('option', { name: 'dataproc-kokoro-tests' }).click();
+    // await page.getByRole('combobox', { name: 'Project ID' }).fill('kokoro');
+    // await page.getByRole('option', { name: 'dataproc-kokoro-tests' }).click();
+    await page.getByRole('combobox', { name: 'Project ID' }).fill('dataproc');
+    await page.getByRole('option', { name: 'dataproc-jupyter-extension-dev' }).click();
     await expect(page.getByRole('button', { name: 'Save' })).not.toBeDisabled();
 
     // Do not actually save. Due to tests running in parallel, changing the project
