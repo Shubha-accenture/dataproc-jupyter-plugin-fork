@@ -223,6 +223,26 @@ async def test_batches_service_get_batch_exception(mock_credentials):
         assert "Batch 404 Not Found" in res["error"]["message"]
 
 
+async def test_batches_service_get_batch_exception_with_code_value(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    err = Exception("Not Found")
+    err.code = MagicMock()
+    err.code.value = 404
+
+    mock_client = MagicMock()
+    mock_client.get_batch = AsyncMock(side_effect=err)
+
+    with patch(
+        "google.cloud.dataproc_v1.BatchControllerAsyncClient",
+        return_value=mock_client,
+    ):
+        res = await service.get_batch("batch-404")
+        assert "error" in res
+        assert res["error"]["code"] == 404
+
+
 def test_batches_service_client_options():
     log = MagicMock()
     service_regional = BatchesService({"region_id": "us-central1"}, log)
