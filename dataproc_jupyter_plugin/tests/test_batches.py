@@ -143,6 +143,8 @@ async def test_batches_service_list_batches_success(mock_credentials):
     mock_pager.pages = AsyncPagesMock()
 
     mock_client = MagicMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
     mock_client.list_batches = AsyncMock(return_value=mock_pager)
 
     expected_batch_dict = {
@@ -186,6 +188,8 @@ async def test_batches_service_get_batch_success(mock_credentials):
 
     mock_batch = MagicMock()
     mock_client = MagicMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
     mock_client.get_batch = AsyncMock(return_value=mock_batch)
 
     expected_dict = {
@@ -211,6 +215,8 @@ async def test_batches_service_get_batch_exception(mock_credentials):
     service = BatchesService(mock_credentials, log)
 
     mock_client = MagicMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
     mock_client.get_batch = AsyncMock(side_effect=Exception("Batch 404 Not Found"))
 
     with patch(
@@ -232,6 +238,8 @@ async def test_batches_service_get_batch_exception_with_code_value(mock_credenti
     err.code.value = 404
 
     mock_client = MagicMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
     mock_client.get_batch = AsyncMock(side_effect=err)
 
     with patch(
@@ -252,4 +260,29 @@ def test_batches_service_client_options():
 
     service_global = BatchesService({"region_id": "global"}, log)
     assert service_global._get_client_options() is None
+
+
+def test_batches_service_credentials():
+    log = MagicMock()
+    service = BatchesService({"access_token": "my-access-token"}, log)
+    creds = service._get_credentials()
+    assert creds is not None
+    assert creds.token == "my-access-token"
+
+    service_no_token = BatchesService({}, log)
+    assert service_no_token._get_credentials() is None
+
+
+async def test_batches_service_missing_config():
+    log = MagicMock()
+    service = BatchesService({}, log)
+    res_list = await service.list_batches()
+    assert res_list["error"]["code"] == 400
+    assert "Project ID and Region ID must be configured." in res_list["error"]["message"]
+
+    res_get = await service.get_batch("b1")
+    assert res_get["error"]["code"] == 400
+    assert "Project ID and Region ID must be configured." in res_get["error"]["message"]
+
+
 
