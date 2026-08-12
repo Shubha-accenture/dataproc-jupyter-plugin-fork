@@ -46,3 +46,18 @@ class BatchDetailController(APIHandler):
         except Exception as e:
             self.log.exception("Error in BatchDetailController")
             self.finish({"error": {"code": 500, "message": str(e)}})
+
+
+class DeleteBatchController(APIHandler):
+    @tornado.web.authenticated
+    async def delete(self):
+        try:
+            batch_id = self.get_argument("batch")
+            credentials_dict = await credentials.get_cached()
+            service = BatchesService(credentials_dict, self.log)
+            result = await service.delete_batch(batch_id)
+            self.finish(json.dumps(result))
+        except Exception as e:
+            self.log.exception("Error in DeleteBatchController")
+            self.finish({"error": {"code": 500, "message": str(e)}})
+

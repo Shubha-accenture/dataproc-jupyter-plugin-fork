@@ -187,43 +187,39 @@ type Region = {
 export class BatchService {
   static deleteBatchAPIService = async (selectedBatch: string) => {
     const credentials = await authApi();
-    const { DATAPROC } = await gcpServiceUrls;
     if (credentials) {
-      loggedFetch(
-        `${DATAPROC}/projects/${credentials.project_id}/locations/${credentials.region_id}/batches/${selectedBatch}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': API_HEADER_CONTENT_TYPE,
-            Authorization: API_HEADER_BEARER + credentials.access_token
-          }
-        }
-      )
-        .then((response: Response) => {
-          response
-            .json()
-            .then(async (responseResult: Response) => {
-              console.log(responseResult);
-              Notification.emit(
-                `Batch ${selectedBatch} deleted successfully`,
-                'success',
-                {
-                  autoClose: 5000
-                }
-              );
-            })
-            .catch((e: Error) => console.log(e));
-        })
-        .catch((err: Error) => {
-          DataprocLoggingService.log('Error deleting batches', LOG_LEVEL.ERROR);
+      try {
+        const responseResult: any = await requestAPI(
+          `deleteBatch?batch=${encodeURIComponent(selectedBatch)}`,
+          { method: 'DELETE' }
+        );
+        if (responseResult?.error?.code) {
           Notification.emit(
-            `Failed to delete the batch ${selectedBatch} : ${err}`,
+            `Failed to delete the batch ${selectedBatch} : ${responseResult.error.message}`,
             'error',
             {
               autoClose: 5000
             }
           );
-        });
+        } else {
+          Notification.emit(
+            `Batch ${selectedBatch} deleted successfully`,
+            'success',
+            {
+              autoClose: 5000
+            }
+          );
+        }
+      } catch (err: any) {
+        DataprocLoggingService.log('Error deleting batches', LOG_LEVEL.ERROR);
+        Notification.emit(
+          `Failed to delete the batch ${selectedBatch} : ${err}`,
+          'error',
+          {
+            autoClose: 5000
+          }
+        );
+      }
     }
   };
 

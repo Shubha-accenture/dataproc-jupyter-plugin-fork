@@ -97,3 +97,23 @@ class BatchesService:
             if hasattr(code, "value"):
                 code = code.value
             return {"error": {"code": code, "message": str(e)}}
+
+    async def delete_batch(self, batch_id):
+        if not self.project_id or not self.region_id:
+            return {"error": {"code": 400, "message": "Project ID and Region ID must be configured."}}
+        try:
+            async with dataproc_v1.BatchControllerAsyncClient(
+                credentials=self._get_credentials(),
+                client_options=self._get_client_options(),
+            ) as client:
+                name = f"projects/{self.project_id}/locations/{self.region_id}/batches/{batch_id}"
+                request = dataproc_v1.DeleteBatchRequest(name=name)
+                await client.delete_batch(request=request)
+                return {"status": "DELETED", "message": f"Batch {batch_id} deleted successfully."}
+        except Exception as e:
+            self.log.exception(f"Error deleting batch {batch_id} in BatchesService")
+            code = getattr(e, "code", 500)
+            if hasattr(code, "value"):
+                code = code.value
+            return {"error": {"code": code, "message": str(e)}}
+

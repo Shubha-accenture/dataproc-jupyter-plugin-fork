@@ -118,6 +118,44 @@ async def test_batch_detail_controller_error(jp_fetch, monkeypatch, mock_credent
         assert "Batch not found" in payload["error"]["message"]
 
 
+async def test_delete_batch_controller_success(jp_fetch, monkeypatch, mock_credentials):
+    mock_get_cached = AsyncMock(return_value=mock_credentials)
+    monkeypatch.setattr("dataproc_jupyter_plugin.credentials.get_cached", mock_get_cached)
+
+    expected_data = {
+        "status": "DELETED",
+        "message": "Batch batch-123 deleted successfully.",
+    }
+
+    with patch(
+        "dataproc_jupyter_plugin.services.batches.BatchesService.delete_batch",
+        new_callable=AsyncMock,
+        return_value=expected_data,
+    ) as mock_delete:
+        response = await jp_fetch("dataproc-plugin", "deleteBatch", method="DELETE", params={"batch": "batch-123"})
+        assert response.code == 200
+        payload = json.loads(response.body)
+        assert payload == expected_data
+        mock_delete.assert_called_once_with("batch-123")
+
+
+async def test_delete_batch_controller_error(jp_fetch, monkeypatch, mock_credentials):
+    mock_get_cached = AsyncMock(return_value=mock_credentials)
+    monkeypatch.setattr("dataproc_jupyter_plugin.credentials.get_cached", mock_get_cached)
+
+    with patch(
+        "dataproc_jupyter_plugin.services.batches.BatchesService.delete_batch",
+        new_callable=AsyncMock,
+        side_effect=Exception("Delete failed"),
+    ):
+        response = await jp_fetch("dataproc-plugin", "deleteBatch", method="DELETE", params={"batch": "batch-123"})
+        assert response.code == 200
+        payload = json.loads(response.body)
+        assert "error" in payload
+        assert payload["error"]["code"] == 500
+        assert "Delete failed" in payload["error"]["message"]
+
+
 # ==============================================================================
 # Service Unit Tests (BatchesService Python SDK calls)
 # ==============================================================================
@@ -251,6 +289,68 @@ async def test_batches_service_get_batch_exception_with_code_value(mock_credenti
         assert res["error"]["code"] == 404
 
 
+async def test_batches_service_delete_batch_success(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    mock_client = MagicMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_client.delete_batch = AsyncMock(return_value=None)
+
+    with patch(
+        "google.cloud.dataproc_v1.BatchControllerAsyncClient",
+        return_value=mock_client,
+    ):
+        res = await service.delete_batch("batch-123")
+        assert res == {
+            "status": "DELETED",
+            "message": "Batch batch-123 deleted successfully.",
+        }
+        mock_client.delete_batch.assert_called_once()
+
+
+async def test_batches_service_delete_batch_exception(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    mock_client = MagicMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_client.delete_batch = AsyncMock(side_effect=Exception("Failed to delete batch"))
+
+    with patch(
+        "google.cloud.dataproc_v1.BatchControllerAsyncClient",
+        return_value=mock_client,
+    ):
+        res = await service.delete_batch("batch-123")
+        assert "error" in res
+        assert res["error"]["code"] == 500
+        assert "Failed to delete batch" in res["error"]["message"]
+
+
+async def test_batches_service_delete_batch_exception_with_code_value(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    err = Exception("Not Found")
+    err.code = MagicMock()
+    err.code.value = 404
+
+    mock_client = MagicMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_client.delete_batch = AsyncMock(side_effect=err)
+
+    with patch(
+        "google.cloud.dataproc_v1.BatchControllerAsyncClient",
+        return_value=mock_client,
+    ):
+        res = await service.delete_batch("batch-404")
+        assert "error" in res
+        assert res["error"]["code"] == 404
+
+
 def test_batches_service_client_options():
     log = MagicMock()
     service_regional = BatchesService({"region_id": "us-central1"}, log)
@@ -283,6 +383,11 @@ async def test_batches_service_missing_config():
     res_get = await service.get_batch("b1")
     assert res_get["error"]["code"] == 400
     assert "Project ID and Region ID must be configured." in res_get["error"]["message"]
+
+    res_del = await service.delete_batch("b1")
+    assert res_del["error"]["code"] == 400
+    assert "Project ID and Region ID must be configured." in res_del["error"]["message"]
+
 
 
 

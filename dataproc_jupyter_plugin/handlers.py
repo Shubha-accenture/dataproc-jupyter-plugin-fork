@@ -260,6 +260,7 @@ def setup_handlers(web_app):
         "checkApiEnabled": checkApiEnabled.CheckApiController,
         "listBatches": batches.ListBatchesController,
         "batchDetail": batches.BatchDetailController,
+        "deleteBatch": batches.DeleteBatchController,
     }
     handlers = [(full_path(name), handler) for name, handler in handlersMap.items()]
     web_app.add_handlers(host_pattern, handlers)
