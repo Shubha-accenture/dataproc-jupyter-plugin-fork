@@ -61,3 +61,31 @@ class DeleteBatchController(APIHandler):
             self.log.exception("Error in DeleteBatchController")
             self.finish({"error": {"code": 500, "message": str(e)}})
 
+
+class ListNetworksController(APIHandler):
+    @tornado.web.authenticated
+    async def get(self):
+        try:
+            credentials_dict = await credentials.get_cached()
+            service = BatchesService(credentials_dict, self.log)
+            result = await service.list_networks()
+            self.finish(json.dumps(result))
+        except Exception as e:
+            self.log.exception("Error in ListNetworksController")
+            self.finish({"error": {"code": 500, "message": str(e)}})
+
+
+class SubNetworkController(APIHandler):
+    @tornado.web.authenticated
+    async def get(self):
+        try:
+            subnetwork = self.get_argument("subNetwork")
+            credentials_dict = await credentials.get_cached()
+            service = BatchesService(credentials_dict, self.log)
+            result = await service.get_subnetwork(subnetwork)
+            self.finish(json.dumps(result))
+        except Exception as e:
+            self.log.exception("Error in SubNetworkController")
+            self.finish({"error": {"code": 500, "message": str(e)}})
+
+

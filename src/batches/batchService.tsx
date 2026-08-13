@@ -142,20 +142,6 @@ interface IApiResponse {
   };
 }
 
-interface INetworkResponse {
-  network: string;
-  error: {
-    message: string;
-    code: number;
-  };
-}
-
-type Network = {
-  selfLink: string;
-  network: string;
-  subnetworks: string;
-};
-
 type IKeyRings = {
   keyRings: Array<{
     name: string;
@@ -500,49 +486,34 @@ export class BatchService {
   ) => {
     setIsloadingNetwork(true);
     const credentials = await authApi();
-    const { COMPUTE } = await gcpServiceUrls;
     if (credentials) {
-      loggedFetch(
-        `${COMPUTE}/projects/${credentials.project_id}/regions/${credentials.region_id}/subnetworks/${subNetwork}`,
-        {
-          headers: {
-            'Content-Type': API_HEADER_CONTENT_TYPE,
-            Authorization: API_HEADER_BEARER + credentials.access_token
-          }
+      try {
+        const responseResult: any = await requestAPI(
+          `subNetwork?subNetwork=${encodeURIComponent(subNetwork)}`,
+          { method: 'GET' }
+        );
+        let transformedNetworkSelected = '';
+        if (responseResult.network) {
+          const parts = responseResult.network.split('/');
+          transformedNetworkSelected = parts[parts.length - 1];
+          setNetworkSelected(transformedNetworkSelected);
         }
-      )
-        .then((response: Response) => {
-          response
-            .json()
-            .then((responseResult: INetworkResponse) => {
-              let transformedNetworkSelected = '';
-              /*
-             Extracting network from items
-             Example: "https://www.googleapis.com/compute/v1/projects/{projectName}/global/subnetworks/",
-            */
-
-              transformedNetworkSelected = responseResult.network.split('/')[9];
-
-              setNetworkSelected(transformedNetworkSelected);
-              if (responseResult?.error?.code) {
-                Notification.emit(responseResult?.error?.message, 'error', {
-                  autoClose: 5000
-                });
-              }
-            })
-            .catch((e: Error) => {
-              console.log(e);
-            });
-        })
-        .catch((err: Error) => {
-          DataprocLoggingService.log(
-            'Error selecting Network',
-            LOG_LEVEL.ERROR
-          );
-          Notification.emit(`Error selecting Network : ${err}`, 'error', {
+        if (responseResult?.error?.code) {
+          Notification.emit(responseResult?.error?.message, 'error', {
             autoClose: 5000
           });
+        }
+      } catch (err: any) {
+        DataprocLoggingService.log(
+          'Error selecting Network',
+          LOG_LEVEL.ERROR
+        );
+        Notification.emit(`Error selecting Network : ${err}`, 'error', {
+          autoClose: 5000
         });
+      } finally {
+        setIsloadingNetwork(false);
+      }
     }
   };
 
@@ -555,66 +526,55 @@ export class BatchService {
     setIsloadingNetwork(true);
     try {
       const credentials = await authApi();
-      const { COMPUTE } = await gcpServiceUrls;
-
       if (!credentials) {
         setIsloadingNetwork(false);
         return;
       }
 
-      const response = await loggedFetch(
-        `${COMPUTE}/projects/${credentials.project_id}/global/networks`,
-        {
-          headers: {
-            'Content-Type': API_HEADER_CONTENT_TYPE,
-            Authorization: API_HEADER_BEARER + credentials.access_token
-          }
-        }
-      );
-
-      const responseResult: {
-        items: Network[];
-        error: {
-          message: string;
-          code: number;
-        };
-      } = await response.json();
+      const responseResult: any = await requestAPI('listNetworks', {
+        method: 'GET'
+      });
 
       if (responseResult?.error?.code) {
         Notification.emit(responseResult.error.message, 'error', {
           autoClose: 5000
         });
-      }
-      else if (responseResult.items) {
-        /*
-         Extracting network from items
-         Example: "https://www.googleapis.com/compute/v1/projects/{projectName}/global/networks/",
-        */
-       
+      } else if (responseResult.items) {
         const transformedNetworkList = responseResult.items.map(
-          (data: Network) => {
-            return data.selfLink.split('/')[9];
+          (data: any) => {
+            if (data.selfLink) {
+              const parts = data.selfLink.split('/');
+              return parts[parts.length - 1];
+            }
+            return data.name;
           }
         );
         setNetworklist(transformedNetworkList);
 
-        if (batchInfoResponse === undefined && transformedNetworkList.length > 0) {
+        if (
+          batchInfoResponse === undefined &&
+          transformedNetworkList.length > 0
+        ) {
           setNetworkSelected(transformedNetworkList[0]);
-        }
-        else if (transformedNetworkList.length === 0) {
-          DataprocLoggingService.log('No networks found (empty list).', LOG_LEVEL.ERROR);
+        } else if (transformedNetworkList.length === 0) {
+          DataprocLoggingService.log(
+            'No networks found (empty list).',
+            LOG_LEVEL.ERROR
+          );
           Notification.emit('No networks found.', 'error', {
             autoClose: 5000
           });
         }
-      }
-      else {
-        DataprocLoggingService.log('No networks found in response.', LOG_LEVEL.ERROR);
+      } else {
+        DataprocLoggingService.log(
+          'No networks found in response.',
+          LOG_LEVEL.ERROR
+        );
         Notification.emit('No networks found.', 'error', {
           autoClose: 5000
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       DataprocLoggingService.log('Error listing Networks', LOG_LEVEL.ERROR);
       Notification.emit(`Error listing Networks : ${err}`, 'error', {
         autoClose: 5000

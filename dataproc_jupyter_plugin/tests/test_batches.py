@@ -156,6 +156,84 @@ async def test_delete_batch_controller_error(jp_fetch, monkeypatch, mock_credent
         assert "Delete failed" in payload["error"]["message"]
 
 
+async def test_list_networks_controller_success(jp_fetch, monkeypatch, mock_credentials):
+    mock_get_cached = AsyncMock(return_value=mock_credentials)
+    monkeypatch.setattr("dataproc_jupyter_plugin.credentials.get_cached", mock_get_cached)
+
+    expected_data = {
+        "items": [
+            {"name": "default", "selfLink": "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/default"}
+        ]
+    }
+
+    with patch(
+        "dataproc_jupyter_plugin.services.batches.BatchesService.list_networks",
+        new_callable=AsyncMock,
+        return_value=expected_data,
+    ) as mock_list:
+        response = await jp_fetch("dataproc-plugin", "listNetworks")
+        assert response.code == 200
+        payload = json.loads(response.body)
+        assert payload == expected_data
+        mock_list.assert_called_once()
+
+
+async def test_list_networks_controller_error(jp_fetch, monkeypatch, mock_credentials):
+    mock_get_cached = AsyncMock(return_value=mock_credentials)
+    monkeypatch.setattr("dataproc_jupyter_plugin.credentials.get_cached", mock_get_cached)
+
+    with patch(
+        "dataproc_jupyter_plugin.services.batches.BatchesService.list_networks",
+        new_callable=AsyncMock,
+        side_effect=Exception("Failed to list networks"),
+    ):
+        response = await jp_fetch("dataproc-plugin", "listNetworks")
+        assert response.code == 200
+        payload = json.loads(response.body)
+        assert "error" in payload
+        assert payload["error"]["code"] == 500
+        assert "Failed to list networks" in payload["error"]["message"]
+
+
+async def test_subnetwork_controller_success(jp_fetch, monkeypatch, mock_credentials):
+    mock_get_cached = AsyncMock(return_value=mock_credentials)
+    monkeypatch.setattr("dataproc_jupyter_plugin.credentials.get_cached", mock_get_cached)
+
+    expected_data = {
+        "name": "sub-1",
+        "network": "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/default",
+        "selfLink": "https://www.googleapis.com/compute/v1/projects/test-project/regions/us-central1/subnetworks/sub-1",
+    }
+
+    with patch(
+        "dataproc_jupyter_plugin.services.batches.BatchesService.get_subnetwork",
+        new_callable=AsyncMock,
+        return_value=expected_data,
+    ) as mock_get:
+        response = await jp_fetch("dataproc-plugin", "subNetwork", params={"subNetwork": "sub-1"})
+        assert response.code == 200
+        payload = json.loads(response.body)
+        assert payload == expected_data
+        mock_get.assert_called_once_with("sub-1")
+
+
+async def test_subnetwork_controller_error(jp_fetch, monkeypatch, mock_credentials):
+    mock_get_cached = AsyncMock(return_value=mock_credentials)
+    monkeypatch.setattr("dataproc_jupyter_plugin.credentials.get_cached", mock_get_cached)
+
+    with patch(
+        "dataproc_jupyter_plugin.services.batches.BatchesService.get_subnetwork",
+        new_callable=AsyncMock,
+        side_effect=Exception("Failed to get subnetwork"),
+    ):
+        response = await jp_fetch("dataproc-plugin", "subNetwork", params={"subNetwork": "invalid-sub"})
+        assert response.code == 200
+        payload = json.loads(response.body)
+        assert "error" in payload
+        assert payload["error"]["code"] == 500
+        assert "Failed to get subnetwork" in payload["error"]["message"]
+
+
 # ==============================================================================
 # Service Unit Tests (BatchesService Python SDK calls)
 # ==============================================================================
@@ -351,6 +429,130 @@ async def test_batches_service_delete_batch_exception_with_code_value(mock_crede
         assert res["error"]["code"] == 404
 
 
+async def test_batches_service_list_networks_success(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    mock_network = MagicMock()
+    mock_network.name = "default"
+    mock_network.self_link = "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/default"
+    mock_network.subnetworks = ["https://www.googleapis.com/compute/v1/projects/test-project/regions/us-central1/subnetworks/default"]
+
+    mock_client = MagicMock()
+    mock_client.list.return_value = [mock_network]
+
+    with patch(
+        "google.cloud.compute_v1.NetworksClient",
+        return_value=mock_client,
+    ):
+        res = await service.list_networks()
+        assert "items" in res
+        assert len(res["items"]) == 1
+        assert res["items"][0]["name"] == "default"
+        assert res["items"][0]["selfLink"] == mock_network.self_link
+        assert res["items"][0]["subnetworks"] == mock_network.subnetworks
+        mock_client.list.assert_called_once()
+
+
+async def test_batches_service_list_networks_exception(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    mock_client = MagicMock()
+    mock_client.list.side_effect = Exception("Compute API error")
+
+    with patch(
+        "google.cloud.compute_v1.NetworksClient",
+        return_value=mock_client,
+    ):
+        res = await service.list_networks()
+        assert "error" in res
+        assert res["error"]["code"] == 500
+        assert "Compute API error" in res["error"]["message"]
+
+
+async def test_batches_service_list_networks_exception_with_code_value(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    err = Exception("Forbidden")
+    err.code = MagicMock()
+    err.code.value = 403
+
+    mock_client = MagicMock()
+    mock_client.list.side_effect = err
+
+    with patch(
+        "google.cloud.compute_v1.NetworksClient",
+        return_value=mock_client,
+    ):
+        res = await service.list_networks()
+        assert "error" in res
+        assert res["error"]["code"] == 403
+
+
+async def test_batches_service_get_subnetwork_success(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    mock_subnetwork = MagicMock()
+    mock_subnetwork.name = "default"
+    mock_subnetwork.network = "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/default"
+    mock_subnetwork.self_link = "https://www.googleapis.com/compute/v1/projects/test-project/regions/us-central1/subnetworks/default"
+
+    mock_client = MagicMock()
+    mock_client.get.return_value = mock_subnetwork
+
+    with patch(
+        "google.cloud.compute_v1.SubnetworksClient",
+        return_value=mock_client,
+    ):
+        res = await service.get_subnetwork("https://.../subnetworks/default")
+        assert res == {
+            "name": "default",
+            "network": "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/default",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/test-project/regions/us-central1/subnetworks/default",
+        }
+        mock_client.get.assert_called_once()
+
+
+async def test_batches_service_get_subnetwork_exception(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    mock_client = MagicMock()
+    mock_client.get.side_effect = Exception("Subnetwork Not Found")
+
+    with patch(
+        "google.cloud.compute_v1.SubnetworksClient",
+        return_value=mock_client,
+    ):
+        res = await service.get_subnetwork("non-existent-sub")
+        assert "error" in res
+        assert res["error"]["code"] == 500
+        assert "Subnetwork Not Found" in res["error"]["message"]
+
+
+async def test_batches_service_get_subnetwork_exception_with_code_value(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    err = Exception("Not Found")
+    err.code = MagicMock()
+    err.code.value = 404
+
+    mock_client = MagicMock()
+    mock_client.get.side_effect = err
+
+    with patch(
+        "google.cloud.compute_v1.SubnetworksClient",
+        return_value=mock_client,
+    ):
+        res = await service.get_subnetwork("non-existent-sub")
+        assert "error" in res
+        assert res["error"]["code"] == 404
+
+
 def test_batches_service_client_options():
     log = MagicMock()
     service_regional = BatchesService({"region_id": "us-central1"}, log)
@@ -387,6 +589,15 @@ async def test_batches_service_missing_config():
     res_del = await service.delete_batch("b1")
     assert res_del["error"]["code"] == 400
     assert "Project ID and Region ID must be configured." in res_del["error"]["message"]
+
+    res_net = await service.list_networks()
+    assert res_net["error"]["code"] == 400
+    assert "Project ID must be configured." in res_net["error"]["message"]
+
+    res_subnet = await service.get_subnetwork("s1")
+    assert res_subnet["error"]["code"] == 400
+    assert "Project ID and Region ID must be configured." in res_subnet["error"]["message"]
+
 
 
 

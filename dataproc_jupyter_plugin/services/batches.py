@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from google.api_core.client_options import ClientOptions
-from google.cloud import dataproc_v1
+from google.cloud import compute_v1, dataproc_v1
 from google.oauth2.credentials import Credentials
 
 
@@ -116,4 +116,53 @@ class BatchesService:
             if hasattr(code, "value"):
                 code = code.value
             return {"error": {"code": code, "message": str(e)}}
+
+    async def list_networks(self):
+        if not self.project_id:
+            return {"error": {"code": 400, "message": "Project ID must be configured."}}
+        try:
+            client = compute_v1.NetworksClient(credentials=self._get_credentials())
+            request = compute_v1.ListNetworksRequest(project=self.project_id)
+            response = client.list(request=request)
+            networks = []
+            for network in response:
+                network_dict = {
+                    "name": network.name,
+                    "selfLink": network.self_link,
+                }
+                if network.subnetworks:
+                    network_dict["subnetworks"] = list(network.subnetworks)
+                networks.append(network_dict)
+            return {"items": networks}
+        except Exception as e:
+            self.log.exception("Error listing networks in BatchesService")
+            code = getattr(e, "code", 500)
+            if hasattr(code, "value"):
+                code = code.value
+            return {"error": {"code": code, "message": str(e)}}
+
+    async def get_subnetwork(self, subnetwork: str):
+        if not self.project_id or not self.region_id:
+            return {"error": {"code": 400, "message": "Project ID and Region ID must be configured."}}
+        try:
+            client = compute_v1.SubnetworksClient(credentials=self._get_credentials())
+            subnetwork_name = subnetwork.split("/")[-1] if "/" in subnetwork else subnetwork
+            request = compute_v1.GetSubnetworkRequest(
+                project=self.project_id,
+                region=self.region_id,
+                subnetwork=subnetwork_name,
+            )
+            response = client.get(request=request)
+            return {
+                "name": response.name,
+                "network": response.network,
+                "selfLink": response.self_link,
+            }
+        except Exception as e:
+            self.log.exception(f"Error getting subnetwork {subnetwork} in BatchesService")
+            code = getattr(e, "code", 500)
+            if hasattr(code, "value"):
+                code = code.value
+            return {"error": {"code": code, "message": str(e)}}
+
 

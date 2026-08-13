@@ -261,6 +261,8 @@ def setup_handlers(web_app):
         "listBatches": batches.ListBatchesController,
         "batchDetail": batches.BatchDetailController,
         "deleteBatch": batches.DeleteBatchController,
+        "listNetworks": batches.ListNetworksController,
+        "subNetwork": batches.SubNetworkController,
     }
     handlers = [(full_path(name), handler) for name, handler in handlersMap.items()]
     web_app.add_handlers(host_pattern, handlers)
