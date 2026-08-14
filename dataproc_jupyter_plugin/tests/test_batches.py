@@ -289,6 +289,27 @@ async def test_batches_service_get_batch_exception_with_code_value(mock_credenti
         assert res["error"]["code"] == 404
 
 
+async def test_batches_service_get_batch_exception_non_int_code(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    err = Exception("RPC Error")
+    err.code = lambda: "bound_method"
+
+    mock_client = MagicMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_client.get_batch = AsyncMock(side_effect=err)
+
+    with patch(
+        "google.cloud.dataproc_v1.BatchControllerAsyncClient",
+        return_value=mock_client,
+    ):
+        res = await service.get_batch("batch-non-int")
+        assert "error" in res
+        assert res["error"]["code"] == 500
+
+
 async def test_batches_service_delete_batch_success(mock_credentials):
     log = MagicMock()
     service = BatchesService(mock_credentials, log)
@@ -349,6 +370,27 @@ async def test_batches_service_delete_batch_exception_with_code_value(mock_crede
         res = await service.delete_batch("batch-404")
         assert "error" in res
         assert res["error"]["code"] == 404
+
+
+async def test_batches_service_delete_batch_exception_non_int_code(mock_credentials):
+    log = MagicMock()
+    service = BatchesService(mock_credentials, log)
+
+    err = Exception("RPC Error")
+    err.code = lambda: "bound_method"
+
+    mock_client = MagicMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_client.delete_batch = AsyncMock(side_effect=err)
+
+    with patch(
+        "google.cloud.dataproc_v1.BatchControllerAsyncClient",
+        return_value=mock_client,
+    ):
+        res = await service.delete_batch("batch-non-int")
+        assert "error" in res
+        assert res["error"]["code"] == 500
 
 
 def test_batches_service_client_options():

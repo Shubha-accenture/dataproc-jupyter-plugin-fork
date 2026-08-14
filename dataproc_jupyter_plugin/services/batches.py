@@ -96,6 +96,8 @@ class BatchesService:
             code = getattr(e, "code", 500)
             if hasattr(code, "value"):
                 code = code.value
+            if not isinstance(code, int):
+                code = 500
             return {"error": {"code": code, "message": str(e)}}
 
     async def delete_batch(self, batch_id):
@@ -115,5 +117,7 @@ class BatchesService:
             code = getattr(e, "code", 500)
             if hasattr(code, "value"):
                 code = code.value
+            if not isinstance(code, int):
+                code = 500
             return {"error": {"code": code, "message": str(e)}}
 

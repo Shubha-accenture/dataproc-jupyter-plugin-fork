@@ -241,11 +241,11 @@ export class BatchService {
           `batchDetail?batch=${encodeURIComponent(batchSelected)}`,
           { method: 'GET' }
         );
-        if (responseResult.error && responseResult.error.code === 404) {
+        if (responseResult?.error && responseResult.error.code === 404) {
           setErrorView(true);
         }
         setBatchInfoResponse(responseResult);
-        if (responseResult.labels) {
+        if (responseResult?.labels) {
           const labelValue = Object.entries(responseResult.labels).map(
             ([key, value]) => `${key}:${value}`
           );
