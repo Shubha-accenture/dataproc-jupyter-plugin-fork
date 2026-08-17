@@ -436,7 +436,6 @@ async def test_batches_service_list_networks_success(mock_credentials):
     mock_network = MagicMock()
     mock_network.name = "default"
     mock_network.self_link = "https://www.googleapis.com/compute/v1/projects/test-project/global/networks/default"
-    mock_network.subnetworks = ["https://www.googleapis.com/compute/v1/projects/test-project/regions/us-central1/subnetworks/default"]
 
     mock_client = MagicMock()
     mock_client.list.return_value = [mock_network]
@@ -450,7 +449,6 @@ async def test_batches_service_list_networks_success(mock_credentials):
         assert len(res["items"]) == 1
         assert res["items"][0]["name"] == "default"
         assert res["items"][0]["selfLink"] == mock_network.self_link
-        assert res["items"][0]["subnetworks"] == mock_network.subnetworks
         mock_client.list.assert_called_once()
 
 

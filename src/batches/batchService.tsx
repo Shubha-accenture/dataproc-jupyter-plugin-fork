@@ -227,7 +227,7 @@ export class BatchService {
           `batchDetail?batch=${encodeURIComponent(batchSelected)}`,
           { method: 'GET' }
         );
-        if (responseResult.error && responseResult.error.code === 404) {
+        if (responseResult?.error?.code === 404) {
           setErrorView(true);
         }
         setBatchInfoResponse(responseResult);
@@ -493,7 +493,7 @@ export class BatchService {
           { method: 'GET' }
         );
         let transformedNetworkSelected = '';
-        if (responseResult.network) {
+        if (responseResult?.network) {
           const parts = responseResult.network.split('/');
           transformedNetworkSelected = parts[parts.length - 1];
           setNetworkSelected(transformedNetworkSelected);
@@ -536,10 +536,10 @@ export class BatchService {
       });
 
       if (responseResult?.error?.code) {
-        Notification.emit(responseResult.error.message, 'error', {
+        Notification.emit(responseResult?.error?.message, 'error', {
           autoClose: 5000
         });
-      } else if (responseResult.items) {
+      } else if (responseResult?.items) {
         const transformedNetworkList = responseResult.items.map(
           (data: any) => {
             if (data.selfLink) {

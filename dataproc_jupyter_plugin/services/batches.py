@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import asyncio
 
 from google.api_core.client_options import ClientOptions
 from google.cloud import compute_v1, dataproc_v1
@@ -121,17 +122,20 @@ class BatchesService:
         if not self.project_id:
             return {"error": {"code": 400, "message": "Project ID must be configured."}}
         try:
-            client = compute_v1.NetworksClient(credentials=self._get_credentials())
-            request = compute_v1.ListNetworksRequest(project=self.project_id)
-            response = client.list(request=request)
+            loop = asyncio.get_event_loop()
+
+            def fetch_networks():
+                client = compute_v1.NetworksClient(credentials=self._get_credentials())
+                request = compute_v1.ListNetworksRequest(project=self.project_id)
+                return list(client.list(request=request))
+
+            response = await loop.run_in_executor(None, fetch_networks)
             networks = []
             for network in response:
                 network_dict = {
                     "name": network.name,
                     "selfLink": network.self_link,
                 }
-                if network.subnetworks:
-                    network_dict["subnetworks"] = list(network.subnetworks)
                 networks.append(network_dict)
             return {"items": networks}
         except Exception as e:
@@ -145,14 +149,19 @@ class BatchesService:
         if not self.project_id or not self.region_id:
             return {"error": {"code": 400, "message": "Project ID and Region ID must be configured."}}
         try:
-            client = compute_v1.SubnetworksClient(credentials=self._get_credentials())
-            subnetwork_name = subnetwork.split("/")[-1] if "/" in subnetwork else subnetwork
-            request = compute_v1.GetSubnetworkRequest(
-                project=self.project_id,
-                region=self.region_id,
-                subnetwork=subnetwork_name,
-            )
-            response = client.get(request=request)
+            loop = asyncio.get_event_loop()
+
+            def fetch_subnetwork():
+                client = compute_v1.SubnetworksClient(credentials=self._get_credentials())
+                subnetwork_name = subnetwork.split("/")[-1] if "/" in subnetwork else subnetwork
+                request = compute_v1.GetSubnetworkRequest(
+                    project=self.project_id,
+                    region=self.region_id,
+                    subnetwork=subnetwork_name,
+                )
+                return client.get(request=request)
+
+            response = await loop.run_in_executor(None, fetch_subnetwork)
             return {
                 "name": response.name,
                 "network": response.network,

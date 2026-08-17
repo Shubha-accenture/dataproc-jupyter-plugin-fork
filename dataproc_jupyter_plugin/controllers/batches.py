@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import tornado
 from jupyter_server.base.handlers import APIHandler
 from dataproc_jupyter_plugin import credentials
@@ -28,7 +27,7 @@ class ListBatchesController(APIHandler):
             credentials_dict = await credentials.get_cached()
             service = BatchesService(credentials_dict, self.log)
             result = await service.list_batches(page_size, page_token)
-            self.finish(json.dumps(result))
+            self.finish(result)
         except Exception as e:
             self.log.exception("Error in ListBatchesController")
             self.finish({"error": {"code": 500, "message": str(e)}})
@@ -42,7 +41,7 @@ class BatchDetailController(APIHandler):
             credentials_dict = await credentials.get_cached()
             service = BatchesService(credentials_dict, self.log)
             result = await service.get_batch(batch_id)
-            self.finish(json.dumps(result))
+            self.finish(result)
         except Exception as e:
             self.log.exception("Error in BatchDetailController")
             self.finish({"error": {"code": 500, "message": str(e)}})
@@ -56,7 +55,7 @@ class DeleteBatchController(APIHandler):
             credentials_dict = await credentials.get_cached()
             service = BatchesService(credentials_dict, self.log)
             result = await service.delete_batch(batch_id)
-            self.finish(json.dumps(result))
+            self.finish(result)
         except Exception as e:
             self.log.exception("Error in DeleteBatchController")
             self.finish({"error": {"code": 500, "message": str(e)}})
@@ -69,7 +68,7 @@ class ListNetworksController(APIHandler):
             credentials_dict = await credentials.get_cached()
             service = BatchesService(credentials_dict, self.log)
             result = await service.list_networks()
-            self.finish(json.dumps(result))
+            self.finish(result)
         except Exception as e:
             self.log.exception("Error in ListNetworksController")
             self.finish({"error": {"code": 500, "message": str(e)}})
@@ -83,7 +82,7 @@ class SubNetworkController(APIHandler):
             credentials_dict = await credentials.get_cached()
             service = BatchesService(credentials_dict, self.log)
             result = await service.get_subnetwork(subnetwork)
-            self.finish(json.dumps(result))
+            self.finish(result)
         except Exception as e:
             self.log.exception("Error in SubNetworkController")
             self.finish({"error": {"code": 500, "message": str(e)}})
