@@ -130,13 +130,13 @@ class BatchesService:
                 return list(client.list(request=request))
 
             response = await loop.run_in_executor(None, fetch_networks)
-            networks = []
-            for network in response:
-                network_dict = {
+            networks = [
+                {
                     "name": network.name,
                     "selfLink": network.self_link,
                 }
-                networks.append(network_dict)
+                for network in response
+            ]
             return {"items": networks}
         except Exception as e:
             self.log.exception("Error listing networks in BatchesService")
