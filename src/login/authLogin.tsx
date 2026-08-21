@@ -53,6 +53,7 @@ const AuthLoginComponent = ({
   const [loginError, setLoginError] = useState(false);
   const [configLoading, setConfigLoading] = useState(true);
   const [runtimeProfileUiEnabled, setRuntimeProfileUiEnabled] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
 
   const login = async () => {
     setIsloginDisabled(true);
@@ -90,6 +91,9 @@ const AuthLoginComponent = ({
       })
       .catch(err => {
         console.error('Error fetching settings for feature flag', err);
+      })
+      .finally(() => {
+        setSettingsLoading(false);
       });
   }, []);
 
@@ -106,7 +110,7 @@ const AuthLoginComponent = ({
           Loading Config Setup
         </div>
       )}
-      {!loginError && loginState && runtimeProfileUiEnabled && (
+      {!loginError && loginState && !settingsLoading && runtimeProfileUiEnabled && (
         <SettingsView
           configError={configError}
           setConfigError={setConfigError}
@@ -116,7 +120,7 @@ const AuthLoginComponent = ({
           themeManager={themeManager}
         />
       )}
-      {!loginError && loginState && !runtimeProfileUiEnabled && (
+      {!loginError && loginState && !settingsLoading && !runtimeProfileUiEnabled && (
         <ConfigSelection
           configError={configError}
           setConfigError={setConfigError}
