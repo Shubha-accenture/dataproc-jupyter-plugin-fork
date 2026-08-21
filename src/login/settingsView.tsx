@@ -27,7 +27,7 @@ export default function SettingsView({
   return (
     <div className="settings-view-container">
       <div className="settings-sidebar">
-        <div style={{ padding: '16px 16px', fontWeight: 500, fontSize: '14px', borderBottom: '1px solid var(--jp-border-color2)' }}>
+        <div className="settings-sidebar-header">
           Google Cloud Settings
         </div>
         <div
