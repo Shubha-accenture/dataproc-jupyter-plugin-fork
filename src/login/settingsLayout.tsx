@@ -3,9 +3,9 @@ import { IThemeManager } from '@jupyterlab/apputils';
 import { JupyterLab } from '@jupyterlab/application';
 import { ILauncher } from '@jupyterlab/launcher';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
-import '../../style/runtimeProfile.css';
+import '../../style/settingsLayout.css';
 
-interface ISettingsViewProps {
+interface ISettingsLayoutProps {
   configError: boolean;
   setConfigError: (error: boolean) => void;
   app?: JupyterLab;
@@ -14,18 +14,18 @@ interface ISettingsViewProps {
   themeManager: IThemeManager;
 }
 
-export default function SettingsView({
+export default function SettingsLayout({
   configError,
   setConfigError,
   app,
   launcher,
   settingRegistry,
   themeManager
-}: ISettingsViewProps) {
+}: ISettingsLayoutProps) {
   const [activeTab, setActiveTab] = useState<'common' | 'spark'>('common');
 
   return (
-    <div className="settings-view-container">
+    <div className="settings-Layout-container">
       <div className="settings-sidebar">
         <div className="settings-sidebar-header">
           Google Cloud Settings

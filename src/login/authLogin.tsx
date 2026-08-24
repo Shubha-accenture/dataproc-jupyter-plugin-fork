@@ -20,7 +20,7 @@ import { LabIcon } from '@jupyterlab/ui-components';
 import signinGoogleIcon from '../../style/icons/signin_google_icon.svg';
 import { requestAPI } from '../handler/handler';
 import ConfigSelection from './configSelection';
-import SettingsView from './settingsView';
+import SettingsLayout from './settingsLayout';
 import { LOGIN_STATE, STATUS_SUCCESS } from '../utils/const';
 import { checkConfig } from '../utils/utils';
 import { DataprocWidget } from '../controls/DataprocWidget';
@@ -111,7 +111,7 @@ const AuthLoginComponent = ({
         </div>
       )}
       {!loginError && loginState && !settingsLoading && runtimeProfileUiEnabled && (
-        <SettingsView
+        <SettingsLayout
           configError={configError}
           setConfigError={setConfigError}
           app={app}
