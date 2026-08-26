@@ -165,7 +165,7 @@ const extension: JupyterFrontEndPlugin<void> = {
         console.error('Error during app restoration:', error);
       });
     let bqFeature: SettingsResponse = await requestAPI('settings');
-    const runtimeProfileUiEnabled = true;
+    const runtimeProfileUiEnabled = Boolean(bqFeature?.enable_runtime_profile_integration);
     // START -- Enable Preview Features.
     const settings = await settingRegistry.load(PLUGIN_ID);
 
@@ -845,18 +845,21 @@ const extension: JupyterFrontEndPlugin<void> = {
           });
         }
       });
-      launcher.add({
-        command: createRuntimeTemplateComponentCommand,
-        category: 'Dataproc Serverless Spark',
-        rank: serverlessIndex + 2
-      });
+
       if (runtimeProfileUiEnabled) {
         launcher.add({
           command: createRuntimeProfileComponentCommand,
           category: 'Dataproc Serverless Spark',
           rank: serverlessIndex + 3
         });
+      } else {
+        launcher.add({
+          command: createRuntimeTemplateComponentCommand,
+          category: 'Dataproc Serverless Spark',
+          rank: serverlessIndex + 2
+        });
       }
+
       launcher.add({
         command: createClusterComponentCommand,
         category: TITLE_LAUNCHER_CATEGORY,
