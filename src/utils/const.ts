@@ -34,32 +34,48 @@ interface IGcpUrlResponseData {
   storage_url: string;
 }
 export const gcpServiceUrls = (async () => {
-  const data = (await requestAPI('getGcpServiceUrls')) as IGcpUrlResponseData;
-  const storage_url = new URL(data.storage_url);
-  const storage_upload_url = new URL(data.storage_url);
+  try {
+    const data = (await requestAPI('getGcpServiceUrls')) as IGcpUrlResponseData;
+    const storage_url = new URL(data.storage_url);
+    const storage_upload_url = new URL(data.storage_url);
 
-  if (
-    !storage_url.pathname ||
-    storage_url.pathname === '' ||
-    storage_url.pathname === '/'
-  ) {
-    // If the overwritten  storage_url doesn't contain a path, add it.
-    storage_url.pathname = 'storage/v1/';
+    if (
+      !storage_url.pathname ||
+      storage_url.pathname === '' ||
+      storage_url.pathname === '/'
+    ) {
+      // If the overwritten  storage_url doesn't contain a path, add it.
+      storage_url.pathname = 'storage/v1/';
+    }
+    storage_upload_url.pathname = 'upload/storage/v1/';
+
+    return {
+      DATAPROC: data.dataproc_url + 'v1',
+      COMPUTE: data.compute_url,
+      METASTORE: data.metastore_url + 'v1',
+      CLOUD_KMS: data.cloudkms_url + 'v1',
+      CLOUD_RESOURCE_MANAGER: data.cloudresourcemanager_url + 'v1/projects',
+      REGION_URL: data.compute_url + '/projects',
+      CATALOG: data.datacatalog_url + 'v1/catalog:search',
+      COLUMN: data.datacatalog_url + 'v1/',
+      STORAGE: storage_url.toString(),
+      STORAGE_UPLOAD: storage_upload_url.toString()
+    };
+  } catch (error) {
+    return {
+      DATAPROC: 'https://dataproc.googleapis.com/v1',
+      COMPUTE: 'https://compute.googleapis.com/compute/v1',
+      METASTORE: 'https://metastore.googleapis.com/v1',
+      CLOUD_KMS: 'https://cloudkms.googleapis.com/v1',
+      CLOUD_RESOURCE_MANAGER:
+        'https://cloudresourcemanager.googleapis.com/v1/projects',
+      REGION_URL: 'https://compute.googleapis.com/compute/v1/projects',
+      CATALOG: 'https://datacatalog.googleapis.com/v1/catalog:search',
+      COLUMN: 'https://datacatalog.googleapis.com/v1/',
+      STORAGE: 'https://storage.googleapis.com/storage/v1/',
+      STORAGE_UPLOAD: 'https://storage.googleapis.com/upload/storage/v1/'
+    };
   }
-  storage_upload_url.pathname = 'upload/storage/v1/';
-
-  return {
-    DATAPROC: data.dataproc_url + 'v1',
-    COMPUTE: data.compute_url,
-    METASTORE: data.metastore_url + 'v1',
-    CLOUD_KMS: data.cloudkms_url + 'v1',
-    CLOUD_RESOURCE_MANAGER: data.cloudresourcemanager_url + 'v1/projects',
-    REGION_URL: data.compute_url + '/projects',
-    CATALOG: data.datacatalog_url + 'v1/catalog:search',
-    COLUMN: data.datacatalog_url + 'v1/',
-    STORAGE: storage_url.toString(),
-    STORAGE_UPLOAD: storage_upload_url.toString()
-  };
 })();
 export const VIEW_LOGS_URL = 'https://console.cloud.google.com/logs';
 export const POLLING_TIME_LIMIT = 10000;
