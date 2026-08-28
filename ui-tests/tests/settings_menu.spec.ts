@@ -93,7 +93,7 @@ test.describe('Settings Menu', () => {
     // Verify that the 'common' tab from SettingsLayout is not visible.
     const commonTab = page.locator('.settings-tab').filter({ hasText: 'common' });
     await expect(commonTab).toHaveCount(0);
-
+    
     // Ensure the main configuration form title is visible (rendered by ConfigSelection)
     const projectHeader = page.getByText('Google Cloud Project Settings');
     await expect(projectHeader).toBeVisible();
