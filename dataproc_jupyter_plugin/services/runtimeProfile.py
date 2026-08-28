@@ -13,11 +13,8 @@ class RuntimeProfileService:
         self._creation_time = 0
 
     async def get_client(self, log):
-        if self._session is None or (time.time() - self._creation_time) > 3600:
-            if self._session:
-                await self._session.close()
+        if self._session is None:
             self._session = aiohttp.ClientSession()
-            self._creation_time = time.time()
         return self._session
 
     async def list_runtime_profiles(self, log, page_token="", page_size="50"):
@@ -53,9 +50,12 @@ class RuntimeProfileService:
         creds = await credentials.get_cached()
         if not creds:
             return False, "No credentials found"
-
+        project_id = creds["project_id"]
+        region_id = creds["region_id"]
+        expected_prefix = f"projects/{project_id}/locations/{region_id}/sessionTemplates/"
+        if not template_id.startswith(expected_prefix):
+            return False, f"Invalid templateId. Must belong to project '{project_id}' and region '{region_id}'"
         access_token = creds["access_token"]
-
         dataproc_url = await urls.gcp_service_url(DATAPROC_SERVICE_NAME)
         api_endpoint = f"{dataproc_url}v1/{template_id}"
 
@@ -106,7 +106,7 @@ class RuntimeProfileService:
                     )
 
                     if s_template == template_id or (
-                        template_id and s_template.endswith(template_id)
+                        template_id and s_template.endswith(f"/{template_id}")
                     ):
                         count += 1
                         session_name = s.get("name", "")

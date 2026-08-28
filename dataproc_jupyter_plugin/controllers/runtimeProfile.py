@@ -10,6 +10,10 @@ class RuntimeProfileController(APIHandler):
         try:
             page_token = self.get_argument("pageToken", default="")
             page_size = self.get_argument("pageSize", default="50")
+            if not page_size.isdigit():
+                self.set_status(400)
+                self.finish({"error": "pageSize must be an integer"})
+                return
 
             resp, error = await runtime_profile_service.list_runtime_profiles(
                 self.log, page_token, page_size
@@ -21,6 +25,7 @@ class RuntimeProfileController(APIHandler):
             self.finish(resp)
         except Exception as e:
             self.log.exception(f"Error fetching runtime profiles")
+            self.set_status(500)
             self.finish({"error": str(e)})
 
     @tornado.web.authenticated
@@ -28,6 +33,7 @@ class RuntimeProfileController(APIHandler):
         try:
             template_id = self.get_argument("templateId", default="")
             if not template_id:
+                self.set_status(400)
                 self.finish({"error": "templateId is required"})
                 return
 
@@ -41,6 +47,7 @@ class RuntimeProfileController(APIHandler):
             self.finish({"success": True})
         except Exception as e:
             self.log.exception(f"Error deleting runtime profile")
+            self.set_status(500)
             self.finish({"error": str(e)})
 
 
@@ -50,6 +57,7 @@ class RuntimeProfileActiveSessionsController(APIHandler):
         try:
             template_id = self.get_argument("templateId", default="")
             if not template_id:
+                self.set_status(400)
                 self.finish({"error": "templateId is required"})
                 return
 
@@ -63,4 +71,5 @@ class RuntimeProfileActiveSessionsController(APIHandler):
             self.finish(data)
         except Exception as e:
             self.log.exception(f"Error fetching active sessions count")
+            self.set_status(500)
             self.finish({"error": str(e)})
