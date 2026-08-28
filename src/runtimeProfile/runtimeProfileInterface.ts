@@ -18,7 +18,7 @@
 /**
  * Node configuration type: standard (CPU only) or accelerated (GPU attached)
  */
-export type NodeConfigurationType = 'standard' | 'accelerated'; //no need
+export type NodeConfigurationType = 'standard' | 'accelerated';
 
 /**
  * Interface representing a Region option with id and display name
