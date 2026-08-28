@@ -69,9 +69,10 @@ async def test_runtime_profile_controller_delete_missing_id(jp_fetch):
         "dataproc-plugin",
         "runtimeTemplates",
         method="DELETE",
+        raise_error=False,
     )
 
-    assert response.code == 200
+    assert response.code == 400
     payload = json.loads(response.body)
     assert payload == {"error": "templateId is required"}
 
@@ -103,9 +104,10 @@ async def test_active_sessions_controller_get_missing_id(jp_fetch):
         "dataproc-plugin",
         "runtimeProfileSessions",
         method="GET",
+        raise_error=False,
     )
 
-    assert response.code == 200
+    assert response.code == 400
     payload = json.loads(response.body)
     assert payload == {"error": "templateId is required"}
 
