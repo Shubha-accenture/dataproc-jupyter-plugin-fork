@@ -31,16 +31,13 @@ from traitlets.config import SingletonConfigurable
 
 from dataproc_jupyter_plugin import credentials, urls
 from dataproc_jupyter_plugin.commons import constants
-from dataproc_jupyter_plugin.controllers import (
-    bigquery,
-    checkApiEnabled
-)
+from dataproc_jupyter_plugin.controllers import bigquery, checkApiEnabled
 from dataproc_jupyter_plugin.controllers.version import (
     LatestVersionController,
     UpdatePackage,
-    tornado
+    tornado,
 )
-
+from dataproc_jupyter_plugin.controllers import runtimeProfile
 
 from importlib.metadata import version, PackageNotFoundError
 
@@ -74,7 +71,9 @@ def configure_gateway_client_url(c, log, kernel_gateway_project_number):
             log.error(_project_number_not_set_error)
             return False
 
-        kernel_gateway_url = f"https://{project_number}-dot-{region}.kernels.googleusercontent.com"
+        kernel_gateway_url = (
+            f"https://{project_number}-dot-{region}.kernels.googleusercontent.com"
+        )
         log.info(f"Updating remote kernel gateway URL to {kernel_gateway_url}")
         c.GatewayClient.url = kernel_gateway_url
         return True
@@ -179,13 +178,19 @@ class ConfigHandler(APIHandler):
     async def post(self):
         ERROR_MESSAGE = "Project and region update "
         input_data = self.get_json_body()
-        config_project_number = self.config.DataprocPluginConfig.kernel_gateway_project_number
+        config_project_number = (
+            self.config.DataprocPluginConfig.kernel_gateway_project_number
+        )
         if config_project_number:
-            self.log.debug(f"Using DataprocPluginConfig.kernel_gateway_project_number: {config_project_number}")
+            self.log.debug(
+                f"Using DataprocPluginConfig.kernel_gateway_project_number: {config_project_number}"
+            )
         project_id = input_data["projectId"]
         region = input_data["region"]
         # Validate inputs before processing
-        if not config_project_number and not re.fullmatch(constants.PROJECT_REGEXP, project_id):
+        if not config_project_number and not re.fullmatch(
+            constants.PROJECT_REGEXP, project_id
+        ):
             self.set_status(400)
             self.finish({"error": f"Unsupported project ID: {project_id}"})
             return
@@ -264,7 +269,8 @@ def setup_handlers(web_app):
         "jupyterlabVersion": LatestVersionController,
         "updatePlugin": UpdatePackage,
         "checkApiEnabled": checkApiEnabled.CheckApiController,
-        
+        "runtimeTemplates": runtimeProfile.RuntimeProfileController,
+        "runtimeProfileSessions": runtimeProfile.RuntimeProfileActiveSessionsController,
     }
     handlers = [(full_path(name), handler) for name, handler in handlersMap.items()]
     web_app.add_handlers(host_pattern, handlers)
