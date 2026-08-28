@@ -36,15 +36,15 @@ import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
 import '../../style/runtimeProfile.css';
 import {
   ICreateRuntimeProfilePayload,
-  // IMachineTypeOption,
-  IRegionOption
-  // NodeConfigurationType
+  IMachineTypeOption,
+  IRegionOption,
+  NodeConfigurationType
 } from './runtimeProfileInterface';
 import {
   RuntimeProfileService,
   runtimeProfileService
 } from './runtimeProfileService';
-// import { NodeConfiguration } from './nodeCofiguration';
+import { NodeConfiguration } from './nodeCofiguration';
 
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
@@ -73,33 +73,41 @@ export const CreateRuntimeProfileComponent: React.FC<
   const [displayName, setDisplayName] = useState<string>('');
   const [region, setRegion] = useState<string>('us-central1');
   const [description, setDescription] = useState<string>('');
-  // Node configuration State (commented out for now)
-  // const [nodeType, setNodeType] = useState<NodeConfigurationType>('standard');
-  // const [executorMachineType, setExecutorMachineType] =
-  //   useState<string>('highmem-4');
+  // Node configuration State
+  const [nodeType, setNodeType] = useState<NodeConfigurationType>('standard');
+  const [executorMachineType, setExecutorMachineType] =
+    useState<string>('highmem-4');
 
   // Options & Data State
   const [regions, setRegions] = useState<IRegionOption[]>([]);
-  // const [machineTypes, setMachineTypes] = useState<IMachineTypeOption[]>([]);
+  const [machineTypes, setMachineTypes] = useState<IMachineTypeOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Validation State
   const [displayNameTouched, setDisplayNameTouched] = useState<boolean>(false);
 
-  // Load Regions from service
+  // Load Regions and initial Machine Types from service
   useEffect(() => {
     let isMounted = true;
     const loadInitialData = async () => {
       setIsLoadingOptions(true);
       try {
-        const loadedRegions = await service.getRegions();
+        const [loadedRegions, loadedMachineTypes] = await Promise.all([
+          service.getRegions(),
+          service.getMachineTypes(nodeType)
+        ]);
 
         if (isMounted) {
           setRegions(loadedRegions);
 
           if (loadedRegions.length > 0 && !region) {
             setRegion(loadedRegions[0].name);
+          }
+
+          setMachineTypes(loadedMachineTypes);
+          if (loadedMachineTypes.length > 0) {
+            setExecutorMachineType(loadedMachineTypes[0].name);
           }
         }
       } catch (error) {
@@ -137,14 +145,20 @@ export const CreateRuntimeProfileComponent: React.FC<
 
     setIsSubmitting(true);
     try {
+      const selectedMachine = machineTypes.find(
+        m => m.name === executorMachineType
+      );
+
       const payload: ICreateRuntimeProfilePayload = {
         displayName: displayName.trim(),
         region,
-        description: description.trim() || undefined
-        // nodeConfiguration: {
-        //   nodeType,
-        //   executorMachineType
-        // }
+        description: description.trim() || undefined,
+        nodeConfiguration: {
+          nodeType,
+          executorMachineType,
+          acceleratorType: selectedMachine?.acceleratorType,
+          acceleratorCount: selectedMachine?.acceleratorCount
+        }
       };
 
       await service.createRuntimeProfile(payload, undefined, region);
@@ -259,8 +273,7 @@ export const CreateRuntimeProfileComponent: React.FC<
             />
           </div>
 
-          {/* Node configuration Section (commented out for now) */}
-          {/*
+          {/* Node configuration Section */}
           <NodeConfiguration
             nodeType={nodeType}
             setNodeType={setNodeType}
@@ -271,7 +284,6 @@ export const CreateRuntimeProfileComponent: React.FC<
             isLoadingOptions={isLoadingOptions}
             service={service}
           />
-          */}
 
           {/* Action Buttons */}
           <div className="runtime-profile-buttons">
