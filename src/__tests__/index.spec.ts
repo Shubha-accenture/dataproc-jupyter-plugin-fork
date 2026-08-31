@@ -80,7 +80,7 @@ jest.mock('../runtime/runtimeTemplate', () => {
   };
 });
 
-jest.mock('../runtime/createRuntimeProfile', () => {
+jest.mock('../runtimeProfile/createRuntimeProfile', () => {
   const { Widget } = require('@lumino/widgets');
   return {
     CreateRuntimeProfile: jest.fn().mockImplementation(() => new Widget())
@@ -185,7 +185,7 @@ import extension from '../index';
 import { PLUGIN_ID } from '../utils/const';
 import { DataprocLoggingService } from '../utils/loggingService';
 import { NotebookButtonExtension } from '../controls/NotebookButtonExtension';
-import { CreateRuntimeProfile } from '../runtime/createRuntimeProfile';
+import { CreateRuntimeProfile } from '../runtimeProfile/createRuntimeProfile';
 import { RuntimeTemplate } from '../runtime/runtimeTemplate';
 import { Cluster } from '../cluster/cluster';
 import { Batches } from '../batches/batches';
@@ -748,12 +748,6 @@ describe('extension index.ts comprehensive test suite', () => {
     it('should add static commands to launcher with correct categories and ranks', () => {
       expect(launcherMock.add).toHaveBeenCalledWith(
         expect.objectContaining({
-          command: 'create-runtime-template-component',
-          category: 'Dataproc Serverless Spark'
-        })
-      );
-      expect(launcherMock.add).toHaveBeenCalledWith(
-        expect.objectContaining({
           command: 'create-runtime-profile-component',
           category: 'Dataproc Serverless Spark'
         })
@@ -774,6 +768,41 @@ describe('extension index.ts comprehensive test suite', () => {
         expect.objectContaining({
           command: 'create-template-component',
           rank: 3
+        })
+      );
+    });
+
+    it('should add create-runtime-template-component to launcher when runtime profile is disabled', async () => {
+      launcherMock.add.mockClear();
+      (requestAPI as jest.Mock).mockImplementation((endpoint: string) => {
+        if (endpoint === 'settings') {
+          return Promise.resolve({
+            enable_bigquery_integration: true,
+            enable_metastore_integration: true,
+            enable_cloud_storage_integration: true,
+            enable_runtime_profile_integration: false
+          });
+        }
+        return Promise.resolve({});
+      });
+
+      await (extension.activate as any)(
+        appMock,
+        factoryMock,
+        defaultFileBrowserMock,
+        launcherMock,
+        mainMenuMock,
+        labShellMock,
+        notebookTrackerMock,
+        themeManagerMock,
+        settingRegistryMock,
+        documentManagerMock
+      );
+
+      expect(launcherMock.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'create-runtime-template-component',
+          category: 'Dataproc Serverless Spark'
         })
       );
     });
