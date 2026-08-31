@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { JupyterLab } from '@jupyterlab/application';
 import { IThemeManager, Notification } from '@jupyterlab/apputils';
 import { ILauncher } from '@jupyterlab/launcher';
@@ -27,7 +28,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  SelectChangeEvent,
   TextField
 } from '@mui/material';
 
@@ -42,6 +42,12 @@ import {
   RuntimeProfileService,
   runtimeProfileService
 } from './runtimeProfileService';
+
+interface IRuntimeProfileFormData {
+  displayName: string;
+  region: string;
+  description: string;
+}
 
 const iconLeftArrow = new LabIcon({
   name: 'launcher:left-arrow-icon',
@@ -66,18 +72,24 @@ export const CreateRuntimeProfileComponent: React.FC<
   onBack,
   onSuccess
 }): React.JSX.Element => {
-  // Form State
-  const [displayName, setDisplayName] = useState<string>('');
-  const [region, setRegion] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-
   // Options & Data State
   const [regions, setRegions] = useState<IRegionOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState<boolean>(true);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Validation State
-  const [displayNameTouched, setDisplayNameTouched] = useState<boolean>(false);
+  // React Hook Form initialization
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting, isValid }
+  } = useForm<IRuntimeProfileFormData>({
+    mode: 'onChange',
+    defaultValues: {
+      displayName: '',
+      region: '',
+      description: ''
+    }
+  });
 
   // Load Regions from service
   useEffect(() => {
@@ -91,7 +103,7 @@ export const CreateRuntimeProfileComponent: React.FC<
           setRegions(loadedRegions);
 
           if (loadedRegions.length > 0) {
-            setRegion(prev => prev || loadedRegions[0].name);
+            setValue('region', loadedRegions[0].name, { shouldValidate: true });
           }
         }
       } catch (error) {
@@ -108,7 +120,7 @@ export const CreateRuntimeProfileComponent: React.FC<
     return () => {
       isMounted = false;
     };
-  }, [service]);
+  }, [service, setValue]);
 
   const handleBack = () => {
     if (onBack) {
@@ -118,27 +130,18 @@ export const CreateRuntimeProfileComponent: React.FC<
     }
   };
 
-  const isFormValid = displayName.trim().length > 0 && region.length > 0;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isFormValid || isSubmitting) {
-      setDisplayNameTouched(true);
-      return;
-    }
-
-    setIsSubmitting(true);
+  const onSubmit = async (data: IRuntimeProfileFormData) => {
     try {
       const payload: ICreateRuntimeProfilePayload = {
-        displayName: displayName.trim(),
-        region,
-        description: description.trim() || undefined
+        displayName: data.displayName.trim(),
+        region: data.region,
+        description: data.description.trim() || undefined
       };
 
-      await service.createRuntimeProfile(payload, undefined, region);
+      await service.createRuntimeProfile(payload, undefined, data.region);
 
       Notification.emit(
-        `Runtime profile "${displayName}" created successfully.`,
+        `Runtime profile "${data.displayName}" created successfully.`,
         'success',
         { autoClose: 5000 }
       );
@@ -152,8 +155,6 @@ export const CreateRuntimeProfileComponent: React.FC<
       const errorMessage =
         error?.message || 'Failed to create runtime profile.';
       Notification.emit(errorMessage, 'error', { autoClose: 5000 });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -183,27 +184,32 @@ export const CreateRuntimeProfileComponent: React.FC<
           batches effortlessly.
         </div>
 
-        <form className="runtime-profile-form" onSubmit={handleSubmit}>
+        <form className="runtime-profile-form" onSubmit={handleSubmit(onSubmit)}>
           {/* Row 1: Display name & Region */}
           <div className="runtime-profile-row">
             <div className="runtime-profile-col">
-              <TextField
-                id="runtime-profile-display-name"
-                label="Display name"
-                placeholder="e.g. my-runtime-profile"
-                variant="outlined"
-                size="small"
-                fullWidth
-                value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
-                onBlur={() => setDisplayNameTouched(true)}
-                error={displayNameTouched && displayName.trim().length === 0}
-                helperText={
-                  displayNameTouched && displayName.trim().length === 0
-                    ? 'Display name is required'
-                    : undefined
-                }
-                InputLabelProps={{ shrink: true }}
+              <Controller
+                name="displayName"
+                control={control}
+                rules={{
+                  required: 'Display name is required',
+                  validate: value =>
+                    value.trim().length > 0 || 'Display name is required'
+                }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    id="runtime-profile-display-name"
+                    label="Display name"
+                    placeholder="e.g. my-runtime-profile"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    error={Boolean(errors.displayName)}
+                    helperText={errors.displayName?.message}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                )}
               />
             </div>
             <div className="runtime-profile-col">
@@ -211,39 +217,48 @@ export const CreateRuntimeProfileComponent: React.FC<
                 <InputLabel id="runtime-profile-region-label" shrink>
                   Region *
                 </InputLabel>
-                <Select
-                  labelId="runtime-profile-region-label"
-                  id="runtime-profile-region"
-                  value={region}
-                  label="Region *"
-                  onChange={(e: SelectChangeEvent) =>
-                    setRegion(e.target.value as string)
-                  }
-                  notched
-                  disabled={isLoadingOptions}
-                >
-                  {regions.map(r => (
-                    <MenuItem key={r.name} value={r.name}>
-                      {r.displayName}
-                    </MenuItem>
-                  ))}
-                </Select>
+                <Controller
+                  name="region"
+                  control={control}
+                  rules={{ required: 'Region is required' }}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      labelId="runtime-profile-region-label"
+                      id="runtime-profile-region"
+                      label="Region *"
+                      notched
+                      disabled={isLoadingOptions}
+                    >
+                      {regions.map(r => (
+                        <MenuItem key={r.name} value={r.name}>
+                          {r.displayName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
               </FormControl>
             </div>
           </div>
 
           {/* Row 2: Description */}
           <div className="runtime-profile-full-row">
-            <TextField
-              id="runtime-profile-description"
-              label="Description"
-              placeholder="Optional description"
-              variant="outlined"
-              size="small"
-              fullWidth
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  id="runtime-profile-description"
+                  label="Description"
+                  placeholder="Optional description"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
             />
           </div>
 
@@ -251,9 +266,9 @@ export const CreateRuntimeProfileComponent: React.FC<
           <div className="runtime-profile-buttons">
             <button
               type="submit"
-              disabled={!isFormValid || isSubmitting}
+              disabled={!isValid || isSubmitting}
               className={
-                !isFormValid || isSubmitting
+                !isValid || isSubmitting
                   ? 'submit-button-disable-style'
                   : 'submit-button-style'
               }
