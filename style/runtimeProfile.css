@@ -182,6 +182,12 @@
   max-width: 620px;
 }
 
+.runtime-profile-buttons button {
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
 /* Dark mode overrides */
 body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-main-wrapper {
   background-color: var(--jp-layout-color1);

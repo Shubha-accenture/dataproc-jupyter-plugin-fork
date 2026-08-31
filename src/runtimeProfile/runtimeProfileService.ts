@@ -43,9 +43,6 @@ export const MOCK_REGIONS: IRegionOption[] = [
   { name: 'us-east1', displayName: 'us-east1 (South Carolina)' },
 ];
 
-// In-memory store for mock runtime profiles during session
-const inMemoryProfiles: IRuntimeProfile[] = [];
-
 const safeLog = (message: string, level: LOG_LEVEL = LOG_LEVEL.INFO) => {
   if (process.env.NODE_ENV === 'test') {
     return;
@@ -65,6 +62,7 @@ const safeLog = (message: string, level: LOG_LEVEL = LOG_LEVEL.INFO) => {
  */
 export class RuntimeProfileService implements IRuntimeProfileService {
   private useMock: boolean;
+  private inMemoryProfiles: IRuntimeProfile[] = [];
 
   constructor(useMock: boolean = RUNTIME_PROFILE_USE_MOCK) {
     this.useMock = useMock;
@@ -148,7 +146,7 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         state: 'ACTIVE'
       };
 
-      inMemoryProfiles.push(newProfile);
+      this.inMemoryProfiles.push(newProfile);
       return newProfile;
     }
 
@@ -190,14 +188,15 @@ export class RuntimeProfileService implements IRuntimeProfileService {
     region?: string
   ): Promise<IRuntimeProfile[]> {
     if (this.useMock) {
-      return [...inMemoryProfiles];
+      return [...this.inMemoryProfiles];
     }
 
     try {
       const credentials = await authApi();
       const { DATAPROC } = await gcpServiceUrls;
       const targetProject = projectId || credentials?.project_id;
-      const url = `${DATAPROC}/projects/${targetProject}/locations/${region}/runtimeProfiles`;
+      const targetRegion = region || 'us-central1';
+      const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/runtimeProfiles`;
 
       const response = await loggedFetch(url, {
         method: 'GET',
@@ -220,7 +219,7 @@ export class RuntimeProfileService implements IRuntimeProfileService {
    */
   async getRuntimeProfile(name: string): Promise<IRuntimeProfile> {
     if (this.useMock) {
-      const found = inMemoryProfiles.find(
+      const found = this.inMemoryProfiles.find(
         p => p.name === name || p.id === name
       );
       if (found) {
@@ -250,11 +249,11 @@ export class RuntimeProfileService implements IRuntimeProfileService {
    */
   async deleteRuntimeProfile(name: string): Promise<void> {
     if (this.useMock) {
-      const index = inMemoryProfiles.findIndex(
+      const index = this.inMemoryProfiles.findIndex(
         p => p.name === name || p.id === name
       );
       if (index >= 0) {
-        inMemoryProfiles.splice(index, 1);
+        this.inMemoryProfiles.splice(index, 1);
       }
       return;
     }

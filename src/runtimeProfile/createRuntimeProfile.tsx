@@ -68,7 +68,7 @@ export const CreateRuntimeProfileComponent: React.FC<
 }): React.JSX.Element => {
   // Form State
   const [displayName, setDisplayName] = useState<string>('');
-  const [region, setRegion] = useState<string>('us-central1');
+  const [region, setRegion] = useState<string>('');
   const [description, setDescription] = useState<string>('');
 
   // Options & Data State
@@ -90,8 +90,8 @@ export const CreateRuntimeProfileComponent: React.FC<
         if (isMounted) {
           setRegions(loadedRegions);
 
-          if (loadedRegions.length > 0 && !region) {
-            setRegion(loadedRegions[0].name);
+          if (loadedRegions.length > 0) {
+            setRegion(prev => prev || loadedRegions[0].name);
           }
         }
       } catch (error) {
@@ -108,7 +108,7 @@ export const CreateRuntimeProfileComponent: React.FC<
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [service]);
 
   const handleBack = () => {
     if (onBack) {
@@ -249,16 +249,13 @@ export const CreateRuntimeProfileComponent: React.FC<
 
           {/* Action Buttons */}
           <div className="runtime-profile-buttons">
-            <div
-              role="button"
-              tabIndex={0}
+            <button
+              type="submit"
+              disabled={!isFormValid || isSubmitting}
               className={
                 !isFormValid || isSubmitting
                   ? 'submit-button-disable-style'
                   : 'submit-button-style'
-              }
-              onClick={
-                !isFormValid || isSubmitting ? undefined : e => handleSubmit(e)
               }
             >
               {isSubmitting ? (
@@ -266,15 +263,14 @@ export const CreateRuntimeProfileComponent: React.FC<
               ) : (
                 'CREATE'
               )}
-            </div>
-            <div
-              role="button"
-              tabIndex={0}
+            </button>
+            <button
+              type="button"
               className="job-cancel-button-style"
               onClick={handleBack}
             >
               CANCEL
-            </div>
+            </button>
           </div>
         </form>
       </div>

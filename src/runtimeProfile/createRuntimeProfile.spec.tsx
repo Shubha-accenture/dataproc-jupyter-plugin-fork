@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-import { CreateRuntimeProfileComponent } from './createRuntimeProfile';
+import {
+  CreateRuntimeProfile,
+  CreateRuntimeProfileComponent
+} from './createRuntimeProfile';
 import { RuntimeProfileService } from './runtimeProfileService';
 
 describe('CreateRuntimeProfile Component & Service', () => {
@@ -25,10 +28,28 @@ describe('CreateRuntimeProfile Component & Service', () => {
     mockService = new RuntimeProfileService(true);
   });
 
-  it('should export CreateRuntimeProfileComponent and RuntimeProfileService', () => {
+  it('should export CreateRuntimeProfileComponent, CreateRuntimeProfile, and RuntimeProfileService', () => {
     expect(CreateRuntimeProfileComponent).toBeDefined();
     expect(typeof CreateRuntimeProfileComponent).toBe('function');
+    expect(CreateRuntimeProfile).toBeDefined();
+    expect(typeof CreateRuntimeProfile).toBe('function');
     expect(mockService).toBeDefined();
+  });
+
+  it('should ensure instance isolation for in-memory profiles across different service instances', async () => {
+    const serviceA = new RuntimeProfileService(true);
+    const serviceB = new RuntimeProfileService(true);
+
+    await serviceA.createRuntimeProfile({
+      displayName: 'profile-for-a',
+      region: 'us-central1'
+    });
+
+    const listA = await serviceA.listRuntimeProfiles();
+    const listB = await serviceB.listRuntimeProfiles();
+
+    expect(listA.some(p => p.displayName === 'profile-for-a')).toBe(true);
+    expect(listB.some(p => p.displayName === 'profile-for-a')).toBe(false);
   });
 
   it('should load regions from service', async () => {
@@ -40,7 +61,7 @@ describe('CreateRuntimeProfile Component & Service', () => {
     );
   });
 
-  it('should allow creating a profile in mock mode', async () => {
+  it('should allow creating, getting, listing, and deleting a profile in mock mode', async () => {
     const profile = await mockService.createRuntimeProfile({
       displayName: 'test-profile',
       region: 'us-central1',
@@ -54,5 +75,18 @@ describe('CreateRuntimeProfile Component & Service', () => {
 
     const listed = await mockService.listRuntimeProfiles();
     expect(listed.some(p => p.displayName === 'test-profile')).toBe(true);
+
+    const fetched = await mockService.getRuntimeProfile('test-profile');
+    expect(fetched.displayName).toBe('test-profile');
+
+    await mockService.deleteRuntimeProfile('test-profile');
+    const afterDelete = await mockService.listRuntimeProfiles();
+    expect(afterDelete.some(p => p.displayName === 'test-profile')).toBe(false);
+  });
+
+  it('should throw error when getting a non-existent profile in mock mode', async () => {
+    await expect(
+      mockService.getRuntimeProfile('non-existent-profile')
+    ).rejects.toThrow('Runtime profile not found: non-existent-profile');
   });
 });
