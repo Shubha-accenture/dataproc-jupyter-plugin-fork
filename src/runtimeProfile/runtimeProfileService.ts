@@ -43,19 +43,6 @@ export const RUNTIME_PROFILE_USE_MOCK = true;
 export const MOCK_REGIONS: IRegionOption[] = [
   { name: 'us-central1', displayName: 'us-central1 (Iowa)' },
   { name: 'us-east1', displayName: 'us-east1 (South Carolina)' },
-  { name: 'us-east4', displayName: 'us-east4 (Northern Virginia)' },
-  { name: 'us-west1', displayName: 'us-west1 (Oregon)' },
-  { name: 'us-west2', displayName: 'us-west2 (Los Angeles)' },
-  { name: 'us-west3', displayName: 'us-west3 (Salt Lake City)' },
-  { name: 'us-west4', displayName: 'us-west4 (Las Vegas)' },
-  { name: 'europe-west1', displayName: 'europe-west1 (Belgium)' },
-  { name: 'europe-west2', displayName: 'europe-west2 (London)' },
-  { name: 'europe-west3', displayName: 'europe-west3 (Frankfurt)' },
-  { name: 'europe-west4', displayName: 'europe-west4 (Netherlands)' },
-  { name: 'asia-east1', displayName: 'asia-east1 (Taiwan)' },
-  { name: 'asia-northeast1', displayName: 'asia-northeast1 (Tokyo)' },
-  { name: 'asia-southeast1', displayName: 'asia-southeast1 (Singapore)' },
-  { name: 'asia-south1', displayName: 'asia-south1 (Mumbai)' }
 ];
 
 /**
@@ -74,55 +61,6 @@ export const MOCK_STANDARD_MACHINE_TYPES: IMachineTypeOption[] = [
     label: 'standard-4 (4 vCPU, 16 GB)',
     vCPUs: 4,
     memoryGb: 16,
-    category: 'standard'
-  },
-  {
-    name: 'highcpu-4',
-    label: 'highcpu-4 (4 vCPU, 8 GB)',
-    vCPUs: 4,
-    memoryGb: 8,
-    category: 'standard'
-  },
-  {
-    name: 'highmem-8',
-    label: 'highmem-8 (8 vCPU, 64 GB)',
-    vCPUs: 8,
-    memoryGb: 64,
-    category: 'standard'
-  },
-  {
-    name: 'standard-8',
-    label: 'standard-8 (8 vCPU, 32 GB)',
-    vCPUs: 8,
-    memoryGb: 32,
-    category: 'standard'
-  },
-  {
-    name: 'highcpu-8',
-    label: 'highcpu-8 (8 vCPU, 16 GB)',
-    vCPUs: 8,
-    memoryGb: 16,
-    category: 'standard'
-  },
-  {
-    name: 'highmem-16',
-    label: 'highmem-16 (16 vCPU, 128 GB)',
-    vCPUs: 16,
-    memoryGb: 128,
-    category: 'standard'
-  },
-  {
-    name: 'standard-16',
-    label: 'standard-16 (16 vCPU, 64 GB)',
-    vCPUs: 16,
-    memoryGb: 64,
-    category: 'standard'
-  },
-  {
-    name: 'highcpu-16',
-    label: 'highcpu-16 (16 vCPU, 32 GB)',
-    vCPUs: 16,
-    memoryGb: 32,
     category: 'standard'
   }
 ];

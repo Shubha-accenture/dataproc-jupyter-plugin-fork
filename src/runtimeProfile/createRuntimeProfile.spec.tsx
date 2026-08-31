@@ -16,7 +16,6 @@
  */
 
 import { CreateRuntimeProfileComponent } from './createRuntimeProfile';
-import { NodeConfiguration } from './nodeCofiguration';
 import { RuntimeProfileService } from './runtimeProfileService';
 
 describe('CreateRuntimeProfile Component & Service', () => {
@@ -26,11 +25,9 @@ describe('CreateRuntimeProfile Component & Service', () => {
     mockService = new RuntimeProfileService(true);
   });
 
-  it('should export CreateRuntimeProfileComponent, NodeConfiguration and RuntimeProfileService', () => {
+  it('should export CreateRuntimeProfileComponent and RuntimeProfileService', () => {
     expect(CreateRuntimeProfileComponent).toBeDefined();
     expect(typeof CreateRuntimeProfileComponent).toBe('function');
-    expect(NodeConfiguration).toBeDefined();
-    expect(typeof NodeConfiguration).toBe('function');
     expect(mockService).toBeDefined();
   });
 
