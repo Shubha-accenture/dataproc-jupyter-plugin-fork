@@ -40,32 +40,16 @@ describe('CreateRuntimeProfile Component & Service', () => {
     );
   });
 
-  it('should load standard and accelerated machine types from service', async () => {
-    const standardTypes = await mockService.getMachineTypes('standard');
-    expect(standardTypes.length).toBeGreaterThan(0);
-    expect(standardTypes.some(m => m.name === 'highmem-4')).toBe(true);
-
-    const acceleratedTypes = await mockService.getMachineTypes('accelerated');
-    expect(acceleratedTypes.length).toBeGreaterThan(0);
-    expect(acceleratedTypes.some(m => m.name === 'g2-standard-4')).toBe(true);
-  });
-
   it('should allow creating a profile in mock mode', async () => {
     const profile = await mockService.createRuntimeProfile({
       displayName: 'test-profile',
       region: 'us-central1',
-      description: 'Test runtime profile description',
-      nodeConfiguration: {
-        nodeType: 'standard',
-        executorMachineType: 'highmem-4'
-      }
+      description: 'Test runtime profile description'
     });
 
     expect(profile.displayName).toBe('test-profile');
     expect(profile.region).toBe('us-central1');
     expect(profile.description).toBe('Test runtime profile description');
-    expect(profile.nodeConfiguration?.executorMachineType).toBe('highmem-4');
-    expect(profile.nodeConfiguration?.nodeType).toBe('standard');
     expect(profile.state).toBe('ACTIVE');
 
     const listed = await mockService.listRuntimeProfiles();

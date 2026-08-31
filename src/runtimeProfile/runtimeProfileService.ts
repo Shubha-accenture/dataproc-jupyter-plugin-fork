@@ -24,11 +24,9 @@ import { authApi, loggedFetch } from '../utils/utils';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import {
   ICreateRuntimeProfilePayload,
-  IMachineTypeOption,
   IRegionOption,
   IRuntimeProfile,
-  IRuntimeProfileService,
-  NodeConfigurationType
+  IRuntimeProfileService
 } from './runtimeProfileInterface';
 
 /**
@@ -43,95 +41,6 @@ export const RUNTIME_PROFILE_USE_MOCK = true;
 export const MOCK_REGIONS: IRegionOption[] = [
   { name: 'us-central1', displayName: 'us-central1 (Iowa)' },
   { name: 'us-east1', displayName: 'us-east1 (South Carolina)' },
-];
-
-/**
- * Mock standard machine types (CPU only)
- */
-export const MOCK_STANDARD_MACHINE_TYPES: IMachineTypeOption[] = [
-  {
-    name: 'highmem-4',
-    label: 'highmem-4 (4 vCPU, 32 GB)',
-    vCPUs: 4,
-    memoryGb: 32,
-    category: 'standard'
-  },
-  {
-    name: 'standard-4',
-    label: 'standard-4 (4 vCPU, 16 GB)',
-    vCPUs: 4,
-    memoryGb: 16,
-    category: 'standard'
-  }
-];
-
-/**
- * Mock accelerated machine types (with GPUs attached)
- */
-export const MOCK_ACCELERATED_MACHINE_TYPES: IMachineTypeOption[] = [
-  {
-    name: 'g2-standard-4',
-    label: 'g2-standard-4 (4 vCPU, 16 GB, 1 NVIDIA L4)',
-    vCPUs: 4,
-    memoryGb: 16,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-l4',
-    acceleratorCount: 1
-  },
-  {
-    name: 'g2-standard-8',
-    label: 'g2-standard-8 (8 vCPU, 32 GB, 1 NVIDIA L4)',
-    vCPUs: 8,
-    memoryGb: 32,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-l4',
-    acceleratorCount: 1
-  },
-  {
-    name: 'g2-standard-16',
-    label: 'g2-standard-16 (16 vCPU, 64 GB, 1 NVIDIA L4)',
-    vCPUs: 16,
-    memoryGb: 64,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-l4',
-    acceleratorCount: 1
-  },
-  {
-    name: 'a2-highgpu-1g',
-    label: 'a2-highgpu-1g (12 vCPU, 85 GB, 1 NVIDIA A100)',
-    vCPUs: 12,
-    memoryGb: 85,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-tesla-a100',
-    acceleratorCount: 1
-  },
-  {
-    name: 'a2-highgpu-2g',
-    label: 'a2-highgpu-2g (24 vCPU, 170 GB, 2 NVIDIA A100)',
-    vCPUs: 24,
-    memoryGb: 170,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-tesla-a100',
-    acceleratorCount: 2
-  },
-  {
-    name: 'n1-standard-4-t4',
-    label: 'n1-standard-4 (4 vCPU, 15 GB, 1 NVIDIA T4)',
-    vCPUs: 4,
-    memoryGb: 15,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-tesla-t4',
-    acceleratorCount: 1
-  },
-  {
-    name: 'n1-standard-8-t4',
-    label: 'n1-standard-8 (8 vCPU, 30 GB, 1 NVIDIA T4)',
-    vCPUs: 8,
-    memoryGb: 30,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-tesla-t4',
-    acceleratorCount: 1
-  }
 ];
 
 // In-memory store for mock runtime profiles during session
@@ -204,18 +113,6 @@ export class RuntimeProfileService implements IRuntimeProfileService {
   }
 
   /**
-   * Retrieves available executor machine types based on node category
-   */
-  async getMachineTypes(
-    nodeType: NodeConfigurationType = 'standard'
-  ): Promise<IMachineTypeOption[]> {
-    if (nodeType === 'accelerated') {
-      return MOCK_ACCELERATED_MACHINE_TYPES;
-    }
-    return MOCK_STANDARD_MACHINE_TYPES;
-  }
-
-  /**
    * Creates a new Runtime Profile.
    * Uses mock simulation or sends request to Dataproc API when live.
    */
@@ -246,19 +143,8 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         displayName: payload.displayName,
         region: targetRegion,
         description: payload.description,
-        nodeConfiguration: payload.nodeConfiguration
-          ? {
-              nodeType: payload.nodeConfiguration.nodeType,
-              executorMachineType:
-                payload.nodeConfiguration.executorMachineType,
-              acceleratorType: payload.nodeConfiguration.acceleratorType,
-              acceleratorCount: payload.nodeConfiguration.acceleratorCount
-            }
-          : undefined,
         createTime: new Date().toISOString(),
         updateTime: new Date().toISOString(),
-        labels: payload.labels || {},
-        properties: payload.properties || {},
         state: 'ACTIVE'
       };
 

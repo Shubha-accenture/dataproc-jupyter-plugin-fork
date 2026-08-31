@@ -16,39 +16,11 @@
  */
 
 /**
- * Node configuration type: standard (CPU only) or accelerated (GPU attached)
- */
-export type NodeConfigurationType = 'standard' | 'accelerated';
-
-/**
  * Interface representing a Region option with id and display name
  */
 export interface IRegionOption {
   name: string;
   displayName: string;
-}
-
-/**
- * Interface representing an Executor / Node Machine Type
- */
-export interface IMachineTypeOption {
-  name: string;
-  label: string;
-  vCPUs?: number;
-  memoryGb?: number;
-  category: NodeConfigurationType;
-  acceleratorType?: string;
-  acceleratorCount?: number;
-}
-
-/**
- * Node configuration within a Runtime Profile
- */
-export interface INodeConfiguration {
-  nodeType: NodeConfigurationType;
-  executorMachineType: string;
-  acceleratorType?: string;
-  acceleratorCount?: number;
 }
 
 /**
@@ -60,11 +32,8 @@ export interface IRuntimeProfile {
   displayName: string;
   region: string;
   description?: string;
-  nodeConfiguration?: INodeConfiguration;
   createTime?: string;
   updateTime?: string;
-  labels?: Record<string, string>;
-  properties?: Record<string, string>;
   state?: string;
 }
 
@@ -75,25 +44,6 @@ export interface ICreateRuntimeProfilePayload {
   displayName: string;
   region: string;
   description?: string;
-  nodeConfiguration?: {
-    nodeType: NodeConfigurationType;
-    executorMachineType: string;
-    acceleratorType?: string;
-    acceleratorCount?: number;
-  };
-  labels?: Record<string, string>;
-  properties?: Record<string, string>;
-}
-
-/**
- * Response structure for runtime profile API calls
- */
-export interface IRuntimeProfileApiResponse<T> {
-  data?: T;
-  error?: {
-    code: number;
-    message: string;
-  };
 }
 
 /**
@@ -101,9 +51,6 @@ export interface IRuntimeProfileApiResponse<T> {
  */
 export interface IRuntimeProfileService {
   getRegions(projectId?: string): Promise<IRegionOption[]>;
-  getMachineTypes(
-    nodeType?: NodeConfigurationType
-  ): Promise<IMachineTypeOption[]>;
   createRuntimeProfile(
     payload: ICreateRuntimeProfilePayload,
     projectId?: string,
