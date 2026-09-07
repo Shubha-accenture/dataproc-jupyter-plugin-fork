@@ -261,7 +261,11 @@ export const CreateRuntimeProfileComponent: React.FC<
               )}
             />
           </div>
-
+          {/* TO DO:-
+          Executor configuration
+          Additional Configuration and all the other fields as per Project Ignite Design document
+          API integration of the form fields
+          Will be taken care as part of upcoming development task */}
           {/* Action Buttons */}
           <div className="runtime-profile-buttons">
             <button
