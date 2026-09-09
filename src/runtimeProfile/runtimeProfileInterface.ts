@@ -56,10 +56,4 @@ export interface IRuntimeProfileService {
     projectId?: string,
     region?: string
   ): Promise<IRuntimeProfile>;
-  listRuntimeProfiles(
-    projectId?: string,
-    region?: string
-  ): Promise<IRuntimeProfile[]>;
-  getRuntimeProfile(name: string): Promise<IRuntimeProfile>;
-  deleteRuntimeProfile(name: string): Promise<void>;
 }

@@ -41,11 +41,11 @@ export const RUNTIME_PROFILE_USE_MOCK = true;
  */
 export const MOCK_REGIONS: IRegionOption[] = [
   { name: 'us-central1', displayName: 'us-central1 (Iowa)' },
-  { name: 'us-east1', displayName: 'us-east1 (South Carolina)' },
+  { name: 'us-east1', displayName: 'us-east1 (South Carolina)' }
 ];
 
 const safeLog = (message: string, level: LOG_LEVEL = LOG_LEVEL.INFO) => {
-  if (process.env.NODE_ENV === 'test') {
+  if (process.env.NODE_ENV === 'test' || Boolean(process.env.JEST_WORKER_ID)) {
     return;
   }
   try {
@@ -179,97 +179,6 @@ export class RuntimeProfileService implements IRuntimeProfileService {
       safeLog('Error creating runtime profile: ' + error, LOG_LEVEL.ERROR);
       throw error;
     }
-  }
-
-  /**
-   * Lists all existing runtime profiles
-   */
-  async listRuntimeProfiles(
-    projectId?: string,
-    region?: string
-  ): Promise<IRuntimeProfile[]> {
-    if (this.useMock) {
-      return [...this.inMemoryProfiles];
-    }
-
-    try {
-      const credentials = await authApi();
-      const { DATAPROC } = await gcpServiceUrls;
-      const targetProject = projectId || credentials?.project_id;
-      const targetRegion = region || 'us-central1';
-      const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/sessionTemplates`;
-
-      const response = await loggedFetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': API_HEADER_CONTENT_TYPE,
-          Authorization: API_HEADER_BEARER + (credentials?.access_token || '')
-        }
-      });
-
-      const result = await response.json();
-      return (result.sessionTemplates || []) as IRuntimeProfile[];
-    } catch (error) {
-      safeLog('Error listing runtime profiles: ' + error, LOG_LEVEL.ERROR);
-      return [];
-    }
-  }
-
-  /**
-   * Fetches a specific runtime profile by resource name
-   */
-  async getRuntimeProfile(name: string): Promise<IRuntimeProfile> {
-    if (this.useMock) {
-      const found = this.inMemoryProfiles.find(
-        p => p.name === name || p.id === name
-      );
-      if (found) {
-        return found;
-      }
-      throw new Error(`Runtime profile not found: ${name}`);
-    }
-
-    const credentials = await authApi();
-    const { DATAPROC } = await gcpServiceUrls;
-    const url = `${DATAPROC}/${name}`;
-
-    const response = await loggedFetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': API_HEADER_CONTENT_TYPE,
-        Authorization: API_HEADER_BEARER + (credentials?.access_token || '')
-      }
-    });
-
-    const result = await response.json();
-    return result as IRuntimeProfile;
-  }
-
-  /**
-   * Deletes a runtime profile
-   */
-  async deleteRuntimeProfile(name: string): Promise<void> {
-    if (this.useMock) {
-      const index = this.inMemoryProfiles.findIndex(
-        p => p.name === name || p.id === name
-      );
-      if (index >= 0) {
-        this.inMemoryProfiles.splice(index, 1);
-      }
-      return;
-    }
-
-    const credentials = await authApi();
-    const { DATAPROC } = await gcpServiceUrls;
-    const url = `${DATAPROC}/${name}`;
-
-    await loggedFetch(url, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': API_HEADER_CONTENT_TYPE,
-        Authorization: API_HEADER_BEARER + (credentials?.access_token || '')
-      }
-    });
   }
 }
 

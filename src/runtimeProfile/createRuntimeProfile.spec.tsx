@@ -15,6 +15,18 @@
  * limitations under the License.
  */
 
+jest.mock('../handler/handler', () => ({
+  requestAPI: jest.fn().mockResolvedValue({
+    dataproc_url: 'https://dataproc.googleapis.com/',
+    compute_url: 'https://compute.googleapis.com/compute',
+    metastore_url: 'https://metastore.googleapis.com/',
+    cloudkms_url: 'https://cloudkms.googleapis.com/',
+    cloudresourcemanager_url: 'https://cloudresourcemanager.googleapis.com/',
+    datacatalog_url: 'https://datacatalog.googleapis.com/',
+    storage_url: 'https://storage.googleapis.com/'
+  })
+}));
+
 import {
   CreateRuntimeProfile,
   CreateRuntimeProfileComponent
@@ -36,22 +48,6 @@ describe('CreateRuntimeProfile Component & Service', () => {
     expect(mockService).toBeDefined();
   });
 
-  it('should ensure instance isolation for in-memory profiles across different service instances', async () => {
-    const serviceA = new RuntimeProfileService(true);
-    const serviceB = new RuntimeProfileService(true);
-
-    await serviceA.createRuntimeProfile({
-      displayName: 'profile-for-a',
-      region: 'us-central1'
-    });
-
-    const listA = await serviceA.listRuntimeProfiles();
-    const listB = await serviceB.listRuntimeProfiles();
-
-    expect(listA.some(p => p.displayName === 'profile-for-a')).toBe(true);
-    expect(listB.some(p => p.displayName === 'profile-for-a')).toBe(false);
-  });
-
   it('should load regions from service', async () => {
     const regions = await mockService.getRegions();
     expect(regions.length).toBeGreaterThan(0);
@@ -61,7 +57,7 @@ describe('CreateRuntimeProfile Component & Service', () => {
     );
   });
 
-  it('should allow creating, getting, listing, and deleting a profile in mock mode', async () => {
+  it('should allow creating a profile in mock mode', async () => {
     const profile = await mockService.createRuntimeProfile({
       displayName: 'test-profile',
       region: 'us-central1',
@@ -72,21 +68,23 @@ describe('CreateRuntimeProfile Component & Service', () => {
     expect(profile.region).toBe('us-central1');
     expect(profile.description).toBe('Test runtime profile description');
     expect(profile.state).toBe('ACTIVE');
-
-    const listed = await mockService.listRuntimeProfiles();
-    expect(listed.some(p => p.displayName === 'test-profile')).toBe(true);
-
-    const fetched = await mockService.getRuntimeProfile('test-profile');
-    expect(fetched.displayName).toBe('test-profile');
-
-    await mockService.deleteRuntimeProfile('test-profile');
-    const afterDelete = await mockService.listRuntimeProfiles();
-    expect(afterDelete.some(p => p.displayName === 'test-profile')).toBe(false);
   });
 
-  it('should throw error when getting a non-existent profile in mock mode', async () => {
-    await expect(
-      mockService.getRuntimeProfile('non-existent-profile')
-    ).rejects.toThrow('Runtime profile not found: non-existent-profile');
+  it('should create profile with custom region and project', async () => {
+    const service = new RuntimeProfileService(true);
+    const profile = await service.createRuntimeProfile(
+      {
+        displayName: 'custom-profile',
+        region: 'us-east1',
+        description: 'Profile with custom region'
+      },
+      'test-project',
+      'us-east1'
+    );
+    expect(profile.displayName).toBe('custom-profile');
+    expect(profile.region).toBe('us-east1');
+    expect(profile.name).toBe(
+      'projects/test-project/locations/us-east1/runtimeProfiles/custom-profile'
+    );
   });
 });
