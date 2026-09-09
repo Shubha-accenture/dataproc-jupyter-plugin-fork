@@ -30,8 +30,9 @@ import {
 } from './runtimeProfileInterface';
 
 /**
- * Flag to enable mock mode until Dataproc Runtime Profiles backend API is deployed.
- * Set to false when connecting to the real Google Cloud Dataproc / Jupyter server endpoint.
+ * Flag to enable mock mode for UI development/testing until the skeleton form
+ * is fully connected to the Dataproc sessionTemplates API / Jupyter server endpoint.
+ * Set to false when connecting to the real Google Cloud Dataproc sessionTemplates endpoint.
  */
 export const RUNTIME_PROFILE_USE_MOCK = true;
 
@@ -156,7 +157,7 @@ export class RuntimeProfileService implements IRuntimeProfileService {
       const { DATAPROC } = await gcpServiceUrls;
       const targetProject = projectId || credentials?.project_id;
       const targetRegion = region || payload.region;
-      const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/runtimeProfiles`;
+      const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/sessionTemplates`;
 
       const response = await loggedFetch(url, {
         method: 'POST',
@@ -196,7 +197,7 @@ export class RuntimeProfileService implements IRuntimeProfileService {
       const { DATAPROC } = await gcpServiceUrls;
       const targetProject = projectId || credentials?.project_id;
       const targetRegion = region || 'us-central1';
-      const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/runtimeProfiles`;
+      const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/sessionTemplates`;
 
       const response = await loggedFetch(url, {
         method: 'GET',
@@ -207,7 +208,7 @@ export class RuntimeProfileService implements IRuntimeProfileService {
       });
 
       const result = await response.json();
-      return (result.runtimeProfiles || []) as IRuntimeProfile[];
+      return (result.sessionTemplates || []) as IRuntimeProfile[];
     } catch (error) {
       safeLog('Error listing runtime profiles: ' + error, LOG_LEVEL.ERROR);
       return [];

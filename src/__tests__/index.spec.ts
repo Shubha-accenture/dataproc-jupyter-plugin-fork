@@ -752,6 +752,11 @@ describe('extension index.ts comprehensive test suite', () => {
           category: 'Dataproc Serverless Spark'
         })
       );
+      expect(launcherMock.add).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'create-runtime-template-component'
+        })
+      );
       expect(launcherMock.add).toHaveBeenCalledWith(
         expect.objectContaining({
           command: 'create-cluster-component',
@@ -803,6 +808,11 @@ describe('extension index.ts comprehensive test suite', () => {
         expect.objectContaining({
           command: 'create-runtime-template-component',
           category: 'Dataproc Serverless Spark'
+        })
+      );
+      expect(launcherMock.add).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          command: 'create-runtime-profile-component'
         })
       );
     });
