@@ -47,7 +47,7 @@ import {
   VERSION_DETAIL
 } from './utils/const';
 import { RuntimeTemplate } from './runtime/runtimeTemplate';
-import { CreateRuntimeProfile } from './runtime/createRuntimeProfile';
+import { CreateRuntimeProfile } from './runtimeProfile/createRuntimeProfile';
 import {
   IFileBrowserFactory,
   IDefaultFileBrowser
