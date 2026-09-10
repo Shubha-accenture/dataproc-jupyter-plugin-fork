@@ -102,7 +102,7 @@ export type SparkProperties = Record<string, string>;
 export type ProfileLabels = Record<string, string>;
 
 export interface IRuntimeProfile {
-  name?: string; // Resource name: projects/{project}/locations/{region}/runtimeProfiles/{profile}
+  name?: string;
   id?: string;
   displayName: string;
   region: string;
@@ -114,9 +114,7 @@ export interface IRuntimeProfile {
   executorConfig?: IExecutorConfig;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
   driverAndExecutorConfiguration?: IDriverAndExecutorConfiguration;
-  /** @deprecated Use driverAndExecutorConfiguration instead */
   driverConfig?: IDriverConfig;
-  /** @deprecated Use driverAndExecutorConfiguration instead */
   executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
   metastoreConfig?: IMetastoreConfig;
@@ -134,9 +132,7 @@ export interface ICreateRuntimeProfilePayload {
   executorConfig?: IExecutorConfig;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
   driverAndExecutorConfiguration?: IDriverAndExecutorConfiguration;
-  /** @deprecated Use driverAndExecutorConfiguration instead */
   driverConfig?: IDriverConfig;
-  /** @deprecated Use driverAndExecutorConfiguration instead */
   executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
   metastoreConfig?: IMetastoreConfig;
