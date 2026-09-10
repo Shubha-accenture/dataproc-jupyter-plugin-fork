@@ -142,8 +142,11 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         displayName: payload.displayName,
         region: targetRegion,
         description: payload.description,
+        tier: payload.tier,
         executorConfig: payload.executorConfig,
         runtimeEnvironmentConfig: payload.runtimeEnvironmentConfig,
+        driverAndExecutorConfiguration:
+          payload.driverAndExecutorConfiguration ?? payload.driverConfig,
         driverConfig: payload.driverConfig,
         executorDiskConfig: payload.executorDiskConfig,
         autoscalingConfig: payload.autoscalingConfig,

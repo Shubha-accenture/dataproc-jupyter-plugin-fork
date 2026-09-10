@@ -15,192 +15,70 @@
  * limitations under the License.
  */
 
-/**
- * Interface representing a Region option with id and display name
- */
 export interface IRegionOption {
   name: string;
   displayName: string;
 }
 
-/**
- * Executor configuration types and interface
- */
 export type ExecutorType = 'standard' | 'accelerated';
 
 export interface IExecutorConfig {
-  /**
-   * Executor type: standard (CPU only) or accelerated (GPUs attached)
-   */
   executorType?: ExecutorType;
-  /**
-   * Executor machine type shape (e.g., 'highmem-4 (4 vCPU, 32 GB)')
-   */
   machineType?: string;
 }
 
-/**
- * Runtime environment configuration interface
- */
 export interface IRuntimeEnvironmentConfig {
-  /**
-   * Runtime profile ID
-   */
   runtimeProfileId?: string;
-  /**
-   * Dataproc runtime version (e.g., '2.3 LTS (Spark 3.5.1, Python 3.12, Scala 2.13)')
-   */
   runtimeVersion?: string;
-  /**
-   * Custom Spark container image
-   */
   customSparkImage?: string;
-  /**
-   * Cloud Storage staging bucket (e.g., 'Auto' or 'gs://...')
-   */
   stagingBucket?: string;
-  /**
-   * Python package repository (e.g., PyPI pull-through cache)
-   */
   pythonPackageRepository?: string;
 }
 
-/**
- * Driver and Executor configuration interface
- * Merged driver configuration and executor disk configuration with fields:
- * tier, driverMachineType, driverDisk, executorType, executorDisk.
- * Shown under driverAndExecutorConfiguration under Additional config (To be developed later UI).
- */
-export interface IDriverConfig {
-  /**
-   * Dataproc compute tier (e.g., 'standard' or 'premium')
-   */
+export interface IDriverAndExecutorConfiguration {
   tier?: string;
-  /**
-   * Driver machine type (e.g., 'standard-4 (4 vCPU, 16 GB)')
-   */
   driverMachineType?: string;
-  /**
-   * Driver persistent disk (e.g., 'Standard persistent disk (HDD), 100 GB')
-   */
   driverDisk?: string;
-  /**
-   * Executor type: standard (CPU only) or accelerated (GPUs attached)
-   */
-  executorType?: ExecutorType | string;
-  /**
-   * Executor persistent disk (e.g., 'Standard persistent disk (HDD), 100 GB')
-   */
+  executorType?: ExecutorType;
   executorDisk?: string;
-  /**
-   * @deprecated Use executorDisk instead
-   */
+  /** @deprecated Use executorDisk instead */
   diskType?: string;
-  /**
-   * @deprecated Use driverMachineType instead
-   */
+  /** @deprecated Use driverMachineType instead */
   machineType?: string;
-  /**
-   * @deprecated Use driverDisk instead
-   */
+  /** @deprecated Use driverDisk instead */
   disk?: string;
 }
 
-/**
- * Driver and Executor configuration interface alias
- */
-export type IDriverAndExecutorConfiguration = IDriverConfig;
+export type IDriverConfig = IDriverAndExecutorConfiguration;
+export type IExecutorDiskConfig = IDriverAndExecutorConfiguration;
 
-/**
- * 4. Executor Disk configuration interface
- * Merged into IDriverConfig (driverAndExecutorConfiguration)
- */
-export type IExecutorDiskConfig = IDriverConfig;
-
-/**
- * 5. Autoscaling configuration interface
- */
 export interface IAutoscalingConfig {
-  /**
-   * Whether autoscaling is enabled (on / off)
-   */
   autoscalingEnabled?: boolean;
-  /**
-   * Initial number of executors
-   */
   initialExecutors?: number;
-  /**
-   * Minimum number of executors
-   */
   minExecutors?: number;
-  /**
-   * Maximum number of executors
-   */
   maxExecutors?: number;
 }
 
-/**
- * 6. Metastore configuration interface
- */
 export interface IMetastoreConfig {
-  /**
-   * Metastore name or catalog (e.g., 'Lakehouse runtime catalog')
-   */
   metastore?: string;
-  /**
-   * Whether Hive endpoint is enabled (enabled / disabled)
-   */
   hiveEndpointEnabled?: boolean;
-  /**
-   * Optional project ID for the Metastore instance
-   */
   projectId?: string;
 }
 
-/**
- * 7. Network and Security configuration
- */
 export type ExecutionIdentityType = 'user_account' | 'service_account';
 export type EncryptionType = 'google_managed' | 'customer_managed_key';
 
 export interface INetworkAndSecurityConfig {
-  /**
-   * Execution identity (user account / service account)
-   */
-  executionIdentity?: ExecutionIdentityType | string;
-  /**
-   * Network in this project
-   */
+  executionIdentity?: ExecutionIdentityType;
   networkInThisProject?: string;
-  /**
-   * Primary network name or URI
-   */
   primaryNetwork?: string;
-  /**
-   * Subnetwork name or URI
-   */
   subnetwork?: string;
-  /**
-   * Network tags (list of string tags)
-   */
   networkTags?: string[];
-  /**
-   * Internal IP only (no public IP access)
-   */
   internalIpOnly?: boolean;
-  /**
-   * Encryption type (Google managed / Customer-managed KMS key)
-   */
-  encryption?: EncryptionType | string;
-  /**
-   * KMS key name when using customer-managed encryption
-   */
+  encryption?: EncryptionType;
   kmsKeyName?: string;
 }
 
-/**
- * 8. Session Lifecycle configuration
- */
 export type TimeUnit =
   | 'seconds'
   | 'minutes'
@@ -212,62 +90,33 @@ export type TimeUnit =
   | 'd';
 
 export interface ISessionLifecycleConfig {
-  /**
-   * Maximum idle time string (e.g. '60 minutes')
-   */
   maxIdleTime?: string;
-  /**
-   * Numeric quantity for maximum idle time
-   */
   maxIdleTimeQuantity?: number;
-  /**
-   * Unit for max idle time (e.g., 'minutes', 'hours', 'days')
-   */
-  maxIdleTimeUnit?: TimeUnit | string;
-  /**
-   * Maximum session lifetime string (e.g. '3 days')
-   */
+  maxIdleTimeUnit?: TimeUnit;
   maxSessionTime?: string;
-  /**
-   * Numeric quantity for maximum session lifetime
-   */
   maxSessionTimeQuantity?: number;
-  /**
-   * Unit for max session lifetime (e.g., 'minutes', 'hours', 'days')
-   */
-  maxSessionTimeUnit?: TimeUnit | string;
+  maxSessionTimeUnit?: TimeUnit;
 }
 
-/**
- * 9 & 10. Key-Value map types for Spark Properties and Labels
- */
 export type SparkProperties = Record<string, string>;
 export type ProfileLabels = Record<string, string>;
 
-/**
- * Full Runtime Profile representation (matches backend model / future GCP Dataproc API)
- */
 export interface IRuntimeProfile {
   name?: string; // Resource name: projects/{project}/locations/{region}/runtimeProfiles/{profile}
   id?: string;
   displayName: string;
   region: string;
   description?: string;
-  /**
-   * Dataproc compute tier (e.g. 'standard' or 'premium')
-   * Newly added section added after description and above executor configuration
-   */
   tier?: string;
   createTime?: string;
   updateTime?: string;
   state?: string;
   executorConfig?: IExecutorConfig;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
-  /**
-   * Driver and Executor configuration shown under Additional config (To be developed later UI)
-   */
-  driverAndExecutorConfiguration?: IDriverConfig;
+  driverAndExecutorConfiguration?: IDriverAndExecutorConfiguration;
+  /** @deprecated Use driverAndExecutorConfiguration instead */
   driverConfig?: IDriverConfig;
+  /** @deprecated Use driverAndExecutorConfiguration instead */
   executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
   metastoreConfig?: IMetastoreConfig;
@@ -277,25 +126,17 @@ export interface IRuntimeProfile {
   labels?: ProfileLabels;
 }
 
-/**
- * Payload sent when creating a new Runtime Profile
- */
 export interface ICreateRuntimeProfilePayload {
   displayName: string;
   region: string;
   description?: string;
-  /**
-   * Dataproc compute tier (e.g. 'standard' or 'premium')
-   * Newly added section added after description and above executor configuration
-   */
   tier?: string;
   executorConfig?: IExecutorConfig;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
-  /**
-   * Driver and Executor configuration shown under Additional config (To be developed later UI)
-   */
-  driverAndExecutorConfiguration?: IDriverConfig;
+  driverAndExecutorConfiguration?: IDriverAndExecutorConfiguration;
+  /** @deprecated Use driverAndExecutorConfiguration instead */
   driverConfig?: IDriverConfig;
+  /** @deprecated Use driverAndExecutorConfiguration instead */
   executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
   metastoreConfig?: IMetastoreConfig;
@@ -305,9 +146,6 @@ export interface ICreateRuntimeProfilePayload {
   labels?: ProfileLabels;
 }
 
-/**
- * Service contract for Runtime Profile operations
- */
 export interface IRuntimeProfileService {
   getRegions(projectId?: string): Promise<IRegionOption[]>;
   createRuntimeProfile(
