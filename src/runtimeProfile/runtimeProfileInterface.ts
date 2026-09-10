@@ -44,9 +44,9 @@ export interface IExecutorConfig {
  */
 export interface IRuntimeEnvironmentConfig {
   /**
-   * Template runtime ID
+   * Runtime profile ID
    */
-  templateRuntimeId?: string;
+  runtimeProfileId?: string;
   /**
    * Dataproc runtime version (e.g., '2.3 LTS (Spark 3.5.1, Python 3.12, Scala 2.13)')
    */
@@ -63,35 +63,59 @@ export interface IRuntimeEnvironmentConfig {
    * Python package repository (e.g., PyPI pull-through cache)
    */
   pythonPackageRepository?: string;
-  /**
-   * Whether Lightning Engine is enabled
-   */
-  lightningEngineEnabled?: boolean;
 }
 
 /**
- * Driver configuration interface
+ * Driver and Executor configuration interface
+ * Merged driver configuration and executor disk configuration with fields:
+ * tier, driverMachineType, driverDisk, executorType, executorDisk.
+ * Shown under driverAndExecutorConfiguration under Additional config (To be developed later UI).
  */
 export interface IDriverConfig {
   /**
+   * Dataproc compute tier (e.g., 'standard' or 'premium')
+   */
+  tier?: string;
+  /**
    * Driver machine type (e.g., 'standard-4 (4 vCPU, 16 GB)')
+   */
+  driverMachineType?: string;
+  /**
+   * Driver persistent disk (e.g., 'Standard persistent disk (HDD), 100 GB')
+   */
+  driverDisk?: string;
+  /**
+   * Executor type: standard (CPU only) or accelerated (GPUs attached)
+   */
+  executorType?: ExecutorType | string;
+  /**
+   * Executor persistent disk (e.g., 'Standard persistent disk (HDD), 100 GB')
+   */
+  executorDisk?: string;
+  /**
+   * @deprecated Use executorDisk instead
+   */
+  diskType?: string;
+  /**
+   * @deprecated Use driverMachineType instead
    */
   machineType?: string;
   /**
-   * Driver persistent disk (e.g., 'Standard persistent disk (HDD), 100 GB')
+   * @deprecated Use driverDisk instead
    */
   disk?: string;
 }
 
 /**
- * 4. Executor Disk configuration interface
+ * Driver and Executor configuration interface alias
  */
-export interface IExecutorDiskConfig {
-  /**
-   * Executor disk type / capacity (e.g., 'Standard persistent disk (HDD), 100 GB')
-   */
-  diskType?: string;
-}
+export type IDriverAndExecutorConfiguration = IDriverConfig;
+
+/**
+ * 4. Executor Disk configuration interface
+ * Merged into IDriverConfig (driverAndExecutorConfiguration)
+ */
+export type IExecutorDiskConfig = IDriverConfig;
 
 /**
  * 5. Autoscaling configuration interface
@@ -229,11 +253,20 @@ export interface IRuntimeProfile {
   displayName: string;
   region: string;
   description?: string;
+  /**
+   * Dataproc compute tier (e.g. 'standard' or 'premium')
+   * Newly added section added after description and above executor configuration
+   */
+  tier?: string;
   createTime?: string;
   updateTime?: string;
   state?: string;
   executorConfig?: IExecutorConfig;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
+  /**
+   * Driver and Executor configuration shown under Additional config (To be developed later UI)
+   */
+  driverAndExecutorConfiguration?: IDriverConfig;
   driverConfig?: IDriverConfig;
   executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
@@ -251,8 +284,17 @@ export interface ICreateRuntimeProfilePayload {
   displayName: string;
   region: string;
   description?: string;
+  /**
+   * Dataproc compute tier (e.g. 'standard' or 'premium')
+   * Newly added section added after description and above executor configuration
+   */
+  tier?: string;
   executorConfig?: IExecutorConfig;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
+  /**
+   * Driver and Executor configuration shown under Additional config (To be developed later UI)
+   */
+  driverAndExecutorConfiguration?: IDriverConfig;
   driverConfig?: IDriverConfig;
   executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
