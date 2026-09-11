@@ -34,7 +34,10 @@ import {
   TextField
 } from '@mui/material';
 
+import { KernelSpecAPI } from '@jupyterlab/services';
 import { DataprocWidget } from '../controls/DataprocWidget';
+import { authApi, iconDisplay } from '../utils/utils';
+import { mapRuntimeProfileToSessionTemplate } from './runtimeProfileMapper';
 import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
 import expandLessIcon from '../../style/icons/expand_less.svg';
 import expandMoreIcon from '../../style/icons/expand_more.svg';
@@ -640,6 +643,8 @@ export const CreateRuntimeProfileComponent: React.FC<
   ICreateRuntimeProfileComponentProps
 > = ({
   app,
+  launcher,
+  themeManager,
   service = runtimeProfileService,
   onBack,
   onSuccess,
@@ -807,29 +812,31 @@ export const CreateRuntimeProfileComponent: React.FC<
     }
   });
 
-  // Load Regions from service
-  useEffect(() => {
-    let isMounted = true;
-    const loadInitialData = async () => {
-      setIsLoadingOptions(true);
-      try {
-        const loadedRegions = await service.getRegions();
+    // Load Regions from service
+    useEffect(() => {
+      let isMounted = true;
+      const loadInitialData = async () => {
+        setIsLoadingOptions(true);
+        try {
+          const credentials = await authApi().catch(() => undefined);
+          const loadedRegions = await service.getRegions(credentials?.project_id);
 
         if (isMounted) {
           setRegions(loadedRegions);
 
+            
           if (loadedRegions.length > 0) {
-            setValue('region', loadedRegions[0].name, { shouldValidate: true });
+              setValue('region', loadedRegions[0].name, { shouldValidate: true });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load runtime profile initial data', error);
+        } finally {
+          if (isMounted) {
+            setIsLoadingOptions(false);
           }
         }
-      } catch (error) {
-        console.error('Failed to load runtime profile initial data', error);
-      } finally {
-        if (isMounted) {
-          setIsLoadingOptions(false);
-        }
-      }
-    };
+      };
 
     loadInitialData();
 
@@ -846,41 +853,125 @@ export const CreateRuntimeProfileComponent: React.FC<
     }
   };
 
-  const onSubmit = async (data: IRuntimeProfileFormData) => {
-    try {
-      const payload: ICreateRuntimeProfilePayload = {
-        displayName: data.displayName.trim(),
-        region: data.region,
-        description: data.description.trim() || undefined,
-        tier,
-        lightningEngineEnabled,
-        executorConfig: {
-          executorType: executorCategory,
-          machineType: executorType
-        },
-        runtimeEnvironmentConfig: {
-          ...runtimeEnvironmentConfig,
-          lightningEngineEnabled
-        },
-        executorAndDriverConfig: activeDriverAndExecutorConfig,
-        driverAndExecutorConfiguration: activeDriverAndExecutorConfig,
-        driverConfig: activeDriverAndExecutorConfig,
-        executorDiskConfig: activeDriverAndExecutorConfig,
-        autoscalingConfig,
-        metastoreConfig,
-        networkAndSecurityConfig,
-        sessionLifecycleConfig,
-        sparkProperties,
-        labels
-      };
+    const onSubmit = async (data: IRuntimeProfileFormData) => {
+      try {
+        const credentials = await authApi().catch(() => undefined);
+        const targetProject = credentials?.project_id;
+        if (!targetProject) {
+          throw new Error(
+            'GCP Project ID not found. Please log in or verify your Dataproc configuration.'
+          );
+        }
+        const targetRegion = data.region || credentials?.region_id;
+        if (!targetRegion) {
+          throw new Error('Please select a valid GCP Region.');
+        }
 
-      await service.createRuntimeProfile(payload, undefined, data.region);
+        const payload: ICreateRuntimeProfilePayload = {
+          displayName: data.displayName.trim(),
+          region: targetRegion,
+          description: data.description.trim() || undefined,
+          tier,
+          lightningEngineEnabled,
+          executorConfig: {
+            executorType: executorCategory,
+            machineType: executorType
+          },
+          runtimeEnvironmentConfig,
+          driverAndExecutorConfiguration: activeDriverAndExecutorConfig,
+          autoscalingConfig,
+          metastoreConfig,
+          networkAndSecurityConfig,
+          sessionLifecycleConfig,
+          sparkProperties,
+          labels
+        };
+        console.log('Payload', payload);
 
-      Notification.emit(
-        `Runtime profile "${data.displayName}" created successfully.`,
-        'success',
-        { autoClose: 5000 }
-      );
+        // Transform UI form payload to Dataproc SessionTemplate API schema
+        const sessionTemplatePayload = mapRuntimeProfileToSessionTemplate(
+          payload,
+          targetProject,
+          targetRegion
+        );
+
+        console.log('Session Template API Payload:', sessionTemplatePayload);
+        console.log(
+          '[CreateRuntimeProfile] Form submitted, calling service.createRuntimeProfile...',
+          { targetProject, targetRegion, sessionTemplatePayload }
+        );
+
+        const createdResult = await service.createRuntimeProfile(
+          sessionTemplatePayload,
+          targetProject,
+          targetRegion
+        );
+        console.log(
+          '[CreateRuntimeProfile] service.createRuntimeProfile finished successfully:',
+          createdResult
+        );
+
+        Notification.emit(
+          `Runtime profile "${data.displayName}" created successfully.`,
+          'success',
+          { autoClose: 5000 }
+        );
+
+        // Register notebook kernels in JupyterLab launcher
+        if (launcher && app) {
+          try {
+            const kernelSpecs = await KernelSpecAPI.getSpecs();
+            const kernels = kernelSpecs.kernelspecs;
+            const { commands } = app;
+
+            Object.values(kernels).forEach((kernelsData, index) => {
+              const commandNameExist = `notebook:create-${kernelsData?.name}`;
+              if (
+                kernelsData?.resources?.endpointParentResource &&
+                kernelsData?.resources?.endpointParentResource.includes(
+                  '/sessions'
+                ) &&
+                !commands.hasCommand(commandNameExist)
+              ) {
+                const commandNotebook = `notebook:create-${kernelsData?.name}`;
+                commands.addCommand(commandNotebook, {
+                  caption: kernelsData?.display_name,
+                  label: kernelsData?.display_name,
+                  icon: themeManager
+                    ? () => iconDisplay(kernelsData, themeManager)
+                    : undefined,
+                  execute: async () => {
+                    const model = await app.commands.execute(
+                      'docmanager:new-untitled',
+                      {
+                        type: 'notebook',
+                        path: '',
+                        kernel: { name: kernelsData?.name }
+                      }
+                    );
+                    await app.commands.execute('docmanager:open', {
+                      kernel: { name: kernelsData?.name },
+                      path: model.path,
+                      factory: 'notebook'
+                    });
+                  }
+                });
+
+                launcher.add({
+                  command: commandNotebook,
+                  category: 'Dataproc Serverless Spark',
+                  //@ts-ignore jupyter lab Launcher type issue
+                  metadata: kernelsData?.metadata,
+                  rank: index + 1,
+                  //@ts-ignore jupyter lab Launcher type issue
+                  args: kernelsData?.argv
+                });
+              }
+            });
+          } catch (kernelErr) {
+            console.error('Error refreshing kernelspecs in launcher:', kernelErr);
+          }
+        }
 
       if (onSuccess) {
         onSuccess();
