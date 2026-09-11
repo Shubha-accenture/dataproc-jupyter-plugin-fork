@@ -148,8 +148,10 @@ export const RESTART_JOB_URL =
   'https://cloud.google.com/dataproc/docs/concepts/jobs/restartable-jobs';
 export const SELF_MANAGED_CLUSTER =
   'https://cloud.google.com/dataproc-metastore/docs/attach-dataproc';
-export const LIGHTNING_ENGINE_DOC = 
-  'https://cloud.google.com/dataproc-serverless/docs/guides/lightning-engine'
+export const DATAPROC_TIER_DOC =
+  'https://cloud.google.com/dataproc-serverless/docs/concepts/pricing';
+export const LIGHTNING_ENGINE_DOC =
+  'https://cloud.google.com/dataproc-serverless/docs/guides/lightning-engine';
 export const SECURITY_KEY =
   'https://console.cloud.google.com/security/kms/keyrings';
 export const SERVICE_ACCOUNT =

@@ -23,11 +23,14 @@ import { ILauncher } from '@jupyterlab/launcher';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { LabIcon } from '@jupyterlab/ui-components';
 import {
+  Checkbox,
   CircularProgress,
   FormControl,
+  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
+  SelectChangeEvent,
   TextField
 } from '@mui/material';
 
@@ -37,11 +40,14 @@ import expandLessIcon from '../../style/icons/expand_less.svg';
 import expandMoreIcon from '../../style/icons/expand_more.svg';
 import { SectionDetail, ISectionProperty } from '../controls/SectionDetail';
 import '../../style/runtimeProfile.css';
+import { DATAPROC_TIER_DOC, LIGHTNING_ENGINE_DOC } from '../utils/const';
 import {
+  ExecutorCategoryType,
   IAutoscalingConfig,
   ICreateRuntimeProfilePayload,
   IDriverAndExecutorConfiguration,
   IExecutorAndDriverConfig,
+  IMachineTypeOption,
   IMetastoreConfig,
   INetworkAndSecurityConfig,
   IRegionOption,
@@ -51,6 +57,8 @@ import {
   SparkProperties
 } from './runtimeProfileInterface';
 import {
+  MOCK_ACCELERATED_MACHINE_TYPES,
+  MOCK_GENERAL_MACHINE_TYPES,
   RuntimeProfileService,
   runtimeProfileService
 } from './runtimeProfileService';
@@ -618,6 +626,10 @@ export interface ICreateRuntimeProfileComponentProps {
   initialSessionLifecycleConfig?: ISessionLifecycleConfig;
   initialSparkProperties?: SparkProperties;
   initialLabels?: ProfileLabels;
+  initialTier?: string;
+  initialLightningEngineEnabled?: boolean;
+  initialExecutorCategory?: ExecutorCategoryType;
+  initialExecutorType?: string;
 }
 
 export const CreateRuntimeProfileComponent: React.FC<
@@ -635,7 +647,11 @@ export const CreateRuntimeProfileComponent: React.FC<
   initialNetworkAndSecurityConfig,
   initialSessionLifecycleConfig,
   initialSparkProperties,
-  initialLabels
+  initialLabels,
+  initialTier,
+  initialLightningEngineEnabled,
+  initialExecutorCategory,
+  initialExecutorType
 }): React.JSX.Element => {
   // Options & Data State
   const [regions, setRegions] = useState<IRegionOption[]>([]);
@@ -643,15 +659,19 @@ export const CreateRuntimeProfileComponent: React.FC<
   const [expandAdditionalConfig, setExpandAdditionalConfig] =
     useState<boolean>(true);
 
-  // Configuration states using domain interfaces
+  
+    // Configuration states using domain interfaces
   const [runtimeEnvironmentConfig] = useState<IRuntimeEnvironmentConfig>(
     initialRuntimeEnvironmentConfig || DEFAULT_RUNTIME_ENVIRONMENT_CONFIG
   );
-  const [executorAndDriverConfig] = useState<IExecutorAndDriverConfig>(
-    initialExecutorAndDriverConfig ||
-      initialDriverAndExecutorConfiguration ||
-      DEFAULT_EXECUTOR_AND_DRIVER_CONFIG
-  );
+  const [driverAndExecutorConfiguration] =
+    useState<IDriverAndExecutorConfiguration>(
+      initialDriverAndExecutorConfiguration || {
+        ...DEFAULT_DRIVER_AND_EXECUTOR_CONFIG,
+        ...(initialDriverConfig || {}),
+        ...(initialExecutorDiskConfig || {})
+      }
+    );
   const [autoscalingConfig] = useState<IAutoscalingConfig>(
     initialAutoscalingConfig || DEFAULT_AUTOSCALING_CONFIG
   );
@@ -670,6 +690,148 @@ export const CreateRuntimeProfileComponent: React.FC<
   const [labels] = useState<ProfileLabels>(
     initialLabels || DEFAULT_PROFILE_LABELS
   );
+
+    // Synchronized driver & executor configuration for Additional configuration section
+    const activeDriverAndExecutorConfig: IDriverAndExecutorConfiguration =
+      React.useMemo(() => {
+        const allTypes = [
+          ...MOCK_GENERAL_MACHINE_TYPES,
+          ...MOCK_ACCELERATED_MACHINE_TYPES
+        ];
+        const selectedMachine = allTypes.find(m => m.name === executorType);
+        return {
+          ...driverAndExecutorConfiguration,
+          tier,
+          executorType: selectedMachine ? selectedMachine.label : executorType
+        };
+      }, [driverAndExecutorConfiguration, tier, executorType]);
+
+    const handleTierChange = (selectedTier: string) => {
+      setTier(selectedTier);
+      if (selectedTier === 'Standard') {
+        setLightningEngineEnabled(false);
+        if (executorCategory === 'accelerated') {
+          setExecutorCategory('general');
+          setExecutorType('highmem-4');
+        }
+      }
+    };
+
+    const handleExecutorCategoryChange = (category: ExecutorCategoryType) => {
+      if (tier === 'Standard' && category === 'accelerated') {
+        return;
+      }
+      setExecutorCategory(category);
+      if (category === 'general') {
+        setExecutorType('highmem-4');
+      } else if (category === 'accelerated') {
+        setExecutorType('g2-standard-4');
+      }
+    };
+
+    // Load machine types when executorCategory changes
+    useEffect(() => {
+      let isMounted = true;
+      const loadMachineTypes = async () => {
+        if (service?.getMachineTypes) {
+          try {
+            const types = await service.getMachineTypes(executorCategory);
+            if (isMounted && types && types.length > 0) {
+              setMachineTypes(types);
+              return;
+            }
+          } catch (error) {
+            console.error(
+              'Failed to load machine types for ' + executorCategory,
+              error
+            );
+          }
+        }
+        if (isMounted) {
+          setMachineTypes(
+            executorCategory === 'accelerated'
+              ? MOCK_ACCELERATED_MACHINE_TYPES
+              : MOCK_GENERAL_MACHINE_TYPES
+          );
+        }
+      };
+
+      loadMachineTypes();
+      return () => {
+        isMounted = false;
+      };
+    }, [executorCategory, service]);
+
+    // Synchronized driver & executor configuration for Additional configuration section
+    const activeDriverAndExecutorConfig: IDriverAndExecutorConfiguration =
+      React.useMemo(() => {
+        const allTypes = [
+          ...MOCK_GENERAL_MACHINE_TYPES,
+          ...MOCK_ACCELERATED_MACHINE_TYPES
+        ];
+        const selectedMachine = allTypes.find(m => m.name === executorType);
+        return {
+          ...driverAndExecutorConfiguration,
+          tier,
+          executorType: selectedMachine ? selectedMachine.label : executorType
+        };
+      }, [driverAndExecutorConfiguration, tier, executorType]);
+
+    const handleTierChange = (selectedTier: string) => {
+      setTier(selectedTier);
+      if (selectedTier === 'Standard') {
+        setLightningEngineEnabled(false);
+        if (executorCategory === 'accelerated') {
+          setExecutorCategory('general');
+          setExecutorType('highmem-4');
+        }
+      }
+    };
+
+    const handleExecutorCategoryChange = (category: ExecutorCategoryType) => {
+      if (tier === 'Standard' && category === 'accelerated') {
+        return;
+      }
+      setExecutorCategory(category);
+      if (category === 'general') {
+        setExecutorType('highmem-4');
+      } else if (category === 'accelerated') {
+        setExecutorType('g2-standard-4');
+      }
+    };
+
+    // Load machine types when executorCategory changes
+    useEffect(() => {
+      let isMounted = true;
+      const loadMachineTypes = async () => {
+        if (service?.getMachineTypes) {
+          try {
+            const types = await service.getMachineTypes(executorCategory);
+            if (isMounted && types && types.length > 0) {
+              setMachineTypes(types);
+              return;
+            }
+          } catch (error) {
+            console.error(
+              'Failed to load machine types for ' + executorCategory,
+              error
+            );
+          }
+        }
+        if (isMounted) {
+          setMachineTypes(
+            executorCategory === 'accelerated'
+              ? MOCK_ACCELERATED_MACHINE_TYPES
+              : MOCK_GENERAL_MACHINE_TYPES
+          );
+        }
+      };
+
+      loadMachineTypes();
+      return () => {
+        isMounted = false;
+      };
+    }, [executorCategory, service]);
 
   // React Hook Form initialization
   const {
@@ -855,26 +1017,26 @@ export const CreateRuntimeProfileComponent: React.FC<
             </div>
           </div>
 
-          {/* Row 2: Description */}
-          <div className="runtime-profile-full-row">
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  id="runtime-profile-description"
-                  label="Description"
-                  placeholder="Optional description"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                />
-              )}
-            />
-          </div>
-          {/* TO DO:-
+             {/* Row 2: Description */}
+            <div className="runtime-profile-full-row">
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    id="runtime-profile-description"
+                    label="Description"
+                    placeholder="Optional description"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                )}
+              />
+            </div>
+            {/* TO DO:-
           Executor configuration
           API integration of the form fields
           Will be taken care as part of upcoming development task */}
