@@ -24,11 +24,11 @@ import { authApi, loggedFetch } from '../utils/utils';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import {
   ICreateRuntimeProfilePayload,
-  IMachineTypeOption,
+   IMachineTypeOption,
   IRegionOption,
   IRuntimeProfile,
   IRuntimeProfileService,
-  ExecutorCategoryType
+   ExecutorCategoryType
 } from './runtimeProfileInterface';
 
 /**
@@ -261,9 +261,8 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         region: targetRegion,
         description: payload.description,
         tier: payload.tier ?? payload.executorAndDriverConfig?.tier,
-        lightningEngineEnabled:
-          payload.lightningEngineEnabled ??
-          payload.runtimeEnvironmentConfig?.lightningEngineEnabled,
+        tier: payload.tier,
+        lightningEngineEnabled: payload.lightningEngineEnabled,
         executorConfig: payload.executorConfig,
         runtimeEnvironmentConfig: payload.runtimeEnvironmentConfig,
         executorAndDriverConfig:
