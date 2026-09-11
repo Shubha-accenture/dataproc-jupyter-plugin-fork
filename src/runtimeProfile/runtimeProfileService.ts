@@ -24,9 +24,11 @@ import { authApi, loggedFetch } from '../utils/utils';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import {
   ICreateRuntimeProfilePayload,
+  IMachineTypeOption,
   IRegionOption,
   IRuntimeProfile,
-  IRuntimeProfileService
+  IRuntimeProfileService,
+  ExecutorCategoryType
 } from './runtimeProfileInterface';
 
 /**
@@ -42,6 +44,110 @@ export const RUNTIME_PROFILE_USE_MOCK = true;
 export const MOCK_REGIONS: IRegionOption[] = [
   { name: 'us-central1', displayName: 'us-central1 (Iowa)' },
   { name: 'us-east1', displayName: 'us-east1 (South Carolina)' }
+];
+
+/**
+ * Mock general machine types (CPU only)
+ */
+export const MOCK_GENERAL_MACHINE_TYPES: IMachineTypeOption[] = [
+  {
+    name: 'highmem-4',
+    label: 'highmem-4 (4 vCPU, 32 GB)',
+    vCPUs: 4,
+    memoryGb: 32,
+    category: 'general'
+  },
+  {
+    name: 'standard-4',
+    label: 'standard-4 (4 vCPU, 16 GB)',
+    vCPUs: 4,
+    memoryGb: 16,
+    category: 'general'
+  },
+  {
+    name: 'highcpu-4',
+    label: 'highcpu-4 (4 vCPU, 8 GB)',
+    vCPUs: 4,
+    memoryGb: 8,
+    category: 'general'
+  },
+  {
+    name: 'highmem-8',
+    label: 'highmem-8 (8 vCPU, 64 GB)',
+    vCPUs: 8,
+    memoryGb: 64,
+    category: 'general'
+  },
+  {
+    name: 'standard-8',
+    label: 'standard-8 (8 vCPU, 32 GB)',
+    vCPUs: 8,
+    memoryGb: 32,
+    category: 'general'
+  },
+  {
+    name: 'highcpu-8',
+    label: 'highcpu-8 (8 vCPU, 16 GB)',
+    vCPUs: 8,
+    memoryGb: 16,
+    category: 'general'
+  },
+  {
+    name: 'highmem-16',
+    label: 'highmem-16 (16 vCPU, 128 GB)',
+    vCPUs: 16,
+    memoryGb: 128,
+    category: 'general'
+  },
+  {
+    name: 'standard-16',
+    label: 'standard-16 (16 vCPU, 64 GB)',
+    vCPUs: 16,
+    memoryGb: 64,
+    category: 'general'
+  }
+];
+
+/**
+ * Mock accelerated machine types (with GPUs attached)
+ */
+export const MOCK_ACCELERATED_MACHINE_TYPES: IMachineTypeOption[] = [
+  {
+    name: 'g2-standard-4',
+    label: 'g2-standard-4 (4 vCPU, 16 GB, 1 NVIDIA L4)',
+    vCPUs: 4,
+    memoryGb: 16,
+    category: 'accelerated',
+    acceleratorType: 'nvidia-l4',
+    acceleratorCount: 1
+  },
+  {
+    name: 'g2-standard-8',
+    label: 'g2-standard-8 (8 vCPU, 32 GB, 1 NVIDIA L4)',
+    vCPUs: 8,
+    memoryGb: 32,
+    category: 'accelerated',
+    acceleratorType: 'nvidia-l4',
+    acceleratorCount: 1
+  },
+  {
+    name: 'g2-standard-16',
+    label: 'g2-standard-16 (16 vCPU, 64 GB, 1 NVIDIA L4)',
+    vCPUs: 16,
+    memoryGb: 64,
+    category: 'accelerated',
+    acceleratorType: 'nvidia-l4',
+    acceleratorCount: 1
+  },
+  {
+    name: 'a2-highgpu-1g',
+    label: 'a2-highgpu-1g (12 vCPU, 85 GB, 1 NVIDIA A100)',
+    vCPUs: 12,
+    memoryGb: 85,
+    category: 'accelerated',
+    acceleratorType: 'nvidia-tesla-a100',
+    acceleratorCount: 1
+  }
 ];
 
 const safeLog = (message: string, level: LOG_LEVEL = LOG_LEVEL.INFO) => {
@@ -112,6 +218,18 @@ export class RuntimeProfileService implements IRuntimeProfileService {
   }
 
   /**
+   * Retrieves available executor machine types based on executor category
+   */
+  async getMachineTypes(
+    category: ExecutorCategoryType = 'general'
+  ): Promise<IMachineTypeOption[]> {
+    if (category === 'accelerated') {
+      return MOCK_ACCELERATED_MACHINE_TYPES;
+    }
+    return MOCK_GENERAL_MACHINE_TYPES;
+  }
+
+  /**
    * Creates a new Runtime Profile.
    * Uses mock simulation or sends request to Dataproc API when live.
    */
@@ -143,12 +261,15 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         region: targetRegion,
         description: payload.description,
         tier: payload.tier,
+        lightningEngineEnabled: payload.lightningEngineEnabled,
         executorConfig: payload.executorConfig,
         runtimeEnvironmentConfig: payload.runtimeEnvironmentConfig,
         driverAndExecutorConfiguration:
           payload.driverAndExecutorConfiguration ?? payload.driverConfig,
-        driverConfig: payload.driverConfig,
-        executorDiskConfig: payload.executorDiskConfig,
+        driverConfig:
+          payload.driverConfig ?? payload.driverAndExecutorConfiguration,
+        executorDiskConfig:
+          payload.executorDiskConfig ?? payload.driverAndExecutorConfiguration,
         autoscalingConfig: payload.autoscalingConfig,
         metastoreConfig: payload.metastoreConfig,
         networkAndSecurityConfig: payload.networkAndSecurityConfig,

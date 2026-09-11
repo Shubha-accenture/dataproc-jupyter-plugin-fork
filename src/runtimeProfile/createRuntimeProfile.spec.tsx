@@ -27,6 +27,7 @@ jest.mock('../handler/handler', () => ({
   })
 }));
 
+import React from 'react';
 import {
   CreateRuntimeProfile,
   CreateRuntimeProfileComponent,
@@ -65,7 +66,12 @@ import {
   DEFAULT_SPARK_PROPERTIES,
   DEFAULT_PROFILE_LABELS
 } from './createRuntimeProfile';
-import { RuntimeProfileService } from './runtimeProfileService';
+import {
+  MOCK_ACCELERATED_MACHINE_TYPES,
+  MOCK_GENERAL_MACHINE_TYPES,
+  RuntimeProfileService
+} from './runtimeProfileService';
+import { DATAPROC_TIER_DOC, LIGHTNING_ENGINE_DOC } from '../utils/const';
 
 describe('CreateRuntimeProfile Component & Service', () => {
   let mockService: RuntimeProfileService;
@@ -305,4 +311,101 @@ describe('CreateRuntimeProfile Component & Service', () => {
       'env: prod, team: data'
     );
   });
+
+  it('should export valid machine type mock collections and documentation URLs', () => {
+    expect(MOCK_GENERAL_MACHINE_TYPES.length).toBeGreaterThan(0);
+    expect(MOCK_GENERAL_MACHINE_TYPES[0].name).toBe('highmem-4');
+    expect(MOCK_GENERAL_MACHINE_TYPES[0].label).toBe(
+      'highmem-4 (4 vCPU, 32 GB)'
+    );
+    expect(MOCK_GENERAL_MACHINE_TYPES[0].category).toBe('general');
+
+    expect(MOCK_ACCELERATED_MACHINE_TYPES.length).toBeGreaterThan(0);
+    expect(MOCK_ACCELERATED_MACHINE_TYPES[0].name).toBe('g2-standard-4');
+    expect(MOCK_ACCELERATED_MACHINE_TYPES[0].category).toBe('accelerated');
+
+    expect(DATAPROC_TIER_DOC).toBe(
+      'https://cloud.google.com/dataproc-serverless/docs/concepts/pricing'
+    );
+    expect(LIGHTNING_ENGINE_DOC).toBe(
+      'https://cloud.google.com/dataproc-serverless/docs/guides/lightning-engine'
+    );
+  });
+
+  it('should retrieve machine types based on category from RuntimeProfileService', async () => {
+    const generalTypes = await mockService.getMachineTypes('general');
+    expect(generalTypes.length).toBeGreaterThan(0);
+    expect(generalTypes.some(m => m.name === 'highmem-4')).toBe(true);
+
+    const acceleratedTypes = await mockService.getMachineTypes('accelerated');
+    expect(acceleratedTypes.length).toBeGreaterThan(0);
+    expect(acceleratedTypes.some(m => m.name === 'g2-standard-4')).toBe(true);
+  });
+
+  it('should create a runtime profile with tier, lightningEngineEnabled, and executorConfig', async () => {
+    const profile = await mockService.createRuntimeProfile({
+      displayName: 'custom-tier-profile',
+      region: 'us-central1',
+      description: 'Profile with Tier and Executor configuration',
+      tier: 'Premium',
+      lightningEngineEnabled: true,
+      executorConfig: {
+        executorType: 'general',
+        machineType: 'highmem-4'
+      }
+    });
+
+    expect(profile.displayName).toBe('custom-tier-profile');
+    expect(profile.tier).toBe('Premium');
+    expect(profile.lightningEngineEnabled).toBe(true);
+    expect(profile.executorConfig?.executorType).toBe('general');
+    expect(profile.executorConfig?.machineType).toBe('highmem-4');
+  });
+
+  it('should instantiate CreateRuntimeProfileComponent with initial tier and executor props', () => {
+    const element = React.createElement(CreateRuntimeProfileComponent, {
+      initialTier: 'Premium',
+      initialLightningEngineEnabled: true,
+      initialExecutorCategory: 'general',
+      initialExecutorType: 'highmem-4'
+    });
+
+    expect(element).toBeDefined();
+    expect(element.type).toBe(CreateRuntimeProfileComponent);
+    expect(element.props.initialTier).toBe('Premium');
+    expect(element.props.initialLightningEngineEnabled).toBe(true);
+    expect(element.props.initialExecutorCategory).toBe('general');
+    expect(element.props.initialExecutorType).toBe('highmem-4');
+  });
+
+  it('should support clean normalized payload without redundant driverConfig or executorDiskConfig', async () => {
+    const cleanPayload = {
+      displayName: 'clean-normalized-profile',
+      region: 'us-central1',
+      tier: 'Premium',
+      lightningEngineEnabled: true,
+      executorConfig: {
+        executorType: 'accelerated',
+        machineType: 'g2-standard-4'
+      },
+      driverAndExecutorConfiguration: {
+        driverMachineType: 'Standard-4',
+        driverDisk: 'standard persistent disk',
+        executorDisk: 'Standard persistent disk (HDD), 100 GB'
+      }
+    };
+
+    expect(cleanPayload).not.toHaveProperty('driverConfig');
+    expect(cleanPayload).not.toHaveProperty('executorDiskConfig');
+
+    const created = await mockService.createRuntimeProfile(cleanPayload);
+    expect(created.displayName).toBe('clean-normalized-profile');
+    expect(created.tier).toBe('Premium');
+    expect(created.executorConfig?.executorType).toBe('accelerated');
+    expect(created.executorConfig?.machineType).toBe('g2-standard-4');
+    expect(created.driverAndExecutorConfiguration?.driverMachineType).toBe('Standard-4');
+    expect(created.driverAndExecutorConfiguration?.driverDisk).toBe('standard persistent disk');
+    expect(created.driverAndExecutorConfiguration?.executorDisk).toBe('Standard persistent disk (HDD), 100 GB');
+  });
 });
+

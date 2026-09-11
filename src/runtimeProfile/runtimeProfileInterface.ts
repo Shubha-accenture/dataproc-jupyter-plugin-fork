@@ -20,10 +20,21 @@ export interface IRegionOption {
   displayName: string;
 }
 
-export type ExecutorType = 'standard' | 'accelerated';
+export type ExecutorType = 'standard' | 'accelerated' | 'general' | string;
+export type ExecutorCategoryType = 'general' | 'accelerated' | 'standard';
+
+export interface IMachineTypeOption {
+  name: string;
+  label: string;
+  vCPUs: number;
+  memoryGb: number;
+  category: ExecutorCategoryType;
+  acceleratorType?: string;
+  acceleratorCount?: number;
+}
 
 export interface IExecutorConfig {
-  executorType?: ExecutorType;
+  executorType?: ExecutorCategoryType | string;
   machineType?: string;
 }
 
@@ -33,13 +44,16 @@ export interface IRuntimeEnvironmentConfig {
   customSparkImage?: string;
   stagingBucket?: string;
   pythonPackageRepository?: string;
+  lightningEngineEnabled?: boolean;
 }
 
 export interface IDriverAndExecutorConfiguration {
+  /** @deprecated Use top-level tier on ICreateRuntimeProfilePayload instead */
   tier?: string;
   driverMachineType?: string;
   driverDisk?: string;
-  executorType?: ExecutorType;
+  /** @deprecated Use top-level executorConfig on ICreateRuntimeProfilePayload instead */
+  executorType?: ExecutorType | string;
   executorDisk?: string;
   /** @deprecated Use executorDisk instead */
   diskType?: string;
@@ -49,7 +63,9 @@ export interface IDriverAndExecutorConfiguration {
   disk?: string;
 }
 
+/** @deprecated Use IDriverAndExecutorConfiguration instead */
 export type IDriverConfig = IDriverAndExecutorConfiguration;
+/** @deprecated Use IDriverAndExecutorConfiguration instead */
 export type IExecutorDiskConfig = IDriverAndExecutorConfiguration;
 
 export interface IAutoscalingConfig {
@@ -108,13 +124,16 @@ export interface IRuntimeProfile {
   region: string;
   description?: string;
   tier?: string;
+  lightningEngineEnabled?: boolean;
   createTime?: string;
   updateTime?: string;
   state?: string;
   executorConfig?: IExecutorConfig;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
   driverAndExecutorConfiguration?: IDriverAndExecutorConfiguration;
+  /** @deprecated Use driverAndExecutorConfiguration instead */
   driverConfig?: IDriverConfig;
+  /** @deprecated Use driverAndExecutorConfiguration instead */
   executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
   metastoreConfig?: IMetastoreConfig;
@@ -129,10 +148,13 @@ export interface ICreateRuntimeProfilePayload {
   region: string;
   description?: string;
   tier?: string;
+  lightningEngineEnabled?: boolean;
   executorConfig?: IExecutorConfig;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
   driverAndExecutorConfiguration?: IDriverAndExecutorConfiguration;
+  /** @deprecated Use driverAndExecutorConfiguration instead */
   driverConfig?: IDriverConfig;
+  /** @deprecated Use driverAndExecutorConfiguration instead */
   executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
   metastoreConfig?: IMetastoreConfig;
@@ -144,6 +166,9 @@ export interface ICreateRuntimeProfilePayload {
 
 export interface IRuntimeProfileService {
   getRegions(projectId?: string): Promise<IRegionOption[]>;
+  getMachineTypes?(
+    category?: ExecutorCategoryType
+  ): Promise<IMachineTypeOption[]>;
   createRuntimeProfile(
     payload: ICreateRuntimeProfilePayload,
     projectId?: string,

@@ -132,6 +132,67 @@
   line-height: 16px;
 }
 
+.node-config-card-desc {
+  font-size: 12px;
+  color: var(--jp-ui-font-color2, #5f6368);
+  line-height: 16px;
+  margin-top: 2px;
+}
+
+.node-config-card-sub3 {
+  font-size: 12px;
+  color: var(--jp-ui-font-color2, #5f6368);
+  line-height: 16px;
+  margin-top: 4px;
+}
+
+.node-config-card.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: var(--jp-border-color1, #dadce0);
+  background-color: var(--jp-layout-color2, #f8f9fa);
+}
+
+.node-config-card.disabled:hover {
+  border-color: var(--jp-border-color1, #dadce0);
+}
+
+.runtime-profile-checkbox-section {
+  margin-top: -12px;
+  margin-bottom: 24px;
+  max-width: 620px;
+}
+
+.runtime-profile-checkbox-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--jp-ui-font-color0, #202124);
+}
+
+.runtime-profile-checkbox-desc {
+  font-size: 12px;
+  color: var(--jp-ui-font-color2, #5f6368);
+  margin-left: 28px;
+  margin-top: -6px;
+  line-height: 16px;
+}
+
+.runtime-profile-checkbox-desc.disabled-text,
+.runtime-profile-checkbox-title.disabled-text {
+  color: var(--jp-ui-font-color3, #9aa0a6) !important;
+}
+
+.runtime-profile-learn-more {
+  color: #1a73e8;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: normal;
+}
+
+.runtime-profile-learn-more:hover {
+  text-decoration: underline;
+}
+
 .machine-type-subheading {
   font-size: 13px;
   font-weight: 500;
@@ -142,6 +203,13 @@
 .machine-type-select-wrapper {
   width: 300px;
   margin-bottom: 24px;
+}
+
+.runtime-profile-divider {
+  height: 1px;
+  background-color: var(--jp-border-color2, #e0e0e0);
+  margin: 28px 0 20px 0;
+  max-width: 620px;
 }
 
 /* Fix floating labels in outlined inputs so border line never crosses text */
@@ -216,4 +284,17 @@ body[data-jp-theme-name='JupyterLab Dark'] .node-config-card {
 body[data-jp-theme-name='JupyterLab Dark'] .node-config-card.selected {
   border-color: #8ab4f8;
   background-color: rgba(138, 180, 248, 0.08);
+}
+
+body[data-jp-theme-name='JupyterLab Dark'] .node-config-card.disabled {
+  background-color: var(--jp-layout-color2);
+  border-color: var(--jp-border-color1);
+}
+
+body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-divider {
+  background-color: var(--jp-border-color2);
+}
+
+body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-learn-more {
+  color: #8ab4f8;
 }
