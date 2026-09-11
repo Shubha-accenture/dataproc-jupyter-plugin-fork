@@ -36,8 +36,8 @@ import {
 
 import { KernelSpecAPI } from '@jupyterlab/services';
 import { DataprocWidget } from '../controls/DataprocWidget';
-import { authApi, iconDisplay } from '../utils/utils';
-import { mapRuntimeProfileToSessionTemplate } from './runtimeProfileMapper';
+ import { authApi, iconDisplay } from '../utils/utils';
+ import { mapRuntimeProfileToSessionTemplate } from './runtimeProfileMapper';
 import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
 import expandLessIcon from '../../style/icons/expand_less.svg';
 import expandMoreIcon from '../../style/icons/expand_more.svg';
@@ -872,11 +872,27 @@ export const CreateRuntimeProfileComponent: React.FC<
           region: targetRegion,
           description: data.description.trim() || undefined,
           
-          tier: driverAndExecutorConfiguration.tier,
-          runtimeEnvironmentConfig,
-          driverAndExecutorConfiguration,
-          driverConfig: driverAndExecutorConfiguration,
-          executorDiskConfig: driverAndExecutorConfiguration,
+          tier,
+          lightningEngineEnabled,
+          executorConfig: {
+            executorType: executorCategory,
+            machineType: executorType
+          },
+          runtimeEnvironmentConfig: {
+            ...runtimeEnvironmentConfig,
+            lightningEngineEnabled
+          },
+          driverAndExecutorConfiguration: {
+            driverMachineType:
+              activeDriverAndExecutorConfig.driverMachineType ||
+              activeDriverAndExecutorConfig.machineType,
+            driverDisk:
+              activeDriverAndExecutorConfig.driverDisk ||
+              activeDriverAndExecutorConfig.disk,
+            executorDisk:
+              activeDriverAndExecutorConfig.executorDisk ||
+              activeDriverAndExecutorConfig.diskType
+          },
           autoscalingConfig,
           metastoreConfig,
           networkAndSecurityConfig,
@@ -884,31 +900,9 @@ export const CreateRuntimeProfileComponent: React.FC<
           sparkProperties,
           labels
         };
-        
-        console.log("Payload", payload)
+         console.log("Payload", payload);
 
-        // Transform UI form payload to Dataproc SessionTemplate API schema
-        const sessionTemplatePayload = mapRuntimeProfileToSessionTemplate(
-          payload,
-          targetProject,
-          targetRegion
-        );
-
-        console.log('Session Template API Payload:', sessionTemplatePayload);
-        console.log(
-          '[CreateRuntimeProfile] Form submitted, calling service.createRuntimeProfile...',
-          { targetProject, targetRegion, sessionTemplatePayload }
-        );
-
-        const createdResult = await service.createRuntimeProfile(
-          sessionTemplatePayload,
-          targetProject,
-          targetRegion
-        );
-        console.log(
-          '[CreateRuntimeProfile] service.createRuntimeProfile finished successfully:',
-          createdResult
-        );
+        await service.createRuntimeProfile(payload, undefined, data.region);
 
         Notification.emit(
           `Runtime profile "${data.displayName}" created successfully.`,

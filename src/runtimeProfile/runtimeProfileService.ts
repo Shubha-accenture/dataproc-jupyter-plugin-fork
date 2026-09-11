@@ -30,7 +30,7 @@ import {
   IRuntimeProfileService,
    ExecutorCategoryType
 } from './runtimeProfileInterface';
-import { ISessionTemplateApiPayload } from './runtimeProfileMapper';
+ import { ISessionTemplateApiPayload } from './runtimeProfileMapper';
 
 /**
  * Flag to enable mock mode for UI development/testing until the skeleton form
@@ -214,35 +214,9 @@ export class RuntimeProfileService implements IRuntimeProfileService {
     }
   }
 
-  /**
-   * Retrieves available executor machine types based on executor category
-   */
-  async getMachineTypes(
-    category: ExecutorCategoryType = 'general'
-  ): Promise<IMachineTypeOption[]> {
-    if (category === 'accelerated') {
-      return MOCK_ACCELERATED_MACHINE_TYPES;
-    }
-    return MOCK_GENERAL_MACHINE_TYPES;
-  }
-
-  
-  /**
-   * Retrieves available executor machine types based on executor category
-   */
-  async getMachineTypes(
-    category: ExecutorCategoryType = 'general'
-  ): Promise<IMachineTypeOption[]> {
-    if (category === 'accelerated') {
-      return MOCK_ACCELERATED_MACHINE_TYPES;
-    }
-    return MOCK_GENERAL_MACHINE_TYPES;
-  }
-
 
   /**
-   
-  * Retrieves available executor machine types based on executor category
+    * Retrieves available executor machine types based on executor category
    */
   async getMachineTypes(
     category: ExecutorCategoryType = 'general'
