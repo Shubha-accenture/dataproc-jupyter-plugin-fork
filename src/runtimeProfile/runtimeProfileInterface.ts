@@ -170,8 +170,8 @@ export interface IRuntimeProfileService {
     category?: ExecutorCategoryType
   ): Promise<IMachineTypeOption[]>;
   createRuntimeProfile(
-    payload: ICreateRuntimeProfilePayload,
+    payload: any,
     projectId?: string,
     region?: string
-  ): Promise<IRuntimeProfile>;
+  ): Promise<any>;
 }

@@ -30,13 +30,14 @@ import {
   IRuntimeProfileService,
   ExecutorCategoryType
 } from './runtimeProfileInterface';
+import { ISessionTemplateApiPayload } from './runtimeProfileMapper';
 
 /**
  * Flag to enable mock mode for UI development/testing until the skeleton form
  * is fully connected to the Dataproc sessionTemplates API / Jupyter server endpoint.
  * Set to false when connecting to the real Google Cloud Dataproc sessionTemplates endpoint.
  */
-export const RUNTIME_PROFILE_USE_MOCK = true;
+export const RUNTIME_PROFILE_USE_MOCK = false;
 
 /**
  * Mock regions with human-readable location descriptions
@@ -179,10 +180,6 @@ export class RuntimeProfileService implements IRuntimeProfileService {
    * Retrieves available GCP regions with formatted display names
    */
   async getRegions(projectId?: string): Promise<IRegionOption[]> {
-    if (this.useMock) {
-      return MOCK_REGIONS;
-    }
-
     try {
       const credentials = await authApi();
       const { REGION_URL } = await gcpServiceUrls;
@@ -210,15 +207,17 @@ export class RuntimeProfileService implements IRuntimeProfileService {
     } catch (error) {
       safeLog(
         'Failed to fetch regions from API, falling back to default regions list: ' +
-          error,
+        error,
         LOG_LEVEL.WARN
       );
       return MOCK_REGIONS;
     }
   }
 
+
   /**
-   * Retrieves available executor machine types based on executor category
+   
+  * Retrieves available executor machine types based on executor category
    */
   async getMachineTypes(
     category: ExecutorCategoryType = 'general'
@@ -230,24 +229,38 @@ export class RuntimeProfileService implements IRuntimeProfileService {
   }
 
   /**
-   * Creates a new Runtime Profile.
-   * Uses mock simulation or sends request to Dataproc API when live.
+   * Creates a new Runtime Profile / Dataproc Session Template.
+   * Sends POST request to Google Cloud Dataproc sessionTemplates endpoint or simulates in mock mode.
    */
   async createRuntimeProfile(
-    payload: ICreateRuntimeProfilePayload,
+    payload: ISessionTemplateApiPayload | ICreateRuntimeProfilePayload | any,
     projectId?: string,
     region?: string
-  ): Promise<IRuntimeProfile> {
+  ): Promise<any> {
+    const profileDisplayName =
+      payload.jupyterSession?.displayName ||
+      payload.displayName ||
+      'runtime-profile';
+
+    console.log('[RuntimeProfileService] createRuntimeProfile called:', {
+      profileDisplayName,
+      useMock: this.useMock,
+      projectId,
+      region,
+      payload
+    });
+
     safeLog(
-      `Creating runtime profile: ${payload.displayName} (mockMode=${this.useMock})`,
+      `Creating runtime profile: ${profileDisplayName} (mockMode=${this.useMock})`,
       LOG_LEVEL.INFO
     );
 
     if (this.useMock) {
+      console.log('[RuntimeProfileService] Executing in mock mode, skipping live API call');
       // Simulate network latency for mock response
       await new Promise(resolve => setTimeout(resolve, 600));
 
-      const profileId = payload.displayName
+      const profileId = profileDisplayName
         .toLowerCase()
         .replace(/[^a-z0-9-]/g, '-')
         .replace(/-+/g, '-');
@@ -255,9 +268,11 @@ export class RuntimeProfileService implements IRuntimeProfileService {
       const targetProject = projectId || 'current-project';
 
       const newProfile: IRuntimeProfile = {
-        name: `projects/${targetProject}/locations/${targetRegion}/runtimeProfiles/${profileId}`,
+        name:
+          payload.name ||
+          `projects/${targetProject}/locations/${targetRegion}/runtimeProfiles/${profileId}`,
         id: profileId,
-        displayName: payload.displayName,
+        displayName: profileDisplayName,
         region: targetRegion,
         description: payload.description,
         tier: payload.tier,
@@ -290,8 +305,29 @@ export class RuntimeProfileService implements IRuntimeProfileService {
       const credentials = await authApi();
       const { DATAPROC } = await gcpServiceUrls;
       const targetProject = projectId || credentials?.project_id;
-      const targetRegion = region || payload.region;
+      const targetRegion = region || payload.region || credentials?.region_id;
+
+      if (!targetProject) {
+        throw new Error(
+          'GCP Project ID is required to create a runtime profile. Please log in or select a project.'
+        );
+      }
+      if (!targetRegion) {
+        throw new Error(
+          'GCP Region is required to create a runtime profile. Please select a valid region.'
+        );
+      }
+
       const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/sessionTemplates`;
+
+console.log('[RuntimeProfileService] Making live API call to:', url, {
+  method: 'POST',
+  headers: {
+    'Content-Type': API_HEADER_CONTENT_TYPE,
+    Authorization: API_HEADER_BEARER + (credentials?.access_token ? '[EXISTS]' : '[MISSING]')
+  },
+  body: payload
+});
 
       const response = await loggedFetch(url, {
         method: 'POST',
@@ -302,14 +338,19 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         body: JSON.stringify(payload)
       });
 
+console.log('[RuntimeProfileService] API response status:', response.status, response.statusText);
+
       const result = await response.json();
-      if (result.error) {
+console.log('[RuntimeProfileService] API response payload:', result);
+if (!response.ok || result.error) {
         throw new Error(
-          result.error.message || 'Failed to create runtime profile'
+          result?.error?.message ||
+          `Failed to create session template (${response.status}: ${response.statusText})`
         );
       }
-      return result as IRuntimeProfile;
+return result;
     } catch (error) {
+      console.error('[RuntimeProfileService] Error in createRuntimeProfile:', error);
       safeLog('Error creating runtime profile: ' + error, LOG_LEVEL.ERROR);
       throw error;
     }
