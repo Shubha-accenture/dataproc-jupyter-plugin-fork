@@ -871,14 +871,12 @@ export const CreateRuntimeProfileComponent: React.FC<
           displayName: data.displayName.trim(),
           region: targetRegion,
           description: data.description.trim() || undefined,
-          tier,
-          lightningEngineEnabled,
-          executorConfig: {
-            executorType: executorCategory,
-            machineType: executorType
-          },
+          
+          tier: driverAndExecutorConfiguration.tier,
           runtimeEnvironmentConfig,
-          driverAndExecutorConfiguration: activeDriverAndExecutorConfig,
+          driverAndExecutorConfiguration,
+          driverConfig: driverAndExecutorConfiguration,
+          executorDiskConfig: driverAndExecutorConfiguration,
           autoscalingConfig,
           metastoreConfig,
           networkAndSecurityConfig,
@@ -886,7 +884,8 @@ export const CreateRuntimeProfileComponent: React.FC<
           sparkProperties,
           labels
         };
-        console.log('Payload', payload);
+        
+        console.log("Payload", payload)
 
         // Transform UI form payload to Dataproc SessionTemplate API schema
         const sessionTemplatePayload = mapRuntimeProfileToSessionTemplate(

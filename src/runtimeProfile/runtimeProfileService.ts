@@ -214,6 +214,31 @@ export class RuntimeProfileService implements IRuntimeProfileService {
     }
   }
 
+  /**
+   * Retrieves available executor machine types based on executor category
+   */
+  async getMachineTypes(
+    category: ExecutorCategoryType = 'general'
+  ): Promise<IMachineTypeOption[]> {
+    if (category === 'accelerated') {
+      return MOCK_ACCELERATED_MACHINE_TYPES;
+    }
+    return MOCK_GENERAL_MACHINE_TYPES;
+  }
+
+  
+  /**
+   * Retrieves available executor machine types based on executor category
+   */
+  async getMachineTypes(
+    category: ExecutorCategoryType = 'general'
+  ): Promise<IMachineTypeOption[]> {
+    if (category === 'accelerated') {
+      return MOCK_ACCELERATED_MACHINE_TYPES;
+    }
+    return MOCK_GENERAL_MACHINE_TYPES;
+  }
+
 
   /**
    
