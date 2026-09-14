@@ -276,9 +276,6 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         region: targetRegion,
         description: payload.description,
         tier: payload.tier ?? payload.executorAndDriverConfig?.tier,
-        tier: payload.tier,
-        lightningEngineEnabled: payload.lightningEngineEnabled,
-        executorConfig: payload.executorConfig,
         runtimeEnvironmentConfig: payload.runtimeEnvironmentConfig,
         executorAndDriverConfig:
           payload.executorAndDriverConfig ??
