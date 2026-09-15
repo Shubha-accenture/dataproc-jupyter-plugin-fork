@@ -46,7 +46,9 @@ import {
   IAutoscalingConfig,
   ICreateRuntimeProfilePayload,
   IDriverAndExecutorConfiguration,
+  IDriverConfig,
   IExecutorAndDriverConfig,
+  IExecutorDiskConfig,
   IMachineTypeOption,
   IMetastoreConfig,
   INetworkAndSecurityConfig,
@@ -620,6 +622,8 @@ export interface ICreateRuntimeProfileComponentProps {
   initialRuntimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
   initialExecutorAndDriverConfig?: IExecutorAndDriverConfig;
   initialDriverAndExecutorConfiguration?: IDriverAndExecutorConfiguration;
+  initialDriverConfig?: IDriverConfig;
+  initialExecutorDiskConfig?: IExecutorDiskConfig;
   initialAutoscalingConfig?: IAutoscalingConfig;
   initialMetastoreConfig?: IMetastoreConfig;
   initialNetworkAndSecurityConfig?: INetworkAndSecurityConfig;
@@ -642,6 +646,8 @@ export const CreateRuntimeProfileComponent: React.FC<
   initialRuntimeEnvironmentConfig,
   initialExecutorAndDriverConfig,
   initialDriverAndExecutorConfiguration,
+  initialDriverConfig,
+  initialExecutorDiskConfig,
   initialAutoscalingConfig,
   initialMetastoreConfig,
   initialNetworkAndSecurityConfig,
@@ -660,17 +666,41 @@ export const CreateRuntimeProfileComponent: React.FC<
     useState<boolean>(true);
 
   
-    // Configuration states using domain interfaces
+  // Tier, Lightning Engine, and Executor configuration state
+  const [tier, setTier] = useState<string>(
+    initialTier ||
+      initialExecutorAndDriverConfig?.tier ||
+      initialDriverAndExecutorConfiguration?.tier ||
+      'Premium'
+  );
+  const [lightningEngineEnabled, setLightningEngineEnabled] = useState<boolean>(
+    initialLightningEngineEnabled !== undefined
+      ? initialLightningEngineEnabled
+      : initialRuntimeEnvironmentConfig?.lightningEngineEnabled !== undefined
+        ? initialRuntimeEnvironmentConfig.lightningEngineEnabled
+        : true
+  );
+  const [executorCategory, setExecutorCategory] =
+    useState<ExecutorCategoryType>(initialExecutorCategory || 'general');
+  const [executorType, setExecutorType] = useState<string>(
+    initialExecutorType || 'highmem-4'
+  );
+  const [machineTypes, setMachineTypes] = useState<IMachineTypeOption[]>(
+    MOCK_GENERAL_MACHINE_TYPES
+  );
+
+  // Configuration states using domain interfaces
   const [runtimeEnvironmentConfig] = useState<IRuntimeEnvironmentConfig>(
     initialRuntimeEnvironmentConfig || DEFAULT_RUNTIME_ENVIRONMENT_CONFIG
   );
   const [driverAndExecutorConfiguration] =
     useState<IDriverAndExecutorConfiguration>(
-      initialDriverAndExecutorConfiguration || {
-        ...DEFAULT_DRIVER_AND_EXECUTOR_CONFIG,
-        ...(initialDriverConfig || {}),
-        ...(initialExecutorDiskConfig || {})
-      }
+      initialExecutorAndDriverConfig ||
+        initialDriverAndExecutorConfiguration || {
+          ...DEFAULT_DRIVER_AND_EXECUTOR_CONFIG,
+          ...(initialDriverConfig || {}),
+          ...(initialExecutorDiskConfig || {})
+        }
     );
   const [autoscalingConfig] = useState<IAutoscalingConfig>(
     initialAutoscalingConfig || DEFAULT_AUTOSCALING_CONFIG
@@ -690,77 +720,6 @@ export const CreateRuntimeProfileComponent: React.FC<
   const [labels] = useState<ProfileLabels>(
     initialLabels || DEFAULT_PROFILE_LABELS
   );
-
-    // Synchronized driver & executor configuration for Additional configuration section
-    const activeDriverAndExecutorConfig: IDriverAndExecutorConfiguration =
-      React.useMemo(() => {
-        const allTypes = [
-          ...MOCK_GENERAL_MACHINE_TYPES,
-          ...MOCK_ACCELERATED_MACHINE_TYPES
-        ];
-        const selectedMachine = allTypes.find(m => m.name === executorType);
-        return {
-          ...driverAndExecutorConfiguration,
-          tier,
-          executorType: selectedMachine ? selectedMachine.label : executorType
-        };
-      }, [driverAndExecutorConfiguration, tier, executorType]);
-
-    const handleTierChange = (selectedTier: string) => {
-      setTier(selectedTier);
-      if (selectedTier === 'Standard') {
-        setLightningEngineEnabled(false);
-        if (executorCategory === 'accelerated') {
-          setExecutorCategory('general');
-          setExecutorType('highmem-4');
-        }
-      }
-    };
-
-    const handleExecutorCategoryChange = (category: ExecutorCategoryType) => {
-      if (tier === 'Standard' && category === 'accelerated') {
-        return;
-      }
-      setExecutorCategory(category);
-      if (category === 'general') {
-        setExecutorType('highmem-4');
-      } else if (category === 'accelerated') {
-        setExecutorType('g2-standard-4');
-      }
-    };
-
-    // Load machine types when executorCategory changes
-    useEffect(() => {
-      let isMounted = true;
-      const loadMachineTypes = async () => {
-        if (service?.getMachineTypes) {
-          try {
-            const types = await service.getMachineTypes(executorCategory);
-            if (isMounted && types && types.length > 0) {
-              setMachineTypes(types);
-              return;
-            }
-          } catch (error) {
-            console.error(
-              'Failed to load machine types for ' + executorCategory,
-              error
-            );
-          }
-        }
-        if (isMounted) {
-          setMachineTypes(
-            executorCategory === 'accelerated'
-              ? MOCK_ACCELERATED_MACHINE_TYPES
-              : MOCK_GENERAL_MACHINE_TYPES
-          );
-        }
-      };
-
-      loadMachineTypes();
-      return () => {
-        isMounted = false;
-      };
-    }, [executorCategory, service]);
 
     // Synchronized driver & executor configuration for Additional configuration section
     const activeDriverAndExecutorConfig: IDriverAndExecutorConfiguration =
@@ -893,10 +852,20 @@ export const CreateRuntimeProfileComponent: React.FC<
         displayName: data.displayName.trim(),
         region: data.region,
         description: data.description.trim() || undefined,
-        tier: executorAndDriverConfig.tier,
-        runtimeEnvironmentConfig,
-        executorAndDriverConfig,
-        driverAndExecutorConfiguration: executorAndDriverConfig,
+        tier,
+        lightningEngineEnabled,
+        executorConfig: {
+          executorType: executorCategory,
+          machineType: executorType
+        },
+        runtimeEnvironmentConfig: {
+          ...runtimeEnvironmentConfig,
+          lightningEngineEnabled
+        },
+        executorAndDriverConfig: activeDriverAndExecutorConfig,
+        driverAndExecutorConfiguration: activeDriverAndExecutorConfig,
+        driverConfig: activeDriverAndExecutorConfig,
+        executorDiskConfig: activeDriverAndExecutorConfig,
         autoscalingConfig,
         metastoreConfig,
         networkAndSecurityConfig,
@@ -1036,10 +1005,228 @@ export const CreateRuntimeProfileComponent: React.FC<
                 )}
               />
             </div>
-            {/* TO DO:-
-          Executor configuration
-          API integration of the form fields
-          Will be taken care as part of upcoming development task */}
+            {/* Section: Tier */}
+            <div className="runtime-profile-section">
+              <div className="runtime-profile-section-title">Tier</div>
+              <div className="runtime-profile-section-subtitle">
+                Managed Service for Apache Spark offers two tiers for workload
+                execution. Use premium tier for accelerated machine types and
+                faster workload execution.{' '}
+                <span
+                  className="runtime-profile-learn-more"
+                  onClick={e => {
+                    e.preventDefault();
+                    window.open(DATAPROC_TIER_DOC, '_blank');
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      window.open(DATAPROC_TIER_DOC, '_blank');
+                    }
+                  }}
+                >
+                  Learn more
+                </span>
+              </div>
+
+              {/* Tier Cards: Premium & Standard */}
+              <div className="node-config-cards-container">
+                <div
+                  className={`node-config-card ${
+                    tier === 'Premium' ? 'selected' : ''
+                  }`}
+                  onClick={() => handleTierChange('Premium')}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={tier === 'Premium'}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleTierChange('Premium');
+                    }
+                  }}
+                >
+                  <div className="node-config-card-title">Premium</div>
+                  <div className="node-config-card-desc">
+                    Includes support for accelerated compute and Lightning
+                    Engine.
+                  </div>
+                </div>
+
+                <div
+                  className={`node-config-card ${
+                    tier === 'Standard' ? 'selected' : ''
+                  }`}
+                  onClick={() => handleTierChange('Standard')}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={tier === 'Standard'}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleTierChange('Standard');
+                    }
+                  }}
+                >
+                  <div className="node-config-card-title">Standard</div>
+                  <div className="node-config-card-desc">
+                    Standard Spark execution environment for routine data
+                    processing.
+                  </div>
+                </div>
+              </div>
+
+              {/* Checkbox: Enable Lightning Engine */}
+              <div className="runtime-profile-checkbox-section">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={lightningEngineEnabled}
+                      disabled={tier === 'Standard'}
+                      onChange={e =>
+                        setLightningEngineEnabled(e.target.checked)
+                      }
+                      name="lightningEngine"
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <span
+                      className={`runtime-profile-checkbox-title ${
+                        tier === 'Standard' ? 'disabled-text' : ''
+                      }`}
+                    >
+                      Enable Lightning Engine to accelerate performance
+                    </span>
+                  }
+                />
+                <div
+                  className={`runtime-profile-checkbox-desc ${
+                    tier === 'Standard' ? 'disabled-text' : ''
+                  }`}
+                >
+                  Turn on to accelerate your Spark jobs with Lightning Engine.{' '}
+                  <span
+                    className="runtime-profile-learn-more"
+                    onClick={e => {
+                      e.preventDefault();
+                      window.open(LIGHTNING_ENGINE_DOC, '_blank');
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        window.open(LIGHTNING_ENGINE_DOC, '_blank');
+                      }
+                    }}
+                  >
+                    Learn more
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section: Executor configuration */}
+            <div className="runtime-profile-section">
+              <div className="runtime-profile-section-title">
+                Executor configuration
+              </div>
+              <div className="runtime-profile-section-subtitle">
+                The size and configuration of the Spark driver and executors that
+                run your workload. You can choose a separate configuration for
+                the driver under additional configuration.
+              </div>
+
+              {/* Executor Cards: General & Accelerated */}
+              <div className="node-config-cards-container">
+                <div
+                  className={`node-config-card ${
+                    executorCategory === 'general' ? 'selected' : ''
+                  }`}
+                  onClick={() => handleExecutorCategoryChange('general')}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={executorCategory === 'general'}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleExecutorCategoryChange('general');
+                    }
+                  }}
+                >
+                  <div className="node-config-card-title">General</div>
+                  <div className="node-config-card-sub1">CPU only</div>
+                  <div className="node-config-card-sub2">
+                    Suited for most ETL workloads
+                  </div>
+                </div>
+
+                <div
+                  className={`node-config-card ${
+                    executorCategory === 'accelerated' ? 'selected' : ''
+                  } ${tier === 'Standard' ? 'disabled' : ''}`}
+                  onClick={() => {
+                    if (tier !== 'Standard') {
+                      handleExecutorCategoryChange('accelerated');
+                    }
+                  }}
+                  role="button"
+                  tabIndex={tier === 'Standard' ? -1 : 0}
+                  aria-disabled={tier === 'Standard'}
+                  aria-pressed={executorCategory === 'accelerated'}
+                  onKeyDown={e => {
+                    if (
+                      tier !== 'Standard' &&
+                      (e.key === 'Enter' || e.key === ' ')
+                    ) {
+                      handleExecutorCategoryChange('accelerated');
+                    }
+                  }}
+                >
+                  <div className="node-config-card-title">Accelerated</div>
+                  <div className="node-config-card-sub1">Includes GPUs</div>
+                  <div className="node-config-card-sub2">
+                    Best for data science and AI/ML workloads
+                  </div>
+                  <div className="node-config-card-sub3">
+                    Available with premium tier only
+                  </div>
+                </div>
+              </div>
+
+              {/* Machine Type Subheading & Select */}
+              <div className="machine-type-subheading">
+                Shapes for common workloads, optimized for cost and flexibility
+              </div>
+              <div className="machine-type-select-wrapper">
+                <FormControl size="small" fullWidth variant="outlined">
+                  <InputLabel
+                    id="runtime-profile-executor-type-label"
+                    shrink
+                  >
+                    Executor type
+                  </InputLabel>
+                  <Select
+                    labelId="runtime-profile-executor-type-label"
+                    id="runtime-profile-executor-type"
+                    value={executorType}
+                    label="Executor type"
+                    onChange={(e: SelectChangeEvent) =>
+                      setExecutorType(e.target.value as string)
+                    }
+                    notched
+                  >
+                    {machineTypes.map(m => (
+                      <MenuItem key={m.name} value={m.name}>
+                        {m.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+            </div>
+
+            {/* Divider line above Additional configuration */}
+            <div className="runtime-profile-divider" />
 
           {/* Additional configuration (70% width) */}
           <div className="additional-config-section">
