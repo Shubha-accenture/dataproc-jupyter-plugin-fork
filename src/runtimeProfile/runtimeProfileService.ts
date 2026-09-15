@@ -261,6 +261,10 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         region: targetRegion,
         description: payload.description,
         tier: payload.tier ?? payload.executorAndDriverConfig?.tier,
+        lightningEngineEnabled:
+          payload.lightningEngineEnabled ??
+          payload.runtimeEnvironmentConfig?.lightningEngineEnabled,
+        executorConfig: payload.executorConfig,
         runtimeEnvironmentConfig: payload.runtimeEnvironmentConfig,
         executorAndDriverConfig:
           payload.executorAndDriverConfig ??
@@ -268,6 +272,14 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         driverAndExecutorConfiguration:
           payload.driverAndExecutorConfiguration ??
           payload.executorAndDriverConfig,
+        driverConfig:
+          payload.driverConfig ??
+          payload.executorAndDriverConfig ??
+          payload.driverAndExecutorConfiguration,
+        executorDiskConfig:
+          payload.executorDiskConfig ??
+          payload.executorAndDriverConfig ??
+          payload.driverAndExecutorConfiguration,
         autoscalingConfig: payload.autoscalingConfig,
         metastoreConfig: payload.metastoreConfig,
         networkAndSecurityConfig: payload.networkAndSecurityConfig,

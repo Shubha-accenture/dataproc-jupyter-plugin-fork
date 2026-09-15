@@ -20,7 +20,23 @@ export interface IRegionOption {
   displayName: string;
 }
 
-export type ExecutorType = 'standard' | 'accelerated';
+export type ExecutorType = 'standard' | 'accelerated' | 'general' | string;
+export type ExecutorCategoryType = 'general' | 'accelerated' | 'standard';
+
+export interface IMachineTypeOption {
+  name: string;
+  label: string;
+  vCPUs: number;
+  memoryGb: number;
+  category: ExecutorCategoryType;
+  acceleratorType?: string;
+  acceleratorCount?: number;
+}
+
+export interface IExecutorConfig {
+  executorType?: ExecutorCategoryType | string;
+  machineType?: string;
+}
 
 export interface IRuntimeEnvironmentConfig {
   runtimeProfileId?: string;
@@ -37,10 +53,16 @@ export interface IExecutorAndDriverConfig {
   driverDisk?: string;
   executorType?: ExecutorType | string;
   executorDisk?: string;
+  /** Legacy compatibility fields */
+  machineType?: string;
+  disk?: string;
+  diskType?: string;
 }
 
-/** Backward-compatibility alias */
+/** Backward-compatibility aliases */
 export type IDriverAndExecutorConfiguration = IExecutorAndDriverConfig;
+export type IDriverConfig = IExecutorAndDriverConfig;
+export type IExecutorDiskConfig = IExecutorAndDriverConfig;
 
 export interface IAutoscalingConfig {
   autoscalingEnabled?: boolean;
@@ -99,12 +121,15 @@ export interface IRuntimeProfile {
   description?: string;
   tier?: string;
   lightningEngineEnabled?: boolean;
+  executorConfig?: IExecutorConfig;
   createTime?: string;
   updateTime?: string;
   state?: string;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
   executorAndDriverConfig?: IExecutorAndDriverConfig;
   driverAndExecutorConfiguration?: IExecutorAndDriverConfig;
+  driverConfig?: IDriverConfig;
+  executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
   metastoreConfig?: IMetastoreConfig;
   networkAndSecurityConfig?: INetworkAndSecurityConfig;
@@ -118,9 +143,13 @@ export interface ICreateRuntimeProfilePayload {
   region: string;
   description?: string;
   tier?: string;
+  lightningEngineEnabled?: boolean;
+  executorConfig?: IExecutorConfig;
   runtimeEnvironmentConfig?: IRuntimeEnvironmentConfig;
   executorAndDriverConfig?: IExecutorAndDriverConfig;
   driverAndExecutorConfiguration?: IExecutorAndDriverConfig;
+  driverConfig?: IDriverConfig;
+  executorDiskConfig?: IExecutorDiskConfig;
   autoscalingConfig?: IAutoscalingConfig;
   metastoreConfig?: IMetastoreConfig;
   networkAndSecurityConfig?: INetworkAndSecurityConfig;
