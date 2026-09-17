@@ -20,6 +20,8 @@ import {
   normalizeStagingBucket,
   convertToTtlSeconds,
   sanitizeSessionTemplateId,
+  parseMachineTypeSpec,
+  parseDiskSpec,
   mapRuntimeProfileToSessionTemplate
 } from './runtimeProfileMapper';
 import { ICreateRuntimeProfilePayload } from './runtimeProfileInterface';
@@ -92,6 +94,55 @@ describe('runtimeProfileMapper', () => {
       expect(sanitizeSessionTemplateId('', 'preferred-id-123')).toBe(
         'preferred-id-123'
       );
+    });
+  });
+
+  describe('parseMachineTypeSpec', () => {
+    it('should parse known machine types', () => {
+      expect(parseMachineTypeSpec('standard-4')).toEqual({
+        cores: 4,
+        memoryGb: 16
+      });
+      expect(parseMachineTypeSpec('Highmem-8')).toEqual({
+        cores: 8,
+        memoryGb: 64
+      });
+      expect(parseMachineTypeSpec('g2-standard-4')).toEqual({
+        cores: 4,
+        memoryGb: 16,
+        acceleratorType: 'l4'
+      });
+    });
+
+    it('should parse dynamic machine types', () => {
+      expect(parseMachineTypeSpec('n2-standard-32')).toEqual({
+        cores: 32,
+        memoryGb: 128
+      });
+    });
+
+    it('should return undefined for empty or invalid machine type', () => {
+      expect(parseMachineTypeSpec('')).toBeUndefined();
+      expect(parseMachineTypeSpec(undefined)).toBeUndefined();
+    });
+  });
+
+  describe('parseDiskSpec', () => {
+    it('should parse standard and premium disk types and sizes and enforce minimum 250g', () => {
+      expect(parseDiskSpec('standard persistent disk')).toEqual({
+        tier: 'standard',
+        size: '400g'
+      });
+      expect(
+        parseDiskSpec('Standard persistent disk (HDD), 100 GB')
+      ).toEqual({
+        tier: 'standard',
+        size: '250g'
+      });
+      expect(parseDiskSpec('SSD persistent disk (SSD), 500 GB')).toEqual({
+        tier: 'premium',
+        size: '500g'
+      });
     });
   });
 
@@ -208,6 +259,22 @@ describe('runtimeProfileMapper', () => {
         result.runtimeConfig?.properties?.['spark.sql.shuffle.partitions']
       ).toBe('200');
 
+      // Driver & Executor machine type and disk properties
+      expect(result.runtimeConfig?.properties?.['spark.driver.cores']).toBe('4');
+      expect(result.runtimeConfig?.properties?.['spark.driver.memory']).toBe('16g');
+      expect(
+        result.runtimeConfig?.properties?.['spark.dataproc.driver.disk.tier']
+      ).toBe('standard');
+      expect(
+        result.runtimeConfig?.properties?.['spark.dataproc.driver.disk.size']
+      ).toBe('400g');
+      expect(
+        result.runtimeConfig?.properties?.['spark.dataproc.executor.disk.tier']
+      ).toBe('standard');
+      expect(
+        result.runtimeConfig?.properties?.['spark.dataproc.executor.disk.size']
+      ).toBe('250g');
+
       // Execution config
       const execConfig = result.environmentConfig?.executionConfig;
       expect(execConfig?.subnetworkUri).toBe(
@@ -228,6 +295,68 @@ describe('runtimeProfileMapper', () => {
       expect(result.environmentConfig?.peripheralsConfig?.metastoreService).toBe(
         'projects/test-project/locations/us-central1/services/dpms'
       );
+    });
+
+    it('should map accelerated executor machine type and SSD executor disk to properties', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'Accelerated ML Profile',
+        region: 'us-central1',
+        tier: 'Premium',
+        executorConfig: {
+          executorType: 'accelerated',
+          machineType: 'g2-standard-4'
+        },
+        driverAndExecutorConfiguration: {
+          driverMachineType: 'standard-8',
+          driverDisk: 'SSD persistent disk, 500 GB',
+          executorType: 'g2-standard-4',
+          executorDisk: 'SSD persistent disk (SSD), 200 GB'
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      const props = result.runtimeConfig?.properties;
+      expect(props?.['spark.driver.cores']).toBe('8');
+      expect(props?.['spark.driver.memory']).toBe('32g');
+      expect(props?.['spark.dataproc.driver.disk.tier']).toBe('premium');
+      expect(props?.['spark.dataproc.driver.disk.size']).toBe('500g');
+
+      expect(props?.['spark.executor.cores']).toBe('4');
+      expect(props?.['spark.executor.memory']).toBe('16g');
+      expect(props?.['spark.dataproc.executor.compute.tier']).toBe('premium');
+      expect(props?.['spark.dataproc.executor.resource.accelerator.type']).toBe('l4');
+      expect(props?.['spark.dataproc.executor.disk.tier']).toBe('premium');
+      // 200 GB is clamped to minimum 250g enforced by Dataproc Serverless
+      expect(props?.['spark.dataproc.executor.disk.size']).toBe('250g');
+    });
+
+    it('should automatically set spark.dataproc.executor.compute.tier to premium for highmem shapes', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'Highmem Profile',
+        region: 'us-central1',
+        tier: 'Standard',
+        executorConfig: {
+          executorType: 'general',
+          machineType: 'highmem-4'
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      const props = result.runtimeConfig?.properties;
+      expect(props?.['spark.executor.cores']).toBe('4');
+      expect(props?.['spark.executor.memory']).toBe('32g');
+      // Highmem shape has 8 GB RAM per core, so it must set premium compute tier
+      expect(props?.['spark.dataproc.executor.compute.tier']).toBe('premium');
     });
   });
 });

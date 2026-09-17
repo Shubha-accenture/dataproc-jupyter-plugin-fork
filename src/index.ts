@@ -165,7 +165,8 @@ const extension: JupyterFrontEndPlugin<void> = {
         console.error('Error during app restoration:', error);
       });
     let bqFeature: SettingsResponse = await requestAPI('settings');
-    const runtimeProfileUiEnabled = Boolean(bqFeature?.enable_runtime_profile_integration);
+    const runtimeProfileUiEnabled = true
+    // Boolean(bqFeature?.enable_runtime_profile_integration);
     // START -- Enable Preview Features.
     const settings = await settingRegistry.load(PLUGIN_ID);
 

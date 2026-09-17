@@ -30,7 +30,10 @@ import {
   IRuntimeProfileService,
    ExecutorCategoryType
 } from './runtimeProfileInterface';
- import { ISessionTemplateApiPayload } from './runtimeProfileMapper';
+ import {
+   ISessionTemplateApiPayload,
+   mapRuntimeProfileToSessionTemplate
+ } from './runtimeProfileMapper';
 
 /**
  * Flag to enable mock mode for UI development/testing until the skeleton form
@@ -275,6 +278,10 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         region: targetRegion,
         description: payload.description,
         tier: payload.tier ?? payload.executorAndDriverConfig?.tier,
+        lightningEngineEnabled:
+          payload.lightningEngineEnabled ??
+          payload.runtimeEnvironmentConfig?.lightningEngineEnabled,
+        executorConfig: payload.executorConfig,
         runtimeEnvironmentConfig: payload.runtimeEnvironmentConfig,
         executorAndDriverConfig:
           payload.executorAndDriverConfig ??
@@ -323,16 +330,27 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         );
       }
 
+      // Ensure payload is mapped to SessionTemplate API schema matching createRunTime.tsx
+      const apiPayload: ISessionTemplateApiPayload =
+        payload.jupyterSession && payload.name
+          ? (payload as ISessionTemplateApiPayload)
+          : mapRuntimeProfileToSessionTemplate(
+              payload as ICreateRuntimeProfilePayload,
+              targetProject,
+              targetRegion,
+              (credentials as any)?.user_info || (credentials as any)?.user_email
+            );
+
       const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/sessionTemplates`;
 
-console.log('[RuntimeProfileService] Making live API call to:', url, {
-  method: 'POST',
-  headers: {
-    'Content-Type': API_HEADER_CONTENT_TYPE,
-    Authorization: API_HEADER_BEARER + (credentials?.access_token ? '[EXISTS]' : '[MISSING]')
-  },
-  body: payload
-});
+      console.log('[RuntimeProfileService] Making live API call to:', url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': API_HEADER_CONTENT_TYPE,
+          Authorization: API_HEADER_BEARER + (credentials?.access_token ? '[EXISTS]' : '[MISSING]')
+        },
+        body: apiPayload
+      });
 
       const response = await loggedFetch(url, {
         method: 'POST',
@@ -340,7 +358,7 @@ console.log('[RuntimeProfileService] Making live API call to:', url, {
           'Content-Type': API_HEADER_CONTENT_TYPE,
           Authorization: API_HEADER_BEARER + (credentials?.access_token || '')
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(apiPayload)
       });
 
 console.log('[RuntimeProfileService] API response status:', response.status, response.statusText);

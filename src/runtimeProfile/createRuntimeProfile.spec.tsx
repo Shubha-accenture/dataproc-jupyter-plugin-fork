@@ -244,7 +244,7 @@ describe('CreateRuntimeProfile Component & Service', () => {
       'standard'
     );
     expect(formatted.find(p => p.label === 'Executor disk')?.value).toBe(
-      'Standard persistent disk (HDD), 100 GB'
+      'Standard persistent disk (HDD), 400 GB'
     );
 
     expect(

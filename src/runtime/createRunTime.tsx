@@ -1578,6 +1578,7 @@ function CreateRunTime({
         if (selectedRuntimeClone !== undefined) {
           updateRuntimeApi(payload);
         } else {
+          console.log("payload of old flow ", payload)
           createRuntimeApi(payload);
         }
       }
