@@ -46,7 +46,7 @@
   display: flex;
   gap: 20px;
   margin-bottom: 16px;
-  max-width: 496px;
+  max-width: 620px;
 }
 
 .runtime-profile-col {
@@ -56,7 +56,7 @@
 
 .runtime-profile-full-row {
   margin-bottom: 24px;
-  max-width: 496px;
+  max-width: 620px;
 }
 
 .runtime-profile-section {

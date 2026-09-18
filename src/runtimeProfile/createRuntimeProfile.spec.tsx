@@ -284,14 +284,12 @@ describe('CreateRuntimeProfile Component & Service', () => {
 
   it('should export valid machine type mock collections and documentation URLs', () => {
     expect(MOCK_GENERAL_MACHINE_TYPES.length).toBeGreaterThan(0);
-    expect(MOCK_GENERAL_MACHINE_TYPES[0].name).toBe('highmem-4');
-    expect(MOCK_GENERAL_MACHINE_TYPES[0].label).toBe(
-      'highmem-4 (4 vCPU, 32 GB)'
-    );
+    expect(MOCK_GENERAL_MACHINE_TYPES.some(m => m.name === 'highmem-4')).toBe(true);
+    expect(MOCK_GENERAL_MACHINE_TYPES.some(m => m.name === 'standard-4')).toBe(true);
     expect(MOCK_GENERAL_MACHINE_TYPES[0].category).toBe('general');
 
     expect(MOCK_ACCELERATED_MACHINE_TYPES.length).toBeGreaterThan(0);
-    expect(MOCK_ACCELERATED_MACHINE_TYPES[0].name).toBe('g2-standard-4');
+    expect(MOCK_ACCELERATED_MACHINE_TYPES[0].name).toBe('l4-4');
     expect(MOCK_ACCELERATED_MACHINE_TYPES[0].category).toBe('accelerated');
 
     expect(DATAPROC_TIER_DOC).toBe(
@@ -309,7 +307,7 @@ describe('CreateRuntimeProfile Component & Service', () => {
 
     const acceleratedTypes = await mockService.getMachineTypes('accelerated');
     expect(acceleratedTypes.length).toBeGreaterThan(0);
-    expect(acceleratedTypes.some(m => m.name === 'g2-standard-4')).toBe(true);
+    expect(acceleratedTypes.some(m => m.name === 'l4-4')).toBe(true);
   });
 
   it('should create a runtime profile with tier, lightningEngineEnabled, and executorConfig', async () => {

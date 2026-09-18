@@ -18,7 +18,9 @@
 import {
   API_HEADER_BEARER,
   API_HEADER_CONTENT_TYPE,
-  gcpServiceUrls
+  gcpServiceUrls,
+  DATAPROC_STANDARD_MACHINE_TYPES,
+  DATAPROC_ACCELERATED_MACHINE_TYPES
 } from '../utils/const';
 import { authApi, loggedFetch } from '../utils/utils';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
@@ -47,108 +49,22 @@ export const MOCK_REGIONS: IRegionOption[] = [
 ];
 
 /**
- * Mock general machine types (CPU only)
+ * Dataproc Serverless standard machine types (CPU only)
  */
-export const MOCK_GENERAL_MACHINE_TYPES: IMachineTypeOption[] = [
-  {
-    name: 'highmem-4',
-    label: 'highmem-4 (4 vCPU, 32 GB)',
-    vCPUs: 4,
-    memoryGb: 32,
-    category: 'general'
-  },
-  {
-    name: 'standard-4',
-    label: 'standard-4 (4 vCPU, 16 GB)',
-    vCPUs: 4,
-    memoryGb: 16,
-    category: 'general'
-  },
-  {
-    name: 'highcpu-4',
-    label: 'highcpu-4 (4 vCPU, 8 GB)',
-    vCPUs: 4,
-    memoryGb: 8,
-    category: 'general'
-  },
-  {
-    name: 'highmem-8',
-    label: 'highmem-8 (8 vCPU, 64 GB)',
-    vCPUs: 8,
-    memoryGb: 64,
-    category: 'general'
-  },
-  {
-    name: 'standard-8',
-    label: 'standard-8 (8 vCPU, 32 GB)',
-    vCPUs: 8,
-    memoryGb: 32,
-    category: 'general'
-  },
-  {
-    name: 'highcpu-8',
-    label: 'highcpu-8 (8 vCPU, 16 GB)',
-    vCPUs: 8,
-    memoryGb: 16,
-    category: 'general'
-  },
-  {
-    name: 'highmem-16',
-    label: 'highmem-16 (16 vCPU, 128 GB)',
-    vCPUs: 16,
-    memoryGb: 128,
-    category: 'general'
-  },
-  {
-    name: 'standard-16',
-    label: 'standard-16 (16 vCPU, 64 GB)',
-    vCPUs: 16,
-    memoryGb: 64,
-    category: 'general'
-  }
-];
+export const STANDARD_MACHINE_TYPES: IMachineTypeOption[] =
+  DATAPROC_STANDARD_MACHINE_TYPES;
 
 /**
- * Mock accelerated machine types (with GPUs attached)
+ * Dataproc Serverless accelerated machine types (GPUs attached)
  */
-export const MOCK_ACCELERATED_MACHINE_TYPES: IMachineTypeOption[] = [
-  {
-    name: 'g2-standard-4',
-    label: 'g2-standard-4 (4 vCPU, 16 GB, 1 NVIDIA L4)',
-    vCPUs: 4,
-    memoryGb: 16,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-l4',
-    acceleratorCount: 1
-  },
-  {
-    name: 'g2-standard-8',
-    label: 'g2-standard-8 (8 vCPU, 32 GB, 1 NVIDIA L4)',
-    vCPUs: 8,
-    memoryGb: 32,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-l4',
-    acceleratorCount: 1
-  },
-  {
-    name: 'g2-standard-16',
-    label: 'g2-standard-16 (16 vCPU, 64 GB, 1 NVIDIA L4)',
-    vCPUs: 16,
-    memoryGb: 64,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-l4',
-    acceleratorCount: 1
-  },
-  {
-    name: 'a2-highgpu-1g',
-    label: 'a2-highgpu-1g (12 vCPU, 85 GB, 1 NVIDIA A100)',
-    vCPUs: 12,
-    memoryGb: 85,
-    category: 'accelerated',
-    acceleratorType: 'nvidia-tesla-a100',
-    acceleratorCount: 1
-  }
-];
+export const ACCELERATED_MACHINE_TYPES: IMachineTypeOption[] =
+  DATAPROC_ACCELERATED_MACHINE_TYPES;
+
+/**
+ * Backward compatibility aliases for existing imports
+ */
+export const MOCK_GENERAL_MACHINE_TYPES = STANDARD_MACHINE_TYPES;
+export const MOCK_ACCELERATED_MACHINE_TYPES = ACCELERATED_MACHINE_TYPES;
 
 const safeLog = (message: string, level: LOG_LEVEL = LOG_LEVEL.INFO) => {
   if (process.env.NODE_ENV === 'test' || Boolean(process.env.JEST_WORKER_ID)) {

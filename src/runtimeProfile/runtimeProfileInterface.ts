@@ -27,10 +27,13 @@ export interface IMachineTypeOption {
   name: string;
   label: string;
   vCPUs: number;
-  memoryGb: number;
+  memoryGb?: number;
+  memory?: string;
   category: ExecutorCategoryType;
   acceleratorType?: string;
   acceleratorCount?: number;
+  gpuCount?: number;
+  computeTier?: string;
 }
 
 export interface IExecutorConfig {
