@@ -23,14 +23,14 @@ import { ILauncher } from '@jupyterlab/launcher';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { LabIcon } from '@jupyterlab/ui-components';
 import {
-   Checkbox,
+  Checkbox,
   CircularProgress,
   FormControl,
-   FormControlLabel,
+  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
-   SelectChangeEvent,
+  SelectChangeEvent,
   TextField
 } from '@mui/material';
 
@@ -43,6 +43,10 @@ import expandLessIcon from '../../style/icons/expand_less.svg';
 import expandMoreIcon from '../../style/icons/expand_more.svg';
 import { SectionDetail, ISectionProperty } from '../controls/SectionDetail';
 import '../../style/runtimeProfile.css';
+import {
+  RuntimeEnvironmentEditDrawer,
+  RUNTIME_VERSION_OPTIONS
+} from './runtimeConfigEditDrawers';
 import { DATAPROC_TIER_DOC, LIGHTNING_ENGINE_DOC } from '../utils/const';
 import {
   ExecutorCategoryType,
@@ -89,8 +93,26 @@ const iconExpandMore = new LabIcon({
   svgstr: expandMoreIcon
 });
 
+export const generateRandomHex = (): string => {
+  const crypto =
+    typeof window !== 'undefined'
+      ? window.crypto || (window as any).Crypto
+      : undefined;
+  if (crypto && crypto.getRandomValues) {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const hex = array[0].toString(16);
+    const paddedHex = hex.padStart(12, '0');
+    return 'runtime-' + paddedHex;
+  }
+  const randomHex = Math.floor(Math.random() * 0xffffffff)
+    .toString(16)
+    .padStart(12, '0');
+  return 'runtime-' + randomHex;
+};
+
 export const DEFAULT_RUNTIME_ENVIRONMENT_CONFIG: IRuntimeEnvironmentConfig = {
-  runtimeProfileId: 'Name of the runtime profile',
+  runtimeProfileId: '-',
   runtimeVersion: '2.3 LTS (Spark 3.5.1, Python 3.12)',
   customSparkImage: 'None',
   stagingBucket: 'Auto',
@@ -144,7 +166,7 @@ export const formatRuntimeEnvironmentProperties = (
   return [
     {
       label: 'Runtime Profile ID',
-      value: config.runtimeProfileId || 'Name of the runtime profile'
+      value: config.runtimeProfileId || '-'
     },
     {
       label: 'Dataproc Runtime Version',
@@ -377,7 +399,7 @@ export interface IRuntimeEnvironmentSectionProps {
 
 export const RuntimeEnvironmentSection: React.FC<
   IRuntimeEnvironmentSectionProps
-> = ({ config, onEdit, showEdit = true, isEditDisabled = true }) => {
+> = ({ config, onEdit, showEdit = true, isEditDisabled = false }) => {
   const properties = React.useMemo(
     () => formatRuntimeEnvironmentProperties(config),
     [config]
@@ -669,8 +691,9 @@ export const CreateRuntimeProfileComponent: React.FC<
   const [isLoadingOptions, setIsLoadingOptions] = useState<boolean>(true);
   const [expandAdditionalConfig, setExpandAdditionalConfig] =
     useState<boolean>(true);
+  const [isRuntimeConfigDrawerOpen, setIsRuntimeConfigDrawerOpen] =
+    useState<boolean>(false);
 
-  
   // Default executor machine type:
   // Standard Tier requires memory per core <= 7,424 MB (including 40% memoryOverhead), so standard-4 (16 GB / 4 cores)
   // is selected by default for Standard Tier. Premium Tier supports highmem-4 (32 GB / 4 cores).
@@ -685,23 +708,32 @@ export const CreateRuntimeProfileComponent: React.FC<
     initialLightningEngineEnabled !== undefined
       ? initialLightningEngineEnabled
       : initialRuntimeEnvironmentConfig?.lightningEngineEnabled !== undefined
-        ? initialRuntimeEnvironmentConfig.lightningEngineEnabled
-        : true
+      ? initialRuntimeEnvironmentConfig.lightningEngineEnabled
+      : true
   );
   const [executorCategory, setExecutorCategory] =
     useState<ExecutorCategoryType>(initialExecutorCategory || 'general');
   const [executorType, setExecutorType] = useState<string>(
     initialExecutorType ||
-    (initialTierValue === 'Standard' ? 'standard-4' : 'highmem-4')
+      (initialTierValue === 'Standard' ? 'standard-4' : 'highmem-4')
   );
   const [machineTypes, setMachineTypes] = useState<IMachineTypeOption[]>(
     MOCK_GENERAL_MACHINE_TYPES
   );
 
   // Configuration states using domain interfaces
-  const [runtimeEnvironmentConfig] = useState<IRuntimeEnvironmentConfig>(
-    initialRuntimeEnvironmentConfig || DEFAULT_RUNTIME_ENVIRONMENT_CONFIG
-  );
+  const [runtimeEnvironmentConfig, setRuntimeEnvironmentConfig] =
+    useState<IRuntimeEnvironmentConfig>(() => {
+      const baseConfig =
+        initialRuntimeEnvironmentConfig || DEFAULT_RUNTIME_ENVIRONMENT_CONFIG;
+      return {
+        ...baseConfig,
+        runtimeProfileId:
+          baseConfig.runtimeProfileId && baseConfig.runtimeProfileId !== '-'
+            ? baseConfig.runtimeProfileId
+            : generateRandomHex()
+      };
+    });
   const [driverAndExecutorConfiguration] =
     useState<IDriverAndExecutorConfiguration>(
       initialExecutorAndDriverConfig ||
@@ -730,78 +762,81 @@ export const CreateRuntimeProfileComponent: React.FC<
     initialLabels || DEFAULT_PROFILE_LABELS
   );
 
-    // Synchronized driver & executor configuration for Additional configuration section
-    const activeDriverAndExecutorConfig: IDriverAndExecutorConfiguration =
-      React.useMemo(() => {
-        const allTypes = [
-          ...MOCK_GENERAL_MACHINE_TYPES,
-          ...MOCK_ACCELERATED_MACHINE_TYPES
-        ];
-        const selectedMachine = allTypes.find(m => m.name === executorType);
-        return {
-          ...driverAndExecutorConfiguration,
-          tier,
-          executorType: selectedMachine ? selectedMachine.label : executorType
-        };
-      }, [driverAndExecutorConfiguration, tier, executorType]);
+  // Synchronized driver & executor configuration for Additional configuration section
+  const activeDriverAndExecutorConfig: IDriverAndExecutorConfiguration =
+    React.useMemo(() => {
+      const allTypes = [
+        ...MOCK_GENERAL_MACHINE_TYPES,
+        ...MOCK_ACCELERATED_MACHINE_TYPES
+      ];
+      const selectedMachine = allTypes.find(m => m.name === executorType);
+      return {
+        ...driverAndExecutorConfiguration,
+        tier,
+        executorType: selectedMachine ? selectedMachine.label : executorType
+      };
+    }, [driverAndExecutorConfiguration, tier, executorType]);
 
-    const handleTierChange = (selectedTier: string) => {
-      setTier(selectedTier);
-      if (selectedTier === 'Standard') {
-        setLightningEngineEnabled(false);
-        // Standard tier enforces <= 7,424 MB memory per core; highmem shapes (8 GB/core) or GPU shapes
-        // are not compatible by default. Automatically align to standard-4 (CPU only, 16 GB).
-        if (executorCategory === 'accelerated' || executorType.includes('highmem')) {
-          setExecutorCategory('general');
-          setExecutorType('standard-4');
-        }
+  const handleTierChange = (selectedTier: string) => {
+    setTier(selectedTier);
+    if (selectedTier === 'Standard') {
+      setLightningEngineEnabled(false);
+      // Standard tier enforces <= 7,424 MB memory per core; highmem shapes (8 GB/core) or GPU shapes
+      // are not compatible by default. Automatically align to standard-4 (CPU only, 16 GB).
+      if (
+        executorCategory === 'accelerated' ||
+        executorType.includes('highmem')
+      ) {
+        setExecutorCategory('general');
+        setExecutorType('standard-4');
       }
-    };
+    }
+  };
 
-    const handleExecutorCategoryChange = (category: ExecutorCategoryType) => {
-      if (tier === 'Standard' && category === 'accelerated') {
-        return;
-      }
-      setExecutorCategory(category);
-      if (category === 'general') {
-        setExecutorType('highmem-4');
-      } else if (category === 'accelerated') {
-        setExecutorType('g2-standard-4');
-      }
-    };
+  const handleExecutorCategoryChange = (category: ExecutorCategoryType) => {
+    if (tier === 'Standard' && category === 'accelerated') {
+      return;
+    }
+    setExecutorCategory(category);
+    if (category === 'general') {
+      setExecutorType('highmem-4');
+    } else if (category === 'accelerated') {
+      setExecutorType('g2-standard-4');
+    }
+  };
 
-    // Load machine types when executorCategory changes
-    useEffect(() => {
-      let isMounted = true;
-      const loadMachineTypes = async () => {
-        if (service?.getMachineTypes) {
-          try {
-            const types = await service.getMachineTypes(executorCategory);
-            if (isMounted && types && types.length > 0) {
-              setMachineTypes(types);
-              return;
-            }
-          } catch (error) {
-            console.error(
-              'Failed to load machine types for ' + executorCategory,
-              error
-            );
+  // Load machine types when executorCategory changes
+  useEffect(() => {
+    let isMounted = true;
+    const loadMachineTypes = async () => {
+      if (service?.getMachineTypes) {
+        try {
+          const types = await service.getMachineTypes(executorCategory);
+          if (isMounted && types && types.length > 0) {
+            setMachineTypes(types);
+            return;
           }
-        }
-        if (isMounted) {
-          setMachineTypes(
-            executorCategory === 'accelerated'
-              ? MOCK_ACCELERATED_MACHINE_TYPES
-              : MOCK_GENERAL_MACHINE_TYPES
+        } catch (error) {
+          console.error(
+            'Failed to load machine types for ' + executorCategory,
+            error
           );
         }
-      };
+      }
+      if (isMounted) {
+        setMachineTypes(
+          executorCategory === 'accelerated'
+            ? MOCK_ACCELERATED_MACHINE_TYPES
+            : MOCK_GENERAL_MACHINE_TYPES
+        );
+      }
+    };
 
-      loadMachineTypes();
-      return () => {
-        isMounted = false;
-      };
-    }, [executorCategory, service]);
+    loadMachineTypes();
+    return () => {
+      isMounted = false;
+    };
+  }, [executorCategory, service]);
 
   // React Hook Form initialization
   const {
@@ -818,31 +853,30 @@ export const CreateRuntimeProfileComponent: React.FC<
     }
   });
 
-    // Load Regions from service
-    useEffect(() => {
-      let isMounted = true;
-      const loadInitialData = async () => {
-        setIsLoadingOptions(true);
-        try {
-          const credentials = await authApi().catch(() => undefined);
-          const loadedRegions = await service.getRegions(credentials?.project_id);
+  // Load Regions from service
+  useEffect(() => {
+    let isMounted = true;
+    const loadInitialData = async () => {
+      setIsLoadingOptions(true);
+      try {
+        const credentials = await authApi().catch(() => undefined);
+        const loadedRegions = await service.getRegions(credentials?.project_id);
 
         if (isMounted) {
           setRegions(loadedRegions);
 
-            
           if (loadedRegions.length > 0) {
-              setValue('region', loadedRegions[0].name, { shouldValidate: true });
-            }
-          }
-        } catch (error) {
-          console.error('Failed to load runtime profile initial data', error);
-        } finally {
-          if (isMounted) {
-            setIsLoadingOptions(false);
+            setValue('region', loadedRegions[0].name, { shouldValidate: true });
           }
         }
-      };
+      } catch (error) {
+        console.error('Failed to load runtime profile initial data', error);
+      } finally {
+        if (isMounted) {
+          setIsLoadingOptions(false);
+        }
+      }
+    };
 
     loadInitialData();
 
@@ -859,129 +893,128 @@ export const CreateRuntimeProfileComponent: React.FC<
     }
   };
 
-    const onSubmit = async (data: IRuntimeProfileFormData) => {
-      try {
-        const credentials = await authApi().catch(() => undefined);
-        const targetProject = credentials?.project_id;
-        if (!targetProject) {
-          throw new Error(
-            'GCP Project ID not found. Please log in or verify your Dataproc configuration.'
-          );
-        }
-        const targetRegion = data.region || credentials?.region_id;
-        if (!targetRegion) {
-          throw new Error('Please select a valid GCP Region.');
-        }
-
-        const payload: ICreateRuntimeProfilePayload = {
-          displayName: data.displayName.trim(),
-          region: targetRegion,
-          description: data.description.trim() || undefined,
-          
-          tier,
-          lightningEngineEnabled,
-          executorConfig: {
-            executorType: executorCategory,
-            machineType: executorType
-          },
-          runtimeEnvironmentConfig: {
-            ...runtimeEnvironmentConfig,
-            lightningEngineEnabled
-          },
-          driverAndExecutorConfiguration: {
-            driverMachineType:
-              activeDriverAndExecutorConfig.driverMachineType ||
-              activeDriverAndExecutorConfig.machineType,
-            driverDisk:
-              activeDriverAndExecutorConfig.driverDisk ||
-              activeDriverAndExecutorConfig.disk,
-            executorDisk:
-              activeDriverAndExecutorConfig.executorDisk ||
-              activeDriverAndExecutorConfig.diskType
-          },
-          autoscalingConfig,
-          metastoreConfig,
-          networkAndSecurityConfig,
-          sessionLifecycleConfig,
-          sparkProperties,
-          labels
-        };
-
-        const sessionTemplatePayload = mapRuntimeProfileToSessionTemplate(
-          payload,
-          targetProject,
-          targetRegion,
-          (credentials as any)?.user_info || (credentials as any)?.user_email
+  const onSubmit = async (data: IRuntimeProfileFormData) => {
+    try {
+      const credentials = await authApi().catch(() => undefined);
+      const targetProject = credentials?.project_id;
+      if (!targetProject) {
+        throw new Error(
+          'GCP Project ID not found. Please log in or verify your Dataproc configuration.'
         );
-        console.log("Payload", sessionTemplatePayload);
+      }
+      const targetRegion = data.region || credentials?.region_id;
+      if (!targetRegion) {
+        throw new Error('Please select a valid GCP Region.');
+      }
 
-        await service.createRuntimeProfile(
-          sessionTemplatePayload,
-          targetProject,
-          targetRegion
-        );
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: data.displayName.trim(),
+        region: targetRegion,
+        description: data.description.trim() || undefined,
 
-        Notification.emit(
-          `Runtime profile "${data.displayName}" created successfully.`,
-          'success',
-          { autoClose: 5000 }
-        );
+        tier,
+        lightningEngineEnabled,
+        executorConfig: {
+          executorType: executorCategory,
+          machineType: executorType
+        },
+        runtimeEnvironmentConfig: {
+          ...runtimeEnvironmentConfig,
+          lightningEngineEnabled
+        },
+        driverAndExecutorConfiguration: {
+          driverMachineType:
+            activeDriverAndExecutorConfig.driverMachineType ||
+            activeDriverAndExecutorConfig.machineType,
+          driverDisk:
+            activeDriverAndExecutorConfig.driverDisk ||
+            activeDriverAndExecutorConfig.disk,
+          executorDisk:
+            activeDriverAndExecutorConfig.executorDisk ||
+            activeDriverAndExecutorConfig.diskType
+        },
+        autoscalingConfig,
+        metastoreConfig,
+        networkAndSecurityConfig,
+        sessionLifecycleConfig,
+        sparkProperties,
+        labels
+      };
 
-        // Register notebook kernels in JupyterLab launcher
-        if (launcher && app) {
-          try {
-            const kernelSpecs = await KernelSpecAPI.getSpecs();
-            const kernels = kernelSpecs.kernelspecs;
-            const { commands } = app;
+      const sessionTemplatePayload = mapRuntimeProfileToSessionTemplate(
+        payload,
+        targetProject,
+        targetRegion,
+        (credentials as any)?.user_info || (credentials as any)?.user_email
+      );
 
-            Object.values(kernels).forEach((kernelsData, index) => {
-              const commandNameExist = `notebook:create-${kernelsData?.name}`;
-              if (
-                kernelsData?.resources?.endpointParentResource &&
-                kernelsData?.resources?.endpointParentResource.includes(
-                  '/sessions'
-                ) &&
-                !commands.hasCommand(commandNameExist)
-              ) {
-                const commandNotebook = `notebook:create-${kernelsData?.name}`;
-                commands.addCommand(commandNotebook, {
-                  caption: kernelsData?.display_name,
-                  label: kernelsData?.display_name,
-                  icon: themeManager
-                    ? () => iconDisplay(kernelsData, themeManager)
-                    : undefined,
-                  execute: async () => {
-                    const model = await app.commands.execute(
-                      'docmanager:new-untitled',
-                      {
-                        type: 'notebook',
-                        path: '',
-                        kernel: { name: kernelsData?.name }
-                      }
-                    );
-                    await app.commands.execute('docmanager:open', {
-                      kernel: { name: kernelsData?.name },
-                      path: model.path,
-                      factory: 'notebook'
-                    });
-                  }
-                });
+      await service.createRuntimeProfile(
+        sessionTemplatePayload,
+        targetProject,
+        targetRegion
+      );
 
-                launcher.add({
-                  command: commandNotebook,
-                  category: 'Dataproc Serverless Spark',
-                  //@ts-ignore jupyter lab Launcher type issue
-                  metadata: kernelsData?.metadata,
-                  rank: index + 1,
-                  //@ts-ignore jupyter lab Launcher type issue
-                  args: kernelsData?.argv
-                });
-              }
-            });
-          } catch (kernelErr) {
-            console.error('Error refreshing kernelspecs in launcher:', kernelErr);
-          }
+      Notification.emit(
+        `Runtime profile "${data.displayName}" created successfully.`,
+        'success',
+        { autoClose: 5000 }
+      );
+
+      // Register notebook kernels in JupyterLab launcher
+      if (launcher && app) {
+        try {
+          const kernelSpecs = await KernelSpecAPI.getSpecs();
+          const kernels = kernelSpecs.kernelspecs;
+          const { commands } = app;
+
+          Object.values(kernels).forEach((kernelsData, index) => {
+            const commandNameExist = `notebook:create-${kernelsData?.name}`;
+            if (
+              kernelsData?.resources?.endpointParentResource &&
+              kernelsData?.resources?.endpointParentResource.includes(
+                '/sessions'
+              ) &&
+              !commands.hasCommand(commandNameExist)
+            ) {
+              const commandNotebook = `notebook:create-${kernelsData?.name}`;
+              commands.addCommand(commandNotebook, {
+                caption: kernelsData?.display_name,
+                label: kernelsData?.display_name,
+                icon: themeManager
+                  ? () => iconDisplay(kernelsData, themeManager)
+                  : undefined,
+                execute: async () => {
+                  const model = await app.commands.execute(
+                    'docmanager:new-untitled',
+                    {
+                      type: 'notebook',
+                      path: '',
+                      kernel: { name: kernelsData?.name }
+                    }
+                  );
+                  await app.commands.execute('docmanager:open', {
+                    kernel: { name: kernelsData?.name },
+                    path: model.path,
+                    factory: 'notebook'
+                  });
+                }
+              });
+
+              launcher.add({
+                command: commandNotebook,
+                category: 'Dataproc Serverless Spark',
+                //@ts-ignore jupyter lab Launcher type issue
+                metadata: kernelsData?.metadata,
+                rank: index + 1,
+                //@ts-ignore jupyter lab Launcher type issue
+                args: kernelsData?.argv
+              });
+            }
+          });
+        } catch (kernelErr) {
+          console.error('Error refreshing kernelspecs in launcher:', kernelErr);
         }
+      }
 
       if (onSuccess) {
         onSuccess();
@@ -1087,26 +1120,26 @@ export const CreateRuntimeProfileComponent: React.FC<
             </div>
           </div>
 
-             {/* Row 2: Description */}
-            <div className="runtime-profile-full-row">
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    id="runtime-profile-description"
-                    label="Description"
-                    placeholder="Optional description"
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    InputLabelProps={{ shrink: true }}
-                  />
-                )}
-              />
-            </div>
-            
+          {/* Row 2: Description */}
+          <div className="runtime-profile-full-row">
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  id="runtime-profile-description"
+                  label="Description"
+                  placeholder="Optional description"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
+            />
+          </div>
+
           {/* Section: Tier */}
           <div className="runtime-profile-section">
             <div className="runtime-profile-section-title">Tier</div>
@@ -1135,8 +1168,9 @@ export const CreateRuntimeProfileComponent: React.FC<
             {/* Tier Cards: Premium & Standard */}
             <div className="node-config-cards-container">
               <div
-                className={`node-config-card ${tier === 'Premium' ? 'selected' : ''
-                  }`}
+                className={`node-config-card ${
+                  tier === 'Premium' ? 'selected' : ''
+                }`}
                 onClick={() => handleTierChange('Premium')}
                 role="button"
                 tabIndex={0}
@@ -1149,14 +1183,14 @@ export const CreateRuntimeProfileComponent: React.FC<
               >
                 <div className="node-config-card-title">Premium</div>
                 <div className="node-config-card-desc">
-                  Includes support for accelerated compute and Lightning
-                  Engine.
+                  Includes support for accelerated compute and Lightning Engine.
                 </div>
               </div>
 
               <div
-                className={`node-config-card ${tier === 'Standard' ? 'selected' : ''
-                  }`}
+                className={`node-config-card ${
+                  tier === 'Standard' ? 'selected' : ''
+                }`}
                 onClick={() => handleTierChange('Standard')}
                 role="button"
                 tabIndex={0}
@@ -1183,25 +1217,25 @@ export const CreateRuntimeProfileComponent: React.FC<
                     size="small"
                     checked={lightningEngineEnabled}
                     disabled={tier === 'Standard'}
-                    onChange={e =>
-                      setLightningEngineEnabled(e.target.checked)
-                    }
+                    onChange={e => setLightningEngineEnabled(e.target.checked)}
                     name="lightningEngine"
                     color="primary"
                   />
                 }
                 label={
                   <span
-                    className={`runtime-profile-checkbox-title ${tier === 'Standard' ? 'disabled-text' : ''
-                      }`}
+                    className={`runtime-profile-checkbox-title ${
+                      tier === 'Standard' ? 'disabled-text' : ''
+                    }`}
                   >
                     Enable Lightning Engine to accelerate performance
                   </span>
                 }
               />
               <div
-                className={`runtime-profile-checkbox-desc ${tier === 'Standard' ? 'disabled-text' : ''
-                  }`}
+                className={`runtime-profile-checkbox-desc ${
+                  tier === 'Standard' ? 'disabled-text' : ''
+                }`}
               >
                 Turn on to accelerate your Spark jobs with Lightning Engine.{' '}
                 <span
@@ -1231,15 +1265,16 @@ export const CreateRuntimeProfileComponent: React.FC<
             </div>
             <div className="runtime-profile-section-subtitle">
               The size and configuration of the Spark driver and executors that
-              run your workload. You can choose a separate configuration for
-              the driver under additional configuration.
+              run your workload. You can choose a separate configuration for the
+              driver under additional configuration.
             </div>
 
             {/* Executor Cards: General & Accelerated */}
             <div className="node-config-cards-container">
               <div
-                className={`node-config-card ${executorCategory === 'general' ? 'selected' : ''
-                  }`}
+                className={`node-config-card ${
+                  executorCategory === 'general' ? 'selected' : ''
+                }`}
                 onClick={() => handleExecutorCategoryChange('general')}
                 role="button"
                 tabIndex={0}
@@ -1258,8 +1293,9 @@ export const CreateRuntimeProfileComponent: React.FC<
               </div>
 
               <div
-                className={`node-config-card ${executorCategory === 'accelerated' ? 'selected' : ''
-                  } ${tier === 'Standard' ? 'disabled' : ''}`}
+                className={`node-config-card ${
+                  executorCategory === 'accelerated' ? 'selected' : ''
+                } ${tier === 'Standard' ? 'disabled' : ''}`}
                 onClick={() => {
                   if (tier !== 'Standard') {
                     handleExecutorCategoryChange('accelerated');
@@ -1295,10 +1331,7 @@ export const CreateRuntimeProfileComponent: React.FC<
             </div>
             <div className="machine-type-select-wrapper">
               <FormControl size="small" fullWidth variant="outlined">
-                <InputLabel
-                  id="runtime-profile-executor-type-label"
-                  shrink
-                >
+                <InputLabel id="runtime-profile-executor-type-label" shrink>
                   Executor type
                 </InputLabel>
                 <Select
@@ -1319,7 +1352,7 @@ export const CreateRuntimeProfileComponent: React.FC<
                 </Select>
               </FormControl>
             </div>
-          </div>    
+          </div>
           {/* Additional configuration (70% width) */}
           <div className="additional-config-section">
             <div
@@ -1364,15 +1397,13 @@ export const CreateRuntimeProfileComponent: React.FC<
                 {/* Section 1: Runtime environment */}
                 <RuntimeEnvironmentSection
                   config={runtimeEnvironmentConfig}
-                  isEditDisabled={true}
-                  onEdit={() => {
-                    // TODO - add the edit functionality for this section
-                  }}
+                  isEditDisabled={false}
+                  onEdit={() => setIsRuntimeConfigDrawerOpen(true)}
                 />
 
                 {/* Section 2: Executor & Driver Configuration */}
                 <ExecutorAndDriverSection
-                  config={executorAndDriverConfig}
+                  config={activeDriverAndExecutorConfig}
                   isEditDisabled={true}
                   onEdit={() => {
                     // TODO - add the edit functionality for this section
@@ -1430,10 +1461,7 @@ export const CreateRuntimeProfileComponent: React.FC<
 
           {/* Action Buttons */}
           <div className="runtime-profile-buttons">
-            <button
-              type="submit"
-              className="submit-button-disable-style"
-            >
+            <button type="submit" className="submit-button-disable-style">
               {isSubmitting ? (
                 <CircularProgress size={16} color="inherit" />
               ) : (
@@ -1450,6 +1478,16 @@ export const CreateRuntimeProfileComponent: React.FC<
           </div>
         </form>
       </div>
+
+      <RuntimeEnvironmentEditDrawer
+        open={isRuntimeConfigDrawerOpen}
+        config={runtimeEnvironmentConfig}
+        onClose={() => setIsRuntimeConfigDrawerOpen(false)}
+        onSave={updatedConfig => {
+          setRuntimeEnvironmentConfig(updatedConfig);
+          setIsRuntimeConfigDrawerOpen(false);
+        }}
+      />
     </div>
   );
 };
@@ -1483,4 +1521,4 @@ export class CreateRuntimeProfile extends DataprocWidget {
   }
 }
 
-export { SectionDetail };
+export { SectionDetail, RuntimeEnvironmentEditDrawer, RUNTIME_VERSION_OPTIONS };

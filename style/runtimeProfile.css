@@ -288,6 +288,7 @@ body[data-jp-theme-name='JupyterLab Dark'] .node-config-card.selected {
   background-color: rgba(138, 180, 248, 0.08);
 }
 
+
 body[data-jp-theme-name='JupyterLab Dark'] .node-config-card.disabled {
   background-color: var(--jp-layout-color2);
   border-color: var(--jp-border-color1);

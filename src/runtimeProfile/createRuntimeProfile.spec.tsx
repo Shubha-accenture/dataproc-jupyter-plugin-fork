@@ -32,6 +32,7 @@ import {
   CreateRuntimeProfile,
   CreateRuntimeProfileComponent,
   RuntimeEnvironmentSection,
+  RuntimeEnvironmentEditDrawer,
   ExecutorAndDriverSection,
   DriverAndExecutorSection,
   AutoscalingSection,
@@ -41,6 +42,7 @@ import {
   SparkPropertiesSection,
   ProfileLabelsSection,
   OtherCustomizationSection,
+  generateRandomHex,
   formatRuntimeEnvironmentProperties,
   formatExecutorAndDriverProperties,
   formatDriverAndExecutorProperties,
@@ -125,13 +127,17 @@ describe('CreateRuntimeProfile Component & Service', () => {
 
   it('should format runtime environment config according to IRuntimeEnvironmentConfig interface', () => {
     expect(RuntimeEnvironmentSection).toBeDefined();
+    expect(RuntimeEnvironmentEditDrawer).toBeDefined();
+
+    const randomId = generateRandomHex();
+    expect(randomId).toMatch(/^runtime-[0-9a-f]{12}$/);
 
     const formatted = formatRuntimeEnvironmentProperties(
       DEFAULT_RUNTIME_ENVIRONMENT_CONFIG
     );
     expect(formatted).toHaveLength(5);
     expect(formatted.find(p => p.label === 'Runtime Profile ID')?.value).toBe(
-      'Name of the runtime profile'
+      '-'
     );
     expect(
       formatted.find(p => p.label === 'Dataproc Runtime Version')?.value
