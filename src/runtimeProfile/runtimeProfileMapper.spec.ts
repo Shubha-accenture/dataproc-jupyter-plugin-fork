@@ -112,6 +112,26 @@ describe('runtimeProfileMapper', () => {
         memoryGb: 16,
         acceleratorType: 'l4'
       });
+      expect(parseMachineTypeSpec('l4-4')).toEqual({
+        cores: 4,
+        memoryGb: 16,
+        acceleratorType: 'l4'
+      });
+      expect(parseMachineTypeSpec('l4-24')).toEqual({
+        cores: 24,
+        memoryGb: 96,
+        acceleratorType: 'l4'
+      });
+      expect(parseMachineTypeSpec('a100-40-24')).toEqual({
+        cores: 24,
+        memoryGb: 170,
+        acceleratorType: 'nvidia-tesla-a100'
+      });
+      expect(parseMachineTypeSpec('h100-26')).toEqual({
+        cores: 26,
+        memoryGb: 234,
+        acceleratorType: 'nvidia-h100-80gb'
+      });
     });
 
     it('should parse dynamic machine types', () => {
@@ -133,11 +153,17 @@ describe('runtimeProfileMapper', () => {
         tier: 'standard',
         size: '400g'
       });
-      expect(
-        parseDiskSpec('Standard persistent disk (HDD), 100 GB')
-      ).toEqual({
+      expect(parseDiskSpec('Standard persistent disk (HDD), 100 GB')).toEqual({
         tier: 'standard',
         size: '250g'
+      });
+      expect(parseDiskSpec('HDD (standard), 200 GiB')).toEqual({
+        tier: 'standard',
+        size: '250g'
+      });
+      expect(parseDiskSpec('SSD (premium), 375 GiB')).toEqual({
+        tier: 'premium',
+        size: '375g'
       });
       expect(parseDiskSpec('SSD persistent disk (SSD), 500 GB')).toEqual({
         tier: 'premium',
@@ -260,8 +286,12 @@ describe('runtimeProfileMapper', () => {
       ).toBe('200');
 
       // Driver & Executor machine type and disk properties
-      expect(result.runtimeConfig?.properties?.['spark.driver.cores']).toBe('4');
-      expect(result.runtimeConfig?.properties?.['spark.driver.memory']).toBe('16g');
+      expect(result.runtimeConfig?.properties?.['spark.driver.cores']).toBe(
+        '4'
+      );
+      expect(result.runtimeConfig?.properties?.['spark.driver.memory']).toBe(
+        '16g'
+      );
       expect(
         result.runtimeConfig?.properties?.['spark.dataproc.driver.disk.tier']
       ).toBe('standard');
@@ -292,9 +322,9 @@ describe('runtimeProfileMapper', () => {
       ).toBe('END_USER_CREDENTIALS');
 
       // Peripherals
-      expect(result.environmentConfig?.peripheralsConfig?.metastoreService).toBe(
-        'projects/test-project/locations/us-central1/services/dpms'
-      );
+      expect(
+        result.environmentConfig?.peripheralsConfig?.metastoreService
+      ).toBe('projects/test-project/locations/us-central1/services/dpms');
     });
 
     it('should map accelerated executor machine type and SSD executor disk to properties', () => {
@@ -329,7 +359,9 @@ describe('runtimeProfileMapper', () => {
       expect(props?.['spark.executor.cores']).toBe('4');
       expect(props?.['spark.executor.memory']).toBe('16g');
       expect(props?.['spark.dataproc.executor.compute.tier']).toBe('premium');
-      expect(props?.['spark.dataproc.executor.resource.accelerator.type']).toBe('l4');
+      expect(props?.['spark.dataproc.executor.resource.accelerator.type']).toBe(
+        'l4'
+      );
       expect(props?.['spark.dataproc.executor.disk.tier']).toBe('premium');
       // 200 GB is clamped to minimum 250g enforced by Dataproc Serverless
       expect(props?.['spark.dataproc.executor.disk.size']).toBe('250g');

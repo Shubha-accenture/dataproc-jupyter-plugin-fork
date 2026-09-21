@@ -33,6 +33,7 @@ import {
   CreateRuntimeProfileComponent,
   RuntimeEnvironmentSection,
   RuntimeEnvironmentEditDrawer,
+  ExecutorAndDriverEditDrawer,
   ExecutorAndDriverSection,
   DriverAndExecutorSection,
   AutoscalingSection,
@@ -68,6 +69,14 @@ import {
   MOCK_GENERAL_MACHINE_TYPES,
   RuntimeProfileService
 } from './runtimeProfileService';
+import {
+  DISK_TIER_OPTIONS,
+  HDD_DISK_SIZES,
+  SSD_DISK_SIZES,
+  parseDiskTierAndSize,
+  normalizeMachineTypeName,
+  isAcceleratedMachine
+} from './runtimeConfigEditDrawers';
 import { DATAPROC_TIER_DOC, LIGHTNING_ENGINE_DOC } from '../utils/const';
 
 describe('CreateRuntimeProfile Component & Service', () => {
@@ -379,9 +388,112 @@ describe('CreateRuntimeProfile Component & Service', () => {
     expect(created.tier).toBe('Premium');
     expect(created.executorConfig?.executorType).toBe('accelerated');
     expect(created.executorConfig?.machineType).toBe('g2-standard-4');
-    expect(created.driverAndExecutorConfiguration?.driverMachineType).toBe('Standard-4');
-    expect(created.driverAndExecutorConfiguration?.driverDisk).toBe('standard persistent disk');
-    expect(created.driverAndExecutorConfiguration?.executorDisk).toBe('Standard persistent disk (HDD), 100 GB');
+    expect(created.driverAndExecutorConfiguration?.driverMachineType).toBe(
+      'Standard-4'
+    );
+    expect(created.driverAndExecutorConfiguration?.driverDisk).toBe(
+      'standard persistent disk'
+    );
+    expect(created.driverAndExecutorConfiguration?.executorDisk).toBe(
+      'Standard persistent disk (HDD), 100 GB'
+    );
+  });
+
+  it('should export ExecutorAndDriverEditDrawer and disk constants', () => {
+    expect(ExecutorAndDriverEditDrawer).toBeDefined();
+    expect(typeof ExecutorAndDriverEditDrawer).toBe('function');
+    expect(DISK_TIER_OPTIONS).toEqual(['HDD (standard)', 'SSD (premium)']);
+    expect(HDD_DISK_SIZES.length).toBe(14);
+    expect(HDD_DISK_SIZES[0]).toBe('200 GiB');
+    expect(HDD_DISK_SIZES[HDD_DISK_SIZES.length - 1]).toBe('1500 GiB');
+    expect(SSD_DISK_SIZES.length).toBe(6);
+    expect(SSD_DISK_SIZES[0]).toBe('375 GiB');
+    expect(SSD_DISK_SIZES[SSD_DISK_SIZES.length - 1]).toBe('9000 GiB');
+  });
+
+  it('should parse disk tier and size correctly with parseDiskTierAndSize', () => {
+    expect(parseDiskTierAndSize('HDD (standard), 200 GiB')).toEqual({
+      tier: 'HDD (standard)',
+      size: '200 GiB'
+    });
+    expect(parseDiskTierAndSize('SSD (premium), 375 GiB')).toEqual({
+      tier: 'SSD (premium)',
+      size: '375 GiB'
+    });
+    expect(parseDiskTierAndSize('SSD persistent disk, 750 GB')).toEqual({
+      tier: 'SSD (premium)',
+      size: '750 GiB'
+    });
+    expect(parseDiskTierAndSize('')).toEqual({
+      tier: 'HDD (standard)',
+      size: '200 GiB'
+    });
+    expect(parseDiskTierAndSize(undefined, 'SSD (premium)')).toEqual({
+      tier: 'SSD (premium)',
+      size: '375 GiB'
+    });
+  });
+
+  it('should normalize machine type names correctly', () => {
+    expect(normalizeMachineTypeName('highmem-4 (4 vCPU, 32 GB)')).toBe(
+      'highmem-4'
+    );
+    expect(normalizeMachineTypeName('standard-4 (4 vCPU, 16 GB)')).toBe(
+      'standard-4'
+    );
+    expect(normalizeMachineTypeName('l4-4 (4 vCPU, 16 GB, 1 GPU)')).toBe(
+      'l4-4'
+    );
+    expect(
+      normalizeMachineTypeName('a100-40-24 (24 vCPU, 170 GB, 2 GPUs)')
+    ).toBe('a100-40-24');
+    expect(normalizeMachineTypeName('highmem-4')).toBe('highmem-4');
+    expect(normalizeMachineTypeName('')).toBe('highmem-4');
+  });
+
+  it('should detect accelerated machine shapes with isAcceleratedMachine', () => {
+    expect(isAcceleratedMachine('l4-4', MOCK_ACCELERATED_MACHINE_TYPES)).toBe(
+      true
+    );
+    expect(
+      isAcceleratedMachine('a100-40-24', MOCK_ACCELERATED_MACHINE_TYPES)
+    ).toBe(true);
+    expect(
+      isAcceleratedMachine('h100-26', MOCK_ACCELERATED_MACHINE_TYPES)
+    ).toBe(true);
+    expect(
+      isAcceleratedMachine('g2-standard-4', MOCK_ACCELERATED_MACHINE_TYPES)
+    ).toBe(true);
+    expect(isAcceleratedMachine('standard-4', MOCK_GENERAL_MACHINE_TYPES)).toBe(
+      false
+    );
+    expect(isAcceleratedMachine('highmem-4', MOCK_GENERAL_MACHINE_TYPES)).toBe(
+      false
+    );
+  });
+
+  it('should instantiate ExecutorAndDriverEditDrawer with props', () => {
+    const onSaveMock = jest.fn();
+    const onCloseMock = jest.fn();
+    const element = React.createElement(ExecutorAndDriverEditDrawer, {
+      open: true,
+      config: {
+        tier: 'Premium',
+        lightningEngineEnabled: true,
+        executorType: 'highmem-4 (4 vCPU, 32 GB)',
+        executorDisk: 'HDD (standard), 200 GiB',
+        driverMachineType: 'highmem-4 (4 vCPU, 32 GB)',
+        driverDisk: 'HDD (standard), 200 GiB',
+        useDifferentDriverConfig: false
+      },
+      onClose: onCloseMock,
+      onSave: onSaveMock
+    });
+
+    expect(element).toBeDefined();
+    expect(element.type).toBe(ExecutorAndDriverEditDrawer);
+    expect(element.props.open).toBe(true);
+    expect(element.props.config.tier).toBe('Premium');
+    expect(element.props.config.useDifferentDriverConfig).toBe(false);
   });
 });
-

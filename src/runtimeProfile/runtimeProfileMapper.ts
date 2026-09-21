@@ -91,7 +91,11 @@ export const extractRuntimeVersion = (
 export const normalizeStagingBucket = (
   stagingBucket?: string
 ): string | undefined => {
-  if (!stagingBucket || stagingBucket.trim() === '' || stagingBucket === 'Auto') {
+  if (
+    !stagingBucket ||
+    stagingBucket.trim() === '' ||
+    stagingBucket === 'Auto'
+  ) {
     return undefined;
   }
   return stagingBucket.trim().replace(/^gs:\/\//, '');
@@ -160,10 +164,59 @@ export const KNOWN_MACHINE_SPECS: Record<string, IMachineSpec> = {
   'highcpu-8': { cores: 8, memoryGb: 16 },
   'standard-16': { cores: 16, memoryGb: 64 },
   'highmem-16': { cores: 16, memoryGb: 128 },
+  'l4-4': { cores: 4, memoryGb: 16, acceleratorType: 'l4' },
+  'l4-8': { cores: 8, memoryGb: 32, acceleratorType: 'l4' },
+  'l4-24': { cores: 24, memoryGb: 96, acceleratorType: 'l4' },
+  'l4-48': { cores: 48, memoryGb: 192, acceleratorType: 'l4' },
+  'a100-40-12': {
+    cores: 12,
+    memoryGb: 85,
+    acceleratorType: 'nvidia-tesla-a100'
+  },
+  'a100-40-24': {
+    cores: 24,
+    memoryGb: 170,
+    acceleratorType: 'nvidia-tesla-a100'
+  },
+  'a100-40-48': {
+    cores: 48,
+    memoryGb: 340,
+    acceleratorType: 'nvidia-tesla-a100'
+  },
+  'a100-40-96': {
+    cores: 96,
+    memoryGb: 680,
+    acceleratorType: 'nvidia-tesla-a100'
+  },
+  'a100-80-12': {
+    cores: 12,
+    memoryGb: 170,
+    acceleratorType: 'nvidia-tesla-a100'
+  },
+  'a100-80-24': {
+    cores: 24,
+    memoryGb: 340,
+    acceleratorType: 'nvidia-tesla-a100'
+  },
+  'a100-80-48': {
+    cores: 48,
+    memoryGb: 680,
+    acceleratorType: 'nvidia-tesla-a100'
+  },
+  'h100-26': { cores: 26, memoryGb: 234, acceleratorType: 'nvidia-h100-80gb' },
+  'h100-208': {
+    cores: 208,
+    memoryGb: 1872,
+    acceleratorType: 'nvidia-h100-80gb'
+  },
   'g2-standard-4': { cores: 4, memoryGb: 16, acceleratorType: 'l4' },
   'g2-standard-8': { cores: 8, memoryGb: 32, acceleratorType: 'l4' },
   'g2-standard-16': { cores: 16, memoryGb: 64, acceleratorType: 'l4' },
-  'a2-highgpu-1g': { cores: 12, memoryGb: 85, acceleratorType: 'nvidia-tesla-a100' }
+  'a2-highgpu-1g': {
+    cores: 12,
+    memoryGb: 85,
+    acceleratorType: 'nvidia-tesla-a100'
+  }
 };
 
 /**
@@ -205,7 +258,7 @@ export const parseDiskSpec = (
   const tier =
     lower.includes('ssd') || lower.includes('premium') ? 'premium' : 'standard';
 
-  const sizeMatch = lower.match(/(\d+)\s*(?:gb|g)?/);
+  const sizeMatch = lower.match(/(\d+)\s*(?:gb|gib|g)?/i);
   let size = defaultSize;
   if (sizeMatch) {
     const parsedNum = parseInt(sizeMatch[1], 10);
@@ -351,7 +404,10 @@ export function mapRuntimeProfileToSessionTemplate(
   );
   if (driverDisk.tier && !properties['spark.dataproc.driver.disk.tier']) {
     properties['spark.dataproc.driver.disk.tier'] = driverDisk.tier;
-    if (driverDisk.tier === 'premium' && !properties['spark.dataproc.driver.compute.tier']) {
+    if (
+      driverDisk.tier === 'premium' &&
+      !properties['spark.dataproc.driver.compute.tier']
+    ) {
       properties['spark.dataproc.driver.compute.tier'] = 'premium';
     }
   }
@@ -496,7 +552,9 @@ export function mapRuntimeProfileToSessionTemplate(
     payload.networkAndSecurityConfig?.executionIdentity === 'user_account';
 
   const executionConfig: NonNullable<
-    NonNullable<ISessionTemplateApiPayload['environmentConfig']>['executionConfig']
+    NonNullable<
+      ISessionTemplateApiPayload['environmentConfig']
+    >['executionConfig']
   > = {
     ...(subnetworkUri && { subnetworkUri }),
     ...(networkTags && { networkTags }),
@@ -521,7 +579,9 @@ export function mapRuntimeProfileToSessionTemplate(
       : undefined;
 
   const peripheralsConfig: NonNullable<
-    NonNullable<ISessionTemplateApiPayload['environmentConfig']>['peripheralsConfig']
+    NonNullable<
+      ISessionTemplateApiPayload['environmentConfig']
+    >['peripheralsConfig']
   > = {
     ...(metastoreService && { metastoreService })
   };

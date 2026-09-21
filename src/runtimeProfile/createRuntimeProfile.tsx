@@ -45,7 +45,9 @@ import { SectionDetail, ISectionProperty } from '../controls/SectionDetail';
 import '../../style/runtimeProfile.css';
 import {
   RuntimeEnvironmentEditDrawer,
-  RUNTIME_VERSION_OPTIONS
+  ExecutorAndDriverEditDrawer,
+  RUNTIME_VERSION_OPTIONS,
+  normalizeMachineTypeName
 } from './runtimeConfigEditDrawers';
 import { DATAPROC_TIER_DOC, LIGHTNING_ENGINE_DOC } from '../utils/const';
 import {
@@ -693,6 +695,8 @@ export const CreateRuntimeProfileComponent: React.FC<
     useState<boolean>(true);
   const [isRuntimeConfigDrawerOpen, setIsRuntimeConfigDrawerOpen] =
     useState<boolean>(false);
+  const [isExecutorDriverDrawerOpen, setIsExecutorDriverDrawerOpen] =
+    useState<boolean>(false);
 
   // Default executor machine type:
   // Standard Tier requires memory per core <= 7,424 MB (including 40% memoryOverhead), so standard-4 (16 GB / 4 cores)
@@ -734,15 +738,41 @@ export const CreateRuntimeProfileComponent: React.FC<
             : generateRandomHex()
       };
     });
-  const [driverAndExecutorConfiguration] =
-    useState<IDriverAndExecutorConfiguration>(
-      initialExecutorAndDriverConfig ||
+  const [driverAndExecutorConfiguration, setDriverAndExecutorConfiguration] =
+    useState<IDriverAndExecutorConfiguration>(() => {
+      const initialCfg = initialExecutorAndDriverConfig ||
         initialDriverAndExecutorConfiguration || {
           ...DEFAULT_DRIVER_AND_EXECUTOR_CONFIG,
           ...(initialDriverConfig || {}),
           ...(initialExecutorDiskConfig || {})
-        }
-    );
+        };
+      return {
+        ...initialCfg,
+        tier: initialTierValue,
+        useDifferentDriverConfig:
+          initialCfg.useDifferentDriverConfig !== undefined
+            ? initialCfg.useDifferentDriverConfig
+            : false,
+        executorDiskTier:
+          initialCfg.executorDiskTier ||
+          (initialCfg.executorDisk?.toLowerCase().includes('ssd')
+            ? 'SSD (premium)'
+            : 'HDD (standard)'),
+        executorDiskSize:
+          initialCfg.executorDiskSize ||
+          initialCfg.executorDisk?.match(/(\d+\s*GiB)/i)?.[1] ||
+          '200 GiB',
+        driverDiskTier:
+          initialCfg.driverDiskTier ||
+          (initialCfg.driverDisk?.toLowerCase().includes('ssd')
+            ? 'SSD (premium)'
+            : 'HDD (standard)'),
+        driverDiskSize:
+          initialCfg.driverDiskSize ||
+          initialCfg.driverDisk?.match(/(\d+\s*GiB)/i)?.[1] ||
+          '200 GiB'
+      };
+    });
   const [autoscalingConfig] = useState<IAutoscalingConfig>(
     initialAutoscalingConfig || DEFAULT_AUTOSCALING_CONFIG
   );
@@ -769,13 +799,98 @@ export const CreateRuntimeProfileComponent: React.FC<
         ...MOCK_GENERAL_MACHINE_TYPES,
         ...MOCK_ACCELERATED_MACHINE_TYPES
       ];
-      const selectedMachine = allTypes.find(m => m.name === executorType);
+      const selectedExecMachine = allTypes.find(m => m.name === executorType);
+      const execLabel = selectedExecMachine
+        ? selectedExecMachine.label
+        : executorType;
+
+      const diffDriver = Boolean(
+        driverAndExecutorConfiguration.useDifferentDriverConfig
+      );
+      const driverMachineName =
+        diffDriver && driverAndExecutorConfiguration.driverMachineType
+          ? normalizeMachineTypeName(
+              driverAndExecutorConfiguration.driverMachineType,
+              allTypes
+            )
+          : executorType;
+      const selectedDriverMachine = allTypes.find(
+        m => m.name === driverMachineName
+      );
+      const driverLabel = selectedDriverMachine
+        ? selectedDriverMachine.label
+        : driverMachineName;
+
+      const isExecAcc =
+        selectedExecMachine?.category === 'accelerated' ||
+        Boolean(selectedExecMachine?.acceleratorType);
+      const isDrvAcc =
+        selectedDriverMachine?.category === 'accelerated' ||
+        Boolean(selectedDriverMachine?.acceleratorType);
+
+      const execDiskTier = isExecAcc
+        ? 'SSD (premium)'
+        : tier === 'Standard'
+        ? 'HDD (standard)'
+        : driverAndExecutorConfiguration.executorDiskTier ||
+          (driverAndExecutorConfiguration.executorDisk
+            ?.toLowerCase()
+            .includes('ssd')
+            ? 'SSD (premium)'
+            : 'HDD (standard)');
+
+      const execDiskSize =
+        execDiskTier === 'SSD (premium)'
+          ? driverAndExecutorConfiguration.executorDiskSize?.includes('GiB') &&
+            !driverAndExecutorConfiguration.executorDiskSize.startsWith('200')
+            ? driverAndExecutorConfiguration.executorDiskSize
+            : '375 GiB'
+          : driverAndExecutorConfiguration.executorDiskSize || '200 GiB';
+
+      const drvDiskTier = diffDriver
+        ? isDrvAcc
+          ? 'SSD (premium)'
+          : tier === 'Standard'
+          ? 'HDD (standard)'
+          : driverAndExecutorConfiguration.driverDiskTier ||
+            (driverAndExecutorConfiguration.driverDisk
+              ?.toLowerCase()
+              .includes('ssd')
+              ? 'SSD (premium)'
+              : 'HDD (standard)')
+        : execDiskTier;
+
+      const drvDiskSize = diffDriver
+        ? drvDiskTier === 'SSD (premium)'
+          ? driverAndExecutorConfiguration.driverDiskSize?.includes('GiB') &&
+            !driverAndExecutorConfiguration.driverDiskSize.startsWith('200')
+            ? driverAndExecutorConfiguration.driverDiskSize
+            : '375 GiB'
+          : driverAndExecutorConfiguration.driverDiskSize || '200 GiB'
+        : execDiskSize;
+
       return {
         ...driverAndExecutorConfiguration,
         tier,
-        executorType: selectedMachine ? selectedMachine.label : executorType
+        executorType: execLabel,
+        executorMachineType: executorType,
+        driverMachineType: driverLabel,
+        executorDisk: `${execDiskTier}, ${execDiskSize}`,
+        driverDisk: `${drvDiskTier}, ${drvDiskSize}`,
+        executorDiskTier: execDiskTier,
+        executorDiskSize: execDiskSize,
+        driverDiskTier: drvDiskTier,
+        driverDiskSize: drvDiskSize,
+        useDifferentDriverConfig: diffDriver,
+        lightningEngineEnabled:
+          tier === 'Premium' ? lightningEngineEnabled : false
       };
-    }, [driverAndExecutorConfiguration, tier, executorType]);
+    }, [
+      driverAndExecutorConfiguration,
+      tier,
+      executorType,
+      lightningEngineEnabled
+    ]);
 
   const handleTierChange = (selectedTier: string) => {
     setTier(selectedTier);
@@ -790,6 +905,21 @@ export const CreateRuntimeProfileComponent: React.FC<
         setExecutorCategory('general');
         setExecutorType('standard-4');
       }
+      setDriverAndExecutorConfiguration(prev => ({
+        ...prev,
+        tier: 'Standard',
+        executorDiskTier: 'HDD (standard)',
+        executorDiskSize: '200 GiB',
+        executorDisk: 'HDD (standard), 200 GiB',
+        driverDiskTier: 'HDD (standard)',
+        driverDiskSize: '200 GiB',
+        driverDisk: 'HDD (standard), 200 GiB'
+      }));
+    } else {
+      setDriverAndExecutorConfiguration(prev => ({
+        ...prev,
+        tier: 'Premium'
+      }));
     }
   };
 
@@ -801,7 +931,13 @@ export const CreateRuntimeProfileComponent: React.FC<
     if (category === 'general') {
       setExecutorType('highmem-4');
     } else if (category === 'accelerated') {
-      setExecutorType('g2-standard-4');
+      setExecutorType('l4-4');
+      setDriverAndExecutorConfiguration(prev => ({
+        ...prev,
+        executorDiskTier: 'SSD (premium)',
+        executorDiskSize: '375 GiB',
+        executorDisk: 'SSD (premium), 375 GiB'
+      }));
     }
   };
 
@@ -1339,9 +1475,34 @@ export const CreateRuntimeProfileComponent: React.FC<
                   id="runtime-profile-executor-type"
                   value={executorType}
                   label="Executor type"
-                  onChange={(e: SelectChangeEvent) =>
-                    setExecutorType(e.target.value as string)
-                  }
+                  onChange={(e: SelectChangeEvent) => {
+                    const newType = e.target.value as string;
+                    setExecutorType(newType);
+                    const allTypes = [
+                      ...MOCK_GENERAL_MACHINE_TYPES,
+                      ...MOCK_ACCELERATED_MACHINE_TYPES
+                    ];
+                    const match = allTypes.find(m => m.name === newType);
+                    const isAcc =
+                      match?.category === 'accelerated' ||
+                      Boolean(match?.acceleratorType);
+                    setDriverAndExecutorConfiguration(prev => {
+                      const nextDiskTier = isAcc
+                        ? 'SSD (premium)'
+                        : prev.executorDiskTier;
+                      const nextDiskSize = isAcc
+                        ? '375 GiB'
+                        : prev.executorDiskSize;
+                      return {
+                        ...prev,
+                        executorType: match ? match.label : newType,
+                        executorMachineType: newType,
+                        executorDiskTier: nextDiskTier,
+                        executorDiskSize: nextDiskSize,
+                        executorDisk: `${nextDiskTier}, ${nextDiskSize}`
+                      };
+                    });
+                  }}
                   notched
                 >
                   {machineTypes.map(m => (
@@ -1404,10 +1565,8 @@ export const CreateRuntimeProfileComponent: React.FC<
                 {/* Section 2: Executor & Driver Configuration */}
                 <ExecutorAndDriverSection
                   config={activeDriverAndExecutorConfig}
-                  isEditDisabled={true}
-                  onEdit={() => {
-                    // TODO - add the edit functionality for this section
-                  }}
+                  isEditDisabled={false}
+                  onEdit={() => setIsExecutorDriverDrawerOpen(true)}
                 />
 
                 {/* Section 3: Autoscaling */}
@@ -1488,6 +1647,33 @@ export const CreateRuntimeProfileComponent: React.FC<
           setIsRuntimeConfigDrawerOpen(false);
         }}
       />
+
+      <ExecutorAndDriverEditDrawer
+        open={isExecutorDriverDrawerOpen}
+        config={activeDriverAndExecutorConfig}
+        onClose={() => setIsExecutorDriverDrawerOpen(false)}
+        onSave={updatedConfig => {
+          setTier(updatedConfig.tier || 'Premium');
+          setLightningEngineEnabled(
+            Boolean(updatedConfig.lightningEngineEnabled)
+          );
+          const allTypes = [
+            ...MOCK_GENERAL_MACHINE_TYPES,
+            ...MOCK_ACCELERATED_MACHINE_TYPES
+          ];
+          const execMachineName =
+            updatedConfig.executorMachineType ||
+            normalizeMachineTypeName(updatedConfig.executorType, allTypes);
+          const execObj = allTypes.find(m => m.name === execMachineName);
+          const isAcc =
+            execObj?.category === 'accelerated' ||
+            Boolean(execObj?.acceleratorType);
+          setExecutorCategory(isAcc ? 'accelerated' : 'general');
+          setExecutorType(execMachineName);
+          setDriverAndExecutorConfiguration(updatedConfig);
+          setIsExecutorDriverDrawerOpen(false);
+        }}
+      />
     </div>
   );
 };
@@ -1521,4 +1707,9 @@ export class CreateRuntimeProfile extends DataprocWidget {
   }
 }
 
-export { SectionDetail, RuntimeEnvironmentEditDrawer, RUNTIME_VERSION_OPTIONS };
+export {
+  SectionDetail,
+  RuntimeEnvironmentEditDrawer,
+  ExecutorAndDriverEditDrawer,
+  RUNTIME_VERSION_OPTIONS
+};

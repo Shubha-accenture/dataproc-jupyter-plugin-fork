@@ -29,6 +29,7 @@ export interface IMachineTypeOption {
   vCPUs: number;
   memoryGb: number;
   category: ExecutorCategoryType;
+  subgroup?: string;
   acceleratorType?: string;
   acceleratorCount?: number;
 }
@@ -53,6 +54,14 @@ export interface IExecutorAndDriverConfig {
   driverDisk?: string;
   executorType?: ExecutorType | string;
   executorDisk?: string;
+  useDifferentDriverConfig?: boolean;
+  executorDiskTier?: string;
+  executorDiskSize?: string;
+  driverDiskTier?: string;
+  driverDiskSize?: string;
+  lightningEngineEnabled?: boolean;
+  executorCategory?: ExecutorCategoryType;
+  executorMachineType?: string;
   /** Legacy compatibility fields */
   machineType?: string;
   disk?: string;

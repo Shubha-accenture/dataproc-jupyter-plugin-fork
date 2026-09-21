@@ -24,16 +24,16 @@ import { authApi, loggedFetch } from '../utils/utils';
 import { DataprocLoggingService, LOG_LEVEL } from '../utils/loggingService';
 import {
   ICreateRuntimeProfilePayload,
-   IMachineTypeOption,
+  IMachineTypeOption,
   IRegionOption,
   IRuntimeProfile,
   IRuntimeProfileService,
-   ExecutorCategoryType
+  ExecutorCategoryType
 } from './runtimeProfileInterface';
- import {
-   ISessionTemplateApiPayload,
-   mapRuntimeProfileToSessionTemplate
- } from './runtimeProfileMapper';
+import {
+  ISessionTemplateApiPayload,
+  mapRuntimeProfileToSessionTemplate
+} from './runtimeProfileMapper';
 
 /**
  * Flag to enable mock mode for UI development/testing until the skeleton form
@@ -59,56 +59,64 @@ export const MOCK_GENERAL_MACHINE_TYPES: IMachineTypeOption[] = [
     label: 'highmem-4 (4 vCPU, 32 GB)',
     vCPUs: 4,
     memoryGb: 32,
-    category: 'general'
+    category: 'general',
+    subgroup: 'General (High memory)'
   },
   {
     name: 'standard-4',
     label: 'standard-4 (4 vCPU, 16 GB)',
     vCPUs: 4,
     memoryGb: 16,
-    category: 'general'
-  },
-  {
-    name: 'highcpu-4',
-    label: 'highcpu-4 (4 vCPU, 8 GB)',
-    vCPUs: 4,
-    memoryGb: 8,
-    category: 'general'
-  },
-  {
-    name: 'highmem-8',
-    label: 'highmem-8 (8 vCPU, 64 GB)',
-    vCPUs: 8,
-    memoryGb: 64,
-    category: 'general'
+    category: 'general',
+    subgroup: 'General (Standard)'
   },
   {
     name: 'standard-8',
     label: 'standard-8 (8 vCPU, 32 GB)',
     vCPUs: 8,
     memoryGb: 32,
-    category: 'general'
-  },
-  {
-    name: 'highcpu-8',
-    label: 'highcpu-8 (8 vCPU, 16 GB)',
-    vCPUs: 8,
-    memoryGb: 16,
-    category: 'general'
-  },
-  {
-    name: 'highmem-16',
-    label: 'highmem-16 (16 vCPU, 128 GB)',
-    vCPUs: 16,
-    memoryGb: 128,
-    category: 'general'
+    category: 'general',
+    subgroup: 'General (Standard)'
   },
   {
     name: 'standard-16',
     label: 'standard-16 (16 vCPU, 64 GB)',
     vCPUs: 16,
     memoryGb: 64,
-    category: 'general'
+    category: 'general',
+    subgroup: 'General (Standard)'
+  },
+  {
+    name: 'highmem-8',
+    label: 'highmem-8 (8 vCPU, 64 GB)',
+    vCPUs: 8,
+    memoryGb: 64,
+    category: 'general',
+    subgroup: 'General (High memory)'
+  },
+  {
+    name: 'highmem-16',
+    label: 'highmem-16 (16 vCPU, 128 GB)',
+    vCPUs: 16,
+    memoryGb: 128,
+    category: 'general',
+    subgroup: 'General (High memory)'
+  },
+  {
+    name: 'highcpu-4',
+    label: 'highcpu-4 (4 vCPU, 8 GB)',
+    vCPUs: 4,
+    memoryGb: 8,
+    category: 'general',
+    subgroup: 'General (High memory)'
+  },
+  {
+    name: 'highcpu-8',
+    label: 'highcpu-8 (8 vCPU, 16 GB)',
+    vCPUs: 8,
+    memoryGb: 16,
+    category: 'general',
+    subgroup: 'General (High memory)'
   }
 ];
 
@@ -122,15 +130,152 @@ export const MOCK_ACCELERATED_MACHINE_TYPES: IMachineTypeOption[] = [
     vCPUs: 4,
     memoryGb: 16,
     category: 'accelerated',
+    subgroup: 'Accelerated (L4)',
     acceleratorType: 'nvidia-l4',
     acceleratorCount: 1
   },
+  // L4 Series
+  {
+    name: 'l4-4',
+    label: 'l4-4 (4 vCPU, 16 GB, 1 GPU)',
+    vCPUs: 4,
+    memoryGb: 16,
+    category: 'accelerated',
+    subgroup: 'Accelerated (L4)',
+    acceleratorType: 'l4',
+    acceleratorCount: 1
+  },
+  {
+    name: 'l4-8',
+    label: 'l4-8 (8 vCPU, 32 GB, 1 GPU)',
+    vCPUs: 8,
+    memoryGb: 32,
+    category: 'accelerated',
+    subgroup: 'Accelerated (L4)',
+    acceleratorType: 'l4',
+    acceleratorCount: 1
+  },
+  {
+    name: 'l4-24',
+    label: 'l4-24 (24 vCPU, 96 GB, 2 GPUs)',
+    vCPUs: 24,
+    memoryGb: 96,
+    category: 'accelerated',
+    subgroup: 'Accelerated (L4)',
+    acceleratorType: 'l4',
+    acceleratorCount: 2
+  },
+  {
+    name: 'l4-48',
+    label: 'l4-48 (48 vCPU, 192 GB, 4 GPUs)',
+    vCPUs: 48,
+    memoryGb: 192,
+    category: 'accelerated',
+    subgroup: 'Accelerated (L4)',
+    acceleratorType: 'l4',
+    acceleratorCount: 4
+  },
+  // A100 40GB Series
+  {
+    name: 'a100-40-12',
+    label: 'a100-40-12 (12 vCPU, 85 GB, 1 GPU)',
+    vCPUs: 12,
+    memoryGb: 85,
+    category: 'accelerated',
+    subgroup: 'Accelerated (A100 40GB)',
+    acceleratorType: 'nvidia-tesla-a100',
+    acceleratorCount: 1
+  },
+  {
+    name: 'a100-40-24',
+    label: 'a100-40-24 (24 vCPU, 170 GB, 2 GPUs)',
+    vCPUs: 24,
+    memoryGb: 170,
+    category: 'accelerated',
+    subgroup: 'Accelerated (A100 40GB)',
+    acceleratorType: 'nvidia-tesla-a100',
+    acceleratorCount: 2
+  },
+  {
+    name: 'a100-40-48',
+    label: 'a100-40-48 (48 vCPU, 340 GB, 4 GPUs)',
+    vCPUs: 48,
+    memoryGb: 340,
+    category: 'accelerated',
+    subgroup: 'Accelerated (A100 40GB)',
+    acceleratorType: 'nvidia-tesla-a100',
+    acceleratorCount: 4
+  },
+  {
+    name: 'a100-40-96',
+    label: 'a100-40-96 (96 vCPU, 680 GB, 8 GPUs)',
+    vCPUs: 96,
+    memoryGb: 680,
+    category: 'accelerated',
+    subgroup: 'Accelerated (A100 40GB)',
+    acceleratorType: 'nvidia-tesla-a100',
+    acceleratorCount: 8
+  },
+  // A100 80GB Series
+  {
+    name: 'a100-80-12',
+    label: 'a100-80-12 (12 vCPU, 170 GB, 1 GPU)',
+    vCPUs: 12,
+    memoryGb: 170,
+    category: 'accelerated',
+    subgroup: 'Accelerated (A100 80GB)',
+    acceleratorType: 'nvidia-tesla-a100',
+    acceleratorCount: 1
+  },
+  {
+    name: 'a100-80-24',
+    label: 'a100-80-24 (24 vCPU, 340 GB, 2 GPUs)',
+    vCPUs: 24,
+    memoryGb: 340,
+    category: 'accelerated',
+    subgroup: 'Accelerated (A100 80GB)',
+    acceleratorType: 'nvidia-tesla-a100',
+    acceleratorCount: 2
+  },
+  {
+    name: 'a100-80-48',
+    label: 'a100-80-48 (48 vCPU, 680 GB, 4 GPUs)',
+    vCPUs: 48,
+    memoryGb: 680,
+    category: 'accelerated',
+    subgroup: 'Accelerated (A100 80GB)',
+    acceleratorType: 'nvidia-tesla-a100',
+    acceleratorCount: 4
+  },
+  // H100 80GB Series
+  {
+    name: 'h100-26',
+    label: 'h100-26 (26 vCPU, 234 GB, 1 GPU)',
+    vCPUs: 26,
+    memoryGb: 234,
+    category: 'accelerated',
+    subgroup: 'Accelerated (H100 80GB)',
+    acceleratorType: 'nvidia-h100-80gb',
+    acceleratorCount: 1
+  },
+  {
+    name: 'h100-208',
+    label: 'h100-208 (208 vCPU, 1872 GB, 8 GPUs)',
+    vCPUs: 208,
+    memoryGb: 1872,
+    category: 'accelerated',
+    subgroup: 'Accelerated (H100 80GB)',
+    acceleratorType: 'nvidia-h100-80gb',
+    acceleratorCount: 8
+  },
+  // Legacy / existing shapes for compatibility
   {
     name: 'g2-standard-8',
     label: 'g2-standard-8 (8 vCPU, 32 GB, 1 NVIDIA L4)',
     vCPUs: 8,
     memoryGb: 32,
     category: 'accelerated',
+    subgroup: 'Accelerated (L4)',
     acceleratorType: 'nvidia-l4',
     acceleratorCount: 1
   },
@@ -140,6 +285,7 @@ export const MOCK_ACCELERATED_MACHINE_TYPES: IMachineTypeOption[] = [
     vCPUs: 16,
     memoryGb: 64,
     category: 'accelerated',
+    subgroup: 'Accelerated (L4)',
     acceleratorType: 'nvidia-l4',
     acceleratorCount: 1
   },
@@ -149,6 +295,7 @@ export const MOCK_ACCELERATED_MACHINE_TYPES: IMachineTypeOption[] = [
     vCPUs: 12,
     memoryGb: 85,
     category: 'accelerated',
+    subgroup: 'Accelerated (A100 40GB)',
     acceleratorType: 'nvidia-tesla-a100',
     acceleratorCount: 1
   }
@@ -210,16 +357,15 @@ export class RuntimeProfileService implements IRuntimeProfileService {
     } catch (error) {
       safeLog(
         'Failed to fetch regions from API, falling back to default regions list: ' +
-        error,
+          error,
         LOG_LEVEL.WARN
       );
       return MOCK_REGIONS;
     }
   }
 
-
   /**
-    * Retrieves available executor machine types based on executor category
+   * Retrieves available executor machine types based on executor category
    */
   async getMachineTypes(
     category: ExecutorCategoryType = 'general'
@@ -258,7 +404,9 @@ export class RuntimeProfileService implements IRuntimeProfileService {
     );
 
     if (this.useMock) {
-      console.log('[RuntimeProfileService] Executing in mock mode, skipping live API call');
+      console.log(
+        '[RuntimeProfileService] Executing in mock mode, skipping live API call'
+      );
       // Simulate network latency for mock response
       await new Promise(resolve => setTimeout(resolve, 600));
 
@@ -338,7 +486,8 @@ export class RuntimeProfileService implements IRuntimeProfileService {
               payload as ICreateRuntimeProfilePayload,
               targetProject,
               targetRegion,
-              (credentials as any)?.user_info || (credentials as any)?.user_email
+              (credentials as any)?.user_info ||
+                (credentials as any)?.user_email
             );
 
       const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/sessionTemplates`;
@@ -347,7 +496,9 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         method: 'POST',
         headers: {
           'Content-Type': API_HEADER_CONTENT_TYPE,
-          Authorization: API_HEADER_BEARER + (credentials?.access_token ? '[EXISTS]' : '[MISSING]')
+          Authorization:
+            API_HEADER_BEARER +
+            (credentials?.access_token ? '[EXISTS]' : '[MISSING]')
         },
         body: apiPayload
       });
@@ -361,19 +512,26 @@ export class RuntimeProfileService implements IRuntimeProfileService {
         body: JSON.stringify(apiPayload)
       });
 
-console.log('[RuntimeProfileService] API response status:', response.status, response.statusText);
+      console.log(
+        '[RuntimeProfileService] API response status:',
+        response.status,
+        response.statusText
+      );
 
       const result = await response.json();
-console.log('[RuntimeProfileService] API response payload:', result);
-if (!response.ok || result.error) {
+      console.log('[RuntimeProfileService] API response payload:', result);
+      if (!response.ok || result.error) {
         throw new Error(
           result?.error?.message ||
-          `Failed to create session template (${response.status}: ${response.statusText})`
+            `Failed to create session template (${response.status}: ${response.statusText})`
         );
       }
-return result;
+      return result;
     } catch (error) {
-      console.error('[RuntimeProfileService] Error in createRuntimeProfile:', error);
+      console.error(
+        '[RuntimeProfileService] Error in createRuntimeProfile:',
+        error
+      );
       safeLog('Error creating runtime profile: ' + error, LOG_LEVEL.ERROR);
       throw error;
     }
