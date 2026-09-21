@@ -33,6 +33,9 @@ import {
   CreateRuntimeProfileComponent,
   RuntimeEnvironmentSection,
   RuntimeEnvironmentEditDrawer,
+  AutoscalingEditDrawer,
+  SessionLifecycleEditDrawer,
+  OtherCustomizationEditDrawer,
   ExecutorAndDriverSection,
   DriverAndExecutorSection,
   AutoscalingSection,
@@ -149,6 +152,7 @@ describe('CreateRuntimeProfile Component & Service', () => {
 
   it('should format autoscaling config according to IAutoscalingConfig interface', () => {
     expect(AutoscalingSection).toBeDefined();
+    expect(AutoscalingEditDrawer).toBeDefined();
     const formatted = formatAutoscalingProperties(DEFAULT_AUTOSCALING_CONFIG);
     expect(formatted).toHaveLength(4);
     expect(formatted.find(p => p.label === 'Autoscaling')?.value).toBe(
@@ -157,7 +161,7 @@ describe('CreateRuntimeProfile Component & Service', () => {
     expect(formatted.find(p => p.label === 'Initial executors')?.value).toBe(2);
     expect(formatted.find(p => p.label === 'Minimum executors')?.value).toBe(2);
     expect(formatted.find(p => p.label === 'Maximum executors')?.value).toBe(
-      10
+      1000
     );
 
     expect(formatAutoscalingProperties(undefined)).toEqual([]);
@@ -198,6 +202,7 @@ describe('CreateRuntimeProfile Component & Service', () => {
 
   it('should format session lifecycle config according to ISessionLifecycleConfig interface', () => {
     expect(SessionLifecycleSection).toBeDefined();
+    expect(SessionLifecycleEditDrawer).toBeDefined();
     const formatted = formatSessionLifecycleProperties(
       DEFAULT_SESSION_LIFECYCLE_CONFIG
     );
@@ -262,6 +267,7 @@ describe('CreateRuntimeProfile Component & Service', () => {
 
   it('should format other customization section with spark properties and labels merged', () => {
     expect(OtherCustomizationSection).toBeDefined();
+    expect(OtherCustomizationEditDrawer).toBeDefined();
 
     const emptyCustomization = formatOtherCustomizationProperties(
       DEFAULT_SPARK_PROPERTIES,

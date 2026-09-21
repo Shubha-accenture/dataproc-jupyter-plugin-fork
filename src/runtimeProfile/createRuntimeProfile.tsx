@@ -44,9 +44,12 @@ import expandMoreIcon from '../../style/icons/expand_more.svg';
 import { SectionDetail, ISectionProperty } from '../controls/SectionDetail';
 import '../../style/runtimeProfile.css';
 import {
+  AutoscalingEditDrawer,
+  OtherCustomizationEditDrawer,
   RuntimeEnvironmentEditDrawer,
-  RUNTIME_VERSION_OPTIONS
-} from './runtimeConfigEditDrawers';
+  RUNTIME_VERSION_OPTIONS,
+  SessionLifecycleEditDrawer
+} from './runtimeProfileEditDrawers';
 import { DATAPROC_TIER_DOC, LIGHTNING_ENGINE_DOC } from '../utils/const';
 import {
   ExecutorCategoryType,
@@ -134,7 +137,7 @@ export const DEFAULT_AUTOSCALING_CONFIG: IAutoscalingConfig = {
   autoscalingEnabled: true,
   initialExecutors: 2,
   minExecutors: 2,
-  maxExecutors: 10
+  maxExecutors: 1000
 };
 
 export const DEFAULT_METASTORE_CONFIG: IMetastoreConfig = {
@@ -248,7 +251,7 @@ export const formatAutoscalingProperties = (
     },
     {
       label: 'Maximum executors',
-      value: config.maxExecutors ?? 10
+      value: config.maxExecutors ?? 1000
     }
   ];
 };
@@ -693,6 +696,12 @@ export const CreateRuntimeProfileComponent: React.FC<
     useState<boolean>(true);
   const [isRuntimeConfigDrawerOpen, setIsRuntimeConfigDrawerOpen] =
     useState<boolean>(false);
+  const [isAutoscalingDrawerOpen, setIsAutoscalingDrawerOpen] =
+    useState<boolean>(false);
+  const [isSessionLifecycleDrawerOpen, setIsSessionLifecycleDrawerOpen] =
+    useState<boolean>(false);
+  const [isOtherCustomizationDrawerOpen, setIsOtherCustomizationDrawerOpen] =
+    useState<boolean>(false);
 
   // Default executor machine type:
   // Standard Tier requires memory per core <= 7,424 MB (including 40% memoryOverhead), so standard-4 (16 GB / 4 cores)
@@ -743,22 +752,24 @@ export const CreateRuntimeProfileComponent: React.FC<
           ...(initialExecutorDiskConfig || {})
         }
     );
-  const [autoscalingConfig] = useState<IAutoscalingConfig>(
-    initialAutoscalingConfig || DEFAULT_AUTOSCALING_CONFIG
-  );
+  const [autoscalingConfig, setAutoscalingConfig] =
+    useState<IAutoscalingConfig>(
+      initialAutoscalingConfig || DEFAULT_AUTOSCALING_CONFIG
+    );
   const [metastoreConfig] = useState<IMetastoreConfig>(
     initialMetastoreConfig || DEFAULT_METASTORE_CONFIG
   );
   const [networkAndSecurityConfig] = useState<INetworkAndSecurityConfig>(
     initialNetworkAndSecurityConfig || DEFAULT_NETWORK_SECURITY_CONFIG
   );
-  const [sessionLifecycleConfig] = useState<ISessionLifecycleConfig>(
-    initialSessionLifecycleConfig || DEFAULT_SESSION_LIFECYCLE_CONFIG
-  );
-  const [sparkProperties] = useState<SparkProperties>(
+  const [sessionLifecycleConfig, setSessionLifecycleConfig] =
+    useState<ISessionLifecycleConfig>(
+      initialSessionLifecycleConfig || DEFAULT_SESSION_LIFECYCLE_CONFIG
+    );
+  const [sparkProperties, setSparkProperties] = useState<SparkProperties>(
     initialSparkProperties || DEFAULT_SPARK_PROPERTIES
   );
-  const [labels] = useState<ProfileLabels>(
+  const [labels, setLabels] = useState<ProfileLabels>(
     initialLabels || DEFAULT_PROFILE_LABELS
   );
 
@@ -1413,10 +1424,8 @@ export const CreateRuntimeProfileComponent: React.FC<
                 {/* Section 3: Autoscaling */}
                 <AutoscalingSection
                   config={autoscalingConfig}
-                  isEditDisabled={true}
-                  onEdit={() => {
-                    // TODO - add the edit functionality for this section
-                  }}
+                  isEditDisabled={false}
+                  onEdit={() => setIsAutoscalingDrawerOpen(true)}
                 />
 
                 {/* Section 4: Metastore */}
@@ -1440,20 +1449,16 @@ export const CreateRuntimeProfileComponent: React.FC<
                 {/* Section 6: Session Lifecycle */}
                 <SessionLifecycleSection
                   config={sessionLifecycleConfig}
-                  isEditDisabled={true}
-                  onEdit={() => {
-                    // TODO - add the edit functionality for this section
-                  }}
+                  isEditDisabled={false}
+                  onEdit={() => setIsSessionLifecycleDrawerOpen(true)}
                 />
 
                 {/* Section 7: Other Customization */}
                 <OtherCustomizationSection
                   sparkProperties={sparkProperties}
                   labels={labels}
-                  isEditDisabled={true}
-                  onEdit={() => {
-                    // TODO - add the edit functionality for this section
-                  }}
+                  isEditDisabled={false}
+                  onEdit={() => setIsOtherCustomizationDrawerOpen(true)}
                 />
               </div>
             )}
@@ -1486,6 +1491,38 @@ export const CreateRuntimeProfileComponent: React.FC<
         onSave={updatedConfig => {
           setRuntimeEnvironmentConfig(updatedConfig);
           setIsRuntimeConfigDrawerOpen(false);
+        }}
+      />
+
+      <AutoscalingEditDrawer
+        open={isAutoscalingDrawerOpen}
+        config={autoscalingConfig}
+        onClose={() => setIsAutoscalingDrawerOpen(false)}
+        onSave={updatedConfig => {
+          setAutoscalingConfig(updatedConfig);
+          setIsAutoscalingDrawerOpen(false);
+        }}
+      />
+
+      <SessionLifecycleEditDrawer
+        open={isSessionLifecycleDrawerOpen}
+        config={sessionLifecycleConfig}
+        onClose={() => setIsSessionLifecycleDrawerOpen(false)}
+        onSave={updatedConfig => {
+          setSessionLifecycleConfig(updatedConfig);
+          setIsSessionLifecycleDrawerOpen(false);
+        }}
+      />
+
+      <OtherCustomizationEditDrawer
+        open={isOtherCustomizationDrawerOpen}
+        sparkProperties={sparkProperties}
+        labels={labels}
+        onClose={() => setIsOtherCustomizationDrawerOpen(false)}
+        onSave={(updatedSparkProperties, updatedLabels) => {
+          setSparkProperties(updatedSparkProperties);
+          setLabels(updatedLabels);
+          setIsOtherCustomizationDrawerOpen(false);
         }}
       />
     </div>
@@ -1521,4 +1558,11 @@ export class CreateRuntimeProfile extends DataprocWidget {
   }
 }
 
-export { SectionDetail, RuntimeEnvironmentEditDrawer, RUNTIME_VERSION_OPTIONS };
+export {
+  SectionDetail,
+  RuntimeEnvironmentEditDrawer,
+  AutoscalingEditDrawer,
+  SessionLifecycleEditDrawer,
+  OtherCustomizationEditDrawer,
+  RUNTIME_VERSION_OPTIONS
+};
