@@ -46,7 +46,7 @@ import '../../style/runtimeProfile.css';
 import {
   RuntimeEnvironmentEditDrawer,
   RUNTIME_VERSION_OPTIONS
-} from './runtimeConfigEditDrawers';
+} from './runtimeProfileEditDrawers';
 import { DATAPROC_TIER_DOC, LIGHTNING_ENGINE_DOC } from '../utils/const';
 import {
   ExecutorCategoryType,
@@ -1483,7 +1483,7 @@ export const CreateRuntimeProfileComponent: React.FC<
         open={isRuntimeConfigDrawerOpen}
         config={runtimeEnvironmentConfig}
         onClose={() => setIsRuntimeConfigDrawerOpen(false)}
-        onSave={updatedConfig => {
+        onSave={(updatedConfig: IRuntimeEnvironmentConfig) => {
           setRuntimeEnvironmentConfig(updatedConfig);
           setIsRuntimeConfigDrawerOpen(false);
         }}
