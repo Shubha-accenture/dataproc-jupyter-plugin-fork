@@ -37,6 +37,7 @@ import {
   DriverAndExecutorSection,
   AutoscalingSection,
   MetastoreSection,
+  MetastoreEditDrawer,
   NetworkSecuritySection,
   SessionLifecycleSection,
   SparkPropertiesSection,
@@ -165,6 +166,7 @@ describe('CreateRuntimeProfile Component & Service', () => {
 
   it('should format metastore config according to IMetastoreConfig interface', () => {
     expect(MetastoreSection).toBeDefined();
+    expect(MetastoreEditDrawer).toBeDefined();
     const formatted = formatMetastoreProperties(DEFAULT_METASTORE_CONFIG);
     expect(formatted).toHaveLength(2);
     expect(formatted.find(p => p.label === 'Metastore')?.value).toBe(
@@ -172,6 +174,30 @@ describe('CreateRuntimeProfile Component & Service', () => {
     );
     expect(formatted.find(p => p.label === 'Hive endpoint')?.value).toBe(
       'Disabled'
+    );
+
+    // Lakehouse with specific project ID
+    const formattedWithProject = formatMetastoreProperties({
+      metastore: 'Lakehouse runtime catalog',
+      metastoreType: 'lakehouse',
+      projectId: 'frontrow-team',
+      hiveEndpointEnabled: true
+    });
+    expect(formattedWithProject.find(p => p.label === 'Metastore')?.value).toBe(
+      'Lakehouse runtime catalog (project: frontrow-team)'
+    );
+    expect(
+      formattedWithProject.find(p => p.label === 'Hive endpoint')?.value
+    ).toBe('Enabled');
+
+    // Dataproc Metastore
+    const formattedDpms = formatMetastoreProperties({
+      metastoreType: 'dataproc',
+      dataprocMetastoreService:
+        'projects/test-proj/locations/us-central1/services/dpms-service'
+    });
+    expect(formattedDpms.find(p => p.label === 'Metastore')?.value).toBe(
+      'projects/test-proj/locations/us-central1/services/dpms-service'
     );
 
     expect(formatMetastoreProperties(undefined)).toEqual([]);
@@ -379,9 +405,14 @@ describe('CreateRuntimeProfile Component & Service', () => {
     expect(created.tier).toBe('Premium');
     expect(created.executorConfig?.executorType).toBe('accelerated');
     expect(created.executorConfig?.machineType).toBe('g2-standard-4');
-    expect(created.driverAndExecutorConfiguration?.driverMachineType).toBe('Standard-4');
-    expect(created.driverAndExecutorConfiguration?.driverDisk).toBe('standard persistent disk');
-    expect(created.driverAndExecutorConfiguration?.executorDisk).toBe('Standard persistent disk (HDD), 100 GB');
+    expect(created.driverAndExecutorConfiguration?.driverMachineType).toBe(
+      'Standard-4'
+    );
+    expect(created.driverAndExecutorConfiguration?.driverDisk).toBe(
+      'standard persistent disk'
+    );
+    expect(created.driverAndExecutorConfiguration?.executorDisk).toBe(
+      'Standard persistent disk (HDD), 100 GB'
+    );
   });
 });
-

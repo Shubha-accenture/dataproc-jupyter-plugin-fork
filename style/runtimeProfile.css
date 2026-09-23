@@ -269,12 +269,18 @@ body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-main-wrapper {
   background-color: var(--jp-layout-color1);
 }
 
-body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-container .MuiInputLabel-outlined.MuiInputLabel-shrink,
-body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-container .MuiFormLabel-root.MuiInputLabel-shrink {
+body[data-jp-theme-name='JupyterLab Dark']
+  .runtime-profile-container
+  .MuiInputLabel-outlined.MuiInputLabel-shrink,
+body[data-jp-theme-name='JupyterLab Dark']
+  .runtime-profile-container
+  .MuiFormLabel-root.MuiInputLabel-shrink {
   background-color: var(--jp-layout-color1) !important;
 }
 
-body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-container .MuiOutlinedInput-root {
+body[data-jp-theme-name='JupyterLab Dark']
+  .runtime-profile-container
+  .MuiOutlinedInput-root {
   background-color: var(--jp-layout-color0);
 }
 
@@ -288,7 +294,6 @@ body[data-jp-theme-name='JupyterLab Dark'] .node-config-card.selected {
   background-color: rgba(138, 180, 248, 0.08);
 }
 
-
 body[data-jp-theme-name='JupyterLab Dark'] .node-config-card.disabled {
   background-color: var(--jp-layout-color2);
   border-color: var(--jp-border-color1);
@@ -300,4 +305,61 @@ body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-divider {
 
 body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-learn-more {
   color: #8ab4f8;
+}
+
+.metastore-cards-container {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.metastore-card {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--jp-border-color1, #dadce0);
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  background-color: var(--jp-layout-color0, #ffffff);
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out,
+    background-color 0.15s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.metastore-card:hover {
+  border-color: #1a73e8;
+}
+
+.metastore-card.selected {
+  border: 2px solid #1a73e8;
+  padding: 13px 15px;
+  background-color: rgba(26, 115, 232, 0.04);
+}
+
+.metastore-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--jp-ui-font-color0, #202124);
+  margin-bottom: 4px;
+}
+
+.metastore-card-desc {
+  font-size: 12px;
+  color: var(--jp-ui-font-color2, #5f6368);
+  line-height: 16px;
+}
+
+body[data-jp-theme-name='JupyterLab Dark'] .metastore-card {
+  background-color: var(--jp-layout-color0);
+  border-color: var(--jp-border-color1);
+}
+
+body[data-jp-theme-name='JupyterLab Dark'] .metastore-card.selected {
+  border-color: #8ab4f8;
+  background-color: rgba(138, 180, 248, 0.08);
 }

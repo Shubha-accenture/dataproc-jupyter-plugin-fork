@@ -46,7 +46,8 @@ import '../../style/runtimeProfile.css';
 import {
   RuntimeEnvironmentEditDrawer,
   RUNTIME_VERSION_OPTIONS
-} from './runtimeConfigEditDrawers';
+} from './runtimeProfileEditDrawers';
+import { MetastoreEditDrawer } from './metastoreEditDrawer';
 import { DATAPROC_TIER_DOC, LIGHTNING_ENGINE_DOC } from '../utils/const';
 import {
   ExecutorCategoryType,
@@ -259,10 +260,21 @@ export const formatMetastoreProperties = (
   if (!config) {
     return [];
   }
+  const metastoreLabel =
+    config.metastoreType === 'dataproc'
+      ? config.dataprocMetastoreService ||
+        config.metastore ||
+        'Dataproc Metastore'
+      : config.projectId
+      ? `${config.metastore || 'Lakehouse runtime catalog'} (project: ${
+          config.projectId
+        })`
+      : config.metastore || 'Lakehouse runtime catalog';
+
   return [
     {
       label: 'Metastore',
-      value: config.metastore || 'None'
+      value: metastoreLabel
     },
     {
       label: 'Hive endpoint',
@@ -481,7 +493,7 @@ export const MetastoreSection: React.FC<IMetastoreSectionProps> = ({
   config,
   onEdit,
   showEdit = true,
-  isEditDisabled = true
+  isEditDisabled = false
 }) => {
   const properties = React.useMemo(
     () => formatMetastoreProperties(config),
@@ -693,6 +705,8 @@ export const CreateRuntimeProfileComponent: React.FC<
     useState<boolean>(true);
   const [isRuntimeConfigDrawerOpen, setIsRuntimeConfigDrawerOpen] =
     useState<boolean>(false);
+  const [isMetastoreDrawerOpen, setIsMetastoreDrawerOpen] =
+    useState<boolean>(false);
 
   // Default executor machine type:
   // Standard Tier requires memory per core <= 7,424 MB (including 40% memoryOverhead), so standard-4 (16 GB / 4 cores)
@@ -746,7 +760,7 @@ export const CreateRuntimeProfileComponent: React.FC<
   const [autoscalingConfig] = useState<IAutoscalingConfig>(
     initialAutoscalingConfig || DEFAULT_AUTOSCALING_CONFIG
   );
-  const [metastoreConfig] = useState<IMetastoreConfig>(
+  const [metastoreConfig, setMetastoreConfig] = useState<IMetastoreConfig>(
     initialMetastoreConfig || DEFAULT_METASTORE_CONFIG
   );
   const [networkAndSecurityConfig] = useState<INetworkAndSecurityConfig>(
@@ -843,6 +857,7 @@ export const CreateRuntimeProfileComponent: React.FC<
     control,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting }
   } = useForm<IRuntimeProfileFormData>({
     mode: 'onChange',
@@ -1422,10 +1437,8 @@ export const CreateRuntimeProfileComponent: React.FC<
                 {/* Section 4: Metastore */}
                 <MetastoreSection
                   config={metastoreConfig}
-                  isEditDisabled={true}
-                  onEdit={() => {
-                    // TODO - add the edit functionality for this section
-                  }}
+                  isEditDisabled={false}
+                  onEdit={() => setIsMetastoreDrawerOpen(true)}
                 />
 
                 {/* Section 5: Network and Security */}
@@ -1488,6 +1501,16 @@ export const CreateRuntimeProfileComponent: React.FC<
           setIsRuntimeConfigDrawerOpen(false);
         }}
       />
+      <MetastoreEditDrawer
+        open={isMetastoreDrawerOpen}
+        config={metastoreConfig}
+        region={watch('region')}
+        onClose={() => setIsMetastoreDrawerOpen(false)}
+        onSave={updatedConfig => {
+          setMetastoreConfig(updatedConfig);
+          setIsMetastoreDrawerOpen(false);
+        }}
+      />
     </div>
   );
 };
@@ -1521,4 +1544,9 @@ export class CreateRuntimeProfile extends DataprocWidget {
   }
 }
 
-export { SectionDetail, RuntimeEnvironmentEditDrawer, RUNTIME_VERSION_OPTIONS };
+export {
+  SectionDetail,
+  RuntimeEnvironmentEditDrawer,
+  MetastoreEditDrawer,
+  RUNTIME_VERSION_OPTIONS
+};

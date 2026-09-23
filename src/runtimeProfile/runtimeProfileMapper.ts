@@ -91,7 +91,11 @@ export const extractRuntimeVersion = (
 export const normalizeStagingBucket = (
   stagingBucket?: string
 ): string | undefined => {
-  if (!stagingBucket || stagingBucket.trim() === '' || stagingBucket === 'Auto') {
+  if (
+    !stagingBucket ||
+    stagingBucket.trim() === '' ||
+    stagingBucket === 'Auto'
+  ) {
     return undefined;
   }
   return stagingBucket.trim().replace(/^gs:\/\//, '');
@@ -163,7 +167,11 @@ export const KNOWN_MACHINE_SPECS: Record<string, IMachineSpec> = {
   'g2-standard-4': { cores: 4, memoryGb: 16, acceleratorType: 'l4' },
   'g2-standard-8': { cores: 8, memoryGb: 32, acceleratorType: 'l4' },
   'g2-standard-16': { cores: 16, memoryGb: 64, acceleratorType: 'l4' },
-  'a2-highgpu-1g': { cores: 12, memoryGb: 85, acceleratorType: 'nvidia-tesla-a100' }
+  'a2-highgpu-1g': {
+    cores: 12,
+    memoryGb: 85,
+    acceleratorType: 'nvidia-tesla-a100'
+  }
 };
 
 /**
@@ -351,7 +359,10 @@ export function mapRuntimeProfileToSessionTemplate(
   );
   if (driverDisk.tier && !properties['spark.dataproc.driver.disk.tier']) {
     properties['spark.dataproc.driver.disk.tier'] = driverDisk.tier;
-    if (driverDisk.tier === 'premium' && !properties['spark.dataproc.driver.compute.tier']) {
+    if (
+      driverDisk.tier === 'premium' &&
+      !properties['spark.dataproc.driver.compute.tier']
+    ) {
       properties['spark.dataproc.driver.compute.tier'] = 'premium';
     }
   }
@@ -421,14 +432,51 @@ export function mapRuntimeProfileToSessionTemplate(
     properties['spark.dataproc.executor.disk.size'] = executorDisk.size;
   }
 
-  // BigLake / Lakehouse Metastore properties (matching createRunTime.tsx)
-  if (
+  // BigLake / Lakehouse Metastore properties (matching createRunTime.tsx & go/spark-sep-14-metastore-subtask)
+  const isLakehouse =
+    payload.metastoreConfig?.metastoreType === 'lakehouse' ||
     payload.metastoreConfig?.metastore === 'Lakehouse runtime catalog' ||
-    payload.metastoreConfig?.metastore === 'biglake'
-  ) {
-    properties['spark.sql.catalog.biglake'] =
-      'org.apache.iceberg.spark.SparkCatalog';
-    properties['spark.sql.catalog.biglake.type'] = 'hadoop';
+    payload.metastoreConfig?.metastore === 'biglake';
+
+  if (isLakehouse) {
+    const isIcebergEnabled =
+      payload.metastoreConfig?.icebergRestEndpointEnabled ?? true;
+    const isHiveEnabled = Boolean(payload.metastoreConfig?.hiveEndpointEnabled);
+
+    if (isIcebergEnabled || isHiveEnabled) {
+      const catalogName =
+        payload.metastoreConfig?.catalogName ||
+        payload.metastoreConfig?.catalogId ||
+        'biglake';
+      const catalogId =
+        payload.metastoreConfig?.catalogId ||
+        payload.metastoreConfig?.catalogName ||
+        'biglake';
+
+      const targetCatalogProject =
+        payload.metastoreConfig?.projectId || projectId;
+      const catalogResource = `projects/${targetCatalogProject}/catalogs/${catalogId}`;
+
+      if (isIcebergEnabled) {
+        // Standard Spark Iceberg properties
+        properties[`spark.sql.catalog.${catalogName}`] =
+          'org.apache.iceberg.spark.SparkCatalog';
+        properties[`spark.sql.catalog.${catalogName}.type`] = 'hadoop';
+
+        // NEW backend property: dataproc.lakehouse.catalog.[catalogName] = projects/[projectId]/catalogs/[catalogId]
+        properties[`dataproc.lakehouse.catalog.${catalogName}`] =
+          catalogResource;
+
+        // OLD backend property for backward compatibility
+        properties['dataproc.lakehouse.defaultCatalog'] = catalogResource;
+      }
+
+      if (isHiveEnabled) {
+        // Hive endpoint property for Lakehouse catalog
+        properties[`dataproc.lakehouse.catalog.${catalogName}`] =
+          catalogResource;
+      }
+    }
   }
 
   // Runtime Config
@@ -496,7 +544,9 @@ export function mapRuntimeProfileToSessionTemplate(
     payload.networkAndSecurityConfig?.executionIdentity === 'user_account';
 
   const executionConfig: NonNullable<
-    NonNullable<ISessionTemplateApiPayload['environmentConfig']>['executionConfig']
+    NonNullable<
+      ISessionTemplateApiPayload['environmentConfig']
+    >['executionConfig']
   > = {
     ...(subnetworkUri && { subnetworkUri }),
     ...(networkTags && { networkTags }),
@@ -513,15 +563,18 @@ export function mapRuntimeProfileToSessionTemplate(
 
   // Peripherals Config (Metastore)
   const metastoreService =
-    payload.metastoreConfig?.metastore &&
+    payload.metastoreConfig?.dataprocMetastoreService ||
+    (payload.metastoreConfig?.metastore &&
     payload.metastoreConfig.metastore !== 'None' &&
     payload.metastoreConfig.metastore !== 'Lakehouse runtime catalog' &&
     payload.metastoreConfig.metastore !== 'biglake'
       ? payload.metastoreConfig.metastore
-      : undefined;
+      : undefined);
 
   const peripheralsConfig: NonNullable<
-    NonNullable<ISessionTemplateApiPayload['environmentConfig']>['peripheralsConfig']
+    NonNullable<
+      ISessionTemplateApiPayload['environmentConfig']
+    >['peripheralsConfig']
   > = {
     ...(metastoreService && { metastoreService })
   };
