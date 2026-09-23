@@ -66,7 +66,12 @@ import {
   MOCK_GENERAL_MACHINE_TYPES,
   RuntimeProfileService
 } from './runtimeProfileService';
-import { DATAPROC_TIER_DOC, LIGHTNING_ENGINE_DOC } from '../utils/const';
+import {
+  DATAPROC_TIER_DOC,
+  LIGHTNING_ENGINE_DOC,
+  TIER_STANDARD_INFO_BANNER,
+  EXECUTOR_ACCELERATED_SHAPES_SUBHEADING
+} from '../utils/const';
 
 describe('CreateRuntimeProfile Component & Service', () => {
   let mockService: RuntimeProfileService;
@@ -284,19 +289,36 @@ describe('CreateRuntimeProfile Component & Service', () => {
 
   it('should export valid machine type mock collections and documentation URLs', () => {
     expect(MOCK_GENERAL_MACHINE_TYPES.length).toBeGreaterThan(0);
-    expect(MOCK_GENERAL_MACHINE_TYPES.some(m => m.name === 'highmem-4')).toBe(true);
-    expect(MOCK_GENERAL_MACHINE_TYPES.some(m => m.name === 'standard-4')).toBe(true);
+    expect(MOCK_GENERAL_MACHINE_TYPES.some(m => m.name === 'highmem-4')).toBe(
+      true
+    );
+    expect(MOCK_GENERAL_MACHINE_TYPES.some(m => m.name === 'standard-4')).toBe(
+      true
+    );
     expect(MOCK_GENERAL_MACHINE_TYPES[0].category).toBe('general');
 
     expect(MOCK_ACCELERATED_MACHINE_TYPES.length).toBeGreaterThan(0);
     expect(MOCK_ACCELERATED_MACHINE_TYPES[0].name).toBe('l4-4');
     expect(MOCK_ACCELERATED_MACHINE_TYPES[0].category).toBe('accelerated');
+    expect(
+      MOCK_ACCELERATED_MACHINE_TYPES.filter(m => m.name.startsWith('l4')).length
+    ).toBeGreaterThan(0);
+    expect(
+      MOCK_ACCELERATED_MACHINE_TYPES.filter(m => m.name.startsWith('a100'))
+        .length
+    ).toBeGreaterThan(0);
 
     expect(DATAPROC_TIER_DOC).toBe(
       'https://cloud.google.com/dataproc-serverless/docs/concepts/pricing'
     );
     expect(LIGHTNING_ENGINE_DOC).toBe(
       'https://cloud.google.com/dataproc-serverless/docs/guides/lightning-engine'
+    );
+    expect(TIER_STANDARD_INFO_BANNER).toBe(
+      'Standard tier will only affect batch execution. Interactive sessions always execute on premium tier.'
+    );
+    expect(EXECUTOR_ACCELERATED_SHAPES_SUBHEADING).toBe(
+      'Shapes with GPUs attached, for training and inference workloads'
     );
   });
 
@@ -371,9 +393,14 @@ describe('CreateRuntimeProfile Component & Service', () => {
     expect(created.tier).toBe('Premium');
     expect(created.executorConfig?.executorType).toBe('accelerated');
     expect(created.executorConfig?.machineType).toBe('g2-standard-4');
-    expect(created.driverAndExecutorConfiguration?.driverMachineType).toBe('Standard-4');
-    expect(created.driverAndExecutorConfiguration?.driverDisk).toBe('standard persistent disk');
-    expect(created.driverAndExecutorConfiguration?.executorDisk).toBe('Standard persistent disk (HDD), 100 GB');
+    expect(created.driverAndExecutorConfiguration?.driverMachineType).toBe(
+      'Standard-4'
+    );
+    expect(created.driverAndExecutorConfiguration?.driverDisk).toBe(
+      'standard persistent disk'
+    );
+    expect(created.driverAndExecutorConfiguration?.executorDisk).toBe(
+      'Standard persistent disk (HDD), 100 GB'
+    );
   });
 });
-

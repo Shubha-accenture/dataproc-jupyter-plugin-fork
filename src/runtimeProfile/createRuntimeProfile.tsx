@@ -28,6 +28,7 @@ import {
   FormControl,
   FormControlLabel,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   SelectChangeEvent,
@@ -50,6 +51,7 @@ import {
   TIER_PREMIUM_DESC,
   TIER_STANDARD_TITLE,
   TIER_STANDARD_DESC,
+  TIER_STANDARD_INFO_BANNER,
   LIGHTNING_ENGINE_CHECKBOX_LABEL,
   LIGHTNING_ENGINE_CHECKBOX_DESC,
   EXECUTOR_CONFIG_SECTION_TITLE,
@@ -61,7 +63,8 @@ import {
   EXECUTOR_CATEGORY_ACCELERATED_SUB1,
   EXECUTOR_CATEGORY_ACCELERATED_SUB2,
   EXECUTOR_CATEGORY_ACCELERATED_SUB3,
-  EXECUTOR_SHAPES_SUBHEADING
+  EXECUTOR_SHAPES_SUBHEADING,
+  EXECUTOR_ACCELERATED_SHAPES_SUBHEADING
 } from '../utils/const';
 import {
   ExecutorCategoryType,
@@ -107,6 +110,21 @@ const iconExpandMore = new LabIcon({
   name: 'launcher:expand-more-icon',
   svgstr: expandMoreIcon
 });
+
+const InfoCircleIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+      fill="#1a73e8"
+    />
+  </svg>
+);
 
 export const DEFAULT_RUNTIME_ENVIRONMENT_CONFIG: IRuntimeEnvironmentConfig = {
   runtimeProfileId: 'Name of the runtime profile',
@@ -760,7 +778,6 @@ export const CreateRuntimeProfileComponent: React.FC<
   const handleTierChange = (selectedTier: string) => {
     setTier(selectedTier);
     if (selectedTier === 'Standard') {
-      setLightningEngineEnabled(false);
       if (executorCategory === 'accelerated') {
         setExecutorCategory('general');
         setExecutorType('highmem-4');
@@ -776,7 +793,7 @@ export const CreateRuntimeProfileComponent: React.FC<
     if (category === 'general') {
       setExecutorType('highmem-4');
     } else if (category === 'accelerated') {
-      setExecutorType('g2-standard-4');
+      setExecutorType('l4-4');
     }
   };
 
@@ -869,19 +886,21 @@ export const CreateRuntimeProfileComponent: React.FC<
 
   const onSubmit = async (data: IRuntimeProfileFormData) => {
     try {
+      const isLightningEngineActive =
+        tier === 'Premium' && Boolean(lightningEngineEnabled);
       const payload: ICreateRuntimeProfilePayload = {
         displayName: data.displayName.trim(),
         region: data.region,
         description: data.description.trim() || undefined,
         tier,
-        lightningEngineEnabled,
+        lightningEngineEnabled: isLightningEngineActive,
         executorConfig: {
           executorType: executorCategory,
           machineType: executorType
         },
         runtimeEnvironmentConfig: {
           ...runtimeEnvironmentConfig,
-          lightningEngineEnabled
+          lightningEngineEnabled: isLightningEngineActive
         },
         executorAndDriverConfig: activeDriverAndExecutorConfig,
         driverAndExecutorConfiguration: activeDriverAndExecutorConfig,
@@ -1030,23 +1049,7 @@ export const CreateRuntimeProfileComponent: React.FC<
               {TIER_SECTION_TITLE}
             </div>
             <div className="runtime-profile-section-subtitle">
-              {TIER_SECTION_SUBTITLE}{' '}
-              {/* <span
-                  className="runtime-profile-learn-more"
-                  onClick={e => {
-                    e.preventDefault();
-                    window.open(DATAPROC_TIER_DOC, '_blank');
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      window.open(DATAPROC_TIER_DOC, '_blank');
-                    }
-                  }}
-                >
-                  Learn more
-                </span> */}
+              {TIER_SECTION_SUBTITLE}
             </div>
 
             {/* Tier Cards: Premium & Standard */}
@@ -1094,53 +1097,57 @@ export const CreateRuntimeProfileComponent: React.FC<
               </div>
             </div>
 
-            {/* Checkbox: Enable Lightning Engine */}
-            <div className="runtime-profile-checkbox-section">
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={lightningEngineEnabled}
-                    disabled={tier === 'Standard'}
-                    onChange={e => setLightningEngineEnabled(e.target.checked)}
-                    name="lightningEngine"
-                    color="primary"
-                  />
-                }
-                label={
+            {/* Premium: Enable Lightning Engine Checkbox / Standard: Info Banner */}
+            {tier === 'Premium' ? (
+              <div className="runtime-profile-checkbox-section">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={lightningEngineEnabled}
+                      onChange={e =>
+                        setLightningEngineEnabled(e.target.checked)
+                      }
+                      name="lightningEngine"
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <span className="runtime-profile-checkbox-title">
+                      {LIGHTNING_ENGINE_CHECKBOX_LABEL}
+                    </span>
+                  }
+                />
+                <div className="runtime-profile-checkbox-desc">
+                  {LIGHTNING_ENGINE_CHECKBOX_DESC}{' '}
                   <span
-                    className={`runtime-profile-checkbox-title ${
-                      tier === 'Standard' ? 'disabled-text' : ''
-                    }`}
-                  >
-                    {LIGHTNING_ENGINE_CHECKBOX_LABEL}
-                  </span>
-                }
-              />
-              <div
-                className={`runtime-profile-checkbox-desc ${
-                  tier === 'Standard' ? 'disabled-text' : ''
-                }`}
-              >
-                {LIGHTNING_ENGINE_CHECKBOX_DESC}{' '}
-                <span
-                  className="runtime-profile-learn-more"
-                  onClick={e => {
-                    e.preventDefault();
-                    window.open(LIGHTNING_ENGINE_DOC, '_blank');
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    className="runtime-profile-learn-more"
+                    onClick={e => {
+                      e.preventDefault();
                       window.open(LIGHTNING_ENGINE_DOC, '_blank');
-                    }
-                  }}
-                >
-                  Learn more
-                </span>
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        window.open(LIGHTNING_ENGINE_DOC, '_blank');
+                      }
+                    }}
+                  >
+                    Learn more
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="runtime-profile-tier-info-banner">
+                <div className="runtime-profile-tier-info-icon">
+                  <InfoCircleIcon size={20} />
+                </div>
+                <div className="runtime-profile-tier-info-text">
+                  {TIER_STANDARD_INFO_BANNER}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Section: Executor configuration */}
@@ -1218,7 +1225,9 @@ export const CreateRuntimeProfileComponent: React.FC<
 
             {/* Machine Type Subheading & Select */}
             <div className="machine-type-subheading">
-              {EXECUTOR_SHAPES_SUBHEADING}
+              {executorCategory === 'accelerated'
+                ? EXECUTOR_ACCELERATED_SHAPES_SUBHEADING
+                : EXECUTOR_SHAPES_SUBHEADING}
             </div>
             <div className="machine-type-select-wrapper">
               <FormControl size="small" fullWidth variant="outlined">
@@ -1235,11 +1244,87 @@ export const CreateRuntimeProfileComponent: React.FC<
                   }
                   notched
                 >
-                  {machineTypes.map(m => (
-                    <MenuItem key={m.name} value={m.name}>
-                      {m.label}
-                    </MenuItem>
-                  ))}
+                  {executorCategory === 'accelerated'
+                    ? (() => {
+                        const l4Types = machineTypes.filter(
+                          m =>
+                            m.acceleratorType === 'l4' ||
+                            m.name.toLowerCase().startsWith('l4')
+                        );
+                        const a100Types = machineTypes.filter(
+                          m =>
+                            m.acceleratorType?.startsWith('a100') ||
+                            m.name.toLowerCase().startsWith('a100')
+                        );
+                        const otherTypes = machineTypes.filter(
+                          m => !l4Types.includes(m) && !a100Types.includes(m)
+                        );
+                        const items: React.JSX.Element[] = [];
+
+                        if (l4Types.length > 0) {
+                          items.push(
+                            <ListSubheader
+                              key="header-l4"
+                              className="machine-type-group-header"
+                              disableSticky
+                            >
+                              L4
+                            </ListSubheader>
+                          );
+                          l4Types.forEach(m => {
+                            items.push(
+                              <MenuItem key={m.name} value={m.name}>
+                                {m.label}
+                              </MenuItem>
+                            );
+                          });
+                        }
+
+                        if (a100Types.length > 0) {
+                          items.push(
+                            <ListSubheader
+                              key="header-a100"
+                              className="machine-type-group-header"
+                              disableSticky
+                            >
+                              A100
+                            </ListSubheader>
+                          );
+                          a100Types.forEach(m => {
+                            items.push(
+                              <MenuItem key={m.name} value={m.name}>
+                                {m.label}
+                              </MenuItem>
+                            );
+                          });
+                        }
+
+                        if (otherTypes.length > 0) {
+                          items.push(
+                            <ListSubheader
+                              key="header-other"
+                              className="machine-type-group-header"
+                              disableSticky
+                            >
+                              Other
+                            </ListSubheader>
+                          );
+                          otherTypes.forEach(m => {
+                            items.push(
+                              <MenuItem key={m.name} value={m.name}>
+                                {m.label}
+                              </MenuItem>
+                            );
+                          });
+                        }
+
+                        return items;
+                      })()
+                    : machineTypes.map(m => (
+                        <MenuItem key={m.name} value={m.name}>
+                          {m.label}
+                        </MenuItem>
+                      ))}
                 </Select>
               </FormControl>
             </div>

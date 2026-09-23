@@ -264,17 +264,59 @@
   white-space: nowrap;
 }
 
+.runtime-profile-tier-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #e8f0fe;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: -12px;
+  margin-bottom: 24px;
+  max-width: 620px;
+  box-sizing: border-box;
+}
+
+.runtime-profile-tier-info-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.runtime-profile-tier-info-text {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--jp-ui-font-color0, #202124);
+}
+
+.MuiListSubheader-root.machine-type-group-header {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 24px;
+  text-transform: uppercase;
+  color: var(--jp-ui-font-color2, #5f6368);
+  background-color: var(--jp-layout-color1, #ffffff);
+  pointer-events: none;
+}
+
 /* Dark mode overrides */
 body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-main-wrapper {
   background-color: var(--jp-layout-color1);
 }
 
-body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-container .MuiInputLabel-outlined.MuiInputLabel-shrink,
-body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-container .MuiFormLabel-root.MuiInputLabel-shrink {
+body[data-jp-theme-name='JupyterLab Dark']
+  .runtime-profile-container
+  .MuiInputLabel-outlined.MuiInputLabel-shrink,
+body[data-jp-theme-name='JupyterLab Dark']
+  .runtime-profile-container
+  .MuiFormLabel-root.MuiInputLabel-shrink {
   background-color: var(--jp-layout-color1) !important;
 }
 
-body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-container .MuiOutlinedInput-root {
+body[data-jp-theme-name='JupyterLab Dark']
+  .runtime-profile-container
+  .MuiOutlinedInput-root {
   background-color: var(--jp-layout-color0);
 }
 
@@ -299,4 +341,18 @@ body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-divider {
 
 body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-learn-more {
   color: #8ab4f8;
+}
+
+body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-tier-info-banner {
+  background-color: #283347;
+}
+
+body[data-jp-theme-name='JupyterLab Dark'] .runtime-profile-tier-info-text {
+  color: #e8eaed;
+}
+
+body[data-jp-theme-name='JupyterLab Dark']
+  .MuiListSubheader-root.machine-type-group-header {
+  background-color: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color2);
 }
