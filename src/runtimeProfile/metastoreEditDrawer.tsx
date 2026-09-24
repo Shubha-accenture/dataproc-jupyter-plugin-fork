@@ -57,7 +57,7 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
 }) => {
   const [metastoreType, setMetastoreType] = useState<MetastoreType>(
     config.metastoreType ||
-      (config.metastore === 'Dataproc Metastore' ? 'dataproc' : 'lakehouse')
+    (config.metastore === 'Dataproc Metastore' ? 'dataproc' : 'lakehouse')
   );
 
   const [projectId, setProjectId] = useState<string>(config.projectId || '');
@@ -75,8 +75,7 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
   const [catalogsList, setCatalogsList] = useState<string[]>([]);
   const [isLoadingCatalogs, setIsLoadingCatalogs] = useState<boolean>(false);
 
-  // NOTE: Awaiting tech senior confirmation on default catalog naming convention.
-  // Currently pre-filling standard-lh-catalog-${region} matching screenshot 1.
+  // Pre-fills standard-lh-catalog-${region} matching Cloud console Lakehouse defaults
   const [catalogName, setCatalogName] = useState<string>(
     config.catalogName || `standard-lh-catalog-${region || 'us-central1'}`
   );
@@ -88,8 +87,13 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
   const [isLoadingDpmsServices, setIsLoadingDpmsServices] =
     useState<boolean>(false);
 
-  // Hive Endpoint checkbox
-  // TODO: Check with tech senior on Hive Endpoint Spark / backend properties mapping
+  // Hive Endpoint configuration:
+  // When a user unchecks "Iceberg REST Endpoint" and enables only "Hive Endpoint",
+  // Hive reuses the configured Project ID and default catalog selection from the drawer.
+  // Under the hood, Managed Service for Apache Spark registers this Lakehouse
+  // catalog via `dataproc.lakehouse.catalog.[catalogName] = projects/[projectId]/catalogs/[catalogId]`.
+  // Per go/spark-sep-14-metastore-subtask (Task 5), `dataproc.lakehouse.defaultCatalog`
+  // is strictly reserved for Iceberg defaults and is not set in a Hive-only flow.
   const [hiveEndpointEnabled, setHiveEndpointEnabled] = useState<boolean>(
     Boolean(config.hiveEndpointEnabled)
   );
@@ -175,6 +179,31 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
     onSave(updated);
   };
 
+  const isSaveDisabled = React.useMemo(() => {
+    if (metastoreType === 'lakehouse') {
+      if (!icebergRestEndpointEnabled && !hiveEndpointEnabled) {
+        return true;
+      }
+      if (icebergRestEndpointEnabled) {
+        if (catalogSelectionMode === 'new' && !catalogName.trim()) {
+          return true;
+        }
+        if (catalogSelectionMode === 'existing' && !catalogId.trim()) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return false;
+  }, [
+    metastoreType,
+    icebergRestEndpointEnabled,
+    hiveEndpointEnabled,
+    catalogSelectionMode,
+    catalogName,
+    catalogId
+  ]);
+
   return (
     <>
       <EditDrawer
@@ -183,6 +212,7 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
         subtitle="Choose the metastore that manages your dataset. By default, a runtime profile will use the Lakehouse runtime catalog in the same project as the runtime profile, but you can choose a Lakehouse runtime catalog in a different project or a Dataproc Metastore instance."
         onClose={onClose}
         onSave={handleSave}
+        isSaveDisabled={isSaveDisabled}
       >
         <div className="edit-drawer-field-group">
           <div className="runtime-profile-section-title">
@@ -191,9 +221,8 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
 
           <div className="metastore-cards-container">
             <div
-              className={`metastore-card ${
-                metastoreType === 'lakehouse' ? 'selected' : ''
-              }`}
+              className={`metastore-card ${metastoreType === 'lakehouse' ? 'selected' : ''
+                }`}
               onClick={() => setMetastoreType('lakehouse')}
               role="button"
               tabIndex={0}
@@ -213,9 +242,8 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
             </div>
 
             <div
-              className={`metastore-card ${
-                metastoreType === 'dataproc' ? 'selected' : ''
-              }`}
+              className={`metastore-card ${metastoreType === 'dataproc' ? 'selected' : ''
+                }`}
               onClick={() => setMetastoreType('dataproc')}
               role="button"
               tabIndex={0}
@@ -476,7 +504,6 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
               </div>
             </div>
 
-            {/* TODO: Check with senior if checkbox needs to be added or not */}
           </>
         )}
       </EditDrawer>

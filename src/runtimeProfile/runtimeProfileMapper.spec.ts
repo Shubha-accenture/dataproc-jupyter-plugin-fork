@@ -391,9 +391,10 @@ describe('runtimeProfileMapper', () => {
         props?.['spark.sql.catalog.standard-lh-catalog-us-central1.type']
       ).toBe('hadoop');
 
-      // Dataproc Lakehouse properties
+      // Dataproc Lakehouse properties (Task 2 & 4)
+      expect(props?.['spark.dataproc.lakehouse.project']).toBe('test-project');
       expect(props?.['dataproc.lakehouse.defaultCatalog']).toBe(
-        'projects/test-project/catalogs/standard-lh-catalog-us-central1'
+        'standard-lh-catalog-us-central1'
       );
       expect(
         props?.['dataproc.lakehouse.catalog.standard-lh-catalog-us-central1']
@@ -421,6 +422,7 @@ describe('runtimeProfileMapper', () => {
       );
 
       const props = result.runtimeConfig?.properties;
+      expect(props?.['spark.dataproc.lakehouse.project']).toBe('custom-project');
       expect(props?.['dataproc.lakehouse.catalog.my-hive-catalog']).toBe(
         'projects/custom-project/catalogs/my-hive-catalog'
       );
@@ -430,6 +432,36 @@ describe('runtimeProfileMapper', () => {
       expect(props?.['spark.sql.catalog.my-hive-catalog']).toBe(
         'org.apache.iceberg.spark.SparkCatalog'
       );
+    });
+
+    it('should map Hive-only configuration without defaultCatalog or Iceberg properties', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'Hive Only Profile',
+        region: 'us-central1',
+        metastoreConfig: {
+          metastore: 'Lakehouse runtime catalog',
+          metastoreType: 'lakehouse',
+          catalogSelectionMode: 'existing',
+          catalogId: 'shared-hive-catalog',
+          projectId: 'analytics-prod',
+          icebergRestEndpointEnabled: false,
+          hiveEndpointEnabled: true
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      const props = result.runtimeConfig?.properties;
+      expect(props?.['spark.dataproc.lakehouse.project']).toBe('analytics-prod');
+      expect(props?.['dataproc.lakehouse.catalog.shared-hive-catalog']).toBe(
+        'projects/analytics-prod/catalogs/shared-hive-catalog'
+      );
+      expect(props?.['dataproc.lakehouse.defaultCatalog']).toBeUndefined();
+      expect(props?.['spark.sql.catalog.shared-hive-catalog']).toBeUndefined();
     });
 
     it('should map Dataproc Metastore config with dataprocMetastoreService to peripheralsConfig', () => {

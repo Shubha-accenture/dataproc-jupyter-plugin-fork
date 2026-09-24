@@ -444,36 +444,63 @@ export function mapRuntimeProfileToSessionTemplate(
     const isHiveEnabled = Boolean(payload.metastoreConfig?.hiveEndpointEnabled);
 
     if (isIcebergEnabled || isHiveEnabled) {
-      const catalogName =
-        payload.metastoreConfig?.catalogName ||
-        payload.metastoreConfig?.catalogId ||
-        'biglake';
+      const targetCatalogProject =
+        payload.metastoreConfig?.projectId || projectId;
+
+      // Task 2: Autoload (spark.dataproc.lakehouse.project=[projectId])
+      if (targetCatalogProject) {
+        properties['spark.dataproc.lakehouse.project'] = targetCatalogProject;
+      }
+
+      const isExisting =
+        payload.metastoreConfig?.catalogSelectionMode === 'existing';
       const catalogId =
         payload.metastoreConfig?.catalogId ||
         payload.metastoreConfig?.catalogName ||
         'biglake';
+      const catalogName =
+        payload.metastoreConfig?.catalogName ||
+        payload.metastoreConfig?.catalogId ||
+        `standard-lh-catalog-${targetRegion}`;
 
-      const targetCatalogProject =
-        payload.metastoreConfig?.projectId || projectId;
       const catalogResource = `projects/${targetCatalogProject}/catalogs/${catalogId}`;
 
+      // Task 3 & 4: Iceberg REST Endpoint defaults
       if (isIcebergEnabled) {
-        // Standard Spark Iceberg properties
-        properties[`spark.sql.catalog.${catalogName}`] =
-          'org.apache.iceberg.spark.SparkCatalog';
-        properties[`spark.sql.catalog.${catalogName}.type`] = 'hadoop';
+        const effectiveName = isExisting ? catalogId : catalogName;
 
-        // NEW backend property: dataproc.lakehouse.catalog.[catalogName] = projects/[projectId]/catalogs/[catalogId]
-        properties[`dataproc.lakehouse.catalog.${catalogName}`] =
+        // Standard Spark Iceberg properties
+        properties[`spark.sql.catalog.${effectiveName}`] =
+          'org.apache.iceberg.spark.SparkCatalog';
+        properties[`spark.sql.catalog.${effectiveName}.type`] = 'hadoop';
+
+        // Catalog mapping property
+        properties[`dataproc.lakehouse.catalog.${effectiveName}`] =
           catalogResource;
 
-        // OLD backend property for backward compatibility
-        properties['dataproc.lakehouse.defaultCatalog'] = catalogResource;
+        if (isExisting) {
+          // Task 3: Support Iceberg default select existing catalog
+          // dataproc.lakehouse.defaultCatalog = projects/[projectId]/catalogs/[catalogId]
+          properties['dataproc.lakehouse.defaultCatalog'] = catalogResource;
+        } else {
+          // Task 4: Support Iceberg default new catalog
+          // dataproc.lakehouse.defaultCatalog = standard-lh-catalog-<region>
+          // BE creates it in the project specified by spark.dataproc.lakehouse.project
+          properties['dataproc.lakehouse.defaultCatalog'] = catalogName;
+        }
       }
 
+      // Task 5: Support select Hive existing catalog (b/555763848)
+      // Note on Hive-only configuration:
+      // When a user unchecks "Iceberg REST Endpoint" and enables only "Hive Endpoint",
+      // Hive reuses the configured Project ID and catalog selection from the drawer.
+      // Under the hood, Managed Service for Apache Spark registers this Lakehouse
+      // catalog via `dataproc.lakehouse.catalog.[catalogName] = projects/[projectId]/catalogs/[catalogId]`.
+      // Per Task 5, dataproc.lakehouse.defaultCatalog is strictly reserved for Iceberg defaults
+      // and is omitted in a Hive-only configuration to prevent property overloading.
       if (isHiveEnabled) {
-        // Hive endpoint property for Lakehouse catalog
-        properties[`dataproc.lakehouse.catalog.${catalogName}`] =
+        const hiveCatalogName = isExisting ? catalogId : catalogName;
+        properties[`dataproc.lakehouse.catalog.${hiveCatalogName}`] =
           catalogResource;
       }
     }
