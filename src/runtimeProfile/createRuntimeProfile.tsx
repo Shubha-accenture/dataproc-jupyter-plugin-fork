@@ -45,6 +45,7 @@ import { SectionDetail, ISectionProperty } from '../controls/SectionDetail';
 import '../../style/runtimeProfile.css';
 import {
   AutoscalingEditDrawer,
+  NetworkSecurityEditDrawer,
   OtherCustomizationEditDrawer,
   RuntimeEnvironmentEditDrawer,
   RUNTIME_VERSION_OPTIONS,
@@ -293,6 +294,7 @@ export const formatNetworkSecurityProperties = (
     google_managed: 'Google-managed key',
     customer_managed_key: 'Customer-managed key'
   };
+  const isSharedNetwork = config.networkSource === 'shared_from_host';
   return [
     {
       label: 'Execution identity',
@@ -303,8 +305,12 @@ export const formatNetworkSecurityProperties = (
         'Service account'
     },
     {
-      label: 'Network in this project',
-      value: config.networkInThisProject || 'default'
+      label: isSharedNetwork
+        ? 'Network shared from host'
+        : 'Network in this project',
+      value: isSharedNetwork
+        ? config.sharedSubnetwork || 'default'
+        : config.primaryNetwork || config.networkInThisProject || 'default'
     },
     {
       label: 'Encryption',
@@ -702,6 +708,8 @@ export const CreateRuntimeProfileComponent: React.FC<
     useState<boolean>(false);
   const [isOtherCustomizationDrawerOpen, setIsOtherCustomizationDrawerOpen] =
     useState<boolean>(false);
+  const [isNetworkSecurityDrawerOpen, setIsNetworkSecurityDrawerOpen] =
+    useState<boolean>(false);
 
   // Default executor machine type:
   // Standard Tier requires memory per core <= 7,424 MB (including 40% memoryOverhead), so standard-4 (16 GB / 4 cores)
@@ -759,9 +767,10 @@ export const CreateRuntimeProfileComponent: React.FC<
   const [metastoreConfig] = useState<IMetastoreConfig>(
     initialMetastoreConfig || DEFAULT_METASTORE_CONFIG
   );
-  const [networkAndSecurityConfig] = useState<INetworkAndSecurityConfig>(
-    initialNetworkAndSecurityConfig || DEFAULT_NETWORK_SECURITY_CONFIG
-  );
+  const [networkAndSecurityConfig, setNetworkAndSecurityConfig] =
+    useState<INetworkAndSecurityConfig>(
+      initialNetworkAndSecurityConfig || DEFAULT_NETWORK_SECURITY_CONFIG
+    );
   const [sessionLifecycleConfig, setSessionLifecycleConfig] =
     useState<ISessionLifecycleConfig>(
       initialSessionLifecycleConfig || DEFAULT_SESSION_LIFECYCLE_CONFIG
@@ -1440,10 +1449,8 @@ export const CreateRuntimeProfileComponent: React.FC<
                 {/* Section 5: Network and Security */}
                 <NetworkSecuritySection
                   config={networkAndSecurityConfig}
-                  isEditDisabled={true}
-                  onEdit={() => {
-                    // TODO - add the edit functionality for this section
-                  }}
+                  isEditDisabled={false}
+                  onEdit={() => setIsNetworkSecurityDrawerOpen(true)}
                 />
 
                 {/* Section 6: Session Lifecycle */}
@@ -1525,6 +1532,16 @@ export const CreateRuntimeProfileComponent: React.FC<
           setIsOtherCustomizationDrawerOpen(false);
         }}
       />
+
+      <NetworkSecurityEditDrawer
+        open={isNetworkSecurityDrawerOpen}
+        config={networkAndSecurityConfig}
+        onClose={() => setIsNetworkSecurityDrawerOpen(false)}
+        onSave={updatedConfig => {
+          setNetworkAndSecurityConfig(updatedConfig);
+          setIsNetworkSecurityDrawerOpen(false);
+        }}
+      />
     </div>
   );
 };
@@ -1562,6 +1579,7 @@ export {
   SectionDetail,
   RuntimeEnvironmentEditDrawer,
   AutoscalingEditDrawer,
+  NetworkSecurityEditDrawer,
   SessionLifecycleEditDrawer,
   OtherCustomizationEditDrawer,
   RUNTIME_VERSION_OPTIONS

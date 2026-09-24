@@ -77,14 +77,18 @@ export interface IMetastoreConfig {
   projectId?: string;
 }
 
+export type NetworkSourceType = 'project' | 'shared_from_host';
 export type ExecutionIdentityType = 'user_account' | 'service_account';
 export type EncryptionType = 'google_managed' | 'customer_managed_key';
 
 export interface INetworkAndSecurityConfig {
+  networkSource?: NetworkSourceType;
   executionIdentity?: ExecutionIdentityType;
+  serviceAccount?: string;
   networkInThisProject?: string;
   primaryNetwork?: string;
   subnetwork?: string;
+  sharedSubnetwork?: string;
   networkTags?: string[];
   internalIpOnly?: boolean;
   encryption?: EncryptionType;

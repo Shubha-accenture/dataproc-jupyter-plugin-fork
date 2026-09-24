@@ -467,7 +467,9 @@ export function mapRuntimeProfileToSessionTemplate(
   );
 
   const subnetworkUri =
-    payload.networkAndSecurityConfig?.subnetwork || undefined;
+    payload.networkAndSecurityConfig?.networkSource === 'shared_from_host'
+      ? payload.networkAndSecurityConfig?.sharedSubnetwork || undefined
+      : payload.networkAndSecurityConfig?.subnetwork || undefined;
 
   const networkTags =
     payload.networkAndSecurityConfig?.networkTags &&

@@ -272,3 +272,47 @@ body[data-jp-theme-name='JupyterLab Dark'] .edit-drawer-add-btn:hover {
   background-color: var(--jp-layout-color2);
   border-color: #8ab4f8;
 }
+
+.edit-drawer-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.edit-drawer-radio-option {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.edit-drawer-radio-option .MuiRadio-root,
+.edit-drawer-radio-option .MuiCheckbox-root {
+  padding: 2px;
+  margin-top: -1px;
+}
+
+.edit-drawer-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.edit-drawer-option-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--jp-ui-font-color0, #202124);
+}
+
+.edit-drawer-nested-fields {
+  padding-left: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+
