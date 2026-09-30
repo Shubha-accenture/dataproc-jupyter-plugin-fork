@@ -30,13 +30,13 @@ import {
   IRuntimeProfileService
 } from './runtimeProfileInterface';
 import { IRuntimeProfileTemplate } from './runtimeProfileListMapper';
+import { mapRuntimeProfileToSessionTemplate } from './runtimeProfileMapper';
 
 /**
- * Flag to enable mock mode for UI development/testing until the skeleton form
- * is fully connected to the Dataproc sessionTemplates API / Jupyter server endpoint.
- * Set to false when connecting to the real Google Cloud Dataproc sessionTemplates endpoint.
+ * Flag to enable mock mode for UI development/testing.
+ * When false, runtime profiles are created via the Dataproc sessionTemplates API.
  */
-export const RUNTIME_PROFILE_USE_MOCK = true;
+export const RUNTIME_PROFILE_USE_MOCK = false;
 
 /**
  * Mock regions with human-readable location descriptions
@@ -266,7 +266,24 @@ export class RuntimeProfileService implements IRuntimeProfileService {
       const credentials = await authApi();
       const { DATAPROC } = await gcpServiceUrls;
       const targetProject = projectId || credentials?.project_id;
-      const targetRegion = region || payload.region;
+      const targetRegion = region || payload.region || credentials?.region_id;
+
+      if (!targetProject) {
+        throw new Error(
+          'GCP Project ID is required to create a runtime profile. Please log in or select a project.'
+        );
+      }
+      if (!targetRegion) {
+        throw new Error(
+          'GCP Region is required to create a runtime profile. Please select a valid region.'
+        );
+      }
+
+      const apiPayload = mapRuntimeProfileToSessionTemplate(
+        payload,
+        targetProject,
+        targetRegion
+      );
       const url = `${DATAPROC}/projects/${targetProject}/locations/${targetRegion}/sessionTemplates`;
 
       const response = await loggedFetch(url, {
@@ -275,13 +292,14 @@ export class RuntimeProfileService implements IRuntimeProfileService {
           'Content-Type': API_HEADER_CONTENT_TYPE,
           Authorization: API_HEADER_BEARER + (credentials?.access_token || '')
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(apiPayload)
       });
 
       const result = await response.json();
-      if (result.error) {
+      if (!response.ok || result?.error) {
         throw new Error(
-          result.error.message || 'Failed to create runtime profile'
+          result?.error?.message ||
+            `Failed to create runtime profile (${response.status}: ${response.statusText})`
         );
       }
       return result as IRuntimeProfile;

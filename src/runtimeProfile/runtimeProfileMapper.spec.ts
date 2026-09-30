@@ -29,6 +29,8 @@ jest.mock('../handler/handler', () => ({
 
 import {
   extractRuntimeVersion,
+  normalizeStagingBucket,
+  convertToTtlSeconds,
   sanitizeSessionTemplateId,
   parseMachineTypeSpec,
   parseDiskSpec,
@@ -53,6 +55,46 @@ describe('runtimeProfileMapper', () => {
       expect(extractRuntimeVersion('')).toBeUndefined();
       expect(extractRuntimeVersion('None')).toBeUndefined();
       expect(extractRuntimeVersion(undefined)).toBeUndefined();
+    });
+  });
+
+  describe('normalizeStagingBucket', () => {
+    it('should remove gs:// prefix and trim whitespace', () => {
+      expect(normalizeStagingBucket('gs://my-staging-bucket')).toBe(
+        'my-staging-bucket'
+      );
+      expect(normalizeStagingBucket('  gs://my-bucket/path  ')).toBe(
+        'my-bucket/path'
+      );
+    });
+
+    it('should return undefined for Auto or empty string', () => {
+      expect(normalizeStagingBucket('Auto')).toBeUndefined();
+      expect(normalizeStagingBucket('')).toBeUndefined();
+      expect(normalizeStagingBucket(undefined)).toBeUndefined();
+    });
+  });
+
+  describe('convertToTtlSeconds', () => {
+    it('should convert quantities with various units to seconds string', () => {
+      expect(convertToTtlSeconds(30, 'minutes')).toBe('1800s');
+      expect(convertToTtlSeconds(2, 'hours')).toBe('7200s');
+      expect(convertToTtlSeconds(3, 'days')).toBe('259200s');
+      expect(convertToTtlSeconds(60, 'seconds')).toBe('60s');
+      expect(convertToTtlSeconds(10, 'm')).toBe('600s');
+      expect(convertToTtlSeconds(1, 'h')).toBe('3600s');
+      expect(convertToTtlSeconds(1, 'd')).toBe('86400s');
+    });
+
+    it('should parse raw duration strings', () => {
+      expect(convertToTtlSeconds(undefined, undefined, '3600s')).toBe('3600s');
+      expect(convertToTtlSeconds(undefined, undefined, '60 minutes')).toBe(
+        '3600s'
+      );
+      expect(convertToTtlSeconds(undefined, undefined, '2 hours')).toBe(
+        '7200s'
+      );
+      expect(convertToTtlSeconds(undefined, undefined, '')).toBeUndefined();
     });
   });
 
@@ -232,6 +274,81 @@ describe('runtimeProfileMapper', () => {
       expect(
         result.runtimeConfig?.properties?.['spark.dataproc.executor.disk.size']
       ).toBe('250g');
+    });
+
+    it('should map network, security, session lifecycle and metastore to environmentConfig', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'Finance Analytics Profile',
+        region: 'us-central1',
+        runtimeEnvironmentConfig: {
+          stagingBucket: 'gs://finance-staging-bucket'
+        },
+        metastoreConfig: {
+          metastore: 'projects/test-project/locations/us-central1/services/dpms'
+        },
+        networkAndSecurityConfig: {
+          executionIdentity: 'user_account',
+          subnetwork:
+            'projects/test-project/regions/us-central1/subnetworks/default',
+          networkTags: ['dataproc-job', 'secure-env'],
+          encryption: 'customer_managed_key',
+          kmsKeyName:
+            'projects/test-project/locations/us-central1/keyRings/ring/cryptoKeys/key'
+        },
+        sessionLifecycleConfig: {
+          maxIdleTimeQuantity: 30,
+          maxIdleTimeUnit: 'minutes',
+          maxSessionTimeQuantity: 2,
+          maxSessionTimeUnit: 'days'
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      const execConfig = result.environmentConfig?.executionConfig;
+      expect(execConfig?.subnetworkUri).toBe(
+        'projects/test-project/regions/us-central1/subnetworks/default'
+      );
+      expect(execConfig?.networkTags).toEqual(['dataproc-job', 'secure-env']);
+      expect(execConfig?.kmsKey).toBe(
+        'projects/test-project/locations/us-central1/keyRings/ring/cryptoKeys/key'
+      );
+      expect(execConfig?.stagingBucket).toBe('finance-staging-bucket');
+      expect(execConfig?.idleTtl).toBe('1800s');
+      expect(execConfig?.ttl).toBe('172800s');
+      expect(
+        execConfig?.authentication_config?.user_workload_authentication_type
+      ).toBe('END_USER_CREDENTIALS');
+
+      // Peripherals
+      expect(
+        result.environmentConfig?.peripheralsConfig?.metastoreService
+      ).toBe('projects/test-project/locations/us-central1/services/dpms');
+    });
+
+    it('should map Lakehouse runtime catalog to BigLake catalog properties without a metastore service', () => {
+      const result = mapRuntimeProfileToSessionTemplate(
+        {
+          displayName: 'Lakehouse Profile',
+          region: 'us-central1',
+          metastoreConfig: { metastore: 'Lakehouse runtime catalog' }
+        },
+        'test-project',
+        'us-central1'
+      );
+
+      const props = result.runtimeConfig?.properties;
+      expect(props?.['spark.sql.catalog.biglake']).toBe(
+        'org.apache.iceberg.spark.SparkCatalog'
+      );
+      expect(props?.['spark.sql.catalog.biglake.type']).toBe('hadoop');
+      expect(
+        result.environmentConfig?.peripheralsConfig?.metastoreService
+      ).toBeUndefined();
     });
 
     it('should map accelerated executor machine type and SSD executor disk to properties', () => {

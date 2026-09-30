@@ -23,7 +23,8 @@ import {
 } from '../utils/const';
 import {
   ICreateRuntimeProfilePayload,
-  IMachineTypeOption
+  IMachineTypeOption,
+  TimeUnit
 } from './runtimeProfileInterface';
 
 /**
@@ -48,6 +49,26 @@ export interface ISessionTemplateApiPayload {
       };
     };
   };
+  environmentConfig?: {
+    executionConfig?: {
+      serviceAccount?: string;
+      networkTags?: string[];
+      kmsKey?: string;
+      subnetworkUri?: string;
+      idleTtl?: string;
+      ttl?: string;
+      authentication_config?: {
+        user_workload_authentication_type: string;
+      };
+      stagingBucket?: string;
+    };
+    peripheralsConfig?: {
+      metastoreService?: string;
+      sparkHistoryServerConfig?: {
+        dataprocCluster?: string;
+      };
+    };
+  };
 }
 
 /**
@@ -62,6 +83,70 @@ export const extractRuntimeVersion = (
   }
   const match = rawVersion.trim().match(/^([0-9]+\.[0-9]+)/);
   return match ? match[1] : rawVersion.trim();
+};
+
+/**
+ * Normalizes staging bucket by removing gs:// prefix and ignoring 'Auto'
+ */
+export const normalizeStagingBucket = (
+  stagingBucket?: string
+): string | undefined => {
+  if (
+    !stagingBucket ||
+    stagingBucket.trim() === '' ||
+    stagingBucket === 'Auto'
+  ) {
+    return undefined;
+  }
+  return stagingBucket.trim().replace(/^gs:\/\//, '');
+};
+
+/**
+ * Converts quantity and time unit into standard Dataproc TTL duration format (e.g. '3600s').
+ */
+export const convertToTtlSeconds = (
+  quantity?: number,
+  unit?: TimeUnit | string,
+  rawString?: string
+): string | undefined => {
+  if (quantity !== undefined && quantity > 0) {
+    let multiplier = 1;
+    switch (unit) {
+      case 'm':
+      case 'minutes':
+        multiplier = 60;
+        break;
+      case 'h':
+      case 'hours':
+        multiplier = 3600;
+        break;
+      case 'd':
+      case 'days':
+        multiplier = 86400;
+        break;
+      case 's':
+      case 'seconds':
+      default:
+        multiplier = 1;
+        break;
+    }
+    return `${quantity * multiplier}s`;
+  }
+
+  if (rawString && rawString.trim() !== '') {
+    const trimmed = rawString.trim();
+    if (/^\d+s$/.test(trimmed)) {
+      return trimmed;
+    }
+    const match = trimmed.match(/^(\d+)\s*([a-zA-Z]+)?$/);
+    if (match) {
+      const q = parseInt(match[1], 10);
+      const u = match[2] || 's';
+      return convertToTtlSeconds(q, u);
+    }
+  }
+
+  return undefined;
 };
 
 export interface IMachineSpec {
@@ -342,6 +427,16 @@ export function mapRuntimeProfileToSessionTemplate(
     properties['spark.dataproc.executor.disk.size'] = executorDisk.size;
   }
 
+  // BigLake / Lakehouse Metastore properties (matching createRunTime.tsx)
+  if (
+    payload.metastoreConfig?.metastore === 'Lakehouse runtime catalog' ||
+    payload.metastoreConfig?.metastore === 'biglake'
+  ) {
+    properties['spark.sql.catalog.biglake'] =
+      'org.apache.iceberg.spark.SparkCatalog';
+    properties['spark.sql.catalog.biglake.type'] = 'hadoop';
+  }
+
   // Runtime Config
   const runtimeVersion = extractRuntimeVersion(
     payload.runtimeEnvironmentConfig?.runtimeVersion
@@ -372,6 +467,80 @@ export function mapRuntimeProfileToSessionTemplate(
     })
   };
 
+  // Execution Config
+  const stagingBucket = normalizeStagingBucket(
+    payload.runtimeEnvironmentConfig?.stagingBucket
+  );
+
+  const subnetworkUri =
+    payload.networkAndSecurityConfig?.subnetwork || undefined;
+
+  const networkTags =
+    payload.networkAndSecurityConfig?.networkTags &&
+    payload.networkAndSecurityConfig.networkTags.length > 0
+      ? payload.networkAndSecurityConfig.networkTags
+      : undefined;
+
+  const kmsKey =
+    payload.networkAndSecurityConfig?.encryption === 'customer_managed_key'
+      ? payload.networkAndSecurityConfig.kmsKeyName
+      : undefined;
+
+  const idleTtl = convertToTtlSeconds(
+    payload.sessionLifecycleConfig?.maxIdleTimeQuantity,
+    payload.sessionLifecycleConfig?.maxIdleTimeUnit,
+    payload.sessionLifecycleConfig?.maxIdleTime
+  );
+
+  const ttl = convertToTtlSeconds(
+    payload.sessionLifecycleConfig?.maxSessionTimeQuantity,
+    payload.sessionLifecycleConfig?.maxSessionTimeUnit,
+    payload.sessionLifecycleConfig?.maxSessionTime
+  );
+
+  const isUserAccount =
+    payload.networkAndSecurityConfig?.executionIdentity === 'user_account';
+
+  const executionConfig: NonNullable<
+    NonNullable<
+      ISessionTemplateApiPayload['environmentConfig']
+    >['executionConfig']
+  > = {
+    ...(subnetworkUri && { subnetworkUri }),
+    ...(networkTags && { networkTags }),
+    ...(kmsKey && { kmsKey }),
+    ...(stagingBucket && { stagingBucket }),
+    ...(idleTtl && { idleTtl }),
+    ...(ttl && { ttl }),
+    ...(isUserAccount && {
+      authentication_config: {
+        user_workload_authentication_type: 'END_USER_CREDENTIALS'
+      }
+    })
+  };
+
+  // Peripherals Config (Metastore)
+  const metastoreService =
+    payload.metastoreConfig?.metastore &&
+    payload.metastoreConfig.metastore !== 'None' &&
+    payload.metastoreConfig.metastore !== 'Lakehouse runtime catalog' &&
+    payload.metastoreConfig.metastore !== 'biglake'
+      ? payload.metastoreConfig.metastore
+      : undefined;
+
+  const peripheralsConfig: NonNullable<
+    NonNullable<
+      ISessionTemplateApiPayload['environmentConfig']
+    >['peripheralsConfig']
+  > = {
+    ...(metastoreService && { metastoreService })
+  };
+
+  const environmentConfig: ISessionTemplateApiPayload['environmentConfig'] = {
+    executionConfig,
+    peripheralsConfig
+  };
+
   const templatePayload: ISessionTemplateApiPayload = {
     name: `projects/${projectId}/locations/${targetRegion}/sessionTemplates/${templateId}`,
     description: payload.description,
@@ -380,7 +549,8 @@ export function mapRuntimeProfileToSessionTemplate(
       displayName: payload.displayName
     },
     labels: payload.labels || {},
-    runtimeConfig
+    runtimeConfig,
+    environmentConfig
   };
 
   return templatePayload;

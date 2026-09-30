@@ -43,6 +43,7 @@ import {
   renderGroupedMachineOptions
 } from './createRuntimeProfile';
 import { RuntimeProfileService } from './runtimeProfileService';
+import { Notification } from '@jupyterlab/apputils';
 import {
   DATAPROC_TIER_DOC,
   LIGHTNING_ENGINE_DOC,
@@ -697,6 +698,74 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
       acceleratedExecutorCard.click();
     });
     expect(generalExecutorCard.classList.contains('selected')).toBe(true);
+  });
+
+  it('switches a highmem executor to standard-4 when Standard tier is selected', async () => {
+    await act(async () => {
+      root.render(<CreateRuntimeProfileComponent service={mockService} />);
+    });
+
+    expect(getFieldValue('Executor type')).toBe('highmem-4 (4 vCPU, 32 GB)');
+
+    const standardTierCard = container
+      .querySelectorAll('.node-config-cards-container')[0]
+      .querySelectorAll('.node-config-card')[1] as HTMLDivElement;
+    await act(async () => {
+      standardTierCard.click();
+    });
+
+    expect(getFieldValue('Executor type')).toBe('standard-4 (4 vCPU, 16 GB)');
+
+    // Re-selecting the General card on Standard tier keeps the Standard default
+    const generalExecutorCard = container
+      .querySelectorAll('.node-config-cards-container')[1]
+      .querySelectorAll('.node-config-card')[0] as HTMLDivElement;
+    await act(async () => {
+      generalExecutorCard.click();
+    });
+
+    expect(getFieldValue('Executor type')).toBe('standard-4 (4 vCPU, 16 GB)');
+  });
+
+  it('submits the form payload to the service and notifies on success', async () => {
+    const createSpy = jest
+      .spyOn(mockService, 'createRuntimeProfile')
+      .mockResolvedValue({ displayName: 'created', region: 'us-central1' });
+    const onSuccess = jest.fn();
+
+    await act(async () => {
+      root.render(
+        <CreateRuntimeProfileComponent
+          service={mockService}
+          onSuccess={onSuccess}
+        />
+      );
+    });
+
+    const submitButton = container.querySelector(
+      'button[type="submit"]'
+    ) as HTMLButtonElement;
+    expect(submitButton.disabled).toBe(false);
+
+    await act(async () => {
+      submitButton.click();
+    });
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        region: 'us-central1',
+        tier: 'Premium',
+        executorConfig: { executorType: 'general', machineType: 'highmem-4' }
+      }),
+      undefined,
+      'us-central1'
+    );
+    expect(Notification.emit).toHaveBeenCalledWith(
+      expect.stringContaining('created successfully'),
+      'success',
+      expect.anything()
+    );
+    expect(onSuccess).toHaveBeenCalled();
   });
 
   it('should create a runtime profile with executorConfig via service', async () => {
