@@ -83,6 +83,15 @@
   height: 16px;
   margin-right: 8px;
   opacity: 0.65;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-selector-search-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 .project-selector-search-input {

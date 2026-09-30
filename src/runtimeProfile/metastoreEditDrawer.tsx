@@ -37,6 +37,7 @@ import {
 } from './runtimeProfileInterface';
 import { listBigLakeCatalogsAPI } from '../utils/biglakeService';
 import { metastoreServiceListAPI } from '../utils/metastoreService';
+import { authApi } from '../utils/utils';
 import '../../style/editDrawer.css';
 import '../../style/runtimeProfile.css';
 
@@ -57,11 +58,13 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
 }) => {
   const [metastoreType, setMetastoreType] = useState<MetastoreType>(
     config.metastoreType ||
-    (config.metastore === 'Dataproc Metastore' ? 'dataproc' : 'lakehouse')
+      (config.metastore === 'Dataproc Metastore' ? 'dataproc' : 'lakehouse')
   );
 
   const [projectId, setProjectId] = useState<string>(config.projectId || '');
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean>(false);
+  const [projectModalTarget, setProjectModalTarget] = useState<
+    'iceberg' | 'hive' | 'dpms' | null
+  >(null);
 
   // Iceberg REST Endpoint settings
   const [icebergRestEndpointEnabled, setIcebergRestEndpointEnabled] =
@@ -80,23 +83,41 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
     config.catalogName || `standard-lh-catalog-${region || 'us-central1'}`
   );
 
+  const initialDpms =
+    config.dataprocMetastoreService &&
+    config.dataprocMetastoreService !== 'Dataproc Metastore'
+      ? config.dataprocMetastoreService
+      : config.metastore &&
+        config.metastore !== 'Dataproc Metastore' &&
+        config.metastore !== 'Lakehouse runtime catalog'
+      ? config.metastore
+      : 'None';
+
   // Dataproc Metastore settings
   const [dataprocMetastoreService, setDataprocMetastoreService] =
-    useState<string>(config.dataprocMetastoreService || config.metastore || '');
+    useState<string>(initialDpms);
   const [dpmsServicesList, setDpmsServicesList] = useState<string[]>([]);
   const [isLoadingDpmsServices, setIsLoadingDpmsServices] =
     useState<boolean>(false);
 
   // Hive Endpoint configuration:
-  // When a user unchecks "Iceberg REST Endpoint" and enables only "Hive Endpoint",
-  // Hive reuses the configured Project ID and default catalog selection from the drawer.
-  // Under the hood, Managed Service for Apache Spark registers this Lakehouse
-  // catalog via `dataproc.lakehouse.catalog.[catalogName] = projects/[projectId]/catalogs/[catalogId]`.
-  // Per go/spark-sep-14-metastore-subtask (Task 5), `dataproc.lakehouse.defaultCatalog`
-  // is strictly reserved for Iceberg defaults and is not set in a Hive-only flow.
+  // When a user enables "Hive Endpoint", Project ID *, Catalog ID, and Catalog Name *
+  // allow configuring Lakehouse catalog registration for Hive.
   const [hiveEndpointEnabled, setHiveEndpointEnabled] = useState<boolean>(
     Boolean(config.hiveEndpointEnabled)
   );
+  const [hiveProjectId, setHiveProjectId] = useState<string>(
+    config.hiveProjectId || config.projectId || ''
+  );
+  const [hiveCatalogId, setHiveCatalogId] = useState<string>(
+    config.hiveCatalogId || ''
+  );
+  const [hiveCatalogName, setHiveCatalogName] = useState<string>(
+    config.hiveCatalogName || ''
+  );
+  const [hiveCatalogsList, setHiveCatalogsList] = useState<string[]>([]);
+  const [isLoadingHiveCatalogs, setIsLoadingHiveCatalogs] =
+    useState<boolean>(false);
 
   // Sync state whenever drawer opens or config changes
   useEffect(() => {
@@ -105,17 +126,55 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
         config.metastoreType ||
         (config.metastore === 'Dataproc Metastore' ? 'dataproc' : 'lakehouse');
       setMetastoreType(type);
-      setProjectId(config.projectId || '');
       setIcebergRestEndpointEnabled(config.icebergRestEndpointEnabled ?? true);
       setCatalogSelectionMode(config.catalogSelectionMode || 'new');
       setCatalogId(config.catalogId || '');
       setCatalogName(
         config.catalogName || `standard-lh-catalog-${region || 'us-central1'}`
       );
-      setDataprocMetastoreService(
-        config.dataprocMetastoreService || config.metastore || ''
-      );
+      const currentDpms =
+        config.dataprocMetastoreService &&
+        config.dataprocMetastoreService !== 'Dataproc Metastore'
+          ? config.dataprocMetastoreService
+          : config.metastore &&
+            config.metastore !== 'Dataproc Metastore' &&
+            config.metastore !== 'Lakehouse runtime catalog'
+          ? config.metastore
+          : 'None';
+      setDataprocMetastoreService(currentDpms);
       setHiveEndpointEnabled(Boolean(config.hiveEndpointEnabled));
+      setHiveCatalogId(config.hiveCatalogId || '');
+      setHiveCatalogName(config.hiveCatalogName || '');
+
+      // Auto-populate configured project ID if not already explicitly provided
+      if (config.projectId) {
+        setProjectId(config.projectId);
+      } else {
+        authApi()
+          .then(credentials => {
+            if (credentials?.project_id) {
+              setProjectId(credentials.project_id);
+            }
+          })
+          .catch(err => {
+            console.error('Failed to get active project ID', err);
+          });
+      }
+
+      // Auto-populate Hive project ID
+      if (config.hiveProjectId) {
+        setHiveProjectId(config.hiveProjectId);
+      } else if (config.projectId) {
+        setHiveProjectId(config.projectId);
+      } else {
+        authApi()
+          .then(credentials => {
+            if (credentials?.project_id) {
+              setHiveProjectId(credentials.project_id);
+            }
+          })
+          .catch(() => {});
+      }
     }
   }, [open, config, region]);
 
@@ -142,6 +201,32 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
     }
   }, [open, metastoreType, catalogSelectionMode, projectId, region, catalogId]);
 
+  // Fetch BigLake catalogs when Hive endpoint is enabled
+  useEffect(() => {
+    if (
+      open &&
+      metastoreType === 'lakehouse' &&
+      hiveEndpointEnabled &&
+      hiveProjectId
+    ) {
+      setIsLoadingHiveCatalogs(true);
+      listBigLakeCatalogsAPI(hiveProjectId, region)
+        .then(catalogs => {
+          setHiveCatalogsList(catalogs);
+          setIsLoadingHiveCatalogs(false);
+          if (catalogs.length > 0 && !hiveCatalogId) {
+            setHiveCatalogId(catalogs[0]);
+            if (!hiveCatalogName) {
+              setHiveCatalogName(catalogs[0]);
+            }
+          }
+        })
+        .catch(() => {
+          setIsLoadingHiveCatalogs(false);
+        });
+    }
+  }, [open, metastoreType, hiveEndpointEnabled, hiveProjectId, region]);
+
   // Fetch Dataproc Metastore services when DPMS is selected
   useEffect(() => {
     if (open && metastoreType === 'dataproc' && projectId) {
@@ -150,22 +235,23 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
         .then(services => {
           setDpmsServicesList(services);
           setIsLoadingDpmsServices(false);
-          if (services.length > 0 && !dataprocMetastoreService) {
-            setDataprocMetastoreService(services[0]);
-          }
         })
         .catch(() => {
           setIsLoadingDpmsServices(false);
         });
     }
-  }, [open, metastoreType, projectId, dataprocMetastoreService]);
+  }, [open, metastoreType, projectId]);
 
   const handleSave = () => {
+    const isNone =
+      !dataprocMetastoreService || dataprocMetastoreService === 'None';
     const updated: IMetastoreConfig = {
       metastore:
         metastoreType === 'lakehouse'
           ? 'Lakehouse runtime catalog'
-          : dataprocMetastoreService || 'Dataproc Metastore',
+          : !isNone
+          ? dataprocMetastoreService
+          : 'None',
       metastoreType,
       projectId: projectId || undefined,
       icebergRestEndpointEnabled,
@@ -173,8 +259,19 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
       catalogId: catalogSelectionMode === 'existing' ? catalogId : undefined,
       catalogName: catalogSelectionMode === 'new' ? catalogName : undefined,
       dataprocMetastoreService:
-        metastoreType === 'dataproc' ? dataprocMetastoreService : undefined,
-      hiveEndpointEnabled
+        metastoreType === 'dataproc' && !isNone
+          ? dataprocMetastoreService
+          : undefined,
+      hiveEndpointEnabled,
+      hiveProjectId: hiveEndpointEnabled
+        ? hiveProjectId || undefined
+        : undefined,
+      hiveCatalogId: hiveEndpointEnabled
+        ? hiveCatalogId || undefined
+        : undefined,
+      hiveCatalogName: hiveEndpointEnabled
+        ? hiveCatalogName || undefined
+        : undefined
     };
     onSave(updated);
   };
@@ -192,6 +289,11 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
           return true;
         }
       }
+      if (hiveEndpointEnabled) {
+        if (!hiveProjectId.trim() || !hiveCatalogName.trim()) {
+          return true;
+        }
+      }
       return false;
     }
     return false;
@@ -201,7 +303,9 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
     hiveEndpointEnabled,
     catalogSelectionMode,
     catalogName,
-    catalogId
+    catalogId,
+    hiveProjectId,
+    hiveCatalogName
   ]);
 
   return (
@@ -209,6 +313,7 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
       <EditDrawer
         open={open}
         title="Metastore configuration"
+        width="560px"
         subtitle="Choose the metastore that manages your dataset. By default, a runtime profile will use the Lakehouse runtime catalog in the same project as the runtime profile, but you can choose a Lakehouse runtime catalog in a different project or a Dataproc Metastore instance."
         onClose={onClose}
         onSave={handleSave}
@@ -221,8 +326,9 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
 
           <div className="metastore-cards-container">
             <div
-              className={`metastore-card ${metastoreType === 'lakehouse' ? 'selected' : ''
-                }`}
+              className={`metastore-card ${
+                metastoreType === 'lakehouse' ? 'selected' : ''
+              }`}
               onClick={() => setMetastoreType('lakehouse')}
               role="button"
               tabIndex={0}
@@ -242,8 +348,9 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
             </div>
 
             <div
-              className={`metastore-card ${metastoreType === 'dataproc' ? 'selected' : ''
-                }`}
+              className={`metastore-card ${
+                metastoreType === 'dataproc' ? 'selected' : ''
+              }`}
               onClick={() => setMetastoreType('dataproc')}
               role="button"
               tabIndex={0}
@@ -302,7 +409,7 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
                     <button
                       type="button"
                       className="edit-drawer-browse-btn"
-                      onClick={() => setIsProjectModalOpen(true)}
+                      onClick={() => setProjectModalTarget('iceberg')}
                     >
                       Browse
                     </button>
@@ -390,7 +497,7 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
                         <div style={{ marginLeft: 32, marginBottom: 12 }}>
                           <TextField
                             id="new-catalog-name"
-                            label="Default name"
+                            label="Default catalog name"
                             value={catalogName}
                             onChange={e => setCatalogName(e.target.value)}
                             variant="outlined"
@@ -417,6 +524,101 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
                 }
                 label="Hive Endpoint"
               />
+              <div
+                className="edit-drawer-helper-text"
+                style={{ marginTop: -4, marginBottom: 8 }}
+              >
+                Specify the Hive endpoint.
+              </div>
+
+              {hiveEndpointEnabled && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16,
+                    marginTop: 8
+                  }}
+                >
+                  {/* Hive Project ID * */}
+                  <div className="edit-drawer-input-with-button">
+                    <TextField
+                      id="hive-project-id"
+                      label="Project ID *"
+                      value={hiveProjectId}
+                      onChange={e => setHiveProjectId(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    <button
+                      type="button"
+                      className="edit-drawer-browse-btn"
+                      onClick={() => setProjectModalTarget('hive')}
+                    >
+                      Browse
+                    </button>
+                  </div>
+
+                  {/* Hive Catalog ID dropdown */}
+                  <FormControl size="small" fullWidth variant="outlined">
+                    <InputLabel id="hive-catalog-id-label" shrink>
+                      Catalog ID
+                    </InputLabel>
+                    <Select
+                      labelId="hive-catalog-id-label"
+                      id="hive-catalog-id-select"
+                      label="Catalog ID"
+                      notched
+                      value={hiveCatalogId}
+                      onChange={e => {
+                        const val = e.target.value as string;
+                        setHiveCatalogId(val);
+                        if (
+                          !hiveCatalogName ||
+                          hiveCatalogName === hiveCatalogId
+                        ) {
+                          setHiveCatalogName(val);
+                        }
+                      }}
+                      disabled={isLoadingHiveCatalogs}
+                    >
+                      {isLoadingHiveCatalogs ? (
+                        <MenuItem value="" disabled>
+                          <CircularProgress
+                            size={16}
+                            style={{ marginRight: 8 }}
+                          />
+                          Loading catalogs...
+                        </MenuItem>
+                      ) : hiveCatalogsList.length === 0 ? (
+                        <MenuItem value="" disabled>
+                          No catalogs found in project
+                        </MenuItem>
+                      ) : (
+                        hiveCatalogsList.map(cat => (
+                          <MenuItem key={cat} value={cat}>
+                            {cat}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                  </FormControl>
+
+                  {/* Hive Catalog Name * */}
+                  <TextField
+                    id="hive-catalog-name"
+                    label="Catalog Name *"
+                    value={hiveCatalogName}
+                    onChange={e => setHiveCatalogName(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+              )}
             </div>
           </>
         )}
@@ -455,7 +657,7 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
                 <button
                   type="button"
                   className="edit-drawer-browse-btn"
-                  onClick={() => setIsProjectModalOpen(true)}
+                  onClick={() => setProjectModalTarget('dpms')}
                 >
                   Browse
                 </button>
@@ -472,13 +674,13 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
                   id="dpms-service-select"
                   label="Metastore service"
                   notched
-                  value={dataprocMetastoreService || ''}
+                  value={dataprocMetastoreService || 'None'}
                   onChange={e =>
                     setDataprocMetastoreService(e.target.value as string)
                   }
                   disabled={isLoadingDpmsServices}
                 >
-                  <MenuItem value="">None</MenuItem>
+                  <MenuItem value="None">None</MenuItem>
                   {isLoadingDpmsServices ? (
                     <MenuItem value="" disabled>
                       <CircularProgress size={16} style={{ marginRight: 8 }} />
@@ -503,18 +705,23 @@ export const MetastoreEditDrawer: React.FC<IMetastoreEditDrawerProps> = ({
                 clusters, or for metadata operability across GCP products.
               </div>
             </div>
-
           </>
         )}
       </EditDrawer>
 
       <ProjectSelectorModal
-        open={isProjectModalOpen}
-        selectedProjectId={projectId}
-        onClose={() => setIsProjectModalOpen(false)}
+        open={Boolean(projectModalTarget)}
+        selectedProjectId={
+          projectModalTarget === 'hive' ? hiveProjectId : projectId
+        }
+        onClose={() => setProjectModalTarget(null)}
         onSelect={selectedId => {
-          setProjectId(selectedId);
-          setIsProjectModalOpen(false);
+          if (projectModalTarget === 'hive') {
+            setHiveProjectId(selectedId);
+          } else {
+            setProjectId(selectedId);
+          }
+          setProjectModalTarget(null);
         }}
       />
     </>

@@ -499,9 +499,16 @@ export function mapRuntimeProfileToSessionTemplate(
       // Per Task 5, dataproc.lakehouse.defaultCatalog is strictly reserved for Iceberg defaults
       // and is omitted in a Hive-only configuration to prevent property overloading.
       if (isHiveEnabled) {
-        const hiveCatalogName = isExisting ? catalogId : catalogName;
-        properties[`dataproc.lakehouse.catalog.${hiveCatalogName}`] =
-          catalogResource;
+        const hiveProject =
+          payload.metastoreConfig?.hiveProjectId || targetCatalogProject;
+        const hiveCatId =
+          payload.metastoreConfig?.hiveCatalogId ||
+          (isExisting ? catalogId : catalogName);
+        const hiveCatName =
+          payload.metastoreConfig?.hiveCatalogName ||
+          (isExisting ? catalogId : catalogName);
+        const hiveResource = `projects/${hiveProject}/catalogs/${hiveCatId}`;
+        properties[`dataproc.lakehouse.catalog.${hiveCatName}`] = hiveResource;
       }
     }
   }

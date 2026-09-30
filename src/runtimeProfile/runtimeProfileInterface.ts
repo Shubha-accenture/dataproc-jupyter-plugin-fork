@@ -84,6 +84,9 @@ export interface IMetastoreConfig {
   catalogId?: string;
   catalogName?: string;
   dataprocMetastoreService?: string;
+  hiveProjectId?: string;
+  hiveCatalogId?: string;
+  hiveCatalogName?: string;
 }
 
 export type ExecutionIdentityType = 'user_account' | 'service_account';
