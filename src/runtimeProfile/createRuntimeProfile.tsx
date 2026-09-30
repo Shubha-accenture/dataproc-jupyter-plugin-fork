@@ -90,6 +90,7 @@ import {
   runtimeProfileService
 } from './runtimeProfileService';
 import { registerSessionKernelsInLauncher } from './sessionKernelLauncher';
+import { authApi } from '../utils/utils';
 
 interface IRuntimeProfileFormData {
   displayName: string;
@@ -691,18 +692,34 @@ export const CreateRuntimeProfileComponent: React.FC<
     let isMounted = true;
     const loadInitialData = async () => {
       setIsLoadingOptions(true);
+      const credentials = await authApi();
       try {
         const loadedRegions = await service.getRegions();
 
         if (isMounted) {
           setRegions(loadedRegions);
 
-          if (loadedRegions.length > 0) {
-            setValue('region', loadedRegions[0].name, { shouldValidate: true });
+          // Pre-select the region saved in Settings, else the first region.
+          const defaultRegion =
+            loadedRegions.find(r => r.name === credentials?.region_id) ??
+            loadedRegions[0];
+          if (defaultRegion) {
+            setValue('region', defaultRegion.name, { shouldValidate: true });
           }
         }
       } catch (error) {
         console.error('Failed to load runtime profile initial data', error);
+        // Same as the Settings region dropdown: skip the popup when there is
+        // already a login/config error.
+        if (
+          isMounted &&
+          !credentials?.login_error &&
+          !credentials?.config_error
+        ) {
+          Notification.emit((error as Error).message, 'error', {
+            autoClose: 5000
+          });
+        }
       } finally {
         if (isMounted) {
           setIsLoadingOptions(false);

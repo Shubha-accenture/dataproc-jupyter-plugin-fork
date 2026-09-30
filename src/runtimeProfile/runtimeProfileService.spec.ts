@@ -233,6 +233,59 @@ describe('RuntimeProfileService', () => {
     });
   });
 
+  describe('getRegions', () => {
+    it('returns regions from the API in live mode', async () => {
+      (authApi as jest.Mock).mockResolvedValue({
+        access_token: 'live-token',
+        project_id: 'my-project'
+      });
+      (loggedFetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: jest
+          .fn()
+          .mockResolvedValue({
+            items: [{ name: 'asia-east1' }, { name: 'us-central1' }]
+          })
+      });
+
+      const regions = await new RuntimeProfileService(false).getRegions();
+
+      expect((loggedFetch as jest.Mock).mock.calls[0][0]).toContain(
+        '/my-project/regions'
+      );
+      expect(regions).toEqual([
+        { name: 'asia-east1', displayName: 'asia-east1' },
+        { name: 'us-central1', displayName: 'us-central1' }
+      ]);
+    });
+
+    it('throws the API error instead of falling back to mock regions', async () => {
+      (authApi as jest.Mock).mockResolvedValue({
+        access_token: 'live-token',
+        project_id: 'my-project'
+      });
+      (loggedFetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        json: jest
+          .fn()
+          .mockResolvedValue({ error: { message: 'Permission denied' } })
+      });
+
+      await expect(
+        new RuntimeProfileService(false).getRegions()
+      ).rejects.toThrow('Permission denied');
+    });
+
+    it('returns an empty list when no project ID is available', async () => {
+      (authApi as jest.Mock).mockResolvedValue({ access_token: 'live-token' });
+
+      const regions = await new RuntimeProfileService(false).getRegions();
+
+      expect(regions).toEqual([]);
+      expect(loggedFetch).not.toHaveBeenCalled();
+    });
+  });
+
   describe('createRuntimeProfile', () => {
     it('persists executorAndDriverConfig, derives tier from executorAndDriverConfig, and stores additional config in mock mode', async () => {
       const service = new RuntimeProfileService(true);

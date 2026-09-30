@@ -36,6 +36,11 @@ jest.mock('@jupyterlab/apputils', () => ({
   }
 }));
 
+jest.mock('../utils/utils', () => ({
+  ...jest.requireActual('../utils/utils'),
+  authApi: jest.fn().mockResolvedValue(undefined)
+}));
+
 import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import {
@@ -44,6 +49,7 @@ import {
 } from './createRuntimeProfile';
 import { RuntimeProfileService } from './runtimeProfileService';
 import { Notification } from '@jupyterlab/apputils';
+import { authApi } from '../utils/utils';
 import {
   DATAPROC_TIER_DOC,
   LIGHTNING_ENGINE_DOC,
@@ -766,6 +772,46 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
       expect.anything()
     );
     expect(onSuccess).toHaveBeenCalled();
+  });
+
+  it('pre-selects the region saved in Settings when it is in the list', async () => {
+    (authApi as jest.Mock).mockResolvedValueOnce({ region_id: 'us-east1' });
+    const createSpy = jest
+      .spyOn(mockService, 'createRuntimeProfile')
+      .mockResolvedValue({ displayName: 'created', region: 'us-east1' });
+
+    await act(async () => {
+      root.render(<CreateRuntimeProfileComponent service={mockService} />);
+    });
+    await act(async () => {
+      (
+        container.querySelector('button[type="submit"]') as HTMLButtonElement
+      ).click();
+    });
+
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ region: 'us-east1' }),
+      undefined,
+      'us-east1'
+    );
+  });
+
+  it('shows an error notification when regions fail to load', async () => {
+    jest
+      .spyOn(mockService, 'getRegions')
+      .mockRejectedValue(new Error('Permission denied'));
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    await act(async () => {
+      root.render(<CreateRuntimeProfileComponent service={mockService} />);
+    });
+
+    expect(Notification.emit).toHaveBeenCalledWith(
+      'Permission denied',
+      'error',
+      { autoClose: 5000 }
+    );
+    consoleSpy.mockRestore();
   });
 
   it('should create a runtime profile with executorConfig via service', async () => {

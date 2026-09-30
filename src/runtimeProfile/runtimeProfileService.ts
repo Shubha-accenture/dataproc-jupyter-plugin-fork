@@ -167,45 +167,42 @@ export class RuntimeProfileService implements IRuntimeProfileService {
   }
 
   /**
-   * Retrieves available GCP regions with formatted display names
+   * Retrieves available GCP regions for the project.
+   * Mirrors the Settings region dropdown: returns an empty list when there is
+   * no project or access token, and throws on API errors (no mock fallback).
    */
   async getRegions(projectId?: string): Promise<IRegionOption[]> {
     if (this.useMock) {
       return MOCK_REGIONS;
     }
 
-    try {
-      const credentials = await authApi();
-      const { REGION_URL } = await gcpServiceUrls;
-      const targetProject = projectId || credentials?.project_id;
-      if (targetProject && credentials?.access_token) {
-        const response = await loggedFetch(
-          `${REGION_URL}/${targetProject}/regions`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': API_HEADER_CONTENT_TYPE,
-              Authorization: API_HEADER_BEARER + credentials.access_token
-            }
-          }
-        );
-        const result = await response.json();
-        if (result?.items && Array.isArray(result.items)) {
-          return result.items.map((item: { name: string }) => {
-            const match = MOCK_REGIONS.find(r => r.name === item.name);
-            return match ?? { name: item.name, displayName: item.name };
-          });
+    const credentials = await authApi();
+    const targetProject = projectId || credentials?.project_id;
+    if (!targetProject || !credentials?.access_token) {
+      return [];
+    }
+
+    const { REGION_URL } = await gcpServiceUrls;
+    const response = await loggedFetch(
+      `${REGION_URL}/${targetProject}/regions`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': API_HEADER_CONTENT_TYPE,
+          Authorization: API_HEADER_BEARER + credentials.access_token
         }
       }
-      return MOCK_REGIONS;
-    } catch (error) {
-      safeLog(
-        'Failed to fetch regions from API, falling back to default regions list: ' +
-          error,
-        LOG_LEVEL.WARN
+    );
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.error) {
+      throw new Error(
+        result?.error?.message ||
+          `Failed to fetch regions: ${response.statusText}`
       );
-      return MOCK_REGIONS;
     }
+
+    const items: { name: string }[] = result?.items ?? [];
+    return items.map(item => ({ name: item.name, displayName: item.name }));
   }
 
   /**
