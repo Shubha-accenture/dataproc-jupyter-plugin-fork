@@ -466,10 +466,19 @@ export function mapRuntimeProfileToSessionTemplate(
     payload.runtimeEnvironmentConfig?.stagingBucket
   );
 
-  const subnetworkUri =
-    payload.networkAndSecurityConfig?.networkSource === 'shared_from_host'
-      ? payload.networkAndSecurityConfig?.sharedSubnetwork || undefined
-      : payload.networkAndSecurityConfig?.subnetwork || undefined;
+  let subnetworkUri: string | undefined;
+  if (payload.networkAndSecurityConfig?.networkSource === 'shared_from_host') {
+    const sharedSub = payload.networkAndSecurityConfig?.sharedSubnetwork;
+    const hostProject = payload.networkAndSecurityConfig?.hostProjectId;
+    if (sharedSub) {
+      subnetworkUri =
+        sharedSub.startsWith('projects/') || !hostProject
+          ? sharedSub
+          : `projects/${hostProject}/regions/${targetRegion}/subnetworks/${sharedSub}`;
+    }
+  } else {
+    subnetworkUri = payload.networkAndSecurityConfig?.subnetwork || undefined;
+  }
 
   const networkTags =
     payload.networkAndSecurityConfig?.networkTags &&
@@ -477,10 +486,23 @@ export function mapRuntimeProfileToSessionTemplate(
       ? payload.networkAndSecurityConfig.networkTags
       : undefined;
 
-  const kmsKey =
+  let kmsKey: string | undefined;
+  if (
     payload.networkAndSecurityConfig?.encryption === 'customer_managed_key'
-      ? payload.networkAndSecurityConfig.kmsKeyName
-      : undefined;
+  ) {
+    if (
+      payload.networkAndSecurityConfig.kmsKeySelectionMode !== 'manual' &&
+      payload.networkAndSecurityConfig.keyRing &&
+      payload.networkAndSecurityConfig.cryptoKey
+    ) {
+      kmsKey = `projects/${projectId}/locations/${targetRegion}/keyRings/${payload.networkAndSecurityConfig.keyRing}/cryptoKeys/${payload.networkAndSecurityConfig.cryptoKey}`;
+    } else if (payload.networkAndSecurityConfig.kmsKeyName) {
+      kmsKey = payload.networkAndSecurityConfig.kmsKeyName;
+    }
+  }
+
+  const serviceAccount =
+    payload.networkAndSecurityConfig?.serviceAccount?.trim() || undefined;
 
   const idleTtl = convertToTtlSeconds(
     payload.sessionLifecycleConfig?.maxIdleTimeQuantity,
@@ -503,6 +525,7 @@ export function mapRuntimeProfileToSessionTemplate(
     ...(subnetworkUri && { subnetworkUri }),
     ...(networkTags && { networkTags }),
     ...(kmsKey && { kmsKey }),
+    ...(serviceAccount && { serviceAccount }),
     ...(stagingBucket && { stagingBucket }),
     ...(idleTtl && { idleTtl }),
     ...(ttl && { ttl }),

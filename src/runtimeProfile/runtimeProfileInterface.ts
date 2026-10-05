@@ -89,9 +89,13 @@ export interface INetworkAndSecurityConfig {
   primaryNetwork?: string;
   subnetwork?: string;
   sharedSubnetwork?: string;
+  hostProjectId?: string;
   networkTags?: string[];
   internalIpOnly?: boolean;
   encryption?: EncryptionType;
+  keyRing?: string;
+  cryptoKey?: string;
+  kmsKeySelectionMode?: 'select' | 'manual';
   kmsKeyName?: string;
 }
 
@@ -162,14 +166,36 @@ export interface ICreateRuntimeProfilePayload {
   labels?: ProfileLabels;
 }
 
+export interface ISharedVpcSubnetworksResult {
+  hostProjectId: string;
+  subnetworks: string[];
+}
+
 export interface IRuntimeProfileService {
   getRegions(projectId?: string): Promise<IRegionOption[]>;
   getMachineTypes?(
     category?: ExecutorCategoryType
   ): Promise<IMachineTypeOption[]>;
+  getNetworks?(projectId?: string): Promise<string[]>;
+  getSubnetworks?(
+    network: string,
+    projectId?: string,
+    region?: string
+  ): Promise<string[]>;
+  getSharedVpcSubnetworks?(
+    projectId?: string,
+    region?: string
+  ): Promise<ISharedVpcSubnetworksResult>;
+  getKeyRings?(projectId?: string, region?: string): Promise<string[]>;
+  getCryptoKeys?(
+    keyRing: string,
+    projectId?: string,
+    region?: string
+  ): Promise<string[]>;
   createRuntimeProfile(
     payload: any,
     projectId?: string,
     region?: string
   ): Promise<any>;
 }
+

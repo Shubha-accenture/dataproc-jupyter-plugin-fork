@@ -863,6 +863,7 @@ export const CreateRuntimeProfileComponent: React.FC<
     control,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting }
   } = useForm<IRuntimeProfileFormData>({
     mode: 'onChange',
@@ -872,6 +873,8 @@ export const CreateRuntimeProfileComponent: React.FC<
       description: ''
     }
   });
+
+  const selectedRegion = watch('region');
 
   // Load Regions from service
   useEffect(() => {
@@ -886,7 +889,12 @@ export const CreateRuntimeProfileComponent: React.FC<
           setRegions(loadedRegions);
 
           if (loadedRegions.length > 0) {
-            setValue('region', loadedRegions[0].name, { shouldValidate: true });
+            const defaultRegion =
+              (credentials?.region_id &&
+                loadedRegions.find(r => r.name === credentials.region_id)
+                  ?.name) ||
+              loadedRegions[0].name;
+            setValue('region', defaultRegion, { shouldValidate: true });
           }
         }
       } catch (error) {
@@ -1536,6 +1544,8 @@ export const CreateRuntimeProfileComponent: React.FC<
       <NetworkSecurityEditDrawer
         open={isNetworkSecurityDrawerOpen}
         config={networkAndSecurityConfig}
+        region={selectedRegion}
+        service={service}
         onClose={() => setIsNetworkSecurityDrawerOpen(false)}
         onSave={updatedConfig => {
           setNetworkAndSecurityConfig(updatedConfig);

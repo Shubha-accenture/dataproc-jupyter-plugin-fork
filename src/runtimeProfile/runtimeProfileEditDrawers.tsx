@@ -17,6 +17,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
+  Autocomplete,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -33,20 +34,24 @@ import {
   IAutoscalingConfig,
   INetworkAndSecurityConfig,
   IRuntimeEnvironmentConfig,
+  IRuntimeProfileService,
   ISessionLifecycleConfig,
   NetworkSourceType,
   ProfileLabels,
   SparkProperties,
   TimeUnit
 } from './runtimeProfileInterface';
+import { runtimeProfileService } from './runtimeProfileService';
 import {
   CUSTOM_CONTAINERS,
   CUSTOM_CONTAINER_MESSAGE,
   CUSTOM_CONTAINER_MESSAGE_PART,
   KEY_MESSAGE,
   SECURITY_KEY,
+  SERVICE_ACCOUNT,
   SHARED_VPC
 } from '../utils/const';
+import { authApi } from '../utils/utils';
 
 export const RUNTIME_VERSION_OPTIONS: string[] = [
   '2.3 LTS (Spark 3.5.1, Python 3.12)',
@@ -723,12 +728,20 @@ export const DEFAULT_NETWORK_OPTIONS: string[] = ['default'];
 export const DEFAULT_SUBNETWORK_OPTIONS: string[] = ['default'];
 const INTERNAL_IP_DOC =
   'https://cloud.google.com/dataproc-serverless/docs/concepts/network';
+const KMS_KEY_REGEX =
+  /^projects\/[^/]+\/locations\/[^/]+\/keyRings\/[^/]+\/cryptoKeys\/[^/]+$/;
 
 export interface INetworkSecurityEditDrawerProps {
   open: boolean;
   config: INetworkAndSecurityConfig;
   networkOptions?: string[];
   subnetworkOptions?: string[];
+  sharedSubnetworkOptions?: string[];
+  keyRingOptions?: string[];
+  cryptoKeyOptions?: string[];
+  region?: string;
+  projectId?: string;
+  service?: IRuntimeProfileService;
   onClose: () => void;
   onSave: (updatedConfig: INetworkAndSecurityConfig) => void;
 }
@@ -738,8 +751,14 @@ export const NetworkSecurityEditDrawer: React.FC<
 > = ({
   open,
   config,
-  networkOptions = DEFAULT_NETWORK_OPTIONS,
-  subnetworkOptions = DEFAULT_SUBNETWORK_OPTIONS,
+  networkOptions,
+  subnetworkOptions,
+  sharedSubnetworkOptions,
+  keyRingOptions,
+  cryptoKeyOptions,
+  region,
+  projectId,
+  service = runtimeProfileService,
   onClose,
   onSave
 }) => {
@@ -755,6 +774,9 @@ export const NetworkSecurityEditDrawer: React.FC<
   const [sharedSubnetwork, setSharedSubnetwork] = useState<string>(
     config.sharedSubnetwork || ''
   );
+  const [hostProjectId, setHostProjectId] = useState<string>(
+    config.hostProjectId || ''
+  );
   const [networkTagsText, setNetworkTagsText] = useState<string>(
     (config.networkTags || []).join(', ')
   );
@@ -765,51 +787,438 @@ export const NetworkSecurityEditDrawer: React.FC<
     useState<ExecutionIdentityType>(
       config.executionIdentity ?? 'user_account'
     );
+  const [serviceAccount, setServiceAccount] = useState<string>(
+    config.serviceAccount || ''
+  );
   const [encryption, setEncryption] = useState<EncryptionType>(
     config.encryption ?? 'google_managed'
   );
+  const [kmsKeySelectionMode, setKmsKeySelectionMode] = useState<
+    'select' | 'manual'
+  >(
+    config.kmsKeySelectionMode ??
+      (config.kmsKeyName && !config.keyRing ? 'manual' : 'select')
+  );
+  const [keyRing, setKeyRing] = useState<string>(config.keyRing || '');
+  const [cryptoKey, setCryptoKey] = useState<string>(config.cryptoKey || '');
   const [kmsKeyName, setKmsKeyName] = useState<string>(
     config.kmsKeyName ?? ''
   );
+  const [isValidManualKey, setIsValidManualKey] = useState<boolean>(true);
+
+  const [fetchedNetworks, setFetchedNetworks] = useState<string[]>([]);
+  const [fetchedSubnetworks, setFetchedSubnetworks] = useState<string[]>([]);
+  const [fetchedSharedSubnetworks, setFetchedSharedSubnetworks] = useState<
+    string[]
+  >([]);
+  const [fetchedKeyRings, setFetchedKeyRings] = useState<string[]>([]);
+  const [fetchedCryptoKeys, setFetchedCryptoKeys] = useState<string[]>([]);
+
+  const [isLoadingNetworks, setIsLoadingNetworks] = useState<boolean>(false);
+  const [isLoadingSubnetworks, setIsLoadingSubnetworks] =
+    useState<boolean>(false);
+  const [isLoadingSharedSubnetworks, setIsLoadingSharedSubnetworks] =
+    useState<boolean>(false);
+  const [hasFetchedSubnetworks, setHasFetchedSubnetworks] =
+    useState<boolean>(false);
+  const [hasFetchedSharedSubnetworks, setHasFetchedSharedSubnetworks] =
+    useState<boolean>(false);
+  const [resolvedProject, setResolvedProject] = useState<string>(
+    projectId || ''
+  );
+  const [resolvedRegion, setResolvedRegion] = useState<string>(region || '');
 
   useEffect(() => {
     if (open) {
+      const extractSubnetName = (val?: string) => {
+        if (!val) {
+          return '';
+        }
+        return (
+          /projects\/(?<project>[\w-]+)\/regions\/(?<region>[\w-]+)\/subnetworks\/(?<subnetwork>[\w-]+)/.exec(
+            val
+          )?.groups?.['subnetwork'] || val
+        );
+      };
+
       setNetworkSource(config.networkSource ?? 'project');
       setPrimaryNetwork(
         config.primaryNetwork || config.networkInThisProject || 'default'
       );
-      setSubnetwork(config.subnetwork || 'default');
-      setSharedSubnetwork(config.sharedSubnetwork || '');
+      setSubnetwork(extractSubnetName(config.subnetwork) || 'default');
+      setSharedSubnetwork(extractSubnetName(config.sharedSubnetwork) || '');
+      setHostProjectId(config.hostProjectId || '');
       setNetworkTagsText((config.networkTags || []).join(', '));
       setInternalIpOnly(Boolean(config.internalIpOnly));
       setExecutionIdentity(config.executionIdentity ?? 'user_account');
+      setServiceAccount(config.serviceAccount || '');
       setEncryption(config.encryption ?? 'google_managed');
+
+      // Extract keyRing and cryptoKey from kmsKeyName if formatted and not explicitly stored
+      let initialKeyRing = config.keyRing || '';
+      let initialCryptoKey = config.cryptoKey || '';
+      if (!initialKeyRing && config.kmsKeyName) {
+        const parts = config.kmsKeyName.split('/');
+        if (
+          parts.length === 8 &&
+          parts[0] === 'projects' &&
+          parts[2] === 'locations' &&
+          parts[4] === 'keyRings' &&
+          parts[6] === 'cryptoKeys'
+        ) {
+          initialKeyRing = parts[5] || '';
+          initialCryptoKey = parts[7] || '';
+        }
+      }
+      setKeyRing(initialKeyRing);
+      setCryptoKey(initialCryptoKey);
+      setKmsKeySelectionMode(
+        config.kmsKeySelectionMode ??
+          (config.kmsKeyName && !config.keyRing ? 'manual' : 'select')
+      );
       setKmsKeyName(config.kmsKeyName ?? '');
+      setIsValidManualKey(
+        !config.kmsKeyName || KMS_KEY_REGEX.test(config.kmsKeyName)
+      );
     }
   }, [open, config]);
 
-  const resolvedNetworkOptions = React.useMemo(() => {
-    const base =
-      networkOptions.length > 0 ? networkOptions : DEFAULT_NETWORK_OPTIONS;
-    if (primaryNetwork && !base.includes(primaryNetwork)) {
-      return [primaryNetwork, ...base];
+  // Load primary networks when drawer opens and 'project' network source is selected
+  useEffect(() => {
+    if (!open || networkSource !== 'project') {
+      return;
     }
-    return base;
-  }, [networkOptions, primaryNetwork]);
+    let isMounted = true;
+
+    const fetchProjectNetworks = async () => {
+      const credentials = await authApi().catch(() => undefined);
+      const targetProject = projectId || credentials?.project_id || '';
+      const targetRegion = region || credentials?.region_id || '';
+
+      if (isMounted) {
+        setResolvedProject(targetProject);
+        setResolvedRegion(targetRegion);
+      }
+
+      if (service?.getNetworks && !networkOptions) {
+        setIsLoadingNetworks(true);
+        try {
+          const networks = await service.getNetworks(targetProject);
+          if (isMounted && Array.isArray(networks) && networks.length > 0) {
+            setFetchedNetworks(networks);
+            const currentNet =
+              config.primaryNetwork || config.networkInThisProject || 'default';
+            if (!networks.includes(currentNet)) {
+              setPrimaryNetwork(networks[0]);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load networks:', error);
+        } finally {
+          if (isMounted) {
+            setIsLoadingNetworks(false);
+          }
+        }
+      }
+    };
+
+    fetchProjectNetworks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    open,
+    networkSource,
+    projectId,
+    region,
+    service,
+    networkOptions,
+    config.primaryNetwork,
+    config.networkInThisProject
+  ]);
+
+  // Load Shared VPC subnetworks only when 'shared_from_host' radio option is selected
+  useEffect(() => {
+    if (
+      !open ||
+      networkSource !== 'shared_from_host' ||
+      sharedSubnetworkOptions ||
+      !service?.getSharedVpcSubnetworks
+    ) {
+      return;
+    }
+    let isMounted = true;
+
+    const fetchSharedVpcResources = async () => {
+      setIsLoadingSharedSubnetworks(true);
+      try {
+        const credentials = await authApi().catch(() => undefined);
+        const targetProject = projectId || credentials?.project_id || '';
+        const targetRegion = region || credentials?.region_id || '';
+
+        if (isMounted) {
+          setResolvedProject(targetProject);
+          setResolvedRegion(targetRegion);
+        }
+
+        const sharedResult = await service.getSharedVpcSubnetworks!(
+          targetProject,
+          targetRegion
+        );
+        if (isMounted && sharedResult) {
+          setFetchedSharedSubnetworks(sharedResult.subnetworks || []);
+          if (sharedResult.hostProjectId) {
+            setHostProjectId(sharedResult.hostProjectId);
+          }
+          setHasFetchedSharedSubnetworks(true);
+        }
+      } catch (error) {
+        console.error('Failed to load shared VPC subnetworks:', error);
+      } finally {
+        if (isMounted) {
+          setIsLoadingSharedSubnetworks(false);
+        }
+      }
+    };
+
+    fetchSharedVpcResources();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    open,
+    networkSource,
+    projectId,
+    region,
+    service,
+    sharedSubnetworkOptions
+  ]);
+
+  // Load KMS Key Rings only when 'customer_managed_key' radio option is selected
+  useEffect(() => {
+    if (
+      !open ||
+      encryption !== 'customer_managed_key' ||
+      keyRingOptions ||
+      !service?.getKeyRings
+    ) {
+      return;
+    }
+    let isMounted = true;
+
+    const fetchKeyRings = async () => {
+      try {
+        const credentials = await authApi().catch(() => undefined);
+        const targetProject = projectId || credentials?.project_id || '';
+        const targetRegion = region || credentials?.region_id || '';
+
+        if (isMounted) {
+          setResolvedProject(targetProject);
+          setResolvedRegion(targetRegion);
+        }
+
+        const rings = await service.getKeyRings!(targetProject, targetRegion);
+        if (isMounted && Array.isArray(rings)) {
+          setFetchedKeyRings(rings);
+        }
+      } catch (error) {
+        console.error('Failed to load KMS key rings:', error);
+      }
+    };
+
+    fetchKeyRings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open, encryption, projectId, region, service, keyRingOptions]);
+
+  // Load subnetworks whenever primaryNetwork changes while drawer is open
+  useEffect(() => {
+    if (
+      !open ||
+      networkSource !== 'project' ||
+      !primaryNetwork ||
+      subnetworkOptions ||
+      !service?.getSubnetworks
+    ) {
+      return;
+    }
+    let isMounted = true;
+
+    const fetchSubnetworksForNetwork = async () => {
+      setIsLoadingSubnetworks(true);
+      try {
+        const credentials = await authApi().catch(() => undefined);
+        const targetProject = projectId || credentials?.project_id || '';
+        const targetRegion = region || credentials?.region_id || '';
+
+        const subs = await service.getSubnetworks!(
+          primaryNetwork,
+          targetProject,
+          targetRegion
+        );
+        if (isMounted && Array.isArray(subs)) {
+          setFetchedSubnetworks(subs);
+          setHasFetchedSubnetworks(true);
+          if (subs.length > 0) {
+            setSubnetwork(prev => (prev && subs.includes(prev) ? prev : subs[0]));
+          } else {
+            setSubnetwork('');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load subnetworks:', error);
+      } finally {
+        if (isMounted) {
+          setIsLoadingSubnetworks(false);
+        }
+      }
+    };
+
+    fetchSubnetworksForNetwork();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    open,
+    networkSource,
+    primaryNetwork,
+    projectId,
+    region,
+    service,
+    subnetworkOptions
+  ]);
+
+  // Load KMS CryptoKeys whenever keyRing changes while drawer is open
+  useEffect(() => {
+    if (
+      !open ||
+      encryption !== 'customer_managed_key' ||
+      !keyRing ||
+      cryptoKeyOptions ||
+      !service?.getCryptoKeys
+    ) {
+      return;
+    }
+    let isMounted = true;
+
+    const fetchKeysForRing = async () => {
+      try {
+        const credentials = await authApi().catch(() => undefined);
+        const targetProject = projectId || credentials?.project_id || '';
+        const targetRegion = region || credentials?.region_id || '';
+
+        const keys = await service.getCryptoKeys!(
+          keyRing,
+          targetProject,
+          targetRegion
+        );
+        if (isMounted && Array.isArray(keys)) {
+          setFetchedCryptoKeys(keys);
+          if (keys.length > 0) {
+            setCryptoKey(prev => (prev && keys.includes(prev) ? prev : keys[0]));
+          } else {
+            setCryptoKey('');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load KMS crypto keys:', error);
+      }
+    };
+
+    fetchKeysForRing();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    open,
+    encryption,
+    keyRing,
+    projectId,
+    region,
+    service,
+    cryptoKeyOptions
+  ]);
+
+  const resolvedNetworkOptions = React.useMemo(() => {
+    const source =
+      networkOptions && networkOptions.length > 0
+        ? networkOptions
+        : fetchedNetworks.length > 0
+        ? fetchedNetworks
+        : DEFAULT_NETWORK_OPTIONS;
+    if (primaryNetwork && !source.includes(primaryNetwork)) {
+      return [primaryNetwork, ...source];
+    }
+    return source;
+  }, [networkOptions, fetchedNetworks, primaryNetwork]);
 
   const resolvedSubnetworkOptions = React.useMemo(() => {
-    const base =
-      subnetworkOptions.length > 0
+    const source =
+      subnetworkOptions && subnetworkOptions.length > 0
         ? subnetworkOptions
+        : hasFetchedSubnetworks
+        ? fetchedSubnetworks
+        : fetchedSubnetworks.length > 0
+        ? fetchedSubnetworks
         : DEFAULT_SUBNETWORK_OPTIONS;
-    if (subnetwork && !base.includes(subnetwork)) {
-      return [subnetwork, ...base];
+    if (subnetwork && !hasFetchedSubnetworks && !source.includes(subnetwork)) {
+      return [subnetwork, ...source];
     }
-    return base;
-  }, [subnetworkOptions, subnetwork]);
+    return source;
+  }, [
+    subnetworkOptions,
+    fetchedSubnetworks,
+    hasFetchedSubnetworks,
+    subnetwork
+  ]);
+
+  const resolvedSharedSubnetworkOptions = React.useMemo(() => {
+    const source =
+      sharedSubnetworkOptions && sharedSubnetworkOptions.length > 0
+        ? sharedSubnetworkOptions
+        : fetchedSharedSubnetworks;
+    if (sharedSubnetwork && !source.includes(sharedSubnetwork)) {
+      return [sharedSubnetwork, ...source];
+    }
+    return source;
+  }, [sharedSubnetworkOptions, fetchedSharedSubnetworks, sharedSubnetwork]);
+
+  const resolvedKeyRingOptions = React.useMemo(() => {
+    const source =
+      keyRingOptions && keyRingOptions.length > 0
+        ? keyRingOptions
+        : fetchedKeyRings;
+    if (keyRing && !source.includes(keyRing)) {
+      return [keyRing, ...source];
+    }
+    return source;
+  }, [keyRingOptions, fetchedKeyRings, keyRing]);
+
+  const resolvedCryptoKeyOptions = React.useMemo(() => {
+    const source =
+      cryptoKeyOptions && cryptoKeyOptions.length > 0
+        ? cryptoKeyOptions
+        : fetchedCryptoKeys;
+    if (cryptoKey && !source.includes(cryptoKey)) {
+      return [cryptoKey, ...source];
+    }
+    return source;
+  }, [cryptoKeyOptions, fetchedCryptoKeys, cryptoKey]);
 
   const openExternalLink = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleManualKmsKeyChange = (value: string) => {
+    setKmsKeySelectionMode('manual');
+    setKmsKeyName(value);
+    setIsValidManualKey(value === '' || KMS_KEY_REGEX.test(value.trim()));
   };
 
   const handleSave = () => {
@@ -817,6 +1226,20 @@ export const NetworkSecurityEditDrawer: React.FC<
       .split(',')
       .map(t => t.trim())
       .filter(Boolean);
+
+    let finalKmsKeyName: string | undefined;
+    if (encryption === 'customer_managed_key') {
+      if (kmsKeySelectionMode === 'select' && keyRing && cryptoKey) {
+        const proj = projectId || resolvedProject;
+        const reg = region || resolvedRegion;
+        finalKmsKeyName =
+          proj && reg
+            ? `projects/${proj}/locations/${reg}/keyRings/${keyRing}/cryptoKeys/${cryptoKey}`
+            : kmsKeyName.trim() || undefined;
+      } else {
+        finalKmsKeyName = kmsKeyName.trim() || undefined;
+      }
+    }
 
     onSave({
       ...config,
@@ -828,14 +1251,28 @@ export const NetworkSecurityEditDrawer: React.FC<
         networkSource === 'shared_from_host'
           ? sharedSubnetwork.trim() || undefined
           : undefined,
+      hostProjectId:
+        networkSource === 'shared_from_host'
+          ? hostProjectId || undefined
+          : undefined,
       networkTags: parsedTags,
       internalIpOnly,
       executionIdentity,
+      serviceAccount: serviceAccount.trim() || undefined,
       encryption,
-      kmsKeyName:
-        encryption === 'customer_managed_key'
-          ? kmsKeyName.trim() || undefined
-          : undefined
+      kmsKeySelectionMode:
+        encryption === 'customer_managed_key' ? kmsKeySelectionMode : undefined,
+      keyRing:
+        encryption === 'customer_managed_key' &&
+        kmsKeySelectionMode === 'select'
+          ? keyRing || undefined
+          : undefined,
+      cryptoKey:
+        encryption === 'customer_managed_key' &&
+        kmsKeySelectionMode === 'select'
+          ? cryptoKey || undefined
+          : undefined,
+      kmsKeyName: finalKmsKeyName
     });
   };
 
@@ -898,10 +1335,12 @@ export const NetworkSecurityEditDrawer: React.FC<
                       id="edit-primary-network"
                       label="Primary network"
                       notched
+                      disabled={isLoadingNetworks}
                       value={primaryNetwork}
-                      onChange={e =>
-                        setPrimaryNetwork(e.target.value as string)
-                      }
+                      onChange={e => {
+                        setPrimaryNetwork(e.target.value as string);
+                        setSubnetwork('');
+                      }}
                     >
                       {resolvedNetworkOptions.map(net => (
                         <MenuItem key={net} value={net}>
@@ -920,17 +1359,37 @@ export const NetworkSecurityEditDrawer: React.FC<
                       id="edit-subnetwork"
                       label="Subnetwork"
                       notched
-                      value={subnetwork}
+                      disabled={isLoadingSubnetworks}
+                      value={
+                        resolvedSubnetworkOptions.includes(subnetwork)
+                          ? subnetwork
+                          : ''
+                      }
                       onChange={e => setSubnetwork(e.target.value as string)}
                     >
-                      {resolvedSubnetworkOptions.map(sub => (
-                        <MenuItem key={sub} value={sub}>
-                          {sub}
+                      {resolvedSubnetworkOptions.length === 0 ? (
+                        <MenuItem value="" disabled>
+                          No subnetworks available
                         </MenuItem>
-                      ))}
+                      ) : (
+                        resolvedSubnetworkOptions.map(sub => (
+                          <MenuItem key={sub} value={sub}>
+                            {sub}
+                          </MenuItem>
+                        ))
+                      )}
                     </Select>
                   </FormControl>
                 </div>
+
+                {!isLoadingNetworks &&
+                  !isLoadingSubnetworks &&
+                  hasFetchedSubnetworks &&
+                  resolvedSubnetworkOptions.length === 0 && (
+                    <div className="edit-drawer-helper-text">
+                      Please select a valid network and subnetwork.
+                    </div>
+                  )}
 
                 <TextField
                   id="edit-network-tags"
@@ -1049,16 +1508,42 @@ export const NetworkSecurityEditDrawer: React.FC<
 
             {networkSource === 'shared_from_host' && (
               <div className="edit-drawer-nested-fields">
-                <TextField
-                  id="edit-shared-subnetwork"
-                  label="Shared subnetwork"
+                <Autocomplete
+                  freeSolo
+                  options={resolvedSharedSubnetworkOptions}
                   value={sharedSubnetwork}
-                  onChange={e => setSharedSubnetwork(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
+                  disabled={isLoadingSharedSubnetworks}
+                  onChange={(_event, newValue) => {
+                    setSharedSubnetwork(
+                      typeof newValue === 'string' ? newValue : ''
+                    );
+                  }}
+                  onInputChange={(_event, newInputValue) => {
+                    setSharedSubnetwork(newInputValue);
+                  }}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      id="edit-shared-subnetwork"
+                      label="Shared subnetwork"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{
+                        ...params.inputProps,
+                        id: 'edit-shared-subnetwork'
+                      }}
+                    />
+                  )}
                 />
+                {!isLoadingSharedSubnetworks &&
+                  hasFetchedSharedSubnetworks &&
+                  resolvedSharedSubnetworkOptions.length === 0 && (
+                    <div className="edit-drawer-helper-text">
+                      No shared subnetworks are available in this region.
+                    </div>
+                  )}
               </div>
             )}
           </div>
@@ -1118,6 +1603,40 @@ export const NetworkSecurityEditDrawer: React.FC<
             />
             <div className="edit-drawer-option-content">
               <div className="edit-drawer-option-title">User account</div>
+            </div>
+          </div>
+
+          <div className="edit-drawer-nested-fields">
+            <TextField
+              id="edit-service-account"
+              label={
+                executionIdentity === 'user_account'
+                  ? 'Service account for system operations'
+                  : 'Service account'
+              }
+              value={serviceAccount}
+              onChange={e => setServiceAccount(e.target.value)}
+              variant="outlined"
+              size="small"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+            <div className="edit-drawer-helper-text">
+              If not provided, the default GCE service account will be used.{' '}
+              <span
+                role="button"
+                tabIndex={0}
+                className="section-detail-link"
+                onClick={() => openExternalLink(SERVICE_ACCOUNT)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openExternalLink(SERVICE_ACCOUNT);
+                  }
+                }}
+              >
+                Learn more
+              </span>
             </div>
           </div>
         </div>
@@ -1206,16 +1725,91 @@ export const NetworkSecurityEditDrawer: React.FC<
 
             {encryption === 'customer_managed_key' && (
               <div className="edit-drawer-nested-fields">
-                <TextField
-                  id="edit-kms-key-name"
-                  label="Cloud KMS key"
-                  value={kmsKeyName}
-                  onChange={e => setKmsKeyName(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                />
+                <div className="edit-drawer-radio-option">
+                  <Radio
+                    id="edit-kms-mode-select"
+                    checked={kmsKeySelectionMode === 'select'}
+                    onChange={() => setKmsKeySelectionMode('select')}
+                    size="small"
+                    color="primary"
+                  />
+                  <div
+                    className="edit-drawer-row"
+                    style={{ flex: 1, width: '100%' }}
+                  >
+                    <FormControl size="small" fullWidth variant="outlined">
+                      <InputLabel id="edit-kms-keyring-label" shrink>
+                        Key rings
+                      </InputLabel>
+                      <Select
+                        labelId="edit-kms-keyring-label"
+                        id="edit-kms-keyring"
+                        label="Key rings"
+                        notched
+                        value={keyRing}
+                        onChange={e => {
+                          setKmsKeySelectionMode('select');
+                          setKeyRing(e.target.value as string);
+                        }}
+                      >
+                        {resolvedKeyRingOptions.map(ring => (
+                          <MenuItem key={ring} value={ring}>
+                            {ring}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl size="small" fullWidth variant="outlined">
+                      <InputLabel id="edit-kms-key-label" shrink>
+                        Keys
+                      </InputLabel>
+                      <Select
+                        labelId="edit-kms-key-label"
+                        id="edit-kms-key"
+                        label="Keys"
+                        notched
+                        value={cryptoKey}
+                        onChange={e => {
+                          setKmsKeySelectionMode('select');
+                          setCryptoKey(e.target.value as string);
+                        }}
+                      >
+                        {resolvedCryptoKeyOptions.map(key => (
+                          <MenuItem key={key} value={key}>
+                            {key}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                </div>
+
+                <div className="edit-drawer-radio-option">
+                  <Radio
+                    id="edit-kms-mode-manual"
+                    checked={kmsKeySelectionMode === 'manual'}
+                    onChange={() => setKmsKeySelectionMode('manual')}
+                    size="small"
+                    color="primary"
+                  />
+                  <div style={{ flex: 1, width: '100%' }}>
+                    <TextField
+                      id="edit-kms-key-name"
+                      label="Cloud KMS key"
+                      placeholder="Enter key manually"
+                      value={kmsKeyName}
+                      onChange={e => handleManualKmsKeyChange(e.target.value)}
+                      error={
+                        kmsKeySelectionMode === 'manual' && !isValidManualKey
+                      }
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </div>
+                </div>
                 <div className="edit-drawer-helper-text">{KEY_MESSAGE}</div>
               </div>
             )}

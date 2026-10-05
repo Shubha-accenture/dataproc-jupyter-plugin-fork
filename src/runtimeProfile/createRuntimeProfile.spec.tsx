@@ -389,5 +389,23 @@ describe('CreateRuntimeProfile Component & Service', () => {
     expect(created.driverAndExecutorConfiguration?.driverDisk).toBe('standard persistent disk');
     expect(created.driverAndExecutorConfiguration?.executorDisk).toBe('Standard persistent disk (HDD), 100 GB');
   });
+
+  it('should provide network, subnetwork, shared VPC, keyRing, and cryptoKey methods on RuntimeProfileService', async () => {
+    const networks = await mockService.getNetworks();
+    expect(networks).toEqual(['default']);
+
+    const subnetworks = await mockService.getSubnetworks('default');
+    expect(subnetworks).toEqual(['default']);
+
+    const sharedVpc = await mockService.getSharedVpcSubnetworks();
+    expect(sharedVpc).toEqual({ hostProjectId: '', subnetworks: [] });
+
+    const keyRings = await mockService.getKeyRings();
+    expect(keyRings).toEqual([]);
+
+    const cryptoKeys = await mockService.getCryptoKeys('test-ring');
+    expect(cryptoKeys).toEqual([]);
+  });
 });
+
 
