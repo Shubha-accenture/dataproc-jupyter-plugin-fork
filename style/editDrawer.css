@@ -316,3 +316,49 @@ body[data-jp-theme-name='JupyterLab Dark'] .edit-drawer-add-btn:hover {
   margin-top: 8px;
 }
 
+.edit-drawer-external-link-icon {
+  margin-left: 3px;
+  vertical-align: text-bottom;
+}
+
+.edit-drawer-select-with-help .MuiSelect-select {
+  padding-right: 52px !important;
+}
+
+.edit-drawer-select-with-help .MuiSelect-icon {
+  right: 28px !important;
+}
+
+.edit-drawer-select-help {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--jp-ui-font-color2, #5f6368);
+  cursor: pointer;
+  z-index: 1;
+}
+
+.edit-drawer-help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.edit-drawer-container
+  .MuiOutlinedInput-root.Mui-error
+  .MuiOutlinedInput-notchedOutline {
+  border-color: #d93025 !important;
+}
+
+.edit-drawer-container .MuiFormLabel-root.Mui-error {
+  color: #d93025 !important;
+}
+
+.edit-drawer-error-text {
+  font-size: 12px;
+  line-height: 16px;
+  color: #d93025;
+}

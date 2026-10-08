@@ -17,15 +17,16 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  Autocomplete,
   Checkbox,
   FormControl,
   FormControlLabel,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Radio,
   Select,
-  TextField
+  TextField,
+  Tooltip
 } from '@mui/material';
 import { EditDrawer } from '../controls/EditDrawer';
 import {
@@ -47,6 +48,7 @@ import {
   CUSTOM_CONTAINER_MESSAGE,
   CUSTOM_CONTAINER_MESSAGE_PART,
   KEY_MESSAGE,
+  NETWORK_TAG_MESSAGE,
   SECURITY_KEY,
   SERVICE_ACCOUNT,
   SHARED_VPC
@@ -938,14 +940,9 @@ export const NetworkSecurityEditDrawer: React.FC<
     config.networkInThisProject
   ]);
 
-  // Load Shared VPC subnetworks only when 'shared_from_host' radio option is selected
+  // Load Shared VPC subnetworks when drawer opens or when 'shared_from_host' is selected
   useEffect(() => {
-    if (
-      !open ||
-      networkSource !== 'shared_from_host' ||
-      sharedSubnetworkOptions ||
-      !service?.getSharedVpcSubnetworks
-    ) {
+    if (!open || sharedSubnetworkOptions || !service?.getSharedVpcSubnetworks) {
       return;
     }
     let isMounted = true;
@@ -967,14 +964,25 @@ export const NetworkSecurityEditDrawer: React.FC<
           targetRegion
         );
         if (isMounted && sharedResult) {
-          setFetchedSharedSubnetworks(sharedResult.subnetworks || []);
-          if (sharedResult.hostProjectId) {
+          const subs = sharedResult.subnetworks || [];
+          setFetchedSharedSubnetworks(subs);
+          if (sharedResult.hostProjectId !== undefined) {
             setHostProjectId(sharedResult.hostProjectId);
+          }
+          if (subs.length > 0) {
+            setSharedSubnetwork(prev =>
+              prev && subs.includes(prev) ? prev : subs[0]
+            );
+          } else {
+            setSharedSubnetwork('');
           }
           setHasFetchedSharedSubnetworks(true);
         }
       } catch (error) {
         console.error('Failed to load shared VPC subnetworks:', error);
+        if (isMounted) {
+          setHasFetchedSharedSubnetworks(true);
+        }
       } finally {
         if (isMounted) {
           setIsLoadingSharedSubnetworks(false);
@@ -1189,6 +1197,17 @@ export const NetworkSecurityEditDrawer: React.FC<
     return source;
   }, [sharedSubnetworkOptions, fetchedSharedSubnetworks, sharedSubnetwork]);
 
+  const hasNoSubnetworks =
+    !isLoadingNetworks &&
+    !isLoadingSubnetworks &&
+    hasFetchedSubnetworks &&
+    resolvedSubnetworkOptions.length === 0;
+
+  const hasNoSharedSubnetworks =
+    !isLoadingSharedSubnetworks &&
+    (hasFetchedSharedSubnetworks || Boolean(sharedSubnetworkOptions)) &&
+    resolvedSharedSubnetworkOptions.length === 0;
+
   const resolvedKeyRingOptions = React.useMemo(() => {
     const source =
       keyRingOptions && keyRingOptions.length > 0
@@ -1214,6 +1233,42 @@ export const NetworkSecurityEditDrawer: React.FC<
   const openExternalLink = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
+
+  const renderExternalLinkIcon = () => (
+    <svg
+      className="edit-drawer-external-link-icon"
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
+    </svg>
+  );
+
+  const renderFieldHelpIcon = (tooltipText: string) => (
+    <InputAdornment
+      position="end"
+      className="edit-drawer-select-help"
+      onMouseDown={e => e.stopPropagation()}
+      onClick={e => e.stopPropagation()}
+    >
+      <Tooltip title={tooltipText}>
+        <span className="edit-drawer-help-icon" role="img" aria-label={tooltipText}>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z" />
+          </svg>
+        </span>
+      </Tooltip>
+    </InputAdornment>
+  );
 
   const handleManualKmsKeyChange = (value: string) => {
     setKmsKeySelectionMode('manual');
@@ -1287,11 +1342,11 @@ export const NetworkSecurityEditDrawer: React.FC<
       <div className="edit-drawer-field-group">
         <div className="edit-drawer-section-heading">Connect your cluster</div>
         <div className="edit-drawer-helper-text">
-          Network, private-IP posture, and the identity the cluster runs as.
+          Establishes connectivity for the VM instances in this cluster.
         </div>
 
         <div className="edit-drawer-radio-group">
-          {/* Option 1: Network in this project */}
+          {/* Option 1: Networks in this project */}
           <div>
             <div
               className="edit-drawer-radio-option"
@@ -1315,10 +1370,28 @@ export const NetworkSecurityEditDrawer: React.FC<
               />
               <div className="edit-drawer-option-content">
                 <div className="edit-drawer-option-title">
-                  Network in this project
+                  Networks in this project
                 </div>
                 <div className="edit-drawer-helper-text">
-                  All incoming connections must have SSL encryption.
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className="section-detail-link"
+                    onClick={e => {
+                      e.stopPropagation();
+                      openExternalLink(INTERNAL_IP_DOC);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openExternalLink(INTERNAL_IP_DOC);
+                      }
+                    }}
+                  >
+                    Learn more
+                    {renderExternalLinkIcon()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1326,17 +1399,25 @@ export const NetworkSecurityEditDrawer: React.FC<
             {networkSource === 'project' && (
               <div className="edit-drawer-nested-fields">
                 <div className="edit-drawer-row">
-                  <FormControl size="small" fullWidth variant="outlined">
+                  <FormControl
+                    size="small"
+                    fullWidth
+                    variant="outlined"
+                    className="edit-drawer-select-with-help"
+                  >
                     <InputLabel id="edit-primary-network-label" shrink>
-                      Primary network
+                      Primary network *
                     </InputLabel>
                     <Select
                       labelId="edit-primary-network-label"
                       id="edit-primary-network"
-                      label="Primary network"
+                      label="Primary network *"
                       notched
                       disabled={isLoadingNetworks}
                       value={primaryNetwork}
+                      endAdornment={renderFieldHelpIcon(
+                        'The Compute Engine network for the cluster VMs.'
+                      )}
                       onChange={e => {
                         setPrimaryNetwork(e.target.value as string);
                         setSubnetwork('');
@@ -1350,8 +1431,18 @@ export const NetworkSecurityEditDrawer: React.FC<
                     </Select>
                   </FormControl>
 
-                  <FormControl size="small" fullWidth variant="outlined">
-                    <InputLabel id="edit-subnetwork-label" shrink>
+                  <FormControl
+                    size="small"
+                    fullWidth
+                    variant="outlined"
+                    error={hasNoSubnetworks}
+                    className="edit-drawer-select-with-help"
+                  >
+                    <InputLabel
+                      id="edit-subnetwork-label"
+                      shrink
+                      error={hasNoSubnetworks}
+                    >
                       Subnetwork
                     </InputLabel>
                     <Select
@@ -1359,12 +1450,16 @@ export const NetworkSecurityEditDrawer: React.FC<
                       id="edit-subnetwork"
                       label="Subnetwork"
                       notched
+                      error={hasNoSubnetworks}
                       disabled={isLoadingSubnetworks}
                       value={
                         resolvedSubnetworkOptions.includes(subnetwork)
                           ? subnetwork
                           : ''
                       }
+                      endAdornment={renderFieldHelpIcon(
+                        'The Compute Engine subnetwork with Private Google Access enabled.'
+                      )}
                       onChange={e => setSubnetwork(e.target.value as string)}
                     >
                       {resolvedSubnetworkOptions.length === 0 ? (
@@ -1382,80 +1477,32 @@ export const NetworkSecurityEditDrawer: React.FC<
                   </FormControl>
                 </div>
 
-                {!isLoadingNetworks &&
-                  !isLoadingSubnetworks &&
-                  hasFetchedSubnetworks &&
-                  resolvedSubnetworkOptions.length === 0 && (
-                    <div className="edit-drawer-helper-text">
-                      Please select a valid network and subnetwork.
-                    </div>
-                  )}
+                {hasNoSubnetworks && (
+                  <div className="edit-drawer-error-text">
+                    Please select a valid network and subnetwork.
+                  </div>
+                )}
 
-                <TextField
-                  id="edit-network-tags"
-                  label="Network tags"
-                  value={networkTagsText}
-                  onChange={e => setNetworkTagsText(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                />
-
-                <div
-                  className="edit-drawer-radio-option"
-                  onClick={() => setInternalIpOnly(prev => !prev)}
-                  role="checkbox"
-                  aria-checked={internalIpOnly}
-                  tabIndex={0}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setInternalIpOnly(prev => !prev);
-                    }
-                  }}
-                >
-                  <Checkbox
-                    id="edit-internal-ip-only"
-                    checked={internalIpOnly}
-                    onChange={e => setInternalIpOnly(e.target.checked)}
-                    onClick={e => e.stopPropagation()}
+                <div className="edit-drawer-field-group">
+                  <TextField
+                    id="edit-network-tags"
+                    label="Network tags"
+                    placeholder="Network tags"
+                    value={networkTagsText}
+                    onChange={e => setNetworkTagsText(e.target.value)}
+                    variant="outlined"
                     size="small"
-                    color="primary"
+                    fullWidth
                   />
-                  <div className="edit-drawer-option-content">
-                    <div className="edit-drawer-option-title">
-                      Internal IP only
-                    </div>
-                    <div className="edit-drawer-helper-text">
-                      Configure all instances to have only internal IP
-                      addresses.{' '}
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        className="section-detail-link"
-                        onClick={e => {
-                          e.stopPropagation();
-                          openExternalLink(INTERNAL_IP_DOC);
-                        }}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            openExternalLink(INTERNAL_IP_DOC);
-                          }
-                        }}
-                      >
-                        Learn more
-                      </span>
-                    </div>
+                  <div className="edit-drawer-helper-text">
+                    {NETWORK_TAG_MESSAGE}
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Option 2: Network shared from host */}
+          {/* Option 2: Networks shared from host project */}
           <div>
             <div
               className="edit-drawer-radio-option"
@@ -1479,71 +1526,86 @@ export const NetworkSecurityEditDrawer: React.FC<
               />
               <div className="edit-drawer-option-content">
                 <div className="edit-drawer-option-title">
-                  Network shared from host
+                  {`Networks shared from host project: "${hostProjectId}"`}
                 </div>
                 <div className="edit-drawer-helper-text">
-                  Database will only accept connections via AlloyDB Auth Proxy
-                  and language connectors through the proxy process.{' '}
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className="section-detail-link"
-                    onClick={e => {
-                      e.stopPropagation();
-                      openExternalLink(SHARED_VPC);
-                    }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
+                  Choose a shared VPC network from project that is different
+                  from this cluster&apos;s project.
+                  <div>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="section-detail-link"
+                      onClick={e => {
                         e.stopPropagation();
                         openExternalLink(SHARED_VPC);
-                      }
-                    }}
-                  >
-                    Learn more
-                  </span>
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openExternalLink(SHARED_VPC);
+                        }
+                      }}
+                    >
+                      Learn more
+                      {renderExternalLinkIcon()}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
             {networkSource === 'shared_from_host' && (
               <div className="edit-drawer-nested-fields">
-                <Autocomplete
-                  freeSolo
-                  options={resolvedSharedSubnetworkOptions}
-                  value={sharedSubnetwork}
-                  disabled={isLoadingSharedSubnetworks}
-                  onChange={(_event, newValue) => {
-                    setSharedSubnetwork(
-                      typeof newValue === 'string' ? newValue : ''
-                    );
-                  }}
-                  onInputChange={(_event, newInputValue) => {
-                    setSharedSubnetwork(newInputValue);
-                  }}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      id="edit-shared-subnetwork"
-                      label="Shared subnetwork"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      InputLabelProps={{ shrink: true }}
-                      inputProps={{
-                        ...params.inputProps,
-                        id: 'edit-shared-subnetwork'
-                      }}
-                    />
-                  )}
-                />
-                {!isLoadingSharedSubnetworks &&
-                  hasFetchedSharedSubnetworks &&
-                  resolvedSharedSubnetworkOptions.length === 0 && (
-                    <div className="edit-drawer-helper-text">
-                      No shared subnetworks are available in this region.
-                    </div>
-                  )}
+                <FormControl
+                  size="small"
+                  fullWidth
+                  variant="outlined"
+                  error={hasNoSharedSubnetworks}
+                >
+                  <InputLabel
+                    id="edit-shared-subnetwork-label"
+                    shrink
+                    error={hasNoSharedSubnetworks}
+                  >
+                    Shared subnetwork
+                  </InputLabel>
+                  <Select
+                    labelId="edit-shared-subnetwork-label"
+                    id="edit-shared-subnetwork"
+                    label="Shared subnetwork"
+                    notched
+                    error={hasNoSharedSubnetworks}
+                    disabled={isLoadingSharedSubnetworks}
+                    displayEmpty
+                    value={
+                      resolvedSharedSubnetworkOptions.includes(sharedSubnetwork)
+                        ? sharedSubnetwork
+                        : ''
+                    }
+                    onChange={e =>
+                      setSharedSubnetwork(e.target.value as string)
+                    }
+                  >
+                    {resolvedSharedSubnetworkOptions.length === 0 ? (
+                      <MenuItem value="" disabled>
+                        No shared subnetworks available
+                      </MenuItem>
+                    ) : (
+                      resolvedSharedSubnetworkOptions.map(sub => (
+                        <MenuItem key={sub} value={sub}>
+                          {sub}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
+                {hasNoSharedSubnetworks && (
+                  <div className="edit-drawer-error-text">
+                    No shared subnetworks are available in this region.
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1556,31 +1618,6 @@ export const NetworkSecurityEditDrawer: React.FC<
           Execute notebooks with
         </div>
         <div className="edit-drawer-radio-group">
-          <div
-            className="edit-drawer-radio-option"
-            onClick={() => setExecutionIdentity('service_account')}
-            role="radio"
-            aria-checked={executionIdentity === 'service_account'}
-            tabIndex={0}
-            onKeyDown={e => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setExecutionIdentity('service_account');
-              }
-            }}
-          >
-            <Radio
-              id="edit-execution-identity-service-account"
-              checked={executionIdentity === 'service_account'}
-              onChange={() => setExecutionIdentity('service_account')}
-              size="small"
-              color="primary"
-            />
-            <div className="edit-drawer-option-content">
-              <div className="edit-drawer-option-title">Service account</div>
-            </div>
-          </div>
-
           <div
             className="edit-drawer-radio-option"
             onClick={() => setExecutionIdentity('user_account')}
@@ -1602,43 +1639,66 @@ export const NetworkSecurityEditDrawer: React.FC<
               color="primary"
             />
             <div className="edit-drawer-option-content">
-              <div className="edit-drawer-option-title">User account</div>
+              <div className="edit-drawer-option-title">User Account</div>
             </div>
           </div>
 
-          <div className="edit-drawer-nested-fields">
-            <TextField
-              id="edit-service-account"
-              label={
-                executionIdentity === 'user_account'
-                  ? 'Service account for system operations'
-                  : 'Service account'
+          <div
+            className="edit-drawer-radio-option"
+            onClick={() => setExecutionIdentity('service_account')}
+            role="radio"
+            aria-checked={executionIdentity === 'service_account'}
+            tabIndex={0}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setExecutionIdentity('service_account');
               }
-              value={serviceAccount}
-              onChange={e => setServiceAccount(e.target.value)}
-              variant="outlined"
+            }}
+          >
+            <Radio
+              id="edit-execution-identity-service-account"
+              checked={executionIdentity === 'service_account'}
+              onChange={() => setExecutionIdentity('service_account')}
               size="small"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
+              color="primary"
             />
-            <div className="edit-drawer-helper-text">
-              If not provided, the default GCE service account will be used.{' '}
-              <span
-                role="button"
-                tabIndex={0}
-                className="section-detail-link"
-                onClick={() => openExternalLink(SERVICE_ACCOUNT)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openExternalLink(SERVICE_ACCOUNT);
-                  }
-                }}
-              >
-                Learn more
-              </span>
+            <div className="edit-drawer-option-content">
+              <div className="edit-drawer-option-title">Service Account</div>
             </div>
           </div>
+
+          {executionIdentity === 'service_account' && (
+            <div className="edit-drawer-nested-fields">
+              <TextField
+                id="edit-service-account"
+                label="Service account"
+                value={serviceAccount}
+                onChange={e => setServiceAccount(e.target.value)}
+                variant="outlined"
+                size="small"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+              <div className="edit-drawer-helper-text">
+                If not provided, the default GCE service account will be used.{' '}
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="section-detail-link"
+                  onClick={() => openExternalLink(SERVICE_ACCOUNT)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openExternalLink(SERVICE_ACCOUNT);
+                    }
+                  }}
+                >
+                  Learn more
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
