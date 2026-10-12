@@ -46,6 +46,9 @@ import { createRoot, Root } from 'react-dom/client';
 import {
   CreateRuntimeProfileComponent,
   RuntimeEnvironmentEditDrawer,
+  MetastoreEditDrawer,
+  DEFAULT_METASTORE_CONFIG,
+  formatMetastoreProperties,
   generateRandomHex,
   renderGroupedMachineOptions
 } from './createRuntimeProfile';
@@ -143,12 +146,20 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
       '.section-detail-edit-button'
     );
     expect(editButtons).toHaveLength(7);
-    expect(editButtons[0].getAttribute('aria-disabled')).toBe('false');
-    Array.from(editButtons)
-      .slice(1)
-      .forEach(btn => {
-        expect(btn.getAttribute('aria-disabled')).toBe('true');
-      });
+    // Runtime configuration (0) and Metastore configuration (3) are editable;
+    // the remaining sections are still read-only.
+    const expectedDisabled = [
+      'false',
+      'true',
+      'true',
+      'false',
+      'true',
+      'true',
+      'true'
+    ];
+    Array.from(editButtons).forEach((btn, idx) => {
+      expect(btn.getAttribute('aria-disabled')).toBe(expectedDisabled[idx]);
+    });
 
     const displayNameInput = container.querySelector(
       '#runtime-profile-display-name'
@@ -1007,6 +1018,46 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
     await act(async () => {
       saveBtn.click();
     });
+  });
+
+  it('formats metastore summary labels for Lakehouse and Dataproc Metastore configs and exposes MetastoreEditDrawer', () => {
+    expect(MetastoreEditDrawer).toBeDefined();
+
+    // Default config
+    const formatted = formatMetastoreProperties(DEFAULT_METASTORE_CONFIG);
+    expect(formatted).toHaveLength(2);
+    expect(formatted.find(p => p.label === 'Metastore')?.value).toBe(
+      'Lakehouse runtime catalog'
+    );
+    expect(formatted.find(p => p.label === 'Hive endpoint')?.value).toBe(
+      'Disabled'
+    );
+
+    // Lakehouse with specific project ID
+    const formattedWithProject = formatMetastoreProperties({
+      metastore: 'Lakehouse runtime catalog',
+      metastoreType: 'lakehouse',
+      projectId: 'frontrow-team',
+      hiveEndpointEnabled: true
+    });
+    expect(formattedWithProject.find(p => p.label === 'Metastore')?.value).toBe(
+      'Lakehouse runtime catalog (project: frontrow-team)'
+    );
+    expect(
+      formattedWithProject.find(p => p.label === 'Hive endpoint')?.value
+    ).toBe('Enabled');
+
+    // Dataproc Metastore
+    const formattedDpms = formatMetastoreProperties({
+      metastoreType: 'dataproc',
+      dataprocMetastoreService:
+        'projects/test-proj/locations/us-central1/services/dpms-service'
+    });
+    expect(formattedDpms.find(p => p.label === 'Metastore')?.value).toBe(
+      'projects/test-proj/locations/us-central1/services/dpms-service'
+    );
+
+    expect(formatMetastoreProperties(undefined)).toEqual([]);
   });
 
   it('supports browsing buckets, viewing bucket files, searching buckets, and opening create bucket placeholder drawer', async () => {

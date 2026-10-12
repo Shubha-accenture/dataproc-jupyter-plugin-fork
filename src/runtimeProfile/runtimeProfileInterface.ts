@@ -62,10 +62,22 @@ export interface IAutoscalingConfig {
   maxExecutors?: number;
 }
 
+export type MetastoreType = 'lakehouse' | 'dataproc';
+export type CatalogSelectionMode = 'existing' | 'new';
+
 export interface IMetastoreConfig {
   metastore?: string;
+  metastoreType?: MetastoreType;
   hiveEndpointEnabled?: boolean;
   projectId?: string;
+  icebergRestEndpointEnabled?: boolean;
+  catalogSelectionMode?: CatalogSelectionMode;
+  catalogId?: string;
+  catalogName?: string;
+  dataprocMetastoreService?: string;
+  hiveProjectId?: string;
+  hiveCatalogId?: string;
+  hiveCatalogName?: string;
 }
 
 export type ExecutionIdentityType = 'user_account' | 'service_account';
@@ -154,5 +166,3 @@ export interface IRuntimeProfileService {
     region?: string
   ): Promise<IRuntimeProfile>;
 }
-
-

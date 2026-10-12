@@ -343,5 +343,184 @@ describe('runtimeProfileMapper', () => {
       // Tier is an explicit UI control and intentionally overrides sparkProperties
       expect(props?.[DATAPROC_TIER_PROPERTY]).toBe('premium');
     });
+
+    it('should map Lakehouse metastore config with custom catalog name to Spark Iceberg properties', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'Lakehouse Profile',
+        region: 'us-central1',
+        metastoreConfig: {
+          metastore: 'Lakehouse runtime catalog',
+          metastoreType: 'lakehouse',
+          catalogSelectionMode: 'new',
+          catalogName: 'standard-lh-catalog-us-central1',
+          icebergRestEndpointEnabled: true,
+          hiveEndpointEnabled: true
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      const props = result.runtimeConfig?.properties;
+      expect(props?.['spark.sql.catalog.standard-lh-catalog-us-central1']).toBe(
+        'org.apache.iceberg.spark.SparkCatalog'
+      );
+      expect(
+        props?.['spark.sql.catalog.standard-lh-catalog-us-central1.type']
+      ).toBe('hadoop');
+
+      // Dataproc Lakehouse properties (Task 2 & 4)
+      expect(props?.['spark.dataproc.lakehouse.project']).toBe('test-project');
+      expect(props?.['dataproc.lakehouse.defaultCatalog']).toBe(
+        'standard-lh-catalog-us-central1'
+      );
+      expect(
+        props?.['dataproc.lakehouse.catalog.standard-lh-catalog-us-central1']
+      ).toBe('projects/test-project/catalogs/standard-lh-catalog-us-central1');
+    });
+
+    it('should map Lakehouse metastore with existing catalogId and custom project', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'Existing Catalog Profile',
+        region: 'us-central1',
+        metastoreConfig: {
+          metastore: 'Lakehouse runtime catalog',
+          metastoreType: 'lakehouse',
+          catalogSelectionMode: 'existing',
+          catalogId: 'my-hive-catalog',
+          projectId: 'custom-project',
+          icebergRestEndpointEnabled: true
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      const props = result.runtimeConfig?.properties;
+      expect(props?.['spark.dataproc.lakehouse.project']).toBe(
+        'custom-project'
+      );
+      expect(props?.['dataproc.lakehouse.catalog.my-hive-catalog']).toBe(
+        'projects/custom-project/catalogs/my-hive-catalog'
+      );
+      expect(props?.['dataproc.lakehouse.defaultCatalog']).toBe(
+        'projects/custom-project/catalogs/my-hive-catalog'
+      );
+      expect(props?.['spark.sql.catalog.my-hive-catalog']).toBe(
+        'org.apache.iceberg.spark.SparkCatalog'
+      );
+    });
+
+    it('should map Hive-only configuration without defaultCatalog or Iceberg properties', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'Hive Only Profile',
+        region: 'us-central1',
+        metastoreConfig: {
+          metastore: 'Lakehouse runtime catalog',
+          metastoreType: 'lakehouse',
+          catalogSelectionMode: 'existing',
+          catalogId: 'shared-hive-catalog',
+          projectId: 'analytics-prod',
+          icebergRestEndpointEnabled: false,
+          hiveEndpointEnabled: true
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      const props = result.runtimeConfig?.properties;
+      expect(props?.['spark.dataproc.lakehouse.project']).toBe(
+        'analytics-prod'
+      );
+      expect(props?.['dataproc.lakehouse.catalog.shared-hive-catalog']).toBe(
+        'projects/analytics-prod/catalogs/shared-hive-catalog'
+      );
+      expect(props?.['dataproc.lakehouse.defaultCatalog']).toBeUndefined();
+      expect(props?.['spark.sql.catalog.shared-hive-catalog']).toBeUndefined();
+    });
+
+    it('should map Dataproc Metastore config with dataprocMetastoreService to peripheralsConfig', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'DPMS Profile',
+        region: 'us-central1',
+        metastoreConfig: {
+          metastoreType: 'dataproc',
+          dataprocMetastoreService:
+            'projects/test-project/locations/us-central1/services/my-dpms'
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      expect(
+        result.environmentConfig?.peripheralsConfig?.metastoreService
+      ).toBe('projects/test-project/locations/us-central1/services/my-dpms');
+    });
+
+    it('should not emit environmentConfig when no Dataproc Metastore service is selected', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'No DPMS Profile',
+        region: 'us-central1',
+        metastoreConfig: {
+          metastore: 'Lakehouse runtime catalog',
+          metastoreType: 'lakehouse'
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      expect(result.environmentConfig).toBeUndefined();
+    });
+
+    it('should map Hive Endpoint specific fields (hiveProjectId, hiveCatalogId, hiveCatalogName) correctly', () => {
+      const payload: ICreateRuntimeProfilePayload = {
+        displayName: 'Hive Subfields Profile',
+        region: 'us-central1',
+        metastoreConfig: {
+          metastore: 'Lakehouse runtime catalog',
+          metastoreType: 'lakehouse',
+          catalogSelectionMode: 'new',
+          catalogName: 'default-lakehouse-catalog',
+          icebergRestEndpointEnabled: true,
+          hiveEndpointEnabled: true,
+          hiveProjectId: 'hive-analytics-project',
+          hiveCatalogId: 'custom-hive-cat-id',
+          hiveCatalogName: 'hive_catalog_alias'
+        }
+      };
+
+      const result = mapRuntimeProfileToSessionTemplate(
+        payload,
+        'test-project',
+        'us-central1'
+      );
+
+      const props = result.runtimeConfig?.properties;
+      expect(props?.['spark.dataproc.lakehouse.project']).toBe('test-project');
+      expect(props?.['dataproc.lakehouse.defaultCatalog']).toBe(
+        'default-lakehouse-catalog'
+      );
+      expect(props?.['dataproc.lakehouse.catalog.hive_catalog_alias']).toBe(
+        'projects/hive-analytics-project/catalogs/custom-hive-cat-id'
+      );
+    });
   });
 });

@@ -46,6 +46,7 @@ import {
   RUNTIME_VERSION_OPTIONS,
   SelectBucketEditDrawer
 } from './runtimeProfileEditDrawers';
+import { MetastoreEditDrawer } from './metastoreEditDrawer';
 import {
   DATAPROC_TIER_DOC,
   LIGHTNING_ENGINE_DOC,
@@ -309,10 +310,21 @@ export const formatMetastoreProperties = (
   }
   const isHiveEnabled =
     config.hiveEndpointEnabled ?? DEFAULT_METASTORE_CONFIG.hiveEndpointEnabled;
+  const metastoreLabel =
+    config.metastoreType === 'dataproc'
+      ? config.dataprocMetastoreService ||
+        config.metastore ||
+        'Dataproc Metastore'
+      : config.projectId
+      ? `${config.metastore || 'Lakehouse runtime catalog'} (project: ${
+          config.projectId
+        })`
+      : config.metastore || 'Lakehouse runtime catalog';
+
   return [
     {
       label: 'Metastore',
-      value: config.metastore || 'Lakehouse runtime catalog'
+      value: metastoreLabel
     },
     {
       label: 'Hive endpoint',
@@ -509,6 +521,8 @@ export const CreateRuntimeProfileComponent: React.FC<
     useState<boolean>(true);
   const [isRuntimeConfigDrawerOpen, setIsRuntimeConfigDrawerOpen] =
     useState<boolean>(false);
+  const [isMetastoreDrawerOpen, setIsMetastoreDrawerOpen] =
+    useState<boolean>(false);
 
   // Tier and Lightning Engine state
   const initialTierValue =
@@ -556,6 +570,7 @@ export const CreateRuntimeProfileComponent: React.FC<
     control,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting }
   } = useForm<IRuntimeProfileFormData>({
     mode: 'onChange',
@@ -603,9 +618,8 @@ export const CreateRuntimeProfileComponent: React.FC<
     () => initialAutoscalingConfig || DEFAULT_AUTOSCALING_CONFIG,
     [initialAutoscalingConfig]
   );
-  const metastoreConfig = useMemo<IMetastoreConfig>(
-    () => initialMetastoreConfig || DEFAULT_METASTORE_CONFIG,
-    [initialMetastoreConfig]
+  const [metastoreConfig, setMetastoreConfig] = useState<IMetastoreConfig>(
+    initialMetastoreConfig || DEFAULT_METASTORE_CONFIG
   );
   const networkAndSecurityConfig = useMemo<INetworkAndSecurityConfig>(
     () => initialNetworkAndSecurityConfig || DEFAULT_NETWORK_SECURITY_CONFIG,
@@ -649,8 +663,8 @@ export const CreateRuntimeProfileComponent: React.FC<
       {
         title: 'Metastore configuration',
         properties: formatMetastoreProperties(metastoreConfig),
-        isEditDisabled: true,
-        onEdit: undefined
+        isEditDisabled: false,
+        onEdit: () => setIsMetastoreDrawerOpen(true)
       },
       {
         title: 'Network and security',
@@ -1239,6 +1253,16 @@ export const CreateRuntimeProfileComponent: React.FC<
           setIsRuntimeConfigDrawerOpen(false);
         }}
       />
+      <MetastoreEditDrawer
+        open={isMetastoreDrawerOpen}
+        config={metastoreConfig}
+        region={watch('region')}
+        onClose={() => setIsMetastoreDrawerOpen(false)}
+        onSave={(updatedConfig: IMetastoreConfig) => {
+          setMetastoreConfig(updatedConfig);
+          setIsMetastoreDrawerOpen(false);
+        }}
+      />
     </div>
   );
 };
@@ -1276,6 +1300,6 @@ export {
   SectionDetail,
   RuntimeEnvironmentEditDrawer,
   SelectBucketEditDrawer,
+  MetastoreEditDrawer,
   RUNTIME_VERSION_OPTIONS
 };
-
