@@ -40,6 +40,10 @@ import LeftArrowIcon from '../../style/icons/left_arrow_icon.svg';
 import expandLessIcon from '../../style/icons/expand_less.svg';
 import expandMoreIcon from '../../style/icons/expand_more.svg';
 import { SectionDetail, ISectionProperty } from '../controls/SectionDetail';
+import {
+  LAKEHOUSE_RUNTIME_CATALOG,
+  METASTORE_NONE
+} from './runtimeProfileMapper';
 import '../../style/runtimeProfile.css';
 import {
   RuntimeEnvironmentEditDrawer,
@@ -182,6 +186,8 @@ export const DEFAULT_AUTOSCALING_CONFIG: IAutoscalingConfig = {
   maxExecutors: 10
 };
 
+// No metastoreType: nothing is sent until the user saves the Metastore drawer,
+// so the service uses the Lakehouse runtime catalog by default.
 export const DEFAULT_METASTORE_CONFIG: IMetastoreConfig = {
   metastore: '',
   hiveEndpointEnabled: false
@@ -308,29 +314,34 @@ export const formatMetastoreProperties = (
   if (!config) {
     return [];
   }
-  const isHiveEnabled =
-    config.hiveEndpointEnabled ?? DEFAULT_METASTORE_CONFIG.hiveEndpointEnabled;
-  const metastoreLabel =
-    config.metastoreType === 'dataproc'
-      ? config.dataprocMetastoreService ||
-        config.metastore ||
-        'Dataproc Metastore'
-      : config.projectId
-      ? `${config.metastore || 'Lakehouse runtime catalog'} (project: ${
-          config.projectId
-        })`
-      : config.metastore || 'Lakehouse runtime catalog';
+  const isDataprocMetastore = config.metastoreType === 'dataproc';
+  const lakehouseLabel = config.metastore || LAKEHOUSE_RUNTIME_CATALOG;
+  const metastoreLabel = isDataprocMetastore
+    ? config.dataprocMetastoreService || METASTORE_NONE
+    : config.projectId
+    ? `${lakehouseLabel} (project: ${config.projectId})`
+    : lakehouseLabel;
 
-  return [
+  const properties: ISectionProperty[] = [
     {
       label: 'Metastore',
       value: metastoreLabel
-    },
-    {
-      label: 'Hive endpoint',
-      value: isHiveEnabled ? 'Enabled' : 'Disabled'
     }
   ];
+
+  // Hive endpoint is a Lakehouse runtime catalog option; it does not apply to
+  // Dataproc Metastore.
+  if (!isDataprocMetastore) {
+    const isHiveEnabled =
+      config.hiveEndpointEnabled ??
+      DEFAULT_METASTORE_CONFIG.hiveEndpointEnabled;
+    properties.push({
+      label: 'Hive endpoint',
+      value: isHiveEnabled ? 'Enabled' : 'Disabled'
+    });
+  }
+
+  return properties;
 };
 
 export const formatNetworkSecurityProperties = (

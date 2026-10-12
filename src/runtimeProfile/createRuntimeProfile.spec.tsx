@@ -1047,15 +1047,20 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
       formattedWithProject.find(p => p.label === 'Hive endpoint')?.value
     ).toBe('Enabled');
 
-    // Dataproc Metastore
+    // Dataproc Metastore: Hive endpoint is Lakehouse-only, so no Hive row,
+    // even if a stale hiveEndpointEnabled value is present.
     const formattedDpms = formatMetastoreProperties({
       metastoreType: 'dataproc',
       dataprocMetastoreService:
-        'projects/test-proj/locations/us-central1/services/dpms-service'
+        'projects/test-proj/locations/us-central1/services/dpms-service',
+      hiveEndpointEnabled: true
     });
-    expect(formattedDpms.find(p => p.label === 'Metastore')?.value).toBe(
-      'projects/test-proj/locations/us-central1/services/dpms-service'
-    );
+    expect(formattedDpms).toEqual([
+      {
+        label: 'Metastore',
+        value: 'projects/test-proj/locations/us-central1/services/dpms-service'
+      }
+    ]);
 
     expect(formatMetastoreProperties(undefined)).toEqual([]);
   });

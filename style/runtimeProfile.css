@@ -693,59 +693,40 @@ body[data-jp-theme-name='JupyterLab Dark']
   cursor: not-allowed;
 }
 
-.metastore-cards-container {
-  display: flex;
-  gap: 16px;
-  width: 100%;
+/* Metastore configuration drawer */
+.metastore-drawer-cards {
+  margin: 8px 0;
+}
+
+.metastore-drawer-row {
   margin-top: 8px;
+}
+
+.metastore-drawer-subsection {
+  margin-top: 16px;
+}
+
+.metastore-drawer-indented {
+  margin-left: 32px;
+  margin-bottom: 12px;
+}
+
+.metastore-drawer-checkbox-helper {
+  margin-top: -4px;
   margin-bottom: 8px;
 }
 
-.metastore-card {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--jp-border-color1, #dadce0);
-  border-radius: 8px;
-  padding: 14px 16px;
-  cursor: pointer;
-  background-color: var(--jp-layout-color0, #ffffff);
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out,
-    background-color 0.15s ease-in-out;
+.metastore-drawer-hive-fields {
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
-  user-select: none;
+  gap: 16px;
+  margin-top: 8px;
 }
 
-.metastore-card:hover {
-  border-color: #1a73e8;
+.metastore-drawer-intro {
+  margin-bottom: 16px;
 }
 
-.metastore-card.selected {
-  border: 2px solid #1a73e8;
-  padding: 13px 15px;
-  background-color: rgba(26, 115, 232, 0.04);
-}
-
-.metastore-card-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--jp-ui-font-color0, #202124);
-  margin-bottom: 4px;
-}
-
-.metastore-card-desc {
-  font-size: 12px;
-  color: var(--jp-ui-font-color2, #5f6368);
-  line-height: 16px;
-}
-
-body[data-jp-theme-name='JupyterLab Dark'] .metastore-card {
-  background-color: var(--jp-layout-color0);
-  border-color: var(--jp-border-color1);
-}
-
-body[data-jp-theme-name='JupyterLab Dark'] .metastore-card.selected {
-  border-color: #8ab4f8;
-  background-color: rgba(138, 180, 248, 0.08);
+.metastore-drawer-option-spinner {
+  margin-right: 8px;
 }

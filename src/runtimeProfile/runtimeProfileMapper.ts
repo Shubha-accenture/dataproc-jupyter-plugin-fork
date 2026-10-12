@@ -27,6 +27,19 @@ import {
   IMachineTypeOption
 } from './runtimeProfileInterface';
 
+// Lakehouse runtime catalog properties. Like DATAPROC_TIER_PROPERTY, the keys
+// without the `spark.` prefix are read by the Dataproc service, not by Spark.
+export const LAKEHOUSE_PROJECT_PROPERTY = 'spark.dataproc.lakehouse.project';
+export const LAKEHOUSE_DEFAULT_CATALOG_PROPERTY =
+  'dataproc.lakehouse.defaultCatalog';
+export const LAKEHOUSE_CATALOG_PROPERTY_PREFIX = 'dataproc.lakehouse.catalog.';
+// The default catalog the service creates is named after the region.
+const LAKEHOUSE_DEFAULT_CATALOG_NAME_PREFIX = 'standard-lh-catalog-';
+
+// Metastore values used in IMetastoreConfig.
+export const LAKEHOUSE_RUNTIME_CATALOG = 'Lakehouse runtime catalog';
+export const METASTORE_NONE = 'None';
+
 /**
  * Interface representing the exact Google Cloud Dataproc SessionTemplate API payload schema.
  * Endpoint: POST https://dataproc.googleapis.com/v1/projects/{project}/locations/{location}/sessionTemplates
@@ -221,6 +234,21 @@ export const sanitizeSessionTemplateId = (
 };
 
 /**
+ * Name of the default Lakehouse catalog the service creates in a region,
+ * e.g. 'standard-lh-catalog-us-central1'. Empty when the region is unknown.
+ */
+export const getDefaultLakehouseCatalogName = (region?: string): string =>
+  region ? `${LAKEHOUSE_DEFAULT_CATALOG_NAME_PREFIX}${region}` : '';
+
+/**
+ * Resource name of a Lakehouse catalog, e.g. 'projects/p/catalogs/c'.
+ */
+export const getLakehouseCatalogResource = (
+  project: string,
+  catalogId: string
+): string => `projects/${project}/catalogs/${catalogId}`;
+
+/**
  * Maps ICreateRuntimeProfilePayload to Dataproc SessionTemplate API payload schema
  */
 export function mapRuntimeProfileToSessionTemplate(
@@ -376,84 +404,60 @@ export function mapRuntimeProfileToSessionTemplate(
     properties['spark.dataproc.executor.disk.size'] = executorDisk.size;
   }
 
-  // BigLake / Lakehouse Metastore properties (matching createRunTime.tsx & go/spark-sep-14-metastore-subtask)
-  const isLakehouse =
-    payload.metastoreConfig?.metastoreType === 'lakehouse' ||
-    payload.metastoreConfig?.metastore === 'Lakehouse runtime catalog' ||
-    payload.metastoreConfig?.metastore === 'biglake';
+  // Lakehouse runtime catalog. The untouched default config sends nothing, so
+  // the service uses the Lakehouse runtime catalog in the profile's project.
+  // Derived values never override the user's sparkProperties.
+  const metastoreConfig = payload.metastoreConfig;
+  if (metastoreConfig?.metastoreType === 'lakehouse') {
+    const isIcebergEnabled = metastoreConfig.icebergRestEndpointEnabled ?? true;
+    const isHiveEnabled = Boolean(metastoreConfig.hiveEndpointEnabled);
+    const hiveProject = metastoreConfig.hiveProjectId || projectId;
 
-  if (isLakehouse) {
-    const isIcebergEnabled =
-      payload.metastoreConfig?.icebergRestEndpointEnabled ?? true;
-    const isHiveEnabled = Boolean(payload.metastoreConfig?.hiveEndpointEnabled);
+    if (isIcebergEnabled) {
+      const icebergProject = metastoreConfig.projectId || projectId;
+      setIfAbsent(LAKEHOUSE_PROJECT_PROPERTY, icebergProject);
 
-    if (isIcebergEnabled || isHiveEnabled) {
-      const targetCatalogProject =
-        payload.metastoreConfig?.projectId || projectId;
-
-      // Task 2: Autoload (spark.dataproc.lakehouse.project=[projectId])
-      if (targetCatalogProject) {
-        properties['spark.dataproc.lakehouse.project'] = targetCatalogProject;
-      }
-
-      const isExisting =
-        payload.metastoreConfig?.catalogSelectionMode === 'existing';
-      const catalogId =
-        payload.metastoreConfig?.catalogId ||
-        payload.metastoreConfig?.catalogName ||
-        'biglake';
-      const catalogName =
-        payload.metastoreConfig?.catalogName ||
-        payload.metastoreConfig?.catalogId ||
-        `standard-lh-catalog-${targetRegion}`;
-
-      const catalogResource = `projects/${targetCatalogProject}/catalogs/${catalogId}`;
-
-      // Task 3 & 4: Iceberg REST Endpoint defaults
-      if (isIcebergEnabled) {
-        const effectiveName = isExisting ? catalogId : catalogName;
-
-        // Standard Spark Iceberg properties
-        properties[`spark.sql.catalog.${effectiveName}`] =
-          'org.apache.iceberg.spark.SparkCatalog';
-        properties[`spark.sql.catalog.${effectiveName}.type`] = 'hadoop';
-
-        // Catalog mapping property
-        properties[`dataproc.lakehouse.catalog.${effectiveName}`] =
-          catalogResource;
-
-        if (isExisting) {
-          // Task 3: Support Iceberg default select existing catalog
-          // dataproc.lakehouse.defaultCatalog = projects/[projectId]/catalogs/[catalogId]
-          properties['dataproc.lakehouse.defaultCatalog'] = catalogResource;
-        } else {
-          // Task 4: Support Iceberg default new catalog
-          // dataproc.lakehouse.defaultCatalog = standard-lh-catalog-<region>
-          // BE creates it in the project specified by spark.dataproc.lakehouse.project
-          properties['dataproc.lakehouse.defaultCatalog'] = catalogName;
+      if (metastoreConfig.catalogSelectionMode === 'existing') {
+        // An existing catalog becomes the default catalog.
+        if (metastoreConfig.catalogId) {
+          const catalogResource = getLakehouseCatalogResource(
+            icebergProject,
+            metastoreConfig.catalogId
+          );
+          setIfAbsent(
+            LAKEHOUSE_CATALOG_PROPERTY_PREFIX + metastoreConfig.catalogId,
+            catalogResource
+          );
+          setIfAbsent(LAKEHOUSE_DEFAULT_CATALOG_PROPERTY, catalogResource);
+        }
+      } else {
+        // New default catalog, created by the service in the project above.
+        const catalogName =
+          metastoreConfig.catalogName ||
+          getDefaultLakehouseCatalogName(targetRegion);
+        if (catalogName) {
+          setIfAbsent(
+            LAKEHOUSE_CATALOG_PROPERTY_PREFIX + catalogName,
+            getLakehouseCatalogResource(icebergProject, catalogName)
+          );
+          setIfAbsent(LAKEHOUSE_DEFAULT_CATALOG_PROPERTY, catalogName);
         }
       }
+    } else if (isHiveEnabled) {
+      // Hive only: the Lakehouse project is the Hive endpoint's project.
+      setIfAbsent(LAKEHOUSE_PROJECT_PROPERTY, hiveProject);
+    }
 
-      // Task 5: Support select Hive existing catalog (b/555763848)
-      // Note on Hive-only configuration:
-      // When a user unchecks "Iceberg REST Endpoint" and enables only "Hive Endpoint",
-      // Hive reuses the configured Project ID and catalog selection from the drawer.
-      // Under the hood, Managed Service for Apache Spark registers this Lakehouse
-      // catalog via `dataproc.lakehouse.catalog.[catalogName] = projects/[projectId]/catalogs/[catalogId]`.
-      // Per Task 5, dataproc.lakehouse.defaultCatalog is strictly reserved for Iceberg defaults
-      // and is omitted in a Hive-only configuration to prevent property overloading.
-      if (isHiveEnabled) {
-        const hiveProject =
-          payload.metastoreConfig?.hiveProjectId || targetCatalogProject;
-        const hiveCatId =
-          payload.metastoreConfig?.hiveCatalogId ||
-          (isExisting ? catalogId : catalogName);
-        const hiveCatName =
-          payload.metastoreConfig?.hiveCatalogName ||
-          (isExisting ? catalogId : catalogName);
-        const hiveResource = `projects/${hiveProject}/catalogs/${hiveCatId}`;
-        properties[`dataproc.lakehouse.catalog.${hiveCatName}`] = hiveResource;
-      }
+    // The Hive endpoint registers its catalog but never sets the default
+    // catalog, which belongs to the Iceberg REST endpoint.
+    if (isHiveEnabled && metastoreConfig.hiveCatalogName) {
+      setIfAbsent(
+        LAKEHOUSE_CATALOG_PROPERTY_PREFIX + metastoreConfig.hiveCatalogName,
+        getLakehouseCatalogResource(
+          hiveProject,
+          metastoreConfig.hiveCatalogId || metastoreConfig.hiveCatalogName
+        )
+      );
     }
   }
 
@@ -487,15 +491,13 @@ export function mapRuntimeProfileToSessionTemplate(
     })
   };
 
-  // Peripherals Config (Dataproc Metastore)
+  // Dataproc Metastore service
   const metastoreService =
-    payload.metastoreConfig?.dataprocMetastoreService ||
-    (payload.metastoreConfig?.metastore &&
-    payload.metastoreConfig.metastore !== 'None' &&
-    payload.metastoreConfig.metastore !== 'Lakehouse runtime catalog' &&
-    payload.metastoreConfig.metastore !== 'biglake'
-      ? payload.metastoreConfig.metastore
-      : undefined);
+    metastoreConfig?.metastoreType === 'dataproc' &&
+    metastoreConfig.dataprocMetastoreService &&
+    metastoreConfig.dataprocMetastoreService !== METASTORE_NONE
+      ? metastoreConfig.dataprocMetastoreService
+      : undefined;
 
   const templatePayload: ISessionTemplateApiPayload = {
     name: `projects/${projectId}/locations/${targetRegion}/sessionTemplates/${templateId}`,

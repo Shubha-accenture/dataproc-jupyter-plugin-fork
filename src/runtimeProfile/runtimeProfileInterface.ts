@@ -65,19 +65,31 @@ export interface IAutoscalingConfig {
 export type MetastoreType = 'lakehouse' | 'dataproc';
 export type CatalogSelectionMode = 'existing' | 'new';
 
+/**
+ * Metastore settings of a runtime profile. `metastoreType` decides which
+ * fields apply. When it is unset nothing is sent, and the service uses its
+ * default: the Lakehouse runtime catalog in the profile's project.
+ */
 export interface IMetastoreConfig {
+  /** Display label for the summary. Not used to build the payload. */
   metastore?: string;
   metastoreType?: MetastoreType;
-  hiveEndpointEnabled?: boolean;
+  /** Project of the metastore, when different from the profile's project. */
   projectId?: string;
+  // Lakehouse runtime catalog: Iceberg REST endpoint
   icebergRestEndpointEnabled?: boolean;
   catalogSelectionMode?: CatalogSelectionMode;
+  /** Existing catalog to use as the default catalog. */
   catalogId?: string;
+  /** Name of the new default catalog. Unset means the region's default name. */
   catalogName?: string;
-  dataprocMetastoreService?: string;
+  // Lakehouse runtime catalog: Hive endpoint
+  hiveEndpointEnabled?: boolean;
   hiveProjectId?: string;
   hiveCatalogId?: string;
   hiveCatalogName?: string;
+  // Dataproc Metastore
+  dataprocMetastoreService?: string;
 }
 
 export type ExecutionIdentityType = 'user_account' | 'service_account';
