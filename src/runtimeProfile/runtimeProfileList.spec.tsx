@@ -511,4 +511,34 @@ describe('RuntimeProfileList Component', () => {
       expect(container.querySelector('.runtime-profile-table')).not.toBeNull();
     }
   });
+
+  it('should open the runtime profile form in edit mode when Edit is clicked on the details view', async () => {
+    const mockApp: any = {
+      commands: {
+        execute: jest.fn()
+      }
+    };
+    await act(async () => {
+      root.render(<RuntimeProfileList app={mockApp} />);
+    });
+    act(() => {
+      (
+        container.querySelector('.profile-name-button-link') as HTMLElement
+      ).click();
+    });
+
+    const editBtn = Array.from(
+      container.querySelectorAll('.secondary-action-btn')
+    ).find(btn => btn.textContent?.includes('Edit')) as HTMLButtonElement;
+    expect(editBtn.disabled).toBe(false);
+
+    act(() => {
+      editBtn.click();
+    });
+
+    expect(mockApp.commands.execute).toHaveBeenCalledWith(
+      'create-runtime-profile-component',
+      { mode: 'edit' }
+    );
+  });
 });

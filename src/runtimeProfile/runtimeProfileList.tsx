@@ -171,6 +171,12 @@ export default function RuntimeProfileList({ app }: { app?: JupyterLab }) {
         key={selectedProfile.name}
         profile={selectedProfile}
         onBack={() => setSelectedProfile(null)}
+        onEdit={() =>
+          // TODO: Pass the selected profile so the form can be pre-filled.
+          app?.commands.execute('create-runtime-profile-component', {
+            mode: 'edit'
+          })
+        }
         onDeleteSuccess={() => {
           setSelectedProfile(null);
           if (profiles.length === 1 && currentPage > 0) {

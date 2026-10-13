@@ -1219,4 +1219,48 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
     ).not.toBeNull();
     expect(getSaveBtn()?.disabled).toBe(false);
   });
+
+  it('shows the Create heading and button by default', async () => {
+    await act(async () => {
+      root.render(<CreateRuntimeProfileComponent service={mockService} />);
+    });
+
+    expect(container.querySelector('.cluster-details-title')?.textContent).toBe(
+      'Create a runtime profile'
+    );
+    expect(container.querySelector('button[type="submit"]')?.textContent).toBe(
+      'Create a runtime profile'
+    );
+  });
+
+  it('shows the Edit heading and Save button in edit mode and does not create a profile on Save', async () => {
+    const createSpy = jest.spyOn(mockService, 'createRuntimeProfile');
+    const onSuccess = jest.fn();
+
+    await act(async () => {
+      root.render(
+        <CreateRuntimeProfileComponent
+          service={mockService}
+          mode="edit"
+          onSuccess={onSuccess}
+        />
+      );
+    });
+
+    expect(container.querySelector('.cluster-details-title')?.textContent).toBe(
+      'Edit Runtime Profile'
+    );
+    const submitButton = container.querySelector(
+      'button[type="submit"]'
+    ) as HTMLButtonElement;
+    expect(submitButton.textContent).toBe('Save');
+
+    await act(async () => {
+      submitButton.click();
+    });
+
+    // Saving an edited profile is still a TODO, so nothing is created
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
 });

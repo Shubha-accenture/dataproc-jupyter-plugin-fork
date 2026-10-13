@@ -88,6 +88,7 @@ import {
   IRuntimeEnvironmentConfig,
   ISessionLifecycleConfig,
   ProfileLabels,
+  RuntimeProfileFormMode,
   SparkProperties
 } from './runtimeProfileInterface';
 import {
@@ -413,6 +414,8 @@ export interface ICreateRuntimeProfileComponentProps {
   initialSessionLifecycleConfig?: ISessionLifecycleConfig;
   initialSparkProperties?: SparkProperties;
   initialLabels?: ProfileLabels;
+  /** 'create' (default) creates a new profile; 'edit' edits an existing one. */
+  mode?: RuntimeProfileFormMode;
 }
 
 const MACHINE_TYPE_GROUPS: Record<
@@ -500,8 +503,13 @@ export const CreateRuntimeProfileComponent: React.FC<
   initialNetworkAndSecurityConfig,
   initialSessionLifecycleConfig,
   initialSparkProperties,
-  initialLabels
+  initialLabels,
+  mode = 'create'
 }): React.JSX.Element => {
+  const isEditMode = mode === 'edit';
+  // TODO: In edit mode, pre-fill the form from the selected runtime profile
+  // (map its properties to the initial values above).
+
   // Options & Data State
   const [regions, setRegions] = useState<IRegionOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState<boolean>(true);
@@ -798,6 +806,12 @@ export const CreateRuntimeProfileComponent: React.FC<
         labels
       };
 
+      if (isEditMode) {
+        // TODO: Save the changes to the selected runtime profile (update API)
+        // instead of creating a new one.
+        return;
+      }
+
       await service.createRuntimeProfile(payload, undefined, data.region);
 
       Notification.emit(
@@ -854,7 +868,9 @@ export const CreateRuntimeProfileComponent: React.FC<
             className="icon-white logo-alignment-style"
           />
         </div>
-        <div className="cluster-details-title">Create a runtime profile</div>
+        <div className="cluster-details-title">
+          {isEditMode ? 'Edit Runtime Profile' : 'Create a runtime profile'}
+        </div>
       </div>
 
       <div className="runtime-profile-container">
@@ -1214,6 +1230,8 @@ export const CreateRuntimeProfileComponent: React.FC<
             >
               {isSubmitting ? (
                 <CircularProgress size={16} color="inherit" />
+              ) : isEditMode ? (
+                'Save'
               ) : (
                 'Create a runtime profile'
               )}
@@ -1247,17 +1265,20 @@ export class CreateRuntimeProfile extends DataprocWidget {
   app: JupyterLab;
   launcher: ILauncher;
   settingRegistry: ISettingRegistry;
+  mode: RuntimeProfileFormMode;
 
   constructor(
     app: JupyterLab,
     launcher: ILauncher,
     themeManager: IThemeManager,
-    settingRegistry: ISettingRegistry
+    settingRegistry: ISettingRegistry,
+    mode: RuntimeProfileFormMode = 'create'
   ) {
     super(themeManager);
     this.app = app;
     this.launcher = launcher;
     this.settingRegistry = settingRegistry;
+    this.mode = mode;
   }
 
   renderInternal(): React.JSX.Element {
@@ -1267,6 +1288,7 @@ export class CreateRuntimeProfile extends DataprocWidget {
         launcher={this.launcher}
         themeManager={this.themeManager}
         settingRegistry={this.settingRegistry}
+        mode={this.mode}
       />
     );
   }

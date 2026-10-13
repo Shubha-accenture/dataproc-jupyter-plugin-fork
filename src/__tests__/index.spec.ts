@@ -555,6 +555,11 @@ describe('extension index.ts comprehensive test suite', () => {
       );
     });
 
+    const lastOpenedTabTitle = () => {
+      const calls = (appMock.shell.add as jest.Mock).mock.calls;
+      return calls[calls.length - 1][0].title.label;
+    };
+
     it('should register and execute create-runtime-profile-component command', () => {
       const command = commandsMap.get('create-runtime-profile-component');
       expect(command).toBeDefined();
@@ -566,12 +571,28 @@ describe('extension index.ts comprehensive test suite', () => {
         appMock,
         launcherMock,
         themeManagerMock,
-        settingRegistryMock
+        settingRegistryMock,
+        'create'
       );
       expect(appMock.shell.add).toHaveBeenCalledWith(
         expect.any(MainAreaWidget),
         'main'
       );
+      expect(lastOpenedTabTitle()).toBe('Create Runtime Profile');
+    });
+
+    it('should open create-runtime-profile-component in edit mode', () => {
+      const command = commandsMap.get('create-runtime-profile-component');
+
+      command.execute({ mode: 'edit' });
+      expect(CreateRuntimeProfile).toHaveBeenLastCalledWith(
+        appMock,
+        launcherMock,
+        themeManagerMock,
+        settingRegistryMock,
+        'edit'
+      );
+      expect(lastOpenedTabTitle()).toBe('Edit Runtime Profile');
     });
 
     it('should register and execute create-cluster-component command', () => {

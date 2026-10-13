@@ -143,6 +143,9 @@ export interface ICreateRuntimeProfilePayload {
   labels?: ProfileLabels;
 }
 
+/** Whether the runtime profile form creates a new profile or edits an existing one. */
+export type RuntimeProfileFormMode = 'create' | 'edit';
+
 export interface IRuntimeProfileService {
   getRegions(projectId?: string): Promise<IRegionOption[]>;
   getStorageBuckets?(projectId?: string): Promise<string[]>;
