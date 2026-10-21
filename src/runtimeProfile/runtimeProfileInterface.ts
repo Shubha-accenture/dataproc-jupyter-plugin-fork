@@ -348,8 +348,14 @@ export interface IRuntimeProfileService {
     projectId?: string,
     region?: string
   ): Promise<IRuntimeProfile>;
+  getRuntimeProfile?(name: string): Promise<IRuntimeProfileTemplate>;
+  /**
+   * Saves an edited profile. `initialPayload` is the form when it opened;
+   * only the changes from it to `payload` are applied to the saved profile.
+   */
   updateRuntimeProfile?(
     existingProfile: IRuntimeProfileTemplate,
-    payload: ICreateRuntimeProfilePayload
+    payload: ICreateRuntimeProfilePayload,
+    initialPayload: ICreateRuntimeProfilePayload
   ): Promise<IRuntimeProfileTemplate>;
 }

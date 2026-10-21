@@ -1026,34 +1026,78 @@ export class RuntimeProfileService implements IRuntimeProfileService {
   }
 
   /**
+   * Fetches a Runtime Profile (session template) by its resource name.
+   */
+  async getRuntimeProfile(name: string): Promise<IRuntimeProfileTemplate> {
+    const credentials = await authApi();
+    const { DATAPROC } = await gcpServiceUrls;
+    const response = await loggedFetch(`${DATAPROC}/${name}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': API_HEADER_CONTENT_TYPE,
+        Authorization: API_HEADER_BEARER + (credentials?.access_token || '')
+      }
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result || result.error) {
+      throw new Error(
+        result?.error?.message ||
+          `Failed to load runtime profile (${response.status}: ${response.statusText})`
+      );
+    }
+    return result as IRuntimeProfileTemplate;
+  }
+
+  /**
    * Updates an existing Runtime Profile (session template) with the edited
-   * form payload. Uses mock simulation or sends a PATCH request for the
-   * profile's resource name to the Dataproc API when live.
+   * form payload. Only the changes from `initialPayload` (the form when it
+   * opened) to `payload` are applied, onto the latest saved copy of the
+   * profile, so changes saved elsewhere in the meantime are kept. Uses mock
+   * simulation or sends a PATCH request for the profile's resource name to
+   * the Dataproc API when live.
    */
   async updateRuntimeProfile(
     existingProfile: IRuntimeProfileTemplate,
-    payload: ICreateRuntimeProfilePayload
+    payload: ICreateRuntimeProfilePayload,
+    initialPayload: ICreateRuntimeProfilePayload
   ): Promise<IRuntimeProfileTemplate> {
     safeLog(
       `Updating runtime profile: ${existingProfile.name} (mockMode=${this.useMock})`,
       LOG_LEVEL.INFO
     );
-    const apiPayload = mapRuntimeProfileToSessionTemplateUpdate(
-      payload,
-      existingProfile
-    );
 
     if (this.useMock) {
+      const apiPayload = mapRuntimeProfileToSessionTemplateUpdate(
+        payload,
+        initialPayload,
+        existingProfile
+      );
       // Simulate network latency for mock response
       await new Promise(resolve => setTimeout(resolve, 600));
       return {
-        ...existingProfile,
         ...apiPayload,
+        creator: existingProfile.creator,
+        createTime: existingProfile.createTime,
         updateTime: new Date().toISOString()
       };
     }
 
     try {
+      let latestProfile = existingProfile;
+      try {
+        latestProfile = await this.getRuntimeProfile(existingProfile.name);
+      } catch (error) {
+        safeLog(
+          `Could not reload ${existingProfile.name} before saving; using the copy the form opened with: ${error}`,
+          LOG_LEVEL.WARN
+        );
+      }
+      const apiPayload = mapRuntimeProfileToSessionTemplateUpdate(
+        payload,
+        initialPayload,
+        latestProfile
+      );
+
       const credentials = await authApi();
       const { DATAPROC } = await gcpServiceUrls;
       const response = await loggedFetch(

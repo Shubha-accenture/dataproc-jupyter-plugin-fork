@@ -112,6 +112,7 @@ export interface IRuntimeProfileTemplate {
       subnetworkUri?: string;
       networkTags?: string[];
       kmsKey?: string;
+      serviceAccount?: string;
       stagingBucket?: string;
       idleTtl?: string;
       ttl?: string;
@@ -121,11 +122,15 @@ export interface IRuntimeProfileTemplate {
     };
     peripheralsConfig?: {
       metastoreService?: string;
+      sparkHistoryServerConfig?: {
+        dataprocCluster?: string;
+      };
     };
   };
   creator?: string;
   createTime?: string;
   updateTime?: string;
+  uuid?: string;
   labels?: Record<string, string>;
 }
 
