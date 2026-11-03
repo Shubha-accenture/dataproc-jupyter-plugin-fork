@@ -645,6 +645,8 @@ export const CreateRuntimeProfileComponent: React.FC<
   const [isExecutorDriverDrawerOpen, setIsExecutorDriverDrawerOpen] =
     useState<boolean>(false);
   const formScrollContainerRef = React.useRef<HTMLDivElement | null>(null);
+  // Root element of the form, used to find the shell tab that hosts it.
+  const formRootRef = React.useRef<HTMLDivElement | null>(null);
   const [isNetworkSecurityDrawerOpen, setIsNetworkSecurityDrawerOpen] =
     useState<boolean>(false);
   const [isAutoscalingDrawerOpen, setIsAutoscalingDrawerOpen] =
@@ -1209,12 +1211,20 @@ export const CreateRuntimeProfileComponent: React.FC<
     if (!shell) {
       return;
     }
-    const formWidget = shell.activeWidget;
-    if (typeof shell.widgets === 'function') {
-      Array.from(shell.widgets('main'))
-        .filter(widget => widget.title.label === SETTINGS_WIDGET_TITLE)
-        .forEach(widget => widget.close());
-    }
+    const mainWidgets =
+      typeof shell.widgets === 'function'
+        ? Array.from(shell.widgets('main'))
+        : [];
+    // The form's own tab is the one holding its DOM node. shell.activeWidget
+    // can't be used: it follows focus, which has left the form by the time the
+    // save finishes (the submit button is disabled while saving), and it is
+    // another tab if the user switched tabs in the meantime.
+    const formWidget = mainWidgets.find(widget =>
+      widget.node.contains(formRootRef.current)
+    );
+    mainWidgets
+      .filter(widget => widget.title.label === SETTINGS_WIDGET_TITLE)
+      .forEach(widget => widget.close());
     // The new Settings layout reads this request when it mounts.
     requestRuntimeProfileListTab();
     void app?.commands.execute(SETTINGS_COMMAND_ID);
@@ -1313,6 +1323,7 @@ export const CreateRuntimeProfileComponent: React.FC<
 
   return (
     <div
+      ref={formRootRef}
       className="runtime-profile-main-wrapper"
       onWheel={handleMainWrapperWheel}
     >

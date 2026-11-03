@@ -976,21 +976,33 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
       .spyOn(mockService, 'createRuntimeProfile')
       .mockResolvedValue({ displayName: 'created', region: 'us-central1' });
 
-    const formWidget = { id: 'form-widget', close: jest.fn() };
+    // The form's tab is the main area widget whose node holds the form
+    const formWidget = {
+      id: 'form-widget',
+      node: container,
+      title: { label: 'Create Runtime Profile' },
+      close: jest.fn()
+    };
     const settingsWidget = {
       id: 'settings-widget',
+      node: document.createElement('div'),
       title: { label: SETTINGS_WIDGET_TITLE },
       close: jest.fn()
     };
     const otherWidget = {
       id: 'other',
+      node: document.createElement('div'),
       title: { label: 'Notebook' },
       close: jest.fn()
     };
     const mockApp = {
       shell: {
-        activeWidget: formWidget,
-        widgets: jest.fn(() => [otherWidget, settingsWidget][Symbol.iterator]())
+        // Focus has left the form by the time the save finishes (the submit
+        // button is disabled while saving), so the shell has no active widget
+        activeWidget: null,
+        widgets: jest.fn(() =>
+          [otherWidget, settingsWidget, formWidget][Symbol.iterator]()
+        )
       },
       commands: { execute: jest.fn().mockResolvedValue(undefined) }
     } as any;
@@ -1018,7 +1030,7 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
 
     // Without an open Settings widget, one is simply opened via its command
     mockApp.shell.widgets.mockImplementation(() =>
-      [otherWidget][Symbol.iterator]()
+      [otherWidget, formWidget][Symbol.iterator]()
     );
     mockApp.commands.execute.mockClear();
     await act(async () => {
@@ -1031,6 +1043,44 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
     expect(mockApp.commands.execute).toHaveBeenCalledWith(SETTINGS_COMMAND_ID);
     expect(formWidget.close).toHaveBeenCalledTimes(2);
     expect(consumeRuntimeProfileListTabRequest()).toBe(true);
+  });
+
+  it('closes the form, not the tab the user switched to while saving', async () => {
+    jest
+      .spyOn(mockService, 'createRuntimeProfile')
+      .mockResolvedValue({ displayName: 'created', region: 'us-central1' });
+
+    const formWidget = {
+      node: container,
+      title: { label: 'Create Runtime Profile' },
+      close: jest.fn()
+    };
+    const notebookWidget = {
+      node: document.createElement('div'),
+      title: { label: 'Untitled.ipynb' },
+      close: jest.fn()
+    };
+    const mockApp = {
+      shell: {
+        activeWidget: notebookWidget,
+        widgets: jest.fn(() => [notebookWidget, formWidget][Symbol.iterator]())
+      },
+      commands: { execute: jest.fn().mockResolvedValue(undefined) }
+    } as any;
+
+    await act(async () => {
+      root.render(
+        <CreateRuntimeProfileComponent app={mockApp} service={mockService} />
+      );
+    });
+    await act(async () => {
+      (
+        container.querySelector('button[type="submit"]') as HTMLButtonElement
+      ).click();
+    });
+
+    expect(formWidget.close).toHaveBeenCalledTimes(1);
+    expect(notebookWidget.close).not.toHaveBeenCalled();
   });
 
   it('pre-selects the region saved in Settings when it is in the list', async () => {
