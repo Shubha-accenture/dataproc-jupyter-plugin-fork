@@ -2337,6 +2337,28 @@ describe('CreateRuntimeProfileComponent UI & Service', () => {
       );
     });
 
+    it('shows the GPU shape of a profile saved without executor memory', async () => {
+      await renderEditForm(undefined, {
+        ...profileToEdit,
+        runtimeConfig: {
+          ...profileToEdit.runtimeConfig,
+          properties: {
+            'dataproc:dataproc.tier': 'premium',
+            'spark:spark.dataproc.executor.compute.tier': 'premium',
+            'spark:spark.dataproc.executor.resource.accelerator.type': 'l4',
+            'spark:spark.executor.cores': '48'
+          }
+        }
+      });
+      await expandAdditionalConfig();
+
+      expect(
+        container.querySelector('#runtime-profile-executor-type')?.textContent
+      ).toBe('L4 (48 vCPU)');
+      expect(getFieldValue('Executor type')).toContain('48 vCPU');
+      expect(getFieldValue('Spark properties')).toBe('None');
+    });
+
     it('saves edited Session lifecycle and Network and security settings and keeps the rest of the profile', async () => {
       // Saved without an authentication type, so Execution identity shows the
       // runtime's default. It isn't edited below, so none may be added.

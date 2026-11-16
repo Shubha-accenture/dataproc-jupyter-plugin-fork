@@ -58,6 +58,7 @@ import {
 import {
   DEFAULT_DISK_SIZE,
   extractRuntimeVersion,
+  findAcceleratedMachineType,
   FORM_DERIVED_PROPERTY_KEYS,
   getDefaultLakehouseCatalogName,
   getLakehouseCatalogResource,
@@ -76,7 +77,6 @@ import {
 import { RuntimeProfileService } from './runtimeProfileService';
 import { LOG_LEVEL, safeLog } from '../utils/loggingService';
 import {
-  DATAPROC_ACCELERATED_MACHINE_TYPES,
   DATAPROC_LIGHTNING_ENGINE_PROPERTY,
   DATAPROC_STANDARD_MACHINE_TYPES,
   DATAPROC_TIER_PROPERTY,
@@ -287,12 +287,10 @@ const resolveMachineTypeFromProperties = (
   tier: string
 ): string => {
   if (acceleratorType) {
-    const matchedAcc = DATAPROC_ACCELERATED_MACHINE_TYPES.find(
-      m =>
-        m.acceleratorType?.toLowerCase() === acceleratorType &&
-        (!cores || String(m.vCPUs) === cores)
+    return (
+      findAcceleratedMachineType(acceleratorType, cores)?.name ||
+      DEFAULT_ACCELERATED_EXECUTOR_TYPE
     );
-    return matchedAcc?.name || DEFAULT_ACCELERATED_EXECUTOR_TYPE;
   }
   if (cores && memory) {
     const exact = DATAPROC_STANDARD_MACHINE_TYPES.find(

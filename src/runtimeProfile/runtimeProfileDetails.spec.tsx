@@ -50,6 +50,7 @@ import {
   IRuntimeProfileTemplate,
   parseRuntimeProfileResourceName
 } from './runtimeProfileListMapper';
+import { mapSessionTemplateToFormValues } from './runtimeProfileMapper';
 import {
   runtimeProfileService,
   RuntimeProfileService
@@ -1740,6 +1741,28 @@ describe('RuntimeProfileDetails Component', () => {
       'us-central1'
     );
     expect(clearedExecTemplate.environmentConfig).toBeUndefined();
+  });
+
+  it('saves GPU shapes without memory and the edit form opens them with the same shapes', () => {
+    const saved = applyExecutorAndDriverUpdateToTemplate(mockProfile, {
+      tier: 'Premium',
+      executorType: 'l4-48',
+      executorMachineType: 'l4-48',
+      driverMachineType: 'a100-40'
+    });
+    const props = saved.runtimeConfig?.properties ?? {};
+    expect(props['spark.executor.memory']).toBeUndefined();
+    expect(props['spark.driver.memory']).toBeUndefined();
+
+    expect(buildExecutorAndDriverConfigFromTemplate(saved)).toMatchObject({
+      executorType: 'l4-48',
+      driverMachineType: 'a100-40'
+    });
+    expect(mapSessionTemplateToFormValues(saved)).toMatchObject({
+      initialExecutorCategory: 'accelerated',
+      initialExecutorType: 'l4-48',
+      initialExecutorAndDriverConfig: { driverMachineType: 'a100-40' }
+    });
   });
 
   it('does not report an existing Iceberg REST default catalog as a Hive endpoint', async () => {

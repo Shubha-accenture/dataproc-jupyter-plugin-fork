@@ -1379,23 +1379,55 @@ export const FORM_DERIVED_PROPERTY_KEYS: ReadonlySet<string> = new Set(
   )
 );
 
-/** Known machine type with the given Spark cores and memory, e.g. 4 and '32g' -> highmem-4. */
+/**
+ * Accelerated machine type for an accelerator type (e.g. 'l4') and Spark
+ * cores. Without cores it's the accelerator's default shape, the first one
+ * listed: Dataproc runs 4 cores with an L4 GPU and 12 with an A100.
+ */
+export const findAcceleratedMachineType = (
+  acceleratorType: string,
+  cores?: string
+): IMachineTypeOption | undefined => {
+  const normalizedType = acceleratorType.trim().toLowerCase();
+  return DATAPROC_ACCELERATED_MACHINE_TYPES.find(
+    machine =>
+      machine.acceleratorType.toLowerCase() === normalizedType &&
+      (!cores || String(machine.vCPUs) === cores.trim())
+  );
+};
+
+/**
+ * Known machine type for the Spark properties of an executor or driver.
+ * Accelerated shapes match on accelerator type and cores only: their memory
+ * is optional, so templates created elsewhere (e.g. in the Cloud Console) may
+ * leave it out or use another value. General shapes match on cores and
+ * memory, e.g. 4 and '32g' -> highmem-4.
+ */
 const findMachineType = (
   cores: string | undefined,
   memory: string | undefined,
-  category: ExecutorCategoryType
+  acceleratorType: string | undefined
 ): IMachineTypeOption | undefined => {
+  if (acceleratorType) {
+    return findAcceleratedMachineType(acceleratorType, cores);
+  }
   const memoryMb = memory ? memoryToMb(memory) : 0;
   if (!cores || !memoryMb) {
     return undefined;
   }
   return KNOWN_MACHINE_TYPES.find(
     machine =>
-      machine.category === category &&
+      machine.category === 'general' &&
       String(machine.vCPUs) === cores &&
       memoryToMb(machine.memory) === memoryMb
   );
 };
+
+/** Whether a Spark memory value is unset or the machine type's own memory. */
+const isMachineMemory = (
+  machine: IMachineTypeOption,
+  memory: string | undefined
+): boolean => !memory || memoryToMb(memory) === memoryToMb(machine.memory);
 
 /**
  * Disk label that parseDiskSpec reads back to the same tier and size, e.g.
@@ -1649,42 +1681,46 @@ export function mapSessionTemplateToFormValues(
       : 'Standard';
   markMapped(DATAPROC_TIER_PROPERTY, DATAPROC_LIGHTNING_ENGINE_PROPERTY);
 
-  const executorCategory: ExecutorCategoryType = getProperty(
+  const executorAcceleratorType = getProperty(
     'spark.dataproc.executor.resource.accelerator.type'
-  )
+  );
+  const executorCategory: ExecutorCategoryType = executorAcceleratorType
     ? 'accelerated'
     : 'general';
+  const executorMemory = getProperty('spark.executor.memory');
   const executorMachine = findMachineType(
     getProperty('spark.executor.cores'),
-    getProperty('spark.executor.memory'),
-    executorCategory
+    executorMemory,
+    executorAcceleratorType
   );
   if (executorMachine) {
     markMapped(
       'spark.executor.cores',
-      'spark.executor.memory',
       'spark.dataproc.executor.compute.tier',
       'spark.dataproc.executor.resource.accelerator.type'
     );
+    // A memory the shape doesn't set (a custom one on a GPU shape) stays a
+    // Spark property, so it is saved unchanged.
+    if (isMachineMemory(executorMachine, executorMemory)) {
+      markMapped('spark.executor.memory');
+    }
   }
 
-  const driverCategory: ExecutorCategoryType = getProperty(
-    'spark.dataproc.driver.resource.accelerator.type'
-  )
-    ? 'accelerated'
-    : 'general';
+  const driverMemory = getProperty('spark.driver.memory');
   const driverMachine = findMachineType(
     getProperty('spark.driver.cores'),
-    getProperty('spark.driver.memory'),
-    driverCategory
+    driverMemory,
+    getProperty('spark.dataproc.driver.resource.accelerator.type')
   );
   if (driverMachine) {
     markMapped(
       'spark.driver.cores',
-      'spark.driver.memory',
       'spark.dataproc.driver.compute.tier',
       'spark.dataproc.driver.resource.accelerator.type'
     );
+    if (isMachineMemory(driverMachine, driverMemory)) {
+      markMapped('spark.driver.memory');
+    }
   }
 
   const driverDisk = formatDiskSpec(

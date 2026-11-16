@@ -115,6 +115,22 @@ const consoleProfile: IRuntimeProfileTemplate = {
   environmentConfig: { executionConfig: { subnetworkUri: 'default' } }
 };
 
+// A GPU shape saved without a Spark memory, which is optional for GPU shapes.
+const gpuProfileWithoutMemory: IRuntimeProfileTemplate = {
+  name: 'projects/test-project/locations/us-central1/sessionTemplates/gpu',
+  jupyterSession: { displayName: 'GPU profile', kernel: 'PYTHON' },
+  runtimeConfig: {
+    version: '2.3',
+    properties: {
+      [DATAPROC_TIER_PROPERTY]: 'premium',
+      'spark.dataproc.executor.compute.tier': 'premium',
+      'spark.dataproc.executor.disk.tier': 'premium',
+      'spark.dataproc.executor.resource.accelerator.type': 'l4',
+      'spark.executor.cores': '48'
+    }
+  }
+};
+
 // Values the form can't show: a custom executor shape, a non-numeric
 // autoscaling limit, an unknown Lightning Engine value, prefixed keys and a
 // network without a subnetwork.
@@ -1145,6 +1161,81 @@ describe('runtimeProfileMapper', () => {
       });
     });
 
+    // Memory is optional for GPU shapes, so templates saved from the details
+    // page or elsewhere (e.g. the Cloud Console) may only set the accelerator
+    // type and cores.
+    it.each<[string, string, string | undefined]>([
+      ['l4-48', 'l4', '48'],
+      ['l4-4', 'l4', undefined],
+      ['a100-80', 'a100-80', '12']
+    ])(
+      'maps a GPU shape saved without memory to %s',
+      (machineType, acceleratorType, cores) => {
+        const values = mapSessionTemplateToFormValues({
+          name: 'projects/p/locations/us-central1/sessionTemplates/gpu-profile',
+          runtimeConfig: {
+            properties: {
+              [DATAPROC_TIER_PROPERTY]: 'premium',
+              'spark.dataproc.executor.compute.tier': 'premium',
+              'spark.dataproc.executor.resource.accelerator.type':
+                acceleratorType,
+              'spark.dataproc.driver.compute.tier': 'premium',
+              'spark.dataproc.driver.resource.accelerator.type':
+                acceleratorType,
+              ...(cores
+                ? { 'spark.executor.cores': cores, 'spark.driver.cores': cores }
+                : {})
+            }
+          }
+        });
+
+        expect(values.initialExecutorCategory).toBe('accelerated');
+        expect(values.initialExecutorType).toBe(machineType);
+        expect(values.initialExecutorAndDriverConfig).toMatchObject({
+          executorType: machineType,
+          driverMachineType: machineType
+        });
+        expect(values.initialSparkProperties).toEqual({});
+      }
+    );
+
+    it('keeps a custom memory on a GPU shape as a Spark property', () => {
+      const values = mapSessionTemplateToFormValues({
+        name: 'projects/p/locations/us-central1/sessionTemplates/gpu-profile',
+        runtimeConfig: {
+          properties: {
+            'spark.dataproc.executor.resource.accelerator.type': 'l4',
+            'spark.executor.cores': '48',
+            'spark:spark.executor.memory': '96g'
+          }
+        }
+      });
+
+      expect(values.initialExecutorType).toBe('l4-48');
+      expect(values.initialSparkProperties).toEqual({
+        'spark.executor.memory': '96g'
+      });
+    });
+
+    it('leaves a GPU shape with unsupported cores in spark properties', () => {
+      const values = mapSessionTemplateToFormValues({
+        name: 'projects/p/locations/us-central1/sessionTemplates/gpu-profile',
+        runtimeConfig: {
+          properties: {
+            'spark.dataproc.executor.resource.accelerator.type': 'l4',
+            'spark.executor.cores': '6'
+          }
+        }
+      });
+
+      expect(values.initialExecutorCategory).toBe('accelerated');
+      expect(values.initialExecutorType).toBeUndefined();
+      expect(values.initialSparkProperties).toEqual({
+        'spark.dataproc.executor.resource.accelerator.type': 'l4',
+        'spark.executor.cores': '6'
+      });
+    });
+
     it('detects the Hive endpoint only for catalogs other than the default one', () => {
       const hiveEnabledFor = (metastoreConfig: IMetastoreConfig) =>
         mapSessionTemplateToFormValues(
@@ -1328,6 +1419,7 @@ describe('runtimeProfileMapper', () => {
     it.each([
       ['a profile created by the form', savedProfile],
       ['a profile created in the Console', consoleProfile],
+      ['a GPU shape saved without memory', gpuProfileWithoutMemory],
       ['values the form cannot show', unusualProfile],
       ['a Lakehouse runtime catalog', lakehouseProfile],
       [
@@ -1459,6 +1551,26 @@ describe('runtimeProfileMapper', () => {
         'spark.dataproc.executor.compute.tier': 'premium',
         // Other controls keep their values, even ones the form can't show
         'spark.dataproc.driver.disk.size': '1t'
+      });
+    });
+
+    it('rewrites a GPU shape saved without memory when another size is picked', () => {
+      const body = saveEdits(gpuProfileWithoutMemory, payload => {
+        payload.executorConfig = {
+          executorType: 'accelerated',
+          machineType: 'l4-8'
+        };
+        payload.executorAndDriverConfig = {
+          ...payload.executorAndDriverConfig,
+          executorType: 'l4-8',
+          executorMachineType: 'l4-8'
+        };
+      });
+
+      expect(body.runtimeConfig?.properties).toEqual({
+        ...gpuProfileWithoutMemory.runtimeConfig?.properties,
+        'spark.executor.cores': '8',
+        'spark.executor.memory': '26768m'
       });
     });
 
